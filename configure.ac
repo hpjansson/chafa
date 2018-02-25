@@ -1,12 +1,14 @@
-AC_INIT(configure.ac)
-
 dnl ----------------------------
 dnl Automake/autoconf input file
 dnl ----------------------------
 
 dnl --- Package configuration ---
 
-AM_INIT_AUTOMAKE(chafa, 0.0.0)
+AC_PREREQ(2.59)
+AC_INIT([chafa], [0.0.0], [hpj@copyleft.no])
+AM_INIT_AUTOMAKE([1.9 foreign])
+
+AC_CONFIG_MACRO_DIRS([m4])
 AM_CONFIG_HEADER(config.h)
 
 AC_SUBST(VERSION)
