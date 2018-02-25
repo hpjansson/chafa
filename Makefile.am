@@ -1,0 +1,3 @@
+SUBDIRS = chafa
+
+EXTRA_DIST =
