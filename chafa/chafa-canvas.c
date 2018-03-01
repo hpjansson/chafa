@@ -52,12 +52,15 @@ calc_mean_color (ChafaCanvas *canvas, gint cx, gint cy,
                  ChafaColor *color_out)
 {
     ChafaColor accum = { 0 };
-    gint ofs_y;
+    ChafaPixel *row_p;
+    ChafaPixel *end_p;
 
-    for (ofs_y = 0; ofs_y < CHAFA_SYMBOL_HEIGHT_PIXELS; ofs_y++)
+    row_p = &canvas->pixels [cy * CHAFA_SYMBOL_HEIGHT_PIXELS * canvas->width_pixels + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
+    end_p = row_p + (canvas->width_pixels * CHAFA_SYMBOL_HEIGHT_PIXELS);
+
+    for ( ; row_p < end_p; row_p += canvas->width_pixels)
     {
-        ChafaPixel *p0 = &canvas->pixels [(cy * CHAFA_SYMBOL_HEIGHT_PIXELS + ofs_y) * canvas->width_pixels
-                                         + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
+        ChafaPixel *p0 = row_p;
         ChafaPixel *p1 = p0 + CHAFA_SYMBOL_WIDTH_PIXELS;
 
         for ( ; p0 < p1; p0++)
@@ -73,13 +76,16 @@ eval_symbol_colors (ChafaCanvas *canvas, gint cx, gint cy,
                     const ChafaSymbol *sym, SymbolEval *eval)
 {
     gchar *covp = &sym->coverage [0];
-    gint ofs_y;
     gint n_fg = 0, n_bg = 0;
+    ChafaPixel *row_p;
+    ChafaPixel *end_p;
 
-    for (ofs_y = 0; ofs_y < CHAFA_SYMBOL_HEIGHT_PIXELS; ofs_y++)
+    row_p = &canvas->pixels [cy * CHAFA_SYMBOL_HEIGHT_PIXELS * canvas->width_pixels + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
+    end_p = row_p + (canvas->width_pixels * CHAFA_SYMBOL_HEIGHT_PIXELS);
+
+    for ( ; row_p < end_p; row_p += canvas->width_pixels)
     {
-        ChafaPixel *p0 = &canvas->pixels [(cy * CHAFA_SYMBOL_HEIGHT_PIXELS + ofs_y) * canvas->width_pixels
-                                         + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
+        ChafaPixel *p0 = row_p;
         ChafaPixel *p1 = p0 + CHAFA_SYMBOL_WIDTH_PIXELS;
 
         for ( ; p0 < p1; p0++)
@@ -129,13 +135,16 @@ eval_symbol_error (ChafaCanvas *canvas, gint cx, gint cy,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
     gchar *covp = &sym->coverage [0];
-    gint ofs_y;
     gint error = 0;
+    ChafaPixel *row_p;
+    ChafaPixel *end_p;
 
-    for (ofs_y = 0; ofs_y < CHAFA_SYMBOL_HEIGHT_PIXELS; ofs_y++)
+    row_p = &canvas->pixels [cy * CHAFA_SYMBOL_HEIGHT_PIXELS * canvas->width_pixels + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
+    end_p = row_p + (canvas->width_pixels * CHAFA_SYMBOL_HEIGHT_PIXELS);
+
+    for ( ; row_p < end_p; row_p += canvas->width_pixels)
     {
-        ChafaPixel *p0 = &canvas->pixels [(cy * CHAFA_SYMBOL_HEIGHT_PIXELS + ofs_y) * canvas->width_pixels
-                                         + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
+        ChafaPixel *p0 = row_p;
         ChafaPixel *p1 = p0 + CHAFA_SYMBOL_WIDTH_PIXELS;
 
         for ( ; p0 < p1; p0++)
