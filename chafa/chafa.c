@@ -604,11 +604,13 @@ parse_options (int *argc, char **argv [])
 }
 
 static void
-textify (guint8 *pixels, gint width, gint height)
+textify (guint8 *pixels,
+         gint src_width, gint src_height,
+         gint dest_width, gint dest_height)
 {
     ChafaCanvas *canvas;
 
-    canvas = chafa_canvas_new (options.mode, options.width, options.height);
+    canvas = chafa_canvas_new (options.mode, dest_width, dest_height);
     chafa_canvas_set_color_space (canvas, options.color_space);
     chafa_canvas_set_include_symbols (canvas, options.inc_sym);
     chafa_canvas_set_exclude_symbols (canvas, options.exc_sym);
@@ -616,7 +618,7 @@ textify (guint8 *pixels, gint width, gint height)
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_set_transparency_threshold (canvas, options.transparency_threshold);
     chafa_canvas_set_quality (canvas, options.quality);
-    chafa_canvas_paint_rgba (canvas, pixels, width, height);
+    chafa_canvas_paint_rgba (canvas, pixels, src_width, src_height);
     chafa_canvas_print (canvas);
 
     chafa_canvas_unref (canvas);
@@ -626,7 +628,8 @@ static void
 run (const gchar *filename)
 {
     MagickWand *wand = NULL;
-    gint width, height;
+    gint src_width, src_height;
+    gint dest_width, dest_height;
     guint8 *pixels;
 
     MagickWandGenesis();
@@ -635,48 +638,51 @@ run (const gchar *filename)
     MagickReadImage(wand, filename);
     MagickAutoOrientImage (wand);
 
-    width = MagickGetImageWidth(wand);
-    height = MagickGetImageHeight(wand);
+    src_width = MagickGetImageWidth(wand);
+    src_height = MagickGetImageHeight(wand);
 
-    if (!options.stretch || options.width < 0 || options.height < 0)
+    dest_width = options.width;
+    dest_height = options.height;
+
+    if (!options.stretch || dest_width < 0 || dest_height < 0)
     {
         gdouble src_aspect;
         gdouble dest_aspect;
 
-        src_aspect = width / (gdouble) height;
-        dest_aspect = (options.width / (gdouble) options.height) * options.font_ratio;
+        src_aspect = src_width / (gdouble) src_height;
+        dest_aspect = (dest_width / (gdouble) dest_height) * options.font_ratio;
 
-        if (options.width < 1)
+        if (dest_width < 1)
         {
-            options.width = options.height * (src_aspect / options.font_ratio) + 0.5;
+            dest_width = dest_height * (src_aspect / options.font_ratio) + 0.5;
         }
-        else if (options.height < 1)
+        else if (dest_height < 1)
         {
-            options.height = (options.width / src_aspect) * options.font_ratio + 0.5;
+            dest_height = (dest_width / src_aspect) * options.font_ratio + 0.5;
         }
         else if (src_aspect > dest_aspect)
         {
-            options.height = options.width * (options.font_ratio / src_aspect);
+            dest_height = dest_width * (options.font_ratio / src_aspect);
         }
         else
         {
-            options.width = options.height * (src_aspect / options.font_ratio);
+            dest_width = dest_height * (src_aspect / options.font_ratio);
         }
 
-        options.width = MAX (options.width, 1);
-        options.height = MAX (options.height, 1);
+        dest_width = MAX (dest_width, 1);
+        dest_height = MAX (dest_height, 1);
     }
 
     if (options.quality >= 4 || options.preprocess)
     {
-        gint new_width = CHAFA_SYMBOL_WIDTH_PIXELS * options.width;
-        gint new_height = CHAFA_SYMBOL_HEIGHT_PIXELS * options.height;
+        gint new_width = CHAFA_SYMBOL_WIDTH_PIXELS * dest_width;
+        gint new_height = CHAFA_SYMBOL_HEIGHT_PIXELS * dest_height;
 
-        if (new_width < width || new_height < height)
+        if (new_width < src_width || new_height < src_height)
         {
-            width = new_width;
-            height = new_height;
-            MagickResizeImage (wand, width, height, LanczosFilter);
+            src_width = new_width;
+            src_height = new_height;
+            MagickResizeImage (wand, src_width, src_height, LanczosFilter);
         }
     }
 
@@ -686,10 +692,10 @@ run (const gchar *filename)
 	MagickBrightnessContrastImage (wand, 0, 40);
     }
 
-    pixels = g_malloc (width * height * 4);
+    pixels = g_malloc (src_width * src_height * 4);
     MagickExportImagePixels (wand,
 			     0, 0,
-			     width, height,
+			     src_width, src_height,
 			     "RGBA",
 			     CharPixel,
 			     pixels);
@@ -700,7 +706,9 @@ run (const gchar *filename)
     printf ("\x1b[0f");
 #endif
 
-    textify (pixels, width, height);
+    textify (pixels,
+             src_width, src_height,
+             dest_width, dest_height);
     g_free (pixels);
 
     /* Clean up */
@@ -710,18 +718,31 @@ run (const gchar *filename)
     MagickWandTerminus();
 }
 
+static int
+run_all (GList *filenames)
+{
+    GList *l;
+
+    for (l = filenames; l; l = g_list_next (l))
+    {
+        gchar *filename = l->data;
+        run (filename);
+    }
+
+    return 0;
+}
+
 int
 main (int argc, char *argv [])
 {
     char *filename;
+    int ret;
 
     setlocale (LC_ALL, "");
 
     if (!parse_options (&argc, &argv))
         exit (1);
 
-    filename = options.args->data;
-
-    run (filename);
-    return 0;
+    ret = run_all (options.args);
+    return ret;
 }
