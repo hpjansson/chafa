@@ -46,7 +46,9 @@ typedef enum
     CHAFA_SYMBOL_CLASS_BLOCK    = (1 <<  3),
     CHAFA_SYMBOL_CLASS_BORDER   = (1 <<  4),
     CHAFA_SYMBOL_CLASS_DIAGONAL = (1 <<  5),
-    CHAFA_SYMBOL_CLASS_DOT      = (1 <<  6)
+    CHAFA_SYMBOL_CLASS_DOT      = (1 <<  6),
+    CHAFA_SYMBOL_CLASS_QUAD     = (1 <<  7),
+    CHAFA_SYMBOL_CLASS_HALF     = (1 <<  8),
 }
 ChafaSymbolClass;
 

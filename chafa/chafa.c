@@ -290,6 +290,8 @@ parse_symbol_class (const gchar *name, gint len, ChafaSymbolClass *sc_out, GErro
         { "border", CHAFA_SYMBOL_CLASS_BORDER },
         { "diagonal", CHAFA_SYMBOL_CLASS_DIAGONAL },
         { "dot", CHAFA_SYMBOL_CLASS_DOT },
+        { "quad", CHAFA_SYMBOL_CLASS_QUAD },
+        { "half", CHAFA_SYMBOL_CLASS_HALF },
         { NULL, 0 }
     };
     gint i;

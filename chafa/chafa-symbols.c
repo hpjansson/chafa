@@ -51,7 +51,7 @@ const ChafaSymbol chafa_symbols [] =
         "XXXXXXXX"
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HALF,
         0x2584,
         "        "
         "        "
@@ -148,7 +148,7 @@ const ChafaSymbol chafa_symbols [] =
         "XXXXX   "
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HALF,
         0x258c,
         "XXXX    "
         "XXXX    "
@@ -196,7 +196,7 @@ const ChafaSymbol chafa_symbols [] =
         "X       "
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
         0x2596,
         "        "
         "        "
@@ -208,7 +208,7 @@ const ChafaSymbol chafa_symbols [] =
         "XXXX    "
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
         0x2597,
         "        "
         "        "
@@ -220,7 +220,7 @@ const ChafaSymbol chafa_symbols [] =
         "    XXXX"
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
         0x2598,
         "XXXX    "
         "XXXX    "
@@ -232,7 +232,7 @@ const ChafaSymbol chafa_symbols [] =
         "        "
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
         0x259a,
         "XXXX    "
         "XXXX    "
