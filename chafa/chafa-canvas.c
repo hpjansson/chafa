@@ -207,13 +207,14 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->mode);
         }
         else
+#endif
         {
             ChafaColor fg_col, bg_col;
 
             eval_symbol_colors (canvas, canvas_pixels, &chafa_symbols [i], &eval [i]);
 
             /* Threshold alpha */
-
+#if 0
             if (eval [i].fg.col.ch [3] < canvas->alpha_threshold)
                 eval [i].fg.col.ch [3] = 0x00;
             else
@@ -319,6 +320,10 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             }
         }
     }
+
+    /* Fall back to space */
+    if (n < 0)
+        n = 0;
 
     *sym_out = chafa_symbols [n].c;
     *fg_col_out = eval [n].fg.col;
