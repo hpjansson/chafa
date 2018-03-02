@@ -34,6 +34,7 @@ ChafaPaletteColor;
 
 #define CHAFA_SYMBOL_WIDTH_PIXELS 8
 #define CHAFA_SYMBOL_HEIGHT_PIXELS 8
+#define CHAFA_SYMBOL_N_PIXELS (CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS)
 
 #define CHAFA_SYMBOLS_ALL  0xffffffff
 #define CHAFA_SYMBOLS_NONE 0
@@ -57,6 +58,8 @@ typedef struct
     ChafaSymbolClass sc;
     gunichar c;
     gchar *coverage;
+    gint fg_weight, bg_weight;
+    gboolean have_mixed;
 }
 ChafaSymbol;
 
@@ -76,10 +79,11 @@ ChafaCanvasMode;
 typedef struct ChafaCanvas ChafaCanvas;
 typedef struct ChafaCanvasCell ChafaCanvasCell;
 
-extern const ChafaSymbol chafa_symbols [];
-extern const ChafaSymbol chafa_fill_symbols [];
+extern ChafaSymbol *chafa_symbols;
+extern ChafaSymbol *chafa_fill_symbols;
 
 void chafa_init_palette (void);
+void chafa_init_symbols (void);
 
 ChafaCanvas *chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height);
 void chafa_canvas_unref (ChafaCanvas *canvas);

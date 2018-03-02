@@ -1,6 +1,10 @@
+#include <string.h>
 #include "chafa.h"
 
-const ChafaSymbol chafa_symbols [] =
+ChafaSymbol *chafa_symbols;
+ChafaSymbol *chafa_fill_symbols;
+
+static const ChafaSymbol symbol_defs [] =
 {
     {
         CHAFA_SYMBOL_CLASS_SPACE,
@@ -1567,7 +1571,7 @@ const ChafaSymbol chafa_symbols [] =
     }
 };
 
-const ChafaSymbol chafa_fill_symbols [] =
+static const ChafaSymbol fill_symbol_defs [] =
 {
     {
         CHAFA_SYMBOL_CLASS_SPACE,
@@ -1634,3 +1638,66 @@ const ChafaSymbol chafa_fill_symbols [] =
         0, 0, ""
     }
 };
+
+static gboolean symbols_initialized;
+
+static ChafaSymbol *
+init_symbol_array (const ChafaSymbol *defs)
+{
+    gint i;
+    gchar xlate [256];
+    ChafaSymbol *syms;
+
+    xlate [' '] = 0;
+    xlate ['0'] = 0;
+    xlate ['1'] = 1;
+    xlate ['2'] = 2;
+    xlate ['3'] = 3;
+    xlate ['4'] = 4;
+    xlate ['5'] = 5;
+    xlate ['6'] = 6;
+    xlate ['7'] = 7;
+    xlate ['8'] = 8;
+    xlate ['9'] = 9;
+    xlate ['X'] = 10;
+
+    syms = g_new0 (ChafaSymbol, 256);
+
+    for (i = 0; defs [i].c; i++)
+    {
+        gint j;
+
+        syms [i].sc = defs [i].sc;
+        syms [i].c = defs [i].c;
+        syms [i].coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
+        syms [i].fg_weight = 0;
+        syms [i].bg_weight = 0;
+        syms [i].have_mixed = FALSE;
+
+        for (j = 0; j < CHAFA_SYMBOL_N_PIXELS; j++)
+        {
+            guchar p = defs [i].coverage [j];
+            p = xlate [p];
+            syms [i].coverage [j] = p;
+            syms [i].fg_weight += p;
+            syms [i].bg_weight += 10 - p;
+
+            if (p != 0 && p != 10)
+                syms [i].have_mixed = TRUE;
+        }
+    }
+
+    return syms;
+}
+
+void
+chafa_init_symbols (void)
+{
+    if (symbols_initialized)
+        return;
+
+    chafa_symbols = init_symbol_array (symbol_defs);
+    chafa_fill_symbols = init_symbol_array (fill_symbol_defs);
+
+    symbols_initialized = TRUE;
+}

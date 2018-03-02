@@ -47,9 +47,7 @@ typedef struct
 }
 SymbolEval;
 
-#define SYMBOL_PIXEL_COUNT (CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS)
-
-/* pixels_out must point to SYMBOL_PIXEL_COUNT-element array */
+/* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
 static void
 fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *pixels_out)
 {
@@ -76,12 +74,13 @@ calc_mean_color (ChafaCanvas *canvas, ChafaPixel *pixels, ChafaColor *color_out)
     ChafaColor accum = { 0 };
     gint i;
 
-    for (i = 0; i < SYMBOL_PIXEL_COUNT; i++)
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        chafa_color_add (&accum, &(pixels++)->col);
+        chafa_color_add (&accum, &pixels->col);
+        pixels++;
     }
 
-    chafa_color_div_scalar (&accum, CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS);
+    chafa_color_div_scalar (&accum, CHAFA_SYMBOL_N_PIXELS);
     *color_out = accum;
 }
 
@@ -90,49 +89,41 @@ eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
                     const ChafaSymbol *sym, SymbolEval *eval)
 {
     gchar *covp = &sym->coverage [0];
-    gint n_fg = 0, n_bg = 0;
+    ChafaColor cols [11] = { 0 };
     gint i;
 
-    for (i = 0; i < SYMBOL_PIXEL_COUNT; i++)
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        gchar p = *covp++;
+        guchar p = *covp++;
         const ChafaPixel *p0 = canvas_pixels++;
 
-        if (p == ' ')
-        {
-            chafa_color_add (&eval->bg.col, &p0->col);
-            n_bg += 10;
-        }
-        else if (p == 'X')
-        {
-            chafa_color_add (&eval->fg.col, &p0->col);
-            n_fg += 10;
-        }
-        else
-        {
-            p -= '0';
-            if (p < 0 || p > 9)
-                continue;
+        chafa_color_add (&cols [p], &p0->col);
+    }
 
-            eval->bg.col.ch [0] += ((gint) p0->col.ch [0] * 100 * (gint) (10 - p)) / 1000;
-            eval->bg.col.ch [1] += ((gint) p0->col.ch [1] * 100 * (gint) (10 - p)) / 1000;
-            eval->bg.col.ch [2] += ((gint) p0->col.ch [2] * 100 * (gint) (10 - p)) / 1000;
-            eval->bg.col.ch [3] += ((gint) p0->col.ch [3] * 100 * (gint) (10 - p)) / 1000;
-            n_bg += 10 - p;
+    eval->fg.col = cols [10];
+    eval->bg.col = cols [0];
 
-            eval->fg.col.ch [0] += ((gint) p0->col.ch [0] * 100 * (gint) p) / 1000;
-            eval->fg.col.ch [1] += ((gint) p0->col.ch [1] * 100 * (gint) p) / 1000;
-            eval->fg.col.ch [2] += ((gint) p0->col.ch [2] * 100 * (gint) p) / 1000;
-            eval->fg.col.ch [3] += ((gint) p0->col.ch [3] * 100 * (gint) p) / 1000;
-            n_fg += p;
+    if (sym->have_mixed)
+    {
+        for (i = 1; i < 10; i++)
+        {
+            eval->fg.col.ch [0] += ((gint) cols [i].ch [0] * 100 * (gint) i) / 1000;
+            eval->fg.col.ch [1] += ((gint) cols [i].ch [1] * 100 * (gint) i) / 1000;
+            eval->fg.col.ch [2] += ((gint) cols [i].ch [2] * 100 * (gint) i) / 1000;
+            eval->fg.col.ch [3] += ((gint) cols [i].ch [3] * 100 * (gint) i) / 1000;
+
+            eval->bg.col.ch [0] += ((gint) cols [i].ch [0] * 100 * (gint) (10 - i)) / 1000;
+            eval->bg.col.ch [1] += ((gint) cols [i].ch [1] * 100 * (gint) (10 - i)) / 1000;
+            eval->bg.col.ch [2] += ((gint) cols [i].ch [2] * 100 * (gint) (10 - i)) / 1000;
+            eval->bg.col.ch [3] += ((gint) cols [i].ch [3] * 100 * (gint) (10 - i)) / 1000;
         }
     }
 
-    if (n_fg > 1)
-        chafa_color_div_scalar (&eval->fg.col, (n_fg + 9) / 10);
+    if (sym->fg_weight > 1)
+        chafa_color_div_scalar (&eval->fg.col, (sym->fg_weight + 9) / 10);
 
-    if (n_bg > 1)
-        chafa_color_div_scalar (&eval->bg.col, (n_bg + 9) / 10);
+    if (sym->bg_weight > 1)
+        chafa_color_div_scalar (&eval->bg.col, (sym->bg_weight + 9) / 10);
 }
 
 static void
@@ -140,33 +131,27 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
     gchar *covp = &sym->coverage [0];
+    ChafaColor cols [11] = { 0 };
     gint error = 0;
     gint i;
 
-    for (i = 0; i < SYMBOL_PIXEL_COUNT; i++)
+    cols [0] = eval->bg.col;
+    cols [10] = eval->fg.col;
+
+    if (sym->have_mixed)
     {
-        gchar p = *covp++;
+        for (i = 1; i < 10; i++)
+        {
+            chafa_color_mix (&cols [i], &eval->fg.col, &eval->bg.col, i * 1000);
+        }
+    }
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        guchar p = *covp++;
         const ChafaPixel *p0 = canvas_pixels++;
 
-        if (p == ' ')
-        {
-            error += chafa_color_diff (&eval->bg.col, &p0->col, canvas->color_space);
-        }
-        else if (p == 'X')
-        {
-            error += chafa_color_diff (&eval->fg.col, &p0->col, canvas->color_space);
-        }
-        else
-        {
-            ChafaColor mixed;
-            gint f = p - '0';
-            if (f < 0 || f > 9)
-                g_assert_not_reached ();
-
-            /* FIXME: Speed up by pre-mixing the levels 0-9 */
-            chafa_color_mix (&mixed, &eval->fg.col, &eval->bg.col, f * 1000);
-            error += chafa_color_diff (&mixed, &p0->col, canvas->color_space);
-        }
+        error += chafa_color_diff (&cols [p], &p0->col, canvas->color_space);
     }
 
     eval->error = error;
@@ -179,7 +164,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
                         ChafaColor *bg_col_out,
                         gint *error_out)
 {
-    ChafaPixel canvas_pixels [SYMBOL_PIXEL_COUNT];
+    ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
     SymbolEval eval [SYMBOLS_MAX] = { 0 };
     gint n;
     gint i;
@@ -207,14 +192,13 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->mode);
         }
         else
-#endif
         {
             ChafaColor fg_col, bg_col;
 
             eval_symbol_colors (canvas, canvas_pixels, &chafa_symbols [i], &eval [i]);
 
             /* Threshold alpha */
-#if 0
+
             if (eval [i].fg.col.ch [3] < canvas->alpha_threshold)
                 eval [i].fg.col.ch [3] = 0x00;
             else
@@ -381,7 +365,7 @@ static gboolean
 pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
               gunichar *sym_out, ChafaColor *fg_col_out, ChafaColor *bg_col_out, gint *error_out)
 {
-    ChafaPixel canvas_pixels [SYMBOL_PIXEL_COUNT];
+    ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
     SymbolEval eval [SYMBOLS_MAX] = { 0 };
     SymbolEval best_eval = { 0 };
     gint fg_col, bg_col;
@@ -398,34 +382,7 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
     for (i = 0; chafa_fill_symbols [i].c != 0; i++)
     {
         const ChafaSymbol *sym = &chafa_fill_symbols [i];
-
-        if (!(sym->sc & canvas->include_symbols)
-            || (sym->sc & canvas->exclude_symbols))
-            continue;
-
-        for (j = 0; j < CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS; j++)
-        {
-            gchar p = sym->coverage [j];
-
-            if (p == ' ')
-            {
-                continue;
-            }
-            else if (p == 'X')
-            {
-                sym_coverage [i] += 1000;
-            }
-            else
-            {
-                gint f = p - '0';
-                if (f < 0 || f > 9)
-                    g_assert_not_reached ();
-
-                sym_coverage [i] += (1000 * f) / 10;
-            }
-        }
-
-        sym_coverage [i] /= (CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS);
+        sym_coverage [i] = (sym->fg_weight * (gint) 100) / CHAFA_SYMBOL_N_PIXELS;
     }
 
     for (fg_col = 0; fg_col < 16; fg_col++)
@@ -654,6 +611,7 @@ chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
     ChafaCanvas *canvas;
 
     chafa_init_palette ();
+    chafa_init_symbols ();
 
     canvas = g_new0 (ChafaCanvas, 1);
     canvas->refs = 1;
