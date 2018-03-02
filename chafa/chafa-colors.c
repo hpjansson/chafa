@@ -112,15 +112,6 @@ chafa_unpack_color (guint32 packed, ChafaColor *color_out)
 }
 
 void
-chafa_color_add (ChafaColor *accum, const ChafaColor *src)
-{
-    accum->ch [0] += src->ch [0];
-    accum->ch [1] += src->ch [1];
-    accum->ch [2] += src->ch [2];
-    accum->ch [3] += src->ch [3];
-}
-
-void
 chafa_color_div_scalar (ChafaColor *color, gint scalar)
 {
     color->ch [0] /= scalar;
@@ -296,7 +287,7 @@ color_diff_alpha (const ChafaColor *col_a, const ChafaColor *col_b, gint error)
 }
 
 gint
-chafa_color_diff (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space)
+chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space)
 {
     gint error;
 
@@ -339,7 +330,7 @@ chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space)
         gint error;
 
         palette_color = chafa_get_palette_color_256 (i, color_space);
-        error = chafa_color_diff (color, palette_color, color_space);
+        error = chafa_color_diff_slow (color, palette_color, color_space);
 
         if (error < best_error)
         {
@@ -364,7 +355,7 @@ chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space)
         gint error;
 
         palette_color = chafa_get_palette_color_256 (i, color_space);
-        error = chafa_color_diff (color, palette_color, color_space);
+        error = chafa_color_diff_slow (color, palette_color, color_space);
 
         if (error < best_error)
         {
@@ -388,7 +379,7 @@ chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space)
     for (i = 0; i < 16; i++)
     {
         palette_color = chafa_get_palette_color_256 (i, color_space);
-        error = chafa_color_diff (color, palette_color, color_space);
+        error = chafa_color_diff_slow (color, palette_color, color_space);
 
         if (error < best_error)
         {
@@ -400,7 +391,7 @@ chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space)
     /* Try transparency */
 
     palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_TRANSPARENT, color_space);
-    error = chafa_color_diff (color, palette_color, color_space);
+    error = chafa_color_diff_slow (color, palette_color, color_space);
 
     if (error < best_error)
     {
@@ -420,10 +411,10 @@ chafa_pick_color_2 (const ChafaColor *color, ChafaColorSpace color_space)
     gint error;
 
     palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, color_space);
-    best_error = chafa_color_diff (color, palette_color, color_space);
+    best_error = chafa_color_diff_slow (color, palette_color, color_space);
 
     palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, color_space);
-    error = chafa_color_diff (color, palette_color, color_space);
+    error = chafa_color_diff_slow (color, palette_color, color_space);
     if (error < best_error)
         best_index = CHAFA_PALETTE_INDEX_WHITE;
 

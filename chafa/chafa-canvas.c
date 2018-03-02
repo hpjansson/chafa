@@ -146,12 +146,25 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
         }
     }
 
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    if (canvas->have_alpha)
     {
-        guchar p = *covp++;
-        const ChafaPixel *p0 = canvas_pixels++;
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            guchar p = *covp++;
+            const ChafaPixel *p0 = canvas_pixels++;
 
-        error += chafa_color_diff (&cols [p], &p0->col, canvas->color_space);
+            error += chafa_color_diff_slow (&cols [p], &p0->col, canvas->color_space);
+        }
+    }
+    else
+    {
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            guchar p = *covp++;
+            const ChafaPixel *p0 = canvas_pixels++;
+
+            error += chafa_color_diff_fast (&cols [p], &p0->col, canvas->color_space);
+        }
     }
 
     eval->error = error;
@@ -337,7 +350,10 @@ pick_fill_symbol_16 (ChafaCanvas *canvas, SymbolEval *eval, const ChafaColor *sq
 
         chafa_color_mix (&mixed_col, &e->fg.col, &e->bg.col, sym_coverage [i]);
 
-        e->error = chafa_color_diff (&mixed_col, square_col, canvas->color_space);
+        if (canvas->have_alpha)
+            e->error = chafa_color_diff_slow (&mixed_col, square_col, canvas->color_space);
+        else
+            e->error = chafa_color_diff_fast (&mixed_col, square_col, canvas->color_space);
     }
 
     for (i = 0, n = -1; chafa_fill_symbols [i].c != 0; i++)

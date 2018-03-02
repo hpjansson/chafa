@@ -102,10 +102,20 @@ void chafa_canvas_print (ChafaCanvas *canvas);
 guint32 chafa_pack_color (const ChafaColor *color);
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);
 
-void chafa_color_add (ChafaColor *accum, const ChafaColor *src);
+#define chafa_color_add(d, s) \
+G_STMT_START { \
+  (d)->ch [0] += (s)->ch [0]; (d)->ch [1] += (s)->ch [1]; (d)->ch [2] += (s)->ch [2]; (d)->ch [3] += (s)->ch [3]; \
+} G_STMT_END
+
+#define chafa_color_diff_fast(col_a, col_b, color_space) \
+(((col_b)->ch [0] - (col_a)->ch [0]) * ((col_b)->ch [0] - (col_a)->ch [0]) \
+  + ((col_b)->ch [1] - (col_a)->ch [1]) * ((col_b)->ch [1] - (col_a)->ch [1]) \
+  + ((col_b)->ch [2] - (col_a)->ch [2]) * ((col_b)->ch [2] - (col_a)->ch [2]))
+
+/* Required to get alpha right */
+gint chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space);
+
 void chafa_color_div_scalar (ChafaColor *color, gint scalar);
-gint chafa_color_diff (const ChafaColor *col_a, const ChafaColor *col_b,
-                      ChafaColorSpace color_space);
 
 void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
 
