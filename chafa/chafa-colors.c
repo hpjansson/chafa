@@ -4,6 +4,7 @@
 #include <math.h>
 #include <glib.h>
 #include "chafa/chafa.h"
+#include "chafa/chafa-private.h"
 
 #define N_TERM_COLORS 257
 

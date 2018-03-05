@@ -1,7 +1,8 @@
 #include "config.h"
 
 #include <string.h>
-#include "chafa.h"
+#include "chafa/chafa.h"
+#include "chafa/chafa-private.h"
 
 ChafaSymbol *chafa_symbols;
 ChafaSymbol *chafa_fill_symbols;

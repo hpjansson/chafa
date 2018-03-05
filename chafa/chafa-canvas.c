@@ -7,6 +7,7 @@
 #include <glib.h>
 #include <wand/MagickWand.h>
 #include "chafa/chafa.h"
+#include "chafa/chafa-private.h"
 
 /* Maximum number of symbols in symbols[]. Used for statically allocated arrays */
 #define SYMBOLS_MAX 256
