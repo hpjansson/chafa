@@ -233,9 +233,9 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
                 if (canvas->quality >= 5)
                 {
                     fg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].fg.col,
-                                                                              canvas->color_space), canvas->color_space);
+                                                                                canvas->color_space), canvas->color_space);
                     bg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].bg.col,
-                                                                              canvas->color_space), canvas->color_space);
+                                                                                canvas->color_space), canvas->color_space);
                 }
             }
             else if (canvas->mode == CHAFA_CANVAS_MODE_INDEXED_240)
@@ -243,9 +243,9 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
                 if (canvas->quality >= 8)
                 {
                     fg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].fg.col,
-                                                                               canvas->color_space), canvas->color_space);
+                                                                                 canvas->color_space), canvas->color_space);
                     bg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].bg.col,
-                                                                               canvas->color_space), canvas->color_space);
+                                                                                 canvas->color_space), canvas->color_space);
                 }
             }
             else if (canvas->mode == CHAFA_CANVAS_MODE_INDEXED_256)
@@ -253,9 +253,9 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
                 if (canvas->quality >= 8)
                 {
                     fg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].fg.col,
-                                                                               canvas->color_space), canvas->color_space);
+                                                                                 canvas->color_space), canvas->color_space);
                     bg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].bg.col,
-                                                                               canvas->color_space), canvas->color_space);
+                                                                                 canvas->color_space), canvas->color_space);
                 }
             }
 
