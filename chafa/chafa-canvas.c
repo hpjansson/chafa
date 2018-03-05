@@ -558,7 +558,7 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint 
             pixel->col.ch [2] = *data_p++;
             pixel->col.ch [3] = *data_p;
 
-            alpha_sum += pixel->col.ch [3];
+            alpha_sum += (0xff - pixel->col.ch [3]);
 
             pixel++;
         }
@@ -604,7 +604,7 @@ rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gi
             rgb_col.ch [2] = *data_p++;
             rgb_col.ch [3] = *data_p;
 
-            alpha_sum += rgb_col.ch [3];
+            alpha_sum += (0xff - rgb_col.ch [3]);
 
             chafa_color_rgb_to_din99d (&rgb_col, &pixel->col);
 
