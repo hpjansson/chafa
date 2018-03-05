@@ -97,9 +97,9 @@ eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         guchar p = *covp++;
-        const ChafaPixel *p0 = canvas_pixels++;
+        ChafaPixel px = *canvas_pixels++;
 
-        chafa_color_add (&cols [p], &p0->col);
+        chafa_color_add (&cols [p], &px.col);
     }
 
     eval->fg.col = cols [10];
