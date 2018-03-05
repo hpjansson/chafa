@@ -700,7 +700,7 @@ run (const gchar *filename)
 			     CharPixel,
 			     pixels);
 
-#if 0
+#if 1
     /* Homes cursor so images can be concatenated to create animations.
      * FIXME: Make optional. */
     printf ("\x1b[0f");
