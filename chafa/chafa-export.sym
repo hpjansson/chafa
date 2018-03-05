@@ -1,0 +1,11 @@
+chafa_canvas_new
+chafa_canvas_paint_rgba
+chafa_canvas_print
+chafa_canvas_ref
+chafa_canvas_set_color_space
+chafa_canvas_set_exclude_symbols
+chafa_canvas_set_include_symbols
+chafa_canvas_set_quality
+chafa_canvas_set_transparency_color
+chafa_canvas_set_transparency_threshold
+chafa_canvas_unref
