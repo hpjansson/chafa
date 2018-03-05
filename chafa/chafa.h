@@ -1,5 +1,15 @@
 #include <glib.h>
 
+/* Exported symbol versioning */
+
+#ifndef _CHAFA_EXTERN
+# define _CHAFA_EXTERN extern
+#endif
+
+#define CHAFA_AVAILABLE_IN_ALL _CHAFA_EXTERN
+
+/* Colors and color spaces */
+
 #define CHAFA_PALETTE_INDEX_BLACK 0
 #define CHAFA_PALETTE_INDEX_WHITE 15
 #define CHAFA_PALETTE_INDEX_TRANSPARENT 256
@@ -32,6 +42,8 @@ typedef struct
 }
 ChafaPaletteColor;
 
+/* Character symbols and symbol classes */
+
 #define CHAFA_SYMBOL_WIDTH_PIXELS 8
 #define CHAFA_SYMBOL_HEIGHT_PIXELS 8
 #define CHAFA_SYMBOL_N_PIXELS (CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS)
@@ -63,6 +75,8 @@ typedef struct
 }
 ChafaSymbol;
 
+/* Canvas */
+
 typedef enum
 {
     CHAFA_CANVAS_MODE_RGBA,
@@ -79,24 +93,36 @@ ChafaCanvasMode;
 typedef struct ChafaCanvas ChafaCanvas;
 typedef struct ChafaCanvasCell ChafaCanvasCell;
 
+/* Library functions */
+
 extern ChafaSymbol *chafa_symbols;
 extern ChafaSymbol *chafa_fill_symbols;
 
 void chafa_init_palette (void);
 void chafa_init_symbols (void);
 
+CHAFA_AVAILABLE_IN_ALL
 ChafaCanvas *chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_unref (ChafaCanvas *canvas);
 
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_color_space (ChafaCanvas *canvas, ChafaColorSpace color_space);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_include_symbols (ChafaCanvas *canvas, guint32 include_symbols);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_exclude_symbols (ChafaCanvas *canvas, guint32 exclude_symbols);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_transparency_threshold (ChafaCanvas *canvas, gfloat alpha_threshold);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_transparency_color (ChafaCanvas *canvas, guint32 alpha_color_packed_rgb);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_quality (ChafaCanvas *canvas, gint quality);
 
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_paint_rgba (ChafaCanvas *canvas, guint8 *pixels, gint width, gint height);
 
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_print (ChafaCanvas *canvas);
 
 guint32 chafa_pack_color (const ChafaColor *color);

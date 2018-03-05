@@ -1,13 +1,13 @@
 lib_LTLIBRARIES = libchafa.la
-libchafa_la_LDFLAGS = -version-info 0:0:0 -export-symbols chafa-export.sym
+
+libchafa_la_CFLAGS = $(AM_CFLAGS) $(CHAFA_HIDDEN_VISIBILITY_CFLAGS)
+libchafa_la_LDFLAGS = $(CHAFA_LINK_FLAGS) -version-info 0:0:0
 
 libchafa_la_SOURCES = \
 	chafa.h \
 	chafa-canvas.c \
 	chafa-colors.c \
 	chafa-symbols.c
-
-EXTRA_libchafa_la_DEPENDENCIES = chafa-export.sym
 
 bin_PROGRAMS = \
 	chafa
