@@ -26,7 +26,7 @@ ChafaColorSpace;
 /* Color space agnostic, using fixed point */
 typedef struct
 {
-  gint ch [4];
+  gint16 ch [4];
 }
 ChafaColor;
 
