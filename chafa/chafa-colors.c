@@ -229,9 +229,9 @@ chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99)
     while (h < 0.0) h += 6.283185;  /* 360 degrees */
     while (h > 6.283185) h -= 6.283185;  /* 360 degrees */
 
-    din99->ch [0] = adj_L * 16.0;
-    din99->ch [1] = C * cos (h) * 16.0;
-    din99->ch [2] = C * sin (h) * 16.0;
+    din99->ch [0] = adj_L * 4.0;
+    din99->ch [1] = C * cos (h) * 4.0;
+    din99->ch [2] = C * sin (h) * 4.0;
     din99->ch [3] = rgb->ch [3];
 }
 
