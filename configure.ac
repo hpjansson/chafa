@@ -60,6 +60,42 @@ if test "x${enable_Bsymbolic}" = "xyes"; then
   CHAFA_LINK_FLAGS=-Wl,-Bsymbolic-functions
 fi
 
+dnl Check for working MMX intrinsics
+AC_MSG_CHECKING(working MMX intrinsics)
+SAVED_CFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -mmmx"
+AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM(
+                [[#include <mmintrin.h>]],
+                [[_mm_empty ();]])],
+        [AC_DEFINE([HAVE_MMX_INTRINSICS], [1], [Define if MMX intrinsics work.])
+         ac_cv_mmx_intrinsics=yes],
+        [ac_cv_mmx_intrinsics=no])
+CFLAGS="${SAVED_CFLAGS}"
+AC_MSG_RESULT(${ac_cv_mmx_intrinsics})
+
+if test "x${ac_cv_mmx_intrinsics}" = "xyes"; then
+  BASE_CFLAGS="${BASE_CFLAGS} -mmmx"
+fi
+
+dnl Check for working SSE intrinsics
+AC_MSG_CHECKING(working SSE 4.1 intrinsics)
+SAVED_CFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -msse4.1"
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <smmintrin.h>]],
+		[[__m128i t = { 0 }; int r = _mm_test_all_ones (t);]])],
+	[AC_DEFINE([HAVE_SSE41_INTRINSICS], [1], [Define if SSE 4.1 intrinsics work.])
+	 ac_cv_sse41_intrinsics=yes],
+	[ac_cv_sse41_intrinsics=no])
+CFLAGS="${SAVED_CFLAGS}"
+AC_MSG_RESULT(${ac_cv_sse41_intrinsics})
+
+if test "x${ac_cv_sse41_intrinsics}" = "xyes"; then
+  BASE_CFLAGS="${BASE_CFLAGS} -msse4.1"
+fi
+
 dnl
 dnl Check for -fvisibility=hidden to determine if we can do GNU-style
 dnl visibility attributes for symbol export control
