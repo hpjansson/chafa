@@ -4,10 +4,13 @@ libchafa_la_CFLAGS = $(AM_CFLAGS) $(CHAFA_HIDDEN_VISIBILITY_CFLAGS)
 libchafa_la_LDFLAGS = $(CHAFA_LINK_FLAGS) -version-info 0:0:0
 
 libchafa_la_SOURCES = \
-	chafa.h \
 	chafa-canvas.c \
 	chafa-colors.c \
+	chafa-private.h \
 	chafa-symbols.c
+
+chafaincludedir=$(includedir)/chafa
+chafainclude_HEADERS = chafa.h
 
 bin_PROGRAMS = \
 	chafa
