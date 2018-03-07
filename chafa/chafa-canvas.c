@@ -1,5 +1,13 @@
 #include "config.h"
 
+#ifdef HAVE_MMX_INTRINSICS
+# include <mmintrin.h>
+#endif
+
+#ifdef HAVE_SSE41_INTRINSICS
+# include <smmintrin.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
@@ -87,21 +95,64 @@ calc_mean_color (ChafaCanvas *canvas, ChafaPixel *pixels, ChafaColor *color_out)
     *color_out = accum;
 }
 
+#ifdef HAVE_MMX_INTRINSICS
+
+#define calc_colors_faster calc_colors_mmx
 static void
-eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
-                    const ChafaSymbol *sym, SymbolEval *eval)
+calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
 {
-    gchar *covp = &sym->coverage [0];
-    ChafaColor cols [11] = { 0 };
+    __m64 *m64p0 = (__m64 *) pixels;
+    __m64 *cols_m64 = (__m64 *) cols;
     gint i;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        guchar p = *covp++;
-        ChafaPixel px = *canvas_pixels++;
+        __m64 *m64p1;
 
-        chafa_color_add (&cols [p], &px.col);
+        m64p1 = cols_m64 + cov [i];
+        *m64p1 = _mm_adds_pi16 (*m64p1, m64p0 [i]);
     }
+
+#if 0
+    /* Called after outer loop is done */
+    _mm_empty ();
+#endif
+}
+
+#else
+# define calc_colors_faster calc_colors_plain
+#endif
+
+static void
+calc_colors_plain (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
+{
+    const gint16 *in_s16 = (const gint16 *) pixels;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        gint16 *out_s16 = (gint16 *) (cols + *cov++);
+
+        *out_s16++ += *in_s16++;
+        *out_s16++ += *in_s16++;
+        *out_s16++ += *in_s16++;
+        *out_s16++ += *in_s16++;
+    }
+}
+
+static void
+eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
+                    const ChafaSymbol *sym, SymbolEval *eval)
+{
+    const guint8 *covp = (guint8 *) &sym->coverage [0];
+    ChafaColor cols [11] = { 0 };
+    gint i;
+
+#if 0
+    calc_colors_plain (canvas_pixels, cols, covp);
+#else
+    calc_colors_faster (canvas_pixels, cols, covp);
+#endif
 
     eval->fg.col = cols [10];
     eval->bg.col = cols [0];
@@ -129,13 +180,78 @@ eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
         chafa_color_div_scalar (&eval->bg.col, (sym->bg_weight + 9) / 10);
 }
 
+#ifdef HAVE_SSE41_INTRINSICS
+
+# define calc_error_faster calc_error_sse41
+static gint
+calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
+{
+    __m64 *m64p0 = (__m64 *) pixels;
+    __m64 *m64p1 = (__m64 *) cols;
+    __m128i err4 = { 0 };
+    const gint32 *e = (gint32 *) &err4;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        __m128i t0, t1, t;
+
+        t0 = _mm_cvtepi16_epi32 (_mm_loadl_epi64 ((__m128i *) &m64p0 [i]));
+        t1 = _mm_cvtepi16_epi32 (_mm_loadl_epi64 ((__m128i *) &m64p1 [cov [i]]));
+
+        t = t0 - t1;
+        t = _mm_mullo_epi32 (t, t);
+        err4 += t;
+    }
+
+    return e [0] + e [1] + e [2];
+}
+
+#else
+# define calc_error_faster calc_error_plain
+#endif
+
+static gint
+calc_error_plain (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
+{
+    gint error = 0;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        guint8 p = *cov++;
+        const ChafaPixel *p0 = pixels++;
+
+        error += chafa_color_diff_fast (&cols [p], &p0->col, canvas->color_space);
+    }
+
+    return error;
+}
+
+static gint
+calc_error_with_alpha (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov, ChafaColorSpace cs)
+{
+    gint error = 0;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        guint8 p = *cov++;
+        const ChafaPixel *p0 = pixels++;
+
+        error += chafa_color_diff_slow (&cols [p], &p0->col, cs);
+    }
+
+    return error;
+}
+
 static void
 eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
-    gchar *covp = &sym->coverage [0];
+    const guint8 *covp = (guint8 *) &sym->coverage [0];
     ChafaColor cols [11] = { 0 };
-    gint error = 0;
+    gint error;
     gint i;
 
     cols [0] = eval->bg.col;
@@ -151,23 +267,15 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
 
     if (canvas->have_alpha)
     {
-        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-        {
-            guchar p = *covp++;
-            const ChafaPixel *p0 = canvas_pixels++;
-
-            error += chafa_color_diff_slow (&cols [p], &p0->col, canvas->color_space);
-        }
+        error = calc_error_with_alpha (canvas_pixels, cols, covp, canvas->color_space);
     }
     else
     {
-        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-        {
-            guchar p = *covp++;
-            const ChafaPixel *p0 = canvas_pixels++;
-
-            error += chafa_color_diff_fast (&cols [p], &p0->col, canvas->color_space);
-        }
+#if 0
+        error = calc_error_plain (canvas_pixels, cols, covp);
+#else
+        error = calc_error_faster (canvas_pixels, cols, covp);
+#endif
     }
 
     eval->error = error;
@@ -277,6 +385,11 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
         eval_symbol_error (canvas, canvas_pixels, &chafa_symbols [i], &eval [i]);
     }
+
+#ifdef HAVE_MMX_INTRINSICS
+    /* Make FPU happy again */
+    _mm_empty ();
+#endif
 
     if (error_out)
         *error_out = eval [0].error;
