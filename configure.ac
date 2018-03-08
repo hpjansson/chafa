@@ -73,10 +73,7 @@ AC_COMPILE_IFELSE(
         [ac_cv_mmx_intrinsics=no])
 CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_mmx_intrinsics})
-
-if test "x${ac_cv_mmx_intrinsics}" = "xyes"; then
-  BASE_CFLAGS="${BASE_CFLAGS} -mmmx"
-fi
+AM_CONDITIONAL([HAVE_MMX_INTRINSICS], [test "$ac_cv_mmx_intrinsics" = "yes"])
 
 dnl Check for working SSE intrinsics
 AC_MSG_CHECKING(working SSE 4.1 intrinsics)
@@ -91,10 +88,7 @@ AC_COMPILE_IFELSE(
 	[ac_cv_sse41_intrinsics=no])
 CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_sse41_intrinsics})
-
-if test "x${ac_cv_sse41_intrinsics}" = "xyes"; then
-  BASE_CFLAGS="${BASE_CFLAGS} -msse4.1"
-fi
+AM_CONDITIONAL([HAVE_SSE41_INTRINSICS], [test "$ac_cv_sse41_intrinsics" = "yes"])
 
 dnl
 dnl Check for -fvisibility=hidden to determine if we can do GNU-style

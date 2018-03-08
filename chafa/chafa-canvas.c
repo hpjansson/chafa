@@ -96,29 +96,7 @@ calc_mean_color (ChafaCanvas *canvas, ChafaPixel *pixels, ChafaColor *color_out)
 }
 
 #ifdef HAVE_MMX_INTRINSICS
-
-#define calc_colors_faster calc_colors_mmx
-static void
-calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
-{
-    __m64 *m64p0 = (__m64 *) pixels;
-    __m64 *cols_m64 = (__m64 *) cols;
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        __m64 *m64p1;
-
-        m64p1 = cols_m64 + cov [i];
-        *m64p1 = _mm_adds_pi16 (*m64p1, m64p0 [i]);
-    }
-
-#if 0
-    /* Called after outer loop is done */
-    _mm_empty ();
-#endif
-}
-
+# define calc_colors_faster calc_colors_mmx
 #else
 # define calc_colors_faster calc_colors_plain
 #endif
@@ -181,32 +159,7 @@ eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
 }
 
 #ifdef HAVE_SSE41_INTRINSICS
-
 # define calc_error_faster calc_error_sse41
-static gint
-calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
-{
-    __m64 *m64p0 = (__m64 *) pixels;
-    __m64 *m64p1 = (__m64 *) cols;
-    __m128i err4 = { 0 };
-    const gint32 *e = (gint32 *) &err4;
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        __m128i t0, t1, t;
-
-        t0 = _mm_cvtepi16_epi32 (_mm_loadl_epi64 ((__m128i *) &m64p0 [i]));
-        t1 = _mm_cvtepi16_epi32 (_mm_loadl_epi64 ((__m128i *) &m64p1 [cov [i]]));
-
-        t = t0 - t1;
-        t = _mm_mullo_epi32 (t, t);
-        err4 += t;
-    }
-
-    return e [0] + e [1] + e [2];
-}
-
 #else
 # define calc_error_faster calc_error_plain
 #endif
