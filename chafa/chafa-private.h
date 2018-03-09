@@ -87,3 +87,12 @@ gint chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space);
 gint chafa_pick_color_2 (const ChafaColor *color, ChafaColorSpace color_space);
 
 const ChafaColor *chafa_get_palette_color_256 (guint index, ChafaColorSpace color_space);
+
+#ifdef HAVE_MMX_INTRINSICS
+void calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov);
+void leave_mmx (void);
+#endif
+
+#ifdef HAVE_SSE41_INTRINSICS
+gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov);
+#endif
