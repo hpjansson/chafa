@@ -29,3 +29,9 @@ calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
     _mm_empty ();
 #endif
 }
+
+void
+leave_mmx (void)
+{
+    _mm_empty ();
+}

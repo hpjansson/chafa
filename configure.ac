@@ -59,6 +59,31 @@ if test "x${enable_Bsymbolic}" = "xyes"; then
   CHAFA_BDYNAMIC_FLAGS=-Wl,-Bsymbolic
 fi
 
+dnl
+dnl Check for gcc x86 instruction set check builtins
+dnl
+
+AC_CACHE_CHECK([for gcc __builtin_cpu_init function],
+        [ax_cv_gcc_check_x86_cpu_init],
+        [AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <stdlib.h>],
+                        [__builtin_cpu_init ();])],
+                 [ax_cv_gcc_check_x86_cpu_init=yes],
+                 [ax_cv_gcc_check_x86_cpu_init=no])])
+
+AC_CACHE_CHECK([for gcc __builtin_cpu_supports function],
+        [ax_cv_gcc_check_x86_cpu_supports],
+        [AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <stdlib.h>],
+                        [__builtin_cpu_supports ("mmx");])],
+                 [ax_cv_gcc_check_x86_cpu_supports=yes],
+                 [ax_cv_gcc_check_x86_cpu_supports=no])])
+
+dnl AM_CONDITIONAL([HAVE_GCC_X86_FEATURE_BUILTINS], [test "$ac_cv_gcc_check_x86_cpu_init" = "yes" && test "$ac_cv_gcc_check_x86_cpu_supports" = "yes"])
+AS_IF([test "$ax_cv_gcc_check_x86_cpu_init" = "yes" && test "$ax_cv_gcc_check_x86_cpu_supports" = "yes"], [
+        AC_DEFINE([HAVE_GCC_X86_FEATURE_BUILTINS], [1], [Define if gcc x86 feature builtins work.])
+])
+
 dnl Check for working MMX intrinsics
 AC_MSG_CHECKING(for working MMX intrinsics)
 SAVED_CFLAGS="${CFLAGS}"

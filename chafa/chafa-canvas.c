@@ -57,6 +57,10 @@ typedef struct
 }
 SymbolEval;
 
+static gboolean canvas_initialized;
+static gboolean have_mmx;
+static gboolean have_sse41;
+
 /* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
 static void
 fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *pixels_out)
@@ -125,11 +129,12 @@ eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
     ChafaColor cols [11] = { 0 };
     gint i;
 
-#if 0
-    calc_colors_plain (canvas_pixels, cols, covp);
-#else
-    calc_colors_faster (canvas_pixels, cols, covp);
+#ifdef HAVE_MMX_INTRINSICS
+    if (have_mmx)
+        calc_colors_mmx (canvas_pixels, cols, covp);
+    else
 #endif
+        calc_colors_plain (canvas_pixels, cols, covp);
 
     eval->fg.col = cols [10];
     eval->bg.col = cols [0];
@@ -156,12 +161,6 @@ eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
     if (sym->bg_weight > 1)
         chafa_color_div_scalar (&eval->bg.col, (sym->bg_weight + 9) / 10);
 }
-
-#ifdef HAVE_SSE41_INTRINSICS
-# define calc_error_faster calc_error_sse41
-#else
-# define calc_error_faster calc_error_plain
-#endif
 
 static gint
 calc_error_plain (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
@@ -223,11 +222,12 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
     }
     else
     {
-#if 0
-        error = calc_error_plain (canvas_pixels, cols, covp);
-#else
-        error = calc_error_faster (canvas_pixels, cols, covp);
+#ifdef HAVE_SSE41_INTRINSICS
+        if (have_sse41)
+            error = calc_error_sse41 (canvas_pixels, cols, covp);
+        else
 #endif
+            error = calc_error_plain (canvas_pixels, cols, covp);
     }
 
     eval->error = error;
@@ -340,7 +340,8 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
-    _mm_empty ();
+    if (have_mmx)
+        leave_mmx ();
 #endif
 
     if (error_out)
@@ -689,6 +690,29 @@ rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gi
     }
 }
 
+static void
+chafa_init_canvas (void)
+{
+    if (canvas_initialized)
+        return;
+
+#ifdef HAVE_GCC_X86_FEATURE_BUILTINS
+    __builtin_cpu_init ();
+
+# ifdef HAVE_MMX_INTRINSICS
+    if (__builtin_cpu_supports ("mmx"))
+        have_mmx = TRUE;
+# endif
+
+# ifdef HAVE_SSE41_INTRINSICS
+    if (__builtin_cpu_supports ("sse4.1"))
+        have_sse41 = TRUE;
+# endif
+#endif
+
+    canvas_initialized = TRUE;
+}
+
 ChafaCanvas *
 chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
 {
@@ -696,6 +720,7 @@ chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
 
     chafa_init_palette ();
     chafa_init_symbols ();
+    chafa_init_canvas ();
 
     canvas = g_new0 (ChafaCanvas, 1);
     canvas->refs = 1;
