@@ -45,8 +45,8 @@ AC_ARG_ENABLE(Bsymbolic,
               [AS_HELP_STRING([--disable-Bsymbolic],
                               [avoid linking with -Bsymbolic])],,
               [SAVED_LDFLAGS="${LDFLAGS}" SAVED_LIBS="${LIBS}"
-               AC_MSG_CHECKING([for -Bsymbolic-functions linker flag])
-               LDFLAGS=-Wl,-Bsymbolic-functions
+               AC_MSG_CHECKING([for -Bsymbolic linker flag])
+               LDFLAGS=-Wl,-Bsymbolic
                LIBS=
                AC_TRY_LINK([], [return 0],
                            AC_MSG_RESULT(yes)
@@ -56,11 +56,11 @@ AC_ARG_ENABLE(Bsymbolic,
                LDFLAGS="${SAVED_LDFLAGS}" LIBS="${SAVED_LIBS}"])
 
 if test "x${enable_Bsymbolic}" = "xyes"; then
-  CHAFA_BDYNAMIC_FLAGS=-Wl,-Bsymbolic-functions
+  CHAFA_BDYNAMIC_FLAGS=-Wl,-Bsymbolic
 fi
 
 dnl Check for working MMX intrinsics
-AC_MSG_CHECKING(working MMX intrinsics)
+AC_MSG_CHECKING(for working MMX intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -mmmx"
 AC_COMPILE_IFELSE(
@@ -75,7 +75,7 @@ AC_MSG_RESULT(${ac_cv_mmx_intrinsics})
 AM_CONDITIONAL([HAVE_MMX_INTRINSICS], [test "$ac_cv_mmx_intrinsics" = "yes"])
 
 dnl Check for working SSE intrinsics
-AC_MSG_CHECKING(working SSE 4.1 intrinsics)
+AC_MSG_CHECKING(for working SSE 4.1 intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -msse4.1"
 AC_COMPILE_IFELSE(
