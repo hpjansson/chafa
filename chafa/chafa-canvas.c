@@ -744,8 +744,20 @@ chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
 }
 
 void
+chafa_canvas_ref (ChafaCanvas *canvas)
+{
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+
+    canvas->refs++;
+}
+
+void
 chafa_canvas_unref (ChafaCanvas *canvas)
 {
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+
     if (--canvas->refs == 0)
     {
         g_free (canvas->pixels);

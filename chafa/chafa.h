@@ -63,6 +63,8 @@ typedef struct ChafaCanvas ChafaCanvas;
 CHAFA_AVAILABLE_IN_ALL
 ChafaCanvas *chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height);
 CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_ref (ChafaCanvas *canvas);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_unref (ChafaCanvas *canvas);
 
 CHAFA_AVAILABLE_IN_ALL
