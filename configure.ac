@@ -31,9 +31,8 @@ AM_PROG_LIBTOOL
 
 dnl --- Dependency check ---
 
-PKG_CHECK_MODULES(ALL, \
-  MagickWand >= 6 \
-  glib-2.0 >= 2.10)
+PKG_CHECK_MODULES(MAGICKWAND, MagickWand >= 6)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10)
 
 dnl --- Specific checks ---
 
@@ -57,7 +56,7 @@ AC_ARG_ENABLE(Bsymbolic,
                LDFLAGS="${SAVED_LDFLAGS}" LIBS="${SAVED_LIBS}"])
 
 if test "x${enable_Bsymbolic}" = "xyes"; then
-  LIBCHAFA_BDYNAMIC_FLAGS=-Wl,-Bsymbolic-functions
+  CHAFA_BDYNAMIC_FLAGS=-Wl,-Bsymbolic-functions
 fi
 
 dnl Check for working MMX intrinsics
@@ -124,14 +123,13 @@ esac
 
 dnl --- Set compiler flags ---
 
-BASE_CFLAGS="$BASE_CFLAGS -Wall $(pkg-config --cflags glib-2.0)"
-BASE_LIBS="$BASE_LIBS $(pkg-config --libs glib-2.0)"
+BASE_CFLAGS="-Wall"
 
-LIBCHAFA_CFLAGS="$BASE_CFLAGS $LIBCHAFA_VISIBILITY_FLAGS"
-LIBCHAFA_LDFLAGS="$LIBCHAFA_BDYNAMIC_FLAGS -lm"
+LIBCHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_VISIBILITY_FLAGS"
+LIBCHAFA_LDFLAGS="$CHAFA_BDYNAMIC_FLAGS"
 
-CHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_BDYNAMIC_FLAGS `pkg-config --cflags MagickWand`"
-CHAFA_LDFLAGS="$BASE_LIBS `pkg-config --libs MagickWand` -lm"
+CHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_VISIBILITY_FLAGS"
+CHAFA_LDFLAGS="$CHAFA_BDYNAMIC_FLAGS"
 
 AC_SUBST(LIBCHAFA_CFLAGS)
 AC_SUBST(LIBCHAFA_LDFLAGS)
