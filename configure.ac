@@ -57,7 +57,7 @@ AC_ARG_ENABLE(Bsymbolic,
                LDFLAGS="${SAVED_LDFLAGS}" LIBS="${SAVED_LIBS}"])
 
 if test "x${enable_Bsymbolic}" = "xyes"; then
-  CHAFA_LINK_FLAGS=-Wl,-Bsymbolic-functions
+  LIBCHAFA_BDYNAMIC_FLAGS=-Wl,-Bsymbolic-functions
 fi
 
 dnl Check for working MMX intrinsics
@@ -94,7 +94,7 @@ dnl
 dnl Check for -fvisibility=hidden to determine if we can do GNU-style
 dnl visibility attributes for symbol export control
 dnl
-CHAFA_HIDDEN_VISIBILITY_CFLAGS=""
+CHAFA_VISIBILITY_CFLAGS=""
 case "$host" in
   *-*-mingw*)
     dnl On mingw32 we do -fvisibility=hidden and __declspec(dllexport)
@@ -117,20 +117,27 @@ case "$host" in
     AS_IF([test "${enable_fvisibility_hidden}" = "yes"], [
       AC_DEFINE([_CHAFA_EXTERN], [__attribute__((visibility("default"))) extern],
                 [defines how to decorate public symbols while building])
-      CHAFA_HIDDEN_VISIBILITY_CFLAGS="-fvisibility=hidden"
+      CHAFA_VISIBILITY_CFLAGS="-fvisibility=hidden"
     ])
     ;;
 esac
-AC_SUBST(CHAFA_HIDDEN_VISIBILITY_CFLAGS)
 
 dnl --- Set compiler flags ---
 
-BASE_CFLAGS="$BASE_CFLAGS -Wall"
-CHAFA_LIBS="$BASE_LIBS `pkg-config --libs MagickWand glib-2.0` -lm"
-CHAFA_CFLAGS="$BASE_CFLAGS `pkg-config --cflags MagickWand glib-2.0`"
+BASE_CFLAGS="$BASE_CFLAGS -Wall $(pkg-config --cflags glib-2.0)"
+BASE_LIBS="$BASE_LIBS $(pkg-config --libs glib-2.0)"
 
-AC_SUBST(CHAFA_LIBS)
+LIBCHAFA_CFLAGS="$BASE_CFLAGS $LIBCHAFA_VISIBILITY_FLAGS"
+LIBCHAFA_LDFLAGS="$LIBCHAFA_BDYNAMIC_FLAGS -lm"
+
+CHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_BDYNAMIC_FLAGS `pkg-config --cflags MagickWand`"
+CHAFA_LDFLAGS="$BASE_LIBS `pkg-config --libs MagickWand` -lm"
+
+AC_SUBST(LIBCHAFA_CFLAGS)
+AC_SUBST(LIBCHAFA_LDFLAGS)
+
 AC_SUBST(CHAFA_CFLAGS)
+AC_SUBST(CHAFA_LDFLAGS)
 
 dnl --- Output ---
 

@@ -13,7 +13,6 @@
 #include <wchar.h>
 #include <locale.h>
 #include <glib.h>
-#include <wand/MagickWand.h>
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
