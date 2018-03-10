@@ -624,6 +624,7 @@ textify (guint8 *pixels,
     chafa_canvas_paint_argb (canvas, pixels, src_width, src_height, src_width * 4);
     gs = chafa_canvas_build_gstring (canvas);
     fwrite (gs->str, sizeof (gchar), gs->len, stdout);
+    fflush (stdout);
     g_string_free (gs, TRUE);
 
     chafa_canvas_unref (canvas);
