@@ -259,13 +259,13 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
         if (canvas->mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK)
         {
-            eval [i].fg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->mode);
-            eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, canvas->mode);
+            eval [i].fg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->color_space);
+            eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, canvas->color_space);
         }
         else if (canvas->mode == CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE)
         {
-            eval [i].fg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, canvas->mode);
-            eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->mode);
+            eval [i].fg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, canvas->color_space);
+            eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->color_space);
         }
         else
         {
