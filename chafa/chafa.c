@@ -735,10 +735,11 @@ run (const gchar *filename)
             src_width = new_width;
             src_height = new_height;
 
-#ifdef HAVE_MAGICK_RESIZE_IMAGE_4
+#if defined(HAVE_MAGICK_RESIZE_IMAGE_4)
             MagickResizeImage (wand, src_width, src_height, LanczosFilter);
-#elif HAVE_MAGICK_RESIZE_IMAGE_5
+#elif defined(HAVE_MAGICK_RESIZE_IMAGE_5)
             MagickResizeImage (wand, src_width, src_height, LanczosFilter, 1.0);
+#else
 # warning No valid MagickResizeImage detected. Trying four arguments.
             MagickResizeImage (wand, src_width, src_height, LanczosFilter);
 #endif
