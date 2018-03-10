@@ -490,6 +490,12 @@ get_tty_size (void)
      * anything other than zero. */
 }
 
+/* I really would've preferred to use termcap, but termcap contents
+ * and the TERM env var are often unreliable/unrepresentative, so
+ * instead we have this.
+ *
+ * If you're getting poor results, I'd love to hear about it so it can
+ * be improved. */
 static ChafaCanvasMode
 detect_canvas_mode (void)
 {
