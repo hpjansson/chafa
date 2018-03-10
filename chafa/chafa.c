@@ -618,7 +618,7 @@ textify (guint8 *pixels,
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_set_transparency_threshold (canvas, options.transparency_threshold);
     chafa_canvas_set_quality (canvas, options.quality);
-    chafa_canvas_paint_rgba (canvas, pixels, src_width, src_height);
+    chafa_canvas_paint_argb (canvas, pixels, src_width, src_height);
     chafa_canvas_print (canvas);
 
     chafa_canvas_unref (canvas);

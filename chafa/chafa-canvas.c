@@ -827,7 +827,7 @@ chafa_canvas_set_quality (ChafaCanvas *canvas, gint quality)
 }
 
 void
-chafa_canvas_paint_rgba (ChafaCanvas *canvas, guint8 *pixels, gint width, gint height)
+chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *pixels, gint width, gint height)
 {
     g_return_if_fail (width >= CHAFA_SYMBOL_WIDTH_PIXELS);
     g_return_if_fail (height >= CHAFA_SYMBOL_HEIGHT_PIXELS);

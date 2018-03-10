@@ -81,7 +81,7 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_set_quality (ChafaCanvas *canvas, gint quality);
 
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_paint_rgba (ChafaCanvas *canvas, guint8 *pixels, gint width, gint height);
+void chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *pixels, gint width, gint height);
 
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_print (ChafaCanvas *canvas);
