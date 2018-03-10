@@ -1,13 +1,5 @@
 #include "config.h"
 
-#ifdef HAVE_MMX_INTRINSICS
-# include <mmintrin.h>
-#endif
-
-#ifdef HAVE_SSE41_INTRINSICS
-# include <smmintrin.h>
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <wchar.h>
