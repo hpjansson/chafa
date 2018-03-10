@@ -446,6 +446,8 @@ parse_transparency_color_arg (const gchar *option_name, const gchar *value, gpoi
     gboolean result = TRUE;
     guint32 col;
 
+    /* TODO: It would be nice to support rgb.txt here */
+
     if (!strcasecmp (value, "white"))
     {
         options.transparency_color = 0xffffff;
