@@ -140,8 +140,8 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
-    "  -c, --colors       Set output color mode; one of [none, 2, 16, 240, 256, rgb].\n"
-    "                     Defaults to rgb (24-bit).\n"
+    "  -c, --colors       Set output color mode; one of [none, 2, 16, 240, 256,\n"
+    "                     full]. Defaults to full (24-bit).\n"
     "      --color-space  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
     "      --font-ratio W/H  Target font's width/height ratio. Can be specified as\n"
@@ -199,11 +199,11 @@ parse_colors_arg (const gchar *option_name, const gchar *value, gpointer data, G
     else if (!strcasecmp (value, "256"))
 	options.mode = CHAFA_CANVAS_MODE_INDEXED_256;
     else if (!strcasecmp (value, "full") || !strcasecmp (value, "rgb"))
-	options.mode = CHAFA_CANVAS_MODE_RGBA;
+	options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     else
     {
 	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-		     "Colors must be one of [none, 2, 16, 240, 256, rgb].");
+		     "Colors must be one of [none, 2, 16, 240, 256, full].");
 	result = FALSE;
     }
 
@@ -523,18 +523,18 @@ detect_canvas_mode (void)
     if (!strcasecmp (colorterm, "truecolor")
         || !strcasecmp (colorterm, "gnome-terminal")
         || !strcasecmp (colorterm, "xfce-terminal"))
-        mode = CHAFA_CANVAS_MODE_RGBA;
+        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
     /* In a modern VTE we can rely on VTE_VERSION. It's a great terminal emulator
      * which supports truecolor. */
     if (strlen (vte_version) > 0)
-        mode = CHAFA_CANVAS_MODE_RGBA;
+        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
     /* Terminals that advertise 256 colors usually support truecolor too,
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
      * regardless. */
     if (!strcmp (term, "xterm-256color"))
-        mode = CHAFA_CANVAS_MODE_RGBA;
+        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
     /* 'screen' does not like truecolor at all, but 256 colors works fine.
      * Sometimes we'll see the outer terminal appended to the TERM string,
@@ -549,7 +549,7 @@ detect_canvas_mode (void)
          *
          * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
         if (strlen (tmux) > 0)
-            mode = CHAFA_CANVAS_MODE_RGBA;
+            mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     }
 
     /* If TERM is "linux", we're probably on the Linux console, which supports

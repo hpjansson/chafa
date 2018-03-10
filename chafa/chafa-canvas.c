@@ -316,7 +316,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             }
 
             /* FIXME: The logic here seems overly complicated */
-            if (canvas->mode != CHAFA_CANVAS_MODE_RGBA)
+            if (canvas->mode != CHAFA_CANVAS_MODE_TRUECOLOR)
             {
                 /* Transfer mean alpha over so we can use it later */
 
@@ -889,7 +889,7 @@ chafa_canvas_set_color_space (ChafaCanvas *canvas, ChafaColorSpace color_space)
      * we'd have to convert back to RGB space when emitting control codes, and
      * the code for that has yet to be written. In palette modes we just use
      * the palette mappings. */
-    if (canvas->mode == CHAFA_CANVAS_MODE_RGBA)
+    if (canvas->mode == CHAFA_CANVAS_MODE_TRUECOLOR)
       return;
 
     canvas->color_space = color_space;
