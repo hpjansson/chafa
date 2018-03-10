@@ -490,6 +490,76 @@ get_tty_size (void)
      * anything other than zero. */
 }
 
+static ChafaCanvasMode
+detect_canvas_mode (void)
+{
+    const gchar *term;
+    const gchar *colorterm;
+    const gchar *vte_version;
+    const gchar *tmux;
+    ChafaCanvasMode mode = CHAFA_CANVAS_MODE_INDEXED_240;
+
+    term = g_getenv ("TERM");
+    if (!term) term = "";
+
+    colorterm = g_getenv ("COLORTERM");
+    if (!colorterm) colorterm = "";
+
+    vte_version = g_getenv ("VTE_VERSION");
+    if (!vte_version) vte_version = "";
+
+    tmux = g_getenv ("TMUX");
+    if (!tmux) tmux = "";
+
+    /* Some terminals set COLORTERM=truecolor. However, this env var can
+     * make its way into environments where truecolor is not desired
+     * (e.g. screen sessions), so check it early on and override it later. */
+    if (!strcasecmp (colorterm, "truecolor")
+        || !strcasecmp (colorterm, "gnome-terminal")
+        || !strcasecmp (colorterm, "xfce-terminal"))
+        mode = CHAFA_CANVAS_MODE_RGBA;
+
+    /* In a modern VTE we can rely on VTE_VERSION. It's a great terminal emulator
+     * which supports truecolor. */
+    if (strlen (vte_version) > 0)
+        mode = CHAFA_CANVAS_MODE_RGBA;
+
+    /* Terminals that advertise 256 colors usually support truecolor too,
+     * (VTE, xterm) although some (xterm) may quantize to an indexed palette
+     * regardless. */
+    if (!strcmp (term, "xterm-256color"))
+        mode = CHAFA_CANVAS_MODE_RGBA;
+
+    /* 'screen' does not like truecolor at all, but 256 colors works fine.
+     * Sometimes we'll see the outer terminal appended to the TERM string,
+     * like so: screen.xterm-256color */
+    if (!strncmp (term, "screen", 6))
+    {
+        mode = CHAFA_CANVAS_MODE_INDEXED_240;
+
+        /* 'tmux' also sets TERM=screen, but it supports truecolor codes.
+         * You may have to add the following to .tmux.conf to prevent
+         * remapping to 256 colors:
+         *
+         * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
+        if (strlen (tmux) > 0)
+            mode = CHAFA_CANVAS_MODE_RGBA;
+    }
+
+    /* If TERM is "linux", we're probably on the Linux console, which supports
+     * 16 colors only. It also sets COLORTERM=1.
+     *
+     * https://github.com/torvalds/linux/commit/cec5b2a97a11ade56a701e83044d0a2a984c67b4
+     *
+     * In theory we could emit truecolor codes and let the console remap,
+     * but we get better results if we do the conversion ourselves, since we
+     * can apply preprocessing and exotic color spaces. */
+    if (!strcmp (term, "linux"))
+        mode = CHAFA_CANVAS_MODE_INDEXED_16;
+
+    return mode;
+}
+
 static gboolean
 parse_options (int *argc, char **argv [])
 {
@@ -524,7 +594,7 @@ parse_options (int *argc, char **argv [])
     options.executable_name = g_strdup ((*argv) [0]);
 
     /* Defaults */
-    options.mode = CHAFA_CANVAS_MODE_RGBA;
+    options.mode = detect_canvas_mode ();
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.inc_sym = CHAFA_SYMBOLS_ALL;
     options.exc_sym = CHAFA_SYMBOLS_NONE;
