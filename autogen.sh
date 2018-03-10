@@ -33,7 +33,7 @@ if test "$DIE" -eq 1; then
         echo "The following tools were not found: $MISSING_TOOLS"
         echo
         echo "These are required for building Chafa from its git repository."
-        echo "You should be able to install these using your operating system's"
+        echo "You should be able to install them using your operating system's"
         echo "package manager (apt-get, yum, zypper or similar). Alternately"
         echo "they can be obtained directly from GNU: http://ftp.gnu.org/gnu/"
         echo
