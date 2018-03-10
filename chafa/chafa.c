@@ -532,7 +532,7 @@ parse_options (int *argc, char **argv [])
     options.height = 25;
     options.font_ratio = 1.0 / 2.0;
     options.quality = 5;
-    options.transparency_color = 0x00808080;
+    options.transparency_color = 0x00000000;
     options.transparency_threshold = -1.0;
     get_tty_size ();
 

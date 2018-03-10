@@ -734,7 +734,7 @@ chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
     canvas->width = width;
     canvas->height = height;
     canvas->cells = g_new (ChafaCanvasCell, width * height);
-    canvas->alpha_color_packed_rgb = 0x808080;
+    canvas->alpha_color_packed_rgb = 0x00000000;
     canvas->alpha_threshold = 127;
     canvas->quality = 5;
 
