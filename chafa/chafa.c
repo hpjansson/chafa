@@ -604,6 +604,52 @@ parse_options (int *argc, char **argv [])
 }
 
 static void
+auto_orient_image (MagickWand *image)
+{
+#ifdef HAVE_MAGICK_AUTO_ORIENT_IMAGE
+    MagickAutoOrientImage (image);
+#else
+    PixelWand *pwand = 0;
+
+    switch (MagickGetImageOrientation (image))
+    {
+        case UndefinedOrientation:
+        case TopLeftOrientation:
+        default:
+            break;
+        case TopRightOrientation:
+            MagickFlopImage (image);
+            break;
+        case BottomRightOrientation:
+            pwand = NewPixelWand ();
+            MagickRotateImage (image, pwand, 180.0);
+        case BottomLeftOrientation:
+            MagickFlipImage (image);
+            break;
+        case LeftTopOrientation:
+            MagickTransposeImage (image);
+            break;
+        case RightTopOrientation:
+            pwand = NewPixelWand ();
+            MagickRotateImage (image, pwand, 90.0);
+            break;
+        case RightBottomOrientation:
+            MagickTransverseImage (image);
+            break;
+        case LeftBottomOrientation:
+            pwand = NewPixelWand ();
+            MagickRotateImage (image, pwand, 270.0);
+            break;
+    }
+
+    if (pwand)
+        DestroyPixelWand (pwand);
+
+    MagickSetImageOrientation (image, TopLeftOrientation);
+#endif
+}
+
+static void
 textify (guint8 *pixels,
          gint src_width, gint src_height,
          gint dest_width, gint dest_height)
@@ -642,7 +688,7 @@ run (const gchar *filename)
 
     wand = NewMagickWand();
     MagickReadImage(wand, filename);
-    MagickAutoOrientImage (wand);
+    auto_orient_image (wand);
 
     src_width = MagickGetImageWidth(wand);
     src_height = MagickGetImageHeight(wand);
@@ -688,7 +734,14 @@ run (const gchar *filename)
         {
             src_width = new_width;
             src_height = new_height;
+
+#ifdef HAVE_MAGICK_RESIZE_IMAGE_4
             MagickResizeImage (wand, src_width, src_height, LanczosFilter);
+#elif HAVE_MAGICK_RESIZE_IMAGE_5
+            MagickResizeImage (wand, src_width, src_height, LanczosFilter, 1.0);
+# warning No valid MagickResizeImage detected. Trying four arguments.
+            MagickResizeImage (wand, src_width, src_height, LanczosFilter);
+#endif
         }
     }
 
