@@ -609,8 +609,10 @@ textify (guint8 *pixels,
          gint dest_width, gint dest_height)
 {
     ChafaCanvas *canvas;
+    GString *gs;
 
     canvas = chafa_canvas_new (options.mode, dest_width, dest_height);
+
     chafa_canvas_set_color_space (canvas, options.color_space);
     chafa_canvas_set_include_symbols (canvas, options.inc_sym);
     chafa_canvas_set_exclude_symbols (canvas, options.exc_sym);
@@ -618,8 +620,11 @@ textify (guint8 *pixels,
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_set_transparency_threshold (canvas, options.transparency_threshold);
     chafa_canvas_set_quality (canvas, options.quality);
-    chafa_canvas_paint_argb (canvas, pixels, src_width, src_height);
-    chafa_canvas_print (canvas);
+
+    chafa_canvas_paint_argb (canvas, pixels, src_width, src_height, src_width * 4);
+    gs = chafa_canvas_build_gstring (canvas);
+    fwrite (gs->str, sizeof (gchar), gs->len, stdout);
+    g_string_free (gs, TRUE);
 
     chafa_canvas_unref (canvas);
 }

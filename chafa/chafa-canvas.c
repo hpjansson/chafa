@@ -46,6 +46,7 @@ struct ChafaCanvas
     ChafaColor alpha_color;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
     guint have_alpha : 1;
+    guint needs_clear : 1;
     gint quality;
 };
 
@@ -598,7 +599,7 @@ update_alpha_color (ChafaCanvas *canvas)
 }
 
 static void
-rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint height)
+rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint height, gint rowstride)
 {
     ChafaPixel *pixel;
     gint px, py;
@@ -614,7 +615,7 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint 
     {
         const guint8 *data_row_p;
 
-        data_row_p = data + ((py * y_inc) / FIXED_MULT) * width * 4;
+        data_row_p = data + ((py * y_inc) / FIXED_MULT) * rowstride;
 
         for (px = 0; px < canvas->width_pixels; px++)
         {
@@ -643,7 +644,7 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint 
 }
 
 static void
-rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gint height)
+rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gint height, gint rowstride)
 {
     ChafaPixel *pixel;
     gint px, py;
@@ -659,7 +660,7 @@ rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gi
     {
         const guint8 *data_row_p;
 
-        data_row_p = data + ((py * y_inc) / FIXED_MULT) * width * 4;
+        data_row_p = data + ((py * y_inc) / FIXED_MULT) * rowstride;
 
         for (px = 0; px < canvas->width_pixels; px++)
         {
@@ -688,6 +689,126 @@ rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gi
         canvas->have_alpha = TRUE;
         multiply_alpha (canvas);
     }
+}
+
+static void
+maybe_clear (ChafaCanvas *canvas)
+{
+    gint i;
+
+    if (!canvas->needs_clear)
+        return;
+
+    for (i = 0; i < canvas->width * canvas->height; i++)
+    {
+        ChafaCanvasCell *cell = &canvas->cells [i];
+
+        memset (cell, 0, sizeof (*cell));
+        cell->c = ' ';
+    }
+}
+
+static GString *
+build_gstring (ChafaCanvas *canvas)
+{
+    GString *gs = g_string_new ("");
+    gint x, y;
+    gint i = 0;
+
+    maybe_clear (canvas);
+
+    for (y = 0; y < canvas->height; y++)
+    {
+        for (x = 0; x < canvas->width; x++, i++)
+        {
+            ChafaCanvasCell *cell = &canvas->cells [i];
+
+            if (canvas->mode == CHAFA_CANVAS_MODE_INDEXED_256
+                || canvas->mode == CHAFA_CANVAS_MODE_INDEXED_240
+                || canvas->mode == CHAFA_CANVAS_MODE_INDEXED_16)
+            {
+                /* FIXME: Use old school control codes for 16-color palette */
+
+                if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                {
+                    if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                    {
+                        g_string_append (gs, "\x1b[0m ");
+                    }
+                    else
+                    {
+                        g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[38;5;%dm%lc",
+                                                cell->bg_color,
+                                                (wint_t) cell->c);
+                    }
+                }
+                else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                {
+                    g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm%lc",
+                                            cell->fg_color,
+                                            (wint_t) cell->c);
+                }
+                else
+                {
+                    g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm\x1b[48;5;%dm%lc",
+                                            cell->fg_color,
+                                            cell->bg_color,
+                                            (wint_t) cell->c);
+                }
+            }
+            else if (canvas->mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK
+                     || canvas->mode == CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE)
+            {
+                g_string_append_printf (gs, "\x1b[%dm%lc",
+                                        cell->bg_color == CHAFA_PALETTE_INDEX_WHITE ? 7 : 0,
+                                        cell->fg_color == cell->bg_color ? ' ' : (wint_t) cell->c);
+            }
+            else if (canvas->mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK
+                     || canvas->mode == CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE)
+            {
+                g_string_append_printf (gs, "%lc", (wint_t) cell->c);
+            }
+            else
+            {
+                ChafaColor fg, bg;
+
+                chafa_unpack_color (cell->fg_color, &fg);
+                chafa_unpack_color (cell->bg_color, &bg);
+
+                if (fg.ch [3] < canvas->alpha_threshold)
+                {
+                    if (bg.ch [3] < canvas->alpha_threshold)
+                    {
+                        /* FIXME: Respect include/exclude for space */
+                        g_string_append (gs, "\x1b[0m ");
+                    }
+                    else
+                    {
+                        g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[38;2;%d;%d;%dm%lc",
+                                                bg.ch [0], bg.ch [1], bg.ch [2],
+                                                (wint_t) cell->c);
+                    }
+                }
+                else if (bg.ch [3] < canvas->alpha_threshold)
+                {
+                    g_string_append_printf (gs, "\x1b[0m\x1b[38;2;%d;%d;%dm%lc",
+                                            fg.ch [0], fg.ch [1], fg.ch [2],
+                                            (wint_t) cell->c);
+                }
+                else
+                {
+                    g_string_append_printf (gs, "\x1b[0m\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm%lc",
+                                            fg.ch [0], fg.ch [1], fg.ch [2],
+                                            bg.ch [0], bg.ch [1], bg.ch [2],
+                                            (wint_t) cell->c);
+                }
+            }
+        }
+
+        g_string_append (gs, "\x1b[0m\n");
+    }
+
+    return gs;
 }
 
 static void
@@ -737,6 +858,7 @@ chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
     canvas->alpha_color_packed_rgb = 0x00000000;
     canvas->alpha_threshold = 127;
     canvas->quality = 5;
+    canvas->needs_clear = TRUE;
 
     update_alpha_color (canvas);
 
@@ -827,19 +949,20 @@ chafa_canvas_set_quality (ChafaCanvas *canvas, gint quality)
 }
 
 void
-chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *pixels, gint width, gint height)
+chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *src_pixels,
+                         gint src_width, gint src_height, gint src_rowstride)
 {
-    g_return_if_fail (width >= CHAFA_SYMBOL_WIDTH_PIXELS);
-    g_return_if_fail (height >= CHAFA_SYMBOL_HEIGHT_PIXELS);
+    g_return_if_fail (src_width >= CHAFA_SYMBOL_WIDTH_PIXELS);
+    g_return_if_fail (src_height >= CHAFA_SYMBOL_HEIGHT_PIXELS);
 
     switch (canvas->color_space)
     {
         case CHAFA_COLOR_SPACE_RGB:
-            rgba_to_internal_rgb (canvas, pixels, width, height);
+            rgba_to_internal_rgb (canvas, src_pixels, src_width, src_height, src_rowstride);
             break;
 
         case CHAFA_COLOR_SPACE_DIN99D:
-            rgba_to_internal_din99d (canvas, pixels, width, height);
+            rgba_to_internal_din99d (canvas, src_pixels, src_width, src_height, src_rowstride);
             break;
     }
 
@@ -847,102 +970,21 @@ chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *pixels, gint width, gint h
         canvas->have_alpha = FALSE;
 
     update_cells (canvas);
+    canvas->needs_clear = FALSE;
 }
 
-void
-chafa_canvas_print (ChafaCanvas *canvas)
+GString *
+chafa_canvas_build_gstring (ChafaCanvas *canvas)
 {
-    gint x, y;
-    gint i = 0;
+    maybe_clear (canvas);
+    return build_gstring (canvas);
+}
 
-    for (y = 0; y < canvas->height; y++)
-    {
-        for (x = 0; x < canvas->width; x++, i++)
-        {
-            ChafaCanvasCell *cell = &canvas->cells [i];
+gchar *
+chafa_canvas_build_str (ChafaCanvas *canvas)
+{
+    GString *gs;
 
-            if (canvas->mode == CHAFA_CANVAS_MODE_INDEXED_256
-                || canvas->mode == CHAFA_CANVAS_MODE_INDEXED_240
-                || canvas->mode == CHAFA_CANVAS_MODE_INDEXED_16)
-            {
-                /* FIXME: Use old school control codes for 16-color palette */
-
-                if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
-                {
-                    if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
-                    {
-                        printf ("\x1b[0m ");
-                    }
-                    else
-                    {
-                        printf ("\x1b[0m\x1b[7m\x1b[38;5;%dm%lc",
-                                cell->bg_color,
-                                (wint_t) cell->c);
-                    }
-                }
-                else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
-                {
-                    printf ("\x1b[0m\x1b[38;5;%dm%lc",
-                            cell->fg_color,
-                            (wint_t) cell->c);
-                }
-                else
-                {
-                    printf ("\x1b[0m\x1b[38;5;%dm\x1b[48;5;%dm%lc",
-                            cell->fg_color,
-                            cell->bg_color,
-                            (wint_t) cell->c);
-                }
-            }
-            else if (canvas->mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK
-                     || canvas->mode == CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE)
-            {
-                printf ("\x1b[%dm%lc",
-                        cell->bg_color == CHAFA_PALETTE_INDEX_WHITE ? 7 : 0,
-                        cell->fg_color == cell->bg_color ? ' ' : (wint_t) cell->c);
-            }
-            else if (canvas->mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK
-                     || canvas->mode == CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE)
-            {
-                printf ("%lc", (wint_t) cell->c);
-            }
-            else
-            {
-                ChafaColor fg, bg;
-
-                chafa_unpack_color (cell->fg_color, &fg);
-                chafa_unpack_color (cell->bg_color, &bg);
-
-                if (fg.ch [3] < canvas->alpha_threshold)
-                {
-                    if (bg.ch [3] < canvas->alpha_threshold)
-                    {
-                        /* FIXME: Respect include/exclude for space */
-                        printf ("\x1b[0m ");
-                    }
-                    else
-                    {
-                        printf ("\x1b[0m\x1b[7m\x1b[38;2;%d;%d;%dm%lc",
-                                bg.ch [0], bg.ch [1], bg.ch [2],
-                                (wint_t) cell->c);
-                    }
-                }
-                else if (bg.ch [3] < canvas->alpha_threshold)
-                {
-                    printf ("\x1b[0m\x1b[38;2;%d;%d;%dm%lc",
-                            fg.ch [0], fg.ch [1], fg.ch [2],
-                            (wint_t) cell->c);
-                }
-                else
-                {
-                    printf ("\x1b[0m\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm%lc",
-                            fg.ch [0], fg.ch [1], fg.ch [2],
-                            bg.ch [0], bg.ch [1], bg.ch [2],
-                            (wint_t) cell->c);
-                }
-            }
-        }
-
-        printf ("\x1b[0m\n");
-    }
+    gs = build_gstring (canvas);
+    return g_string_free (gs, FALSE);
 }
