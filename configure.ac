@@ -200,5 +200,6 @@ AC_SUBST(CHAFA_LDFLAGS)
 
 dnl --- Output ---
 
-AC_OUTPUT(Makefile                \
-          chafa/Makefile)
+AC_OUTPUT(Makefile
+          chafa/Makefile
+          chafa.pc)
