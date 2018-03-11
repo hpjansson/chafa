@@ -19,7 +19,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -31,7 +32,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "        "
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -43,7 +45,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -55,7 +58,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HALF,
@@ -67,7 +71,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -79,7 +84,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -91,7 +97,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -103,7 +110,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         /* Full block */
@@ -116,7 +124,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -128,7 +137,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXX "
         "XXXXXXX "
         "XXXXXXX "
-        "XXXXXXX "
+        "XXXXXXX ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -140,7 +150,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXX  "
         "XXXXXX  "
         "XXXXXX  "
-        "XXXXXX  "
+        "XXXXXX  ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -152,7 +163,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "XXXXX   "
         "XXXXX   "
-        "XXXXX   "
+        "XXXXX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HALF,
@@ -164,7 +176,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXX    "
         "XXXX    "
         "XXXX    "
-        "XXXX    "
+        "XXXX    ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -176,7 +189,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXX     "
         "XXX     "
         "XXX     "
-        "XXX     "
+        "XXX     ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -188,7 +202,8 @@ static const ChafaSymbol symbol_defs [] =
         "XX      "
         "XX      "
         "XX      "
-        "XX      "
+        "XX      ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK,
@@ -200,7 +215,8 @@ static const ChafaSymbol symbol_defs [] =
         "X       "
         "X       "
         "X       "
-        "X       "
+        "X       ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
@@ -212,7 +228,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXX    "
         "XXXX    "
         "XXXX    "
-        "XXXX    "
+        "XXXX    ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
@@ -224,7 +241,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    XXXX"
         "    XXXX"
-        "    XXXX"
+        "    XXXX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
@@ -236,7 +254,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
@@ -248,7 +267,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    XXXX"
         "    XXXX"
-        "    XXXX"
+        "    XXXX",
+        0, 0, FALSE
     },
     /* Begin box drawing characters */
     {
@@ -261,7 +281,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -273,7 +294,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -285,7 +307,8 @@ static const ChafaSymbol symbol_defs [] =
         "    X   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -297,7 +320,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -309,7 +333,8 @@ static const ChafaSymbol symbol_defs [] =
         "XX XX XX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -321,7 +346,8 @@ static const ChafaSymbol symbol_defs [] =
         "XX XX XX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -333,7 +359,8 @@ static const ChafaSymbol symbol_defs [] =
         "    X   "
         "        "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -345,7 +372,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "        "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -357,7 +385,8 @@ static const ChafaSymbol symbol_defs [] =
         "X X X X "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -369,7 +398,8 @@ static const ChafaSymbol symbol_defs [] =
         "X X X X "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -381,7 +411,8 @@ static const ChafaSymbol symbol_defs [] =
         "    X   "
         "        "
         "    X   "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -393,7 +424,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "        "
         "   XX   "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -405,7 +437,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -417,7 +450,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -429,7 +463,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -441,7 +476,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -453,7 +489,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -465,7 +502,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -477,7 +515,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -489,7 +528,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -501,7 +541,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -513,7 +554,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -525,7 +567,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -537,7 +580,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -549,7 +593,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -561,7 +606,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -573,7 +619,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -585,7 +632,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -597,7 +645,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -609,7 +658,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -621,7 +671,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -633,7 +684,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -645,7 +697,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -657,7 +710,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -669,7 +723,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -681,7 +736,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -693,7 +749,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -705,7 +762,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -717,7 +775,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -729,7 +788,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -741,7 +801,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -753,7 +814,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -765,7 +827,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -777,7 +840,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -789,7 +853,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -801,7 +866,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -813,7 +879,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -825,7 +892,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -837,7 +905,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -849,7 +918,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -861,7 +931,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -873,7 +944,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -885,7 +957,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -897,7 +970,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -909,7 +983,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -921,7 +996,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -933,7 +1009,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -945,7 +1022,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -957,7 +1035,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -969,7 +1048,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -981,7 +1061,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -993,7 +1074,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1005,7 +1087,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1017,7 +1100,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1029,7 +1113,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1041,7 +1126,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1053,7 +1139,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1065,7 +1152,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1077,7 +1165,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1089,7 +1178,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1101,7 +1191,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1113,7 +1204,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1125,7 +1217,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1137,7 +1230,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1149,7 +1243,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1161,7 +1256,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1173,7 +1269,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXX  XXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1185,7 +1282,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXX  XXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1197,7 +1295,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1209,7 +1308,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DIAGONAL,
@@ -1221,7 +1321,8 @@ static const ChafaSymbol symbol_defs [] =
         "   X    "
         "  X     "
         " X      "
-        "X       "
+        "X       ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1234,7 +1335,8 @@ static const ChafaSymbol symbol_defs [] =
         "  XXX   "
         " XXX    "
         "XXX     "
-        "XX      "
+        "XX      ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DIAGONAL,
@@ -1246,7 +1348,8 @@ static const ChafaSymbol symbol_defs [] =
         "    X   "
         "     X  "
         "      X "
-        "       X"
+        "       X",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DIAGONAL,
@@ -1258,7 +1361,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXX  "
         "    XXX "
         "     XXX"
-        "      XX"
+        "      XX",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DIAGONAL,
@@ -1270,7 +1374,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "  X  X  "
         " X    X "
-        "X      X"
+        "X      X",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1282,7 +1387,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXX    "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1294,7 +1400,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1306,7 +1413,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1318,7 +1426,8 @@ static const ChafaSymbol symbol_defs [] =
         "    X   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1330,7 +1439,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXX    "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1342,7 +1452,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1354,7 +1465,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER | CHAFA_SYMBOL_CLASS_DOT,
@@ -1366,7 +1478,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1378,7 +1491,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1390,7 +1504,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "   XX   "
         "   XX   "
-        "   XX   "
+        "   XX   ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1402,7 +1517,8 @@ static const ChafaSymbol symbol_defs [] =
         "XXXXXXXX"
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_BORDER,
@@ -1414,7 +1530,8 @@ static const ChafaSymbol symbol_defs [] =
         "    X   "
         "    X   "
         "    X   "
-        "    X   "
+        "    X   ",
+        0, 0, FALSE
     },
     /* Begin dot characters*/
     {
@@ -1427,7 +1544,8 @@ static const ChafaSymbol symbol_defs [] =
         " XXXXXX "
         " XXXXXX "
         " XXXXXX "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_DOT,
@@ -1439,7 +1557,8 @@ static const ChafaSymbol symbol_defs [] =
         " XXXXXX "
         " XXXXXX "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_DOT,
@@ -1451,7 +1570,8 @@ static const ChafaSymbol symbol_defs [] =
         "  XXXX  "
         "  XXXX  "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1464,7 +1584,8 @@ static const ChafaSymbol symbol_defs [] =
         " XXXX   "
         " XXXX   "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1477,7 +1598,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XXXX "
         "   XXXX "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1490,7 +1612,8 @@ static const ChafaSymbol symbol_defs [] =
         "  XXXX  "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1503,7 +1626,8 @@ static const ChafaSymbol symbol_defs [] =
         "  XXXX  "
         "  XXXX  "
         "  XXXX  "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_DOT,
@@ -1515,7 +1639,8 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1528,7 +1653,8 @@ static const ChafaSymbol symbol_defs [] =
         "  XX    "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1541,7 +1667,8 @@ static const ChafaSymbol symbol_defs [] =
         "    XX  "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1554,7 +1681,8 @@ static const ChafaSymbol symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         /* Variant */
@@ -1567,10 +1695,12 @@ static const ChafaSymbol symbol_defs [] =
         "   XX   "
         "   XX   "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
-        0, 0, ""
+        0, 0, "",
+        0, 0, FALSE
     }
 };
 
@@ -1586,7 +1716,8 @@ static const ChafaSymbol fill_symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
+        "        ",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_STIPPLE,
@@ -1598,7 +1729,8 @@ static const ChafaSymbol fill_symbol_defs [] =
         "22222222"
         "22222222"
         "22222222"
-        "22222222"
+        "22222222",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_STIPPLE,
@@ -1610,7 +1742,8 @@ static const ChafaSymbol fill_symbol_defs [] =
         "55555555"
         "55555555"
         "55555555"
-        "55555555"
+        "55555555",
+        0, 0, FALSE
     },
     {
         CHAFA_SYMBOL_CLASS_STIPPLE,
@@ -1622,7 +1755,8 @@ static const ChafaSymbol fill_symbol_defs [] =
         "88888888"
         "88888888"
         "88888888"
-        "88888888"
+        "88888888",
+        0, 0, FALSE
     },
     {
         /* Full block */
@@ -1635,10 +1769,11 @@ static const ChafaSymbol fill_symbol_defs [] =
         "XXXXXXXX"
         "XXXXXXXX"
         "XXXXXXXX"
-        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
     },
     {
-        0, 0, ""
+      0, 0, "", 0, 0, FALSE
     }
 };
 

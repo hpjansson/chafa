@@ -92,7 +92,7 @@ parse_color (const gchar *str, guint32 *col_out, GError **error)
     else if (p0 [0] == '0' && (p0 [1] == 'x')) p0 += 2;
 
     len = strspn (p0, "0123456789abcdef");
-    if (len != strlen (p0) || len < 6)
+    if (len != (gint) strlen (p0) || len < 6)
     {
 	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
 		     "Unrecognized color '%s'.", str);
@@ -184,7 +184,7 @@ print_summary (void)
 }
 
 static gboolean
-parse_colors_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
 
@@ -211,7 +211,7 @@ parse_colors_arg (const gchar *option_name, const gchar *value, gpointer data, G
 }
 
 static gboolean
-parse_color_space_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_color_space_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
 
@@ -230,7 +230,7 @@ parse_color_space_arg (const gchar *option_name, const gchar *value, gpointer da
 }
 
 static gboolean
-parse_font_ratio_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_font_ratio_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
     gdouble ratio = -1.0;
@@ -312,7 +312,7 @@ parse_symbol_class (const gchar *name, gint len, ChafaSymbolClass *sc_out, GErro
 }
 
 static gboolean
-parse_symbols_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     const gchar *p0 = value;
     gboolean result = TRUE;
@@ -373,7 +373,7 @@ parse_symbols_arg (const gchar *option_name, const gchar *value, gpointer data, 
 }
 
 static gboolean
-parse_size_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
     gint width = -1, height = -1;
@@ -415,7 +415,7 @@ out:
 }
 
 static gboolean
-parse_preprocess_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
 
@@ -441,7 +441,7 @@ parse_preprocess_arg (const gchar *option_name, const gchar *value, gpointer dat
 }
 
 static gboolean
-parse_transparency_color_arg (const gchar *option_name, const gchar *value, gpointer data, GError **error)
+parse_transparency_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
     guint32 col;
@@ -873,7 +873,6 @@ run_all (GList *filenames)
 int
 main (int argc, char *argv [])
 {
-    char *filename;
     int ret;
 
     setlocale (LC_ALL, "");

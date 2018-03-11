@@ -76,7 +76,7 @@ fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *pix
 }
 
 static void
-calc_mean_color (ChafaCanvas *canvas, ChafaPixel *pixels, ChafaColor *color_out)
+calc_mean_color (ChafaPixel *pixels, ChafaColor *color_out)
 {
     ChafaColor accum = { 0 };
     gint i;
@@ -115,8 +115,7 @@ calc_colors_plain (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov
 }
 
 static void
-eval_symbol_colors (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
-                    const ChafaSymbol *sym, SymbolEval *eval)
+eval_symbol_colors (const ChafaPixel *canvas_pixels, const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
     ChafaColor cols [11] = { 0 };
@@ -264,7 +263,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
         {
             ChafaColor fg_col, bg_col;
 
-            eval_symbol_colors (canvas, canvas_pixels, &chafa_symbols [i], &eval [i]);
+            eval_symbol_colors (canvas_pixels, &chafa_symbols [i], &eval [i]);
 
             /* Threshold alpha */
 
@@ -450,12 +449,12 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
     gint best_sym = -1;
     ChafaColor square_col;
     gint sym_coverage [SYMBOLS_MAX] = { 0 };
-    gint i, j;
+    gint i;
 
     best_eval.error = G_MAXINT;
 
     fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
-    calc_mean_color (canvas, canvas_pixels, &square_col);
+    calc_mean_color (canvas_pixels, &square_col);
 
     for (i = 0; chafa_fill_symbols [i].c != 0; i++)
     {

@@ -188,15 +188,6 @@ convert_xyz_to_lab (const ChafaColorXYZ *xyz, ChafaColorLab *lab)
     lab->c [2] = 200.0 * (xyz2.c [1] - xyz2.c [2]);
 }
 
-static gdouble
-rad_to_deg (gdouble r)
-{
-    gdouble deg = r * (180.0 / M_PI);
-    while (deg < 0.0) deg += 360.0;
-    while (deg > 360.0) deg -= 360.0;
-    return deg;
-}
-
 void
 chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99)
 {
