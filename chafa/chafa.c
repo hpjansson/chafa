@@ -216,17 +216,17 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
 {
     gboolean result = TRUE;
 
-    if (!strcasecmp (value, "none"))
+    if (!g_ascii_strcasecmp (value, "none"))
 	options.mode = CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK;
-    else if (!strcasecmp (value, "2"))
+    else if (!g_ascii_strcasecmp (value, "2"))
 	options.mode = CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK;
-    else if (!strcasecmp (value, "16"))
+    else if (!g_ascii_strcasecmp (value, "16"))
 	options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
-    else if (!strcasecmp (value, "240"))
+    else if (!g_ascii_strcasecmp (value, "240"))
 	options.mode = CHAFA_CANVAS_MODE_INDEXED_240;
-    else if (!strcasecmp (value, "256"))
+    else if (!g_ascii_strcasecmp (value, "256"))
 	options.mode = CHAFA_CANVAS_MODE_INDEXED_256;
-    else if (!strcasecmp (value, "full") || !strcasecmp (value, "rgb"))
+    else if (!g_ascii_strcasecmp (value, "full") || !g_ascii_strcasecmp (value, "rgb"))
 	options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     else
     {
@@ -243,9 +243,9 @@ parse_color_space_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *valu
 {
     gboolean result = TRUE;
 
-    if (!strcasecmp (value, "rgb"))
+    if (!g_ascii_strcasecmp (value, "rgb"))
         options.color_space = CHAFA_COLOR_SPACE_RGB;
-    else if (!strcasecmp (value, "din99d"))
+    else if (!g_ascii_strcasecmp (value, "din99d"))
         options.color_space = CHAFA_COLOR_SPACE_DIN99D;
     else
     {
@@ -265,9 +265,9 @@ parse_font_ratio_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
     gint width = -1, height = -1;
     gint o = 0;
 
-    sscanf (value, "%u/%u%n", &width, &height, &o);
+    sscanf (value, "%d/%d%n", &width, &height, &o);
     if (width < 0 || height < 0)
-        sscanf (value, "%u:%u%n", &width, &height, &o);
+        sscanf (value, "%d:%d%n", &width, &height, &o);
     if (width < 0 || height < 0)
         sscanf (value, "%lf%n", &ratio, &o);
 
@@ -326,7 +326,7 @@ parse_symbol_class (const gchar *name, gint len, ChafaSymbolClass *sc_out, GErro
 
     for (i = 0; map [i].name; i++)
     {
-        if (!strncasecmp (map [i].name, name, len))
+        if (!g_ascii_strncasecmp (map [i].name, name, len))
         {
             *sc_out = map [i].sc;
             return TRUE;
@@ -408,13 +408,13 @@ parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
     gint n;
     gint o = 0;
 
-    n = sscanf (value, "%u%n", &width, &o);
+    n = sscanf (value, "%d%n", &width, &o);
 
     if (value [o] == 'x' && value [o + 1] != '\0')
     {
         gint o2;
 
-        n = sscanf (value + o + 1, "%u%n", &height, &o2);
+        n = sscanf (value + o + 1, "%d%n", &height, &o2);
         if (n == 1 && value [o + o2 + 1] != '\0')
 	{
             width = height = -1;
@@ -447,13 +447,13 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
 {
     gboolean result = TRUE;
 
-    if (!strcasecmp (value, "on")
-	|| !strcasecmp (value, "yes"))
+    if (!g_ascii_strcasecmp (value, "on")
+	|| !g_ascii_strcasecmp (value, "yes"))
     {
         options.preprocess = TRUE;
     }
-    else if (!strcasecmp (value, "off")
-	     || !strcasecmp (value, "no"))
+    else if (!g_ascii_strcasecmp (value, "off")
+	     || !g_ascii_strcasecmp (value, "no"))
     {
         options.preprocess = FALSE;
     }
@@ -476,11 +476,11 @@ parse_transparency_color_arg (G_GNUC_UNUSED const gchar *option_name, const gcha
 
     /* TODO: It would be nice to support rgb.txt here */
 
-    if (!strcasecmp (value, "white"))
+    if (!g_ascii_strcasecmp (value, "white"))
     {
         options.transparency_color = 0xffffff;
     }
-    else if (!strcasecmp (value, "black"))
+    else if (!g_ascii_strcasecmp (value, "black"))
     {
         options.transparency_color = 0x000000;
     }
@@ -550,9 +550,9 @@ detect_canvas_mode (void)
     /* Some terminals set COLORTERM=truecolor. However, this env var can
      * make its way into environments where truecolor is not desired
      * (e.g. screen sessions), so check it early on and override it later. */
-    if (!strcasecmp (colorterm, "truecolor")
-        || !strcasecmp (colorterm, "gnome-terminal")
-        || !strcasecmp (colorterm, "xfce-terminal"))
+    if (!g_ascii_strcasecmp (colorterm, "truecolor")
+        || !g_ascii_strcasecmp (colorterm, "gnome-terminal")
+        || !g_ascii_strcasecmp (colorterm, "xfce-terminal"))
         mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
     /* In a modern VTE we can rely on VTE_VERSION. It's a great terminal emulator
@@ -631,7 +631,7 @@ parse_options (int *argc, char **argv [])
     options.executable_name = g_strdup ((*argv) [0]);
 
     /* Defaults */
-    options.is_interactive = isatty (fileno (stdin)) && isatty (fileno (stdout));
+    options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.inc_sym = CHAFA_SYMBOLS_ALL;
@@ -1006,7 +1006,7 @@ run (const gchar *filename, gboolean is_single_file)
                 elapsed_ms = g_timer_elapsed (timer, NULL) * 1000.0;
                 remain_ms = frame->delay_ms - elapsed_ms;
                 remain_ms = MAX (remain_ms, 0);
-                usleep (remain_ms * 1000);
+                g_usleep (remain_ms * 1000);
             }
 
             is_first_frame = FALSE;

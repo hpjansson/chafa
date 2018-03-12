@@ -25,11 +25,33 @@ AM_SANITY_CHECK
 AM_MAINTAINER_MODE
 
 AC_C_CONST
-AC_ISC_POSIX
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
 AM_PROG_LIBTOOL
+
+dnl --- Required standards ---
+
+dnl POSIX.1-2008 is required to get SA_RESETHAND. We should get this by default
+dnl on most systems, but keep the check around just in case.
+
+dnl AC_MSG_CHECKING(for POSIX.1-2008)
+dnl AC_EGREP_CPP(posix_200809L_supported,
+dnl              [#define _POSIX_C_SOURCE 200809L
+dnl               #include <unistd.h>
+dnl               #ifdef _POSIX_VERSION
+dnl               # if _POSIX_VERSION == 200809L
+dnl               posix_200809L_supported
+dnl               # endif
+dnl               #endif
+dnl              ],
+dnl              [AC_MSG_RESULT(yes)],
+dnl              [AC_MSG_RESULT(no)
+dnl               AC_MSG_FAILURE([Implementation must conform to the POSIX.1-2008 standard.])]
+dnl )
+dnl 
+dnl AC_DEFINE([_POSIX_C_SOURCE], [200809L], [Minimum POSIX standard we need])
 
 dnl --- Dependency check ---
 
