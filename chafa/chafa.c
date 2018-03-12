@@ -39,6 +39,8 @@ typedef struct
     ChafaColorSpace color_space;
     ChafaSymbolClass inc_sym;
     ChafaSymbolClass exc_sym;
+    gboolean is_interactive;
+    gboolean clear;
     gboolean verbose;
     gboolean invert;
     gboolean preprocess;
@@ -157,6 +159,7 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
+    "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors       Set output color mode; one of [none, 2, 16, 240, 256,\n"
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-space  Color space used for quantization; one of [rgb, din99d].\n"
@@ -596,6 +599,7 @@ parse_options (int *argc, char **argv [])
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
+        { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
@@ -619,6 +623,7 @@ parse_options (int *argc, char **argv [])
     options.executable_name = g_strdup ((*argv) [0]);
 
     /* Defaults */
+    options.is_interactive = isatty (fileno (stdin)) && isatty (fileno (stdout));
     options.mode = detect_canvas_mode ();
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.inc_sym = CHAFA_SYMBOLS_ALL;
@@ -744,7 +749,7 @@ auto_orient_image (MagickWand *image)
 #endif
 }
 
-static void
+static GString *
 textify (guint8 *pixels,
          gint src_width, gint src_height,
          gint dest_width, gint dest_height)
@@ -764,29 +769,21 @@ textify (guint8 *pixels,
 
     chafa_canvas_paint_argb (canvas, pixels, src_width, src_height, src_width * 4);
     gs = chafa_canvas_build_gstring (canvas);
-    fwrite (gs->str, sizeof (gchar), gs->len, stdout);
-    fflush (stdout);
-    g_string_free (gs, TRUE);
 
     chafa_canvas_unref (canvas);
+    return gs;
 }
 
 static void
-run (const gchar *filename)
+process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
 {
-    MagickWand *wand = NULL;
     gint src_width, src_height;
     gint dest_width, dest_height;
-    guint8 *pixels;
 
-    MagickWandGenesis();
-
-    wand = NewMagickWand();
-    MagickReadImage(wand, filename);
     auto_orient_image (wand);
 
-    src_width = MagickGetImageWidth(wand);
-    src_height = MagickGetImageHeight(wand);
+    src_width = MagickGetImageWidth (wand);
+    src_height = MagickGetImageHeight (wand);
 
     dest_width = options.width;
     dest_height = options.height;
@@ -847,42 +844,193 @@ run (const gchar *filename)
 	MagickBrightnessContrastImage (wand, 0, 40);
     }
 
-    pixels = g_malloc (src_width * src_height * 4);
-    MagickExportImagePixels (wand,
-			     0, 0,
-			     src_width, src_height,
-			     "RGBA",
-			     CharPixel,
-			     pixels);
+    if (dest_width_out)
+        *dest_width_out = dest_width;
+    if (dest_height_out)
+        *dest_height_out = dest_height;
+}
 
-#if 1
-    /* Homes cursor so images can be concatenated to create animations.
-     * FIXME: Make optional. */
-    printf ("\x1b[0f");
-#endif
+typedef struct
+{
+    GString *gs;
+    gint dest_width, dest_height;
+    gint delay_ms;
+}
+GroupFrame;
 
-    textify (pixels,
-             src_width, src_height,
-             dest_width, dest_height);
-    g_free (pixels);
+typedef struct
+{
+    GList *frames;
+}
+Group;
 
-    /* Clean up */
-    if (wand)
+static void
+group_build (Group *group, MagickWand *wand)
+{
+    memset (group, 0, sizeof (*group));
+
+    for (MagickResetIterator (wand);;)
+    {
+        GroupFrame *frame;
+
+        if (!MagickNextImage (wand))
+            break;
+
+        frame = g_new0 (GroupFrame, 1);
+
+        process_image (wand, &frame->dest_width, &frame->dest_height);
+        frame->delay_ms = MagickGetImageDelay (wand) * 10;
+        if (frame->delay_ms == 0)
+            frame->delay_ms = 50;
+
+        /* String representation is built on demand and cached */
+
+        group->frames = g_list_prepend (group->frames, frame);
+    }
+
+    group->frames = g_list_reverse (group->frames);
+}
+
+static void
+group_clear (Group *group)
+{
+    GList *l;
+
+    for (l = group->frames; l; l = g_list_next (l))
+    {
+        GroupFrame *frame = l->data;
+
+        if (frame->gs)
+            g_string_free (frame->gs, TRUE);
+        g_free (frame);
+    }
+
+    g_list_free (group->frames);
+    memset (group, 0, sizeof (*group));
+}
+
+static void
+run (const gchar *filename, gboolean is_single_file)
+{
+    MagickWand *wand = NULL;
+    guint8 *pixels;
+    gboolean is_first_frame = TRUE;
+    gboolean is_animation;
+    GTimer *timer;
+    Group group = { NULL };
+    GList *l;
+
+    timer = g_timer_new ();
+
+    wand = NewMagickWand();
+    if (MagickReadImage (wand, filename) < 1)
+        goto out;
+
+    is_animation = MagickGetNumberImages (wand) > 1 ? TRUE : FALSE;
+
+    if (is_animation)
+    {
+        MagickWand *wand2 = MagickCoalesceImages (wand);
         wand = DestroyMagickWand (wand);
-	
-    MagickWandTerminus();
+        wand = wand2;
+    }
+
+    group_build (&group, wand);
+
+    do
+    {
+        MagickResetIterator (wand);
+
+        for (l = group.frames; l; l = g_list_next (l))
+        {
+            GroupFrame *frame = l->data;
+            gint elapsed_ms, remain_ms;
+
+            MagickNextImage (wand);
+
+            g_timer_start (timer);
+
+            if (!frame->gs)
+            {
+                gint src_width, src_height;
+
+                src_width = MagickGetImageWidth (wand);
+                src_height = MagickGetImageHeight (wand);
+
+                pixels = g_malloc (src_width * src_height * 4);
+                MagickExportImagePixels (wand,
+                                         0, 0,
+                                         src_width, src_height,
+                                         "RGBA",
+                                         CharPixel,
+                                         pixels);
+
+                frame->gs = textify (pixels,
+                                     src_width, src_height,
+                                     frame->dest_width, frame->dest_height);
+                g_free (pixels);
+            }
+
+            if (options.clear)
+            {
+                if (is_first_frame)
+                {
+                    printf ("\x1b[2J");
+                }
+
+                /* Home cursor between frames */
+                printf ("\x1b[0f");
+            }
+            else if (!is_first_frame)
+            {
+                /* Cursor up N steps */
+                printf ("\x1b[%dA", frame->dest_height);
+            }
+
+            fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
+            fflush (stdout);
+
+            if (is_animation)
+            {
+                /* Account for time spent converting and printing frame */
+                elapsed_ms = g_timer_elapsed (timer, NULL) * 1000.0;
+                remain_ms = frame->delay_ms - elapsed_ms;
+                remain_ms = MAX (remain_ms, 0);
+                usleep (remain_ms * 1000);
+            }
+
+            is_first_frame = FALSE;
+        }
+    }
+    while (options.is_interactive && is_animation && is_single_file);
+
+out:
+    DestroyMagickWand (wand);
+    group_clear (&group);
+    g_timer_destroy (timer);
 }
 
 static int
 run_all (GList *filenames)
 {
     GList *l;
+    gboolean is_single_file = FALSE;
+
+    if (!filenames)
+        return 0;
+
+    if (!filenames->next)
+        is_single_file = TRUE;
+
+    MagickWandGenesis ();
 
     for (l = filenames; l; l = g_list_next (l))
     {
         gchar *filename = l->data;
-        run (filename);
+        run (filename, is_single_file);
     }
+
+    MagickWandTerminus ();
 
     return 0;
 }
