@@ -23,6 +23,7 @@
 #include <locale.h>
 #include <sys/ioctl.h>  /* ioctl */
 #include <unistd.h>  /* STDOUT_FILENO */
+#include <signal.h>  /* sigaction */
 #include <glib.h>
 #include <wand/MagickWand.h>
 #include "chafa/chafa.h"
@@ -56,6 +57,13 @@ typedef struct
 GlobalOptions;
 
 static GlobalOptions options;
+static gboolean interrupted_by_user;
+
+static void
+sigint_handler (G_GNUC_UNUSED int sig)
+{
+    interrupted_by_user = TRUE;
+}
 
 static guchar
 get_hex_byte (const gchar *str)
@@ -939,9 +947,11 @@ run (const gchar *filename, gboolean is_single_file)
 
     do
     {
+        /* Outer loop repeats animation if desired */
+
         MagickResetIterator (wand);
 
-        for (l = group.frames; l; l = g_list_next (l))
+        for (l = group.frames; l && !interrupted_by_user; l = g_list_next (l))
         {
             GroupFrame *frame = l->data;
             gint elapsed_ms, remain_ms;
@@ -1002,7 +1012,7 @@ run (const gchar *filename, gboolean is_single_file)
             is_first_frame = FALSE;
         }
     }
-    while (options.is_interactive && is_animation && is_single_file);
+    while (options.is_interactive && is_animation && is_single_file && !interrupted_by_user);
 
 out:
     DestroyMagickWand (wand);
@@ -1024,7 +1034,7 @@ run_all (GList *filenames)
 
     MagickWandGenesis ();
 
-    for (l = filenames; l; l = g_list_next (l))
+    for (l = filenames; l && !interrupted_by_user; l = g_list_next (l))
     {
         gchar *filename = l->data;
         run (filename, is_single_file);
@@ -1035,12 +1045,25 @@ run_all (GList *filenames)
     return 0;
 }
 
+static void
+proc_init (void)
+{
+    struct sigaction sa = { 0 };
+
+    setlocale (LC_ALL, "");
+
+    sa.sa_handler = sigint_handler;
+    sa.sa_flags = SA_RESETHAND;
+
+    sigaction (SIGINT, &sa, NULL);
+}
+
 int
 main (int argc, char *argv [])
 {
     int ret;
 
-    setlocale (LC_ALL, "");
+    proc_init ();
 
     if (!parse_options (&argc, &argv))
         exit (1);
