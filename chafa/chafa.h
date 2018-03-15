@@ -15,7 +15,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef __CHAFA_H__
+#define __CHAFA_H__
+
 #include <glib.h>
+
+G_BEGIN_DECLS
 
 /* Exported symbol versioning/visibility */
 
@@ -105,3 +110,7 @@ CHAFA_AVAILABLE_IN_ALL
 GString *chafa_canvas_build_gstring (ChafaCanvas *canvas);
 CHAFA_AVAILABLE_IN_ALL
 gchar *chafa_canvas_build_str (ChafaCanvas *canvas);
+
+G_END_DECLS
+
+#endif /* __CHAFA_H__ */

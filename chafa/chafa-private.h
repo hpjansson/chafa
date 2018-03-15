@@ -15,7 +15,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef __CHAFA_PRIVATE_H__
+#define __CHAFA_PRIVATE_H__
+
 #include <glib.h>
+
+G_BEGIN_DECLS
 
 /* Colors and color spaces */
 
@@ -113,3 +118,7 @@ void leave_mmx (void);
 #ifdef HAVE_SSE41_INTRINSICS
 gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov);
 #endif
+
+G_END_DECLS
+
+#endif /* __CHAFA_PRIVATE_H__ */
