@@ -1,3 +1,5 @@
+/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
 /* Copyright (C) 2018 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
