@@ -78,6 +78,8 @@ typedef enum
 }
 ChafaCanvasMode;
 
+#define CHAFA_CANVAS_MODE_MAX (CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE + 1)
+
 typedef struct ChafaCanvas ChafaCanvas;
 
 /* Library functions */

@@ -849,6 +849,10 @@ chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height)
 {
     ChafaCanvas *canvas;
 
+    g_return_val_if_fail (mode < CHAFA_CANVAS_MODE_MAX, NULL);
+    g_return_val_if_fail (width > 0, NULL);
+    g_return_val_if_fail (height > 0, NULL);
+
     chafa_init_palette ();
     chafa_init_symbols ();
     chafa_init_canvas ();
@@ -902,6 +906,8 @@ void
 chafa_canvas_set_color_space (ChafaCanvas *canvas, ChafaColorSpace color_space)
 {
     g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (color_space < CHAFA_COLOR_SPACE_MAX);
 
     /* In truecolor mode we don't support any fancy color spaces for now, since
      * we'd have to convert back to RGB space when emitting control codes, and
@@ -918,6 +924,7 @@ void
 chafa_canvas_set_include_symbols (ChafaCanvas *canvas, guint32 include_symbols)
 {
     g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
 
     canvas->include_symbols = include_symbols;
 }
@@ -926,6 +933,7 @@ void
 chafa_canvas_set_exclude_symbols (ChafaCanvas *canvas, guint32 exclude_symbols)
 {
     g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
 
     canvas->exclude_symbols = exclude_symbols;
 }
@@ -934,6 +942,7 @@ void
 chafa_canvas_set_transparency_threshold (ChafaCanvas *canvas, gfloat alpha_threshold)
 {
     g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
     g_return_if_fail (alpha_threshold >= 0.0);
     g_return_if_fail (alpha_threshold <= 1.0);
 
@@ -945,6 +954,7 @@ void
 chafa_canvas_set_transparency_color (ChafaCanvas *canvas, guint32 alpha_color_packed_rgb)
 {
     g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
 
     canvas->alpha_color_packed_rgb = alpha_color_packed_rgb;
     update_alpha_color (canvas);
@@ -954,6 +964,8 @@ void
 chafa_canvas_set_quality (ChafaCanvas *canvas, gint quality)
 {
     g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (quality >= 1 && quality <= 9);
 
     canvas->quality = quality;
 }
@@ -962,8 +974,12 @@ void
 chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *src_pixels,
                          gint src_width, gint src_height, gint src_rowstride)
 {
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (src_pixels != NULL);
     g_return_if_fail (src_width >= CHAFA_SYMBOL_WIDTH_PIXELS);
     g_return_if_fail (src_height >= CHAFA_SYMBOL_HEIGHT_PIXELS);
+    g_return_if_fail (src_rowstride > 0);
 
     switch (canvas->color_space)
     {
@@ -986,6 +1002,9 @@ chafa_canvas_paint_argb (ChafaCanvas *canvas, guint8 *src_pixels,
 GString *
 chafa_canvas_build_gstring (ChafaCanvas *canvas)
 {
+    g_return_val_if_fail (canvas != NULL, NULL);
+    g_return_val_if_fail (canvas->refs > 0, NULL);
+
     maybe_clear (canvas);
     return build_gstring (canvas);
 }
@@ -994,6 +1013,9 @@ gchar *
 chafa_canvas_build_str (ChafaCanvas *canvas)
 {
     GString *gs;
+
+    g_return_val_if_fail (canvas != NULL, NULL);
+    g_return_val_if_fail (canvas->refs > 0, NULL);
 
     gs = build_gstring (canvas);
     return g_string_free (gs, FALSE);
