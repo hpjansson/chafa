@@ -31,7 +31,7 @@
 #define SYMBOLS_MAX 256
 
 /* Fixed point multiplier */
-#define FIXED_MULT 4096
+#define FIXED_MULT 16384
 
 struct ChafaCanvasCell
 {
@@ -977,9 +977,12 @@ chafa_canvas_paint_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);
     g_return_if_fail (src_pixels != NULL);
-    g_return_if_fail (src_width >= CHAFA_SYMBOL_WIDTH_PIXELS);
-    g_return_if_fail (src_height >= CHAFA_SYMBOL_HEIGHT_PIXELS);
+    g_return_if_fail (src_width >= 0 && src_width < 16384);
+    g_return_if_fail (src_height >= 0 && src_height < 16384);
     g_return_if_fail (src_rowstride > 0);
+
+    if (src_width == 0 || src_height == 0)
+        return;
 
     switch (canvas->color_space)
     {
