@@ -345,12 +345,12 @@ static gboolean
 parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     const gchar *p0 = value;
+    gboolean is_inc = FALSE, is_exc = FALSE;
     gboolean result = TRUE;
 
     while (*p0)
     {
         ChafaSymbolClass sc;
-        gboolean is_exc = FALSE;
         gint n;
 
         p0 += strspn (p0, " ");
@@ -360,11 +360,14 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
         p0 += strspn (p0, ",");
         if (*p0 == '-')
         {
+            is_inc = FALSE;
             is_exc = TRUE;
             p0++;
         }
         else if (*p0 == '+')
         {
+            is_inc = TRUE;
+            is_exc = FALSE;
             p0++;
         }
 
@@ -385,7 +388,13 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 
         p0 += n;
 
-        if (is_exc)
+        if (is_inc)
+        {
+            if (sc == CHAFA_SYMBOLS_NONE)
+                options.inc_sym = CHAFA_SYMBOLS_NONE;
+            options.inc_sym |= sc;
+        }
+        else if (is_exc)
         {
             if (sc == CHAFA_SYMBOLS_NONE)
                 options.exc_sym = CHAFA_SYMBOLS_NONE;
@@ -393,9 +402,9 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
         }
         else
         {
-            if (sc == CHAFA_SYMBOLS_NONE)
-                options.inc_sym = CHAFA_SYMBOLS_NONE;
-            options.inc_sym |= sc;
+            options.inc_sym = sc;
+            options.exc_sym = CHAFA_SYMBOLS_NONE;
+            is_inc = TRUE;
         }
     }
 
