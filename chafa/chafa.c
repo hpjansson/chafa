@@ -773,23 +773,27 @@ textify (guint8 *pixels,
          gint src_width, gint src_height,
          gint dest_width, gint dest_height)
 {
+    ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
     GString *gs;
 
-    canvas = chafa_canvas_new (options.mode, dest_width, dest_height);
+    config = chafa_canvas_config_new ();
 
-    chafa_canvas_set_color_space (canvas, options.color_space);
-    chafa_canvas_set_include_symbols (canvas, options.inc_sym);
-    chafa_canvas_set_exclude_symbols (canvas, options.exc_sym);
-    chafa_canvas_set_transparency_color (canvas, options.transparency_color);
+    chafa_canvas_config_set_canvas_mode (config, options.mode);
+    chafa_canvas_config_set_color_space (config, options.color_space);
+    chafa_canvas_config_set_include_symbols (config, options.inc_sym);
+    chafa_canvas_config_set_exclude_symbols (config, options.exc_sym);
+    chafa_canvas_config_set_transparency_color (config, options.transparency_color);
     if (options.transparency_threshold >= 0.0)
-        chafa_canvas_set_transparency_threshold (canvas, options.transparency_threshold);
-    chafa_canvas_set_quality (canvas, options.quality);
+        chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
+    chafa_canvas_config_set_quality (config, options.quality);
 
+    canvas = chafa_canvas_new (config, dest_width, dest_height);
     chafa_canvas_paint_rgba (canvas, pixels, src_width, src_height, src_width * 4);
     gs = chafa_canvas_build_gstring (canvas);
 
     chafa_canvas_unref (canvas);
+    chafa_canvas_config_unref (config);
     return gs;
 }
 

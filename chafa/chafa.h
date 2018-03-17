@@ -63,7 +63,7 @@ typedef enum
 }
 ChafaSymbolClass;
 
-/* Canvas */
+/* Canvas modes */
 
 typedef enum
 {
@@ -80,29 +80,47 @@ ChafaCanvasMode;
 
 #define CHAFA_CANVAS_MODE_MAX (CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE + 1)
 
-typedef struct ChafaCanvas ChafaCanvas;
+/* Canvas config */
 
-/* Library functions */
+typedef struct ChafaCanvasConfig ChafaCanvasConfig;
 
 CHAFA_AVAILABLE_IN_ALL
-ChafaCanvas *chafa_canvas_new (ChafaCanvasMode mode, gint width, gint height);
+ChafaCanvasConfig *chafa_canvas_config_new (void);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_ref (ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_unref (ChafaCanvasConfig *config);
+
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode mode);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, guint32 include_symbols);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, guint32 exclude_symbols);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloat alpha_threshold);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_transparency_color (ChafaCanvasConfig *config, guint32 alpha_color_packed_rgb);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_quality (ChafaCanvasConfig *config, gint quality);
+
+/* Canvas */
+
+typedef struct ChafaCanvas ChafaCanvas;
+
+CHAFA_AVAILABLE_IN_ALL
+ChafaCanvas *chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height);
+CHAFA_AVAILABLE_IN_ALL
+ChafaCanvas *chafa_canvas_new_similar (ChafaCanvas *orig);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_ref (ChafaCanvas *canvas);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_unref (ChafaCanvas *canvas);
 
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_color_space (ChafaCanvas *canvas, ChafaColorSpace color_space);
-CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_include_symbols (ChafaCanvas *canvas, guint32 include_symbols);
-CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_exclude_symbols (ChafaCanvas *canvas, guint32 exclude_symbols);
-CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_transparency_threshold (ChafaCanvas *canvas, gfloat alpha_threshold);
-CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_transparency_color (ChafaCanvas *canvas, guint32 alpha_color_packed_rgb);
-CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_quality (ChafaCanvas *canvas, gint quality);
+const ChafaCanvasConfig *chafa_canvas_peek_config (ChafaCanvas *canvas);
 
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_paint_rgba (ChafaCanvas *canvas, guint8 *src_pixels,

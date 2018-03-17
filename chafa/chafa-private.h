@@ -63,6 +63,22 @@ typedef struct
 }
 ChafaSymbol;
 
+/* Canvas config */
+
+struct ChafaCanvasConfig
+{
+    gint refs;
+
+    ChafaCanvasMode canvas_mode;
+    ChafaColorSpace color_space;
+    guint32 include_symbols;
+    guint32 exclude_symbols;
+    guint32 alpha_color_packed_rgb;
+    ChafaColor alpha_color;
+    gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
+    gint quality;
+};
+
 /* Canvas */
 
 typedef struct ChafaCanvasCell ChafaCanvasCell;
@@ -74,6 +90,10 @@ extern ChafaSymbol *chafa_fill_symbols;
 
 void chafa_init_palette (void);
 void chafa_init_symbols (void);
+
+void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
+void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
+void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasConfig *src);
 
 guint32 chafa_pack_color (const ChafaColor *color);
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);

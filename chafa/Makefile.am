@@ -9,6 +9,7 @@ libchafa_la_LIBADD = $(GLIB_LIBS)
 
 libchafa_la_SOURCES = \
 	chafa-canvas.c \
+	chafa-canvas-config.c \
 	chafa-colors.c \
 	chafa-private.h \
 	chafa-symbols.c
