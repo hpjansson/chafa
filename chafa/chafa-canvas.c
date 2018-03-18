@@ -52,6 +52,7 @@ struct ChafaCanvas
     ChafaCanvasCell *cells;
     guint have_alpha : 1;
     guint needs_clear : 1;
+    ChafaColor fg_color;
     ChafaColor bg_color;
 
     ChafaCanvasConfig config;
@@ -264,15 +265,10 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
              || (chafa_symbols [i].sc & canvas->config.exclude_symbols)))
             continue;
 
-        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK)
+        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
         {
-            eval [i].fg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->config.color_space);
-            eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, canvas->config.color_space);
-        }
-        else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE)
-        {
-            eval [i].fg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, canvas->config.color_space);
-            eval [i].bg.col = *chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, canvas->config.color_space);
+            eval [i].fg.col = canvas->fg_color;
+            eval [i].bg.col = canvas->bg_color;
         }
         else
         {
@@ -551,23 +547,10 @@ update_cells (ChafaCanvas *canvas)
                     cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
                 }
             }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK)
+            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
             {
-                cell->fg_color = chafa_pick_color_2 (&fg_col, canvas->config.color_space);
-                cell->bg_color = chafa_pick_color_2 (&bg_col, canvas->config.color_space);
-            }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE)
-            {
-                cell->fg_color = chafa_pick_color_2 (&fg_col, canvas->config.color_space);
-                cell->bg_color = chafa_pick_color_2 (&bg_col, canvas->config.color_space);
-
-                /* Invert */
-
-                cell->fg_color = (cell->fg_color == CHAFA_PALETTE_INDEX_BLACK)
-                  ? CHAFA_PALETTE_INDEX_WHITE : CHAFA_PALETTE_INDEX_BLACK;
-
-                cell->bg_color = (cell->bg_color == CHAFA_PALETTE_INDEX_BLACK)
-                  ? CHAFA_PALETTE_INDEX_WHITE : CHAFA_PALETTE_INDEX_BLACK;
+                cell->fg_color = chafa_pick_color_fgbg (&fg_col, canvas->config.color_space, &canvas->fg_color, &canvas->bg_color);
+                cell->bg_color = chafa_pick_color_fgbg (&bg_col, canvas->config.color_space, &canvas->fg_color, &canvas->bg_color);
             }
             else
             {
@@ -593,15 +576,24 @@ multiply_alpha (ChafaCanvas *canvas)
 }
 
 static void
-update_bg_color (ChafaCanvas *canvas)
+update_display_colors (ChafaCanvas *canvas)
 {
-    ChafaColor col;
+    ChafaColor fg_col;
+    ChafaColor bg_col;
 
-    chafa_unpack_color (canvas->config.bg_color_packed_rgb, &col);
+    chafa_unpack_color (canvas->config.fg_color_packed_rgb, &fg_col);
+    chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_col);
+
     if (canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D)
-        chafa_color_rgb_to_din99d (&col, &canvas->bg_color);
+    {
+        chafa_color_rgb_to_din99d (&fg_col, &canvas->fg_color);
+        chafa_color_rgb_to_din99d (&bg_col, &canvas->bg_color);
+    }
     else
-        canvas->bg_color = col;
+    {
+        canvas->fg_color = fg_col;
+        canvas->bg_color = bg_col;
+    }
 }
 
 static void
@@ -762,15 +754,13 @@ build_gstring (ChafaCanvas *canvas)
                                             (wint_t) cell->c);
                 }
             }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK
-                     || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE)
+            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
             {
                 g_string_append_printf (gs, "\x1b[%dm%lc",
-                                        cell->bg_color == CHAFA_PALETTE_INDEX_WHITE ? 7 : 0,
+                                        cell->bg_color == CHAFA_PALETTE_INDEX_FG ? 7 : 0,
                                         cell->fg_color == cell->bg_color ? ' ' : (wint_t) cell->c);
             }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK
-                     || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE)
+            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
             {
                 g_string_append_printf (gs, "%lc", (wint_t) cell->c);
             }
@@ -874,7 +864,7 @@ chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height)
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
         canvas->config.color_space = CHAFA_COLOR_SPACE_RGB;
 
-    update_bg_color (canvas);
+    update_display_colors (canvas);
 
     return canvas;
 }

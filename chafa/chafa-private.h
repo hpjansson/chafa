@@ -26,9 +26,9 @@ G_BEGIN_DECLS
 
 /* Colors and color spaces */
 
-#define CHAFA_PALETTE_INDEX_BLACK 0
-#define CHAFA_PALETTE_INDEX_WHITE 15
 #define CHAFA_PALETTE_INDEX_TRANSPARENT 256
+#define CHAFA_PALETTE_INDEX_FG 257
+#define CHAFA_PALETTE_INDEX_BG 258
 
 /* Color space agnostic, using fixed point */
 typedef struct
@@ -127,8 +127,9 @@ gint chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space)
 /* Takes values 0-255 for r, g, b and returns a universal palette index 0-15 */
 gint chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space);
 
-/* Takes values 0-255 for r, g, b and returns 0 for black and 1 for white */
-gint chafa_pick_color_2 (const ChafaColor *color, ChafaColorSpace color_space);
+/* Takes values 0-255 for r, g, b and returns CHAFA_PALETTE_INDEX_FG or CHAFA_PALETTE_INDEX_BG */
+gint chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
+                            const ChafaColor *fg_color, const ChafaColor *bg_color);
 
 const ChafaColor *chafa_get_palette_color_256 (guint index, ChafaColorSpace color_space);
 

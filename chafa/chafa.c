@@ -221,9 +221,9 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     gboolean result = TRUE;
 
     if (!g_ascii_strcasecmp (value, "none"))
-	options.mode = CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK;
+        options.mode = CHAFA_CANVAS_MODE_FGBG;
     else if (!g_ascii_strcasecmp (value, "2"))
-	options.mode = CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK;
+        options.mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
     else if (!g_ascii_strcasecmp (value, "16"))
 	options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
     else if (!g_ascii_strcasecmp (value, "240"))
@@ -714,25 +714,14 @@ parse_options (int *argc, char **argv [])
         temp_color = options.bg_color;
         options.bg_color = options.fg_color;
         options.fg_color = temp_color;
-
-        if (options.mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK)
-        {
-            options.mode = CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE;
-        }
-        else if (options.mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK)
-        {
-            options.mode = CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE;
-        }
     }
 
     if (!options.preprocess_set)
     {
         options.preprocess = FALSE;
 
-	if (options.mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK
-	    || options.mode == CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE
-	    || options.mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK
-	    || options.mode == CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE
+	if (options.mode == CHAFA_CANVAS_MODE_FGBG
+	    || options.mode == CHAFA_CANVAS_MODE_FGBG_BGFG
 	    || options.mode == CHAFA_CANVAS_MODE_INDEXED_16)
         {
             options.preprocess = TRUE;

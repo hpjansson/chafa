@@ -25,7 +25,7 @@
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
-#define N_TERM_COLORS 257
+#define N_TERM_COLORS 259
 
 /* 256-color values */
 static guint32 term_colors_256 [N_TERM_COLORS] =
@@ -78,7 +78,9 @@ static guint32 term_colors_256 [N_TERM_COLORS] =
     0x585858, 0x626262, 0x6c6c6c, 0x767676, 0x808080, 0x8a8a8a, 0x949494, 0x9e9e9e,
     0xa8a8a8, 0xb2b2b2, 0xbcbcbc, 0xc6c6c6, 0xd0d0d0, 0xdadada, 0xe4e4e4, 0xeeeeee,
 
-    0x808080  /* Transparent */
+    0x808080,  /* Transparent */
+    0xffffff,  /* Foreground */
+    0x000000,  /* Background */
 };
 
 static ChafaPaletteColor palette_256 [N_TERM_COLORS];
@@ -337,7 +339,8 @@ chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space)
     gint best_index = 0;
     gint i;
 
-    for (i = 0; i < N_TERM_COLORS; i++)
+    /* All colors including transparent, but not bg or fg */
+    for (i = 0; i < 257; i++)
     {
         const ChafaColor *palette_color;
         gint error;
@@ -362,7 +365,8 @@ chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space)
     gint best_index = 0;
     gint i;
 
-    for (i = 16; i < N_TERM_COLORS; i++)
+    /* Color cube and transparent, but not lower 16, bg or fg */
+    for (i = 16; i < 257; i++)
     {
         const ChafaColor *palette_color;
         gint error;
@@ -416,20 +420,17 @@ chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space)
 }
 
 gint
-chafa_pick_color_2 (const ChafaColor *color, ChafaColorSpace color_space)
+chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
+                       const ChafaColor *fg_color, const ChafaColor *bg_color)
 {
     gint best_error;
-    gint best_index = CHAFA_PALETTE_INDEX_BLACK;
-    const ChafaColor *palette_color;
+    gint best_index = CHAFA_PALETTE_INDEX_FG;
     gint error;
 
-    palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_BLACK, color_space);
-    best_error = chafa_color_diff_slow (color, palette_color, color_space);
-
-    palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_WHITE, color_space);
-    error = chafa_color_diff_slow (color, palette_color, color_space);
+    best_error = chafa_color_diff_slow (color, fg_color, color_space);
+    error = chafa_color_diff_slow (color, bg_color, color_space);
     if (error < best_error)
-        best_index = CHAFA_PALETTE_INDEX_WHITE;
+        best_index = CHAFA_PALETTE_INDEX_BG;
 
     return best_index;
 }
