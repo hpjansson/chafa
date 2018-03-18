@@ -81,7 +81,7 @@ static const ChafaSymbol symbol_defs [] =
         0, 0, FALSE
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HALF,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_VHALF,
         0x2584,
         "        "
         "        "
@@ -186,7 +186,7 @@ static const ChafaSymbol symbol_defs [] =
         0, 0, FALSE
     },
     {
-        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HALF,
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_HHALF,
         0x258c,
         "XXXX    "
         "XXXX    "

@@ -59,9 +59,12 @@ typedef enum
     CHAFA_SYMBOL_CLASS_DIAGONAL = (1 <<  5),
     CHAFA_SYMBOL_CLASS_DOT      = (1 <<  6),
     CHAFA_SYMBOL_CLASS_QUAD     = (1 <<  7),
-    CHAFA_SYMBOL_CLASS_HALF     = (1 <<  8),
+    CHAFA_SYMBOL_CLASS_HHALF    = (1 <<  8),
+    CHAFA_SYMBOL_CLASS_VHALF    = (1 <<  9),
 }
 ChafaSymbolClass;
+
+#define CHAFA_SYMBOL_CLASS_HALF ((CHAFA_SYMBOL_CLASS_HHALF) | (CHAFA_SYMBOL_CLASS_VHALF))
 
 /* Canvas modes */
 

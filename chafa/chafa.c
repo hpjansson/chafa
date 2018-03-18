@@ -197,8 +197,9 @@ print_summary (void)
     "                     transparency will be used [0.0 - 1.0].\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
-    "  border, diagonal, dot]. Use \"none\" to clear the include/exclude lists.\n"
-    "  Some symbols belong to multiple classes, e.g. diagonals are also borders.\n\n"
+    "  border, diagonal, dot, quad, half, hhalf, vhalf]. Use \"none\" to clear the\n"
+    "  include/exclude lists. Some symbols belong to multiple classes, e.g. diagonals\n"
+    "  are also borders.\n\n"
 
     "Examples:\n"
 
@@ -324,6 +325,8 @@ parse_symbol_class (const gchar *name, gint len, ChafaSymbolClass *sc_out, GErro
         { "dot", CHAFA_SYMBOL_CLASS_DOT },
         { "quad", CHAFA_SYMBOL_CLASS_QUAD },
         { "half", CHAFA_SYMBOL_CLASS_HALF },
+        { "hhalf", CHAFA_SYMBOL_CLASS_HHALF },
+        { "vhalf", CHAFA_SYMBOL_CLASS_VHALF },
         { NULL, 0 }
     };
     gint i;
