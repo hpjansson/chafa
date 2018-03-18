@@ -89,25 +89,25 @@ static gboolean palette_initialized;
 void
 chafa_init_palette (void)
 {
-  gint i;
+    gint i;
 
-  if (palette_initialized)
-    return;
+    if (palette_initialized)
+        return;
 
-  for (i = 0; i < N_TERM_COLORS; i++)
-  {
-    chafa_unpack_color (term_colors_256 [i], &palette_256 [i].col [0]);
-    chafa_color_rgb_to_din99d (&palette_256 [i].col [0], &palette_256 [i].col [1]);
+    for (i = 0; i < N_TERM_COLORS; i++)
+    {
+        chafa_unpack_color (term_colors_256 [i], &palette_256 [i].col [0]);
+        chafa_color_rgb_to_din99d (&palette_256 [i].col [0], &palette_256 [i].col [1]);
 
-    palette_256 [i].col [0].ch [3] = 0xff;  /* Fully opaque */
-    palette_256 [i].col [1].ch [3] = 0xff;  /* Fully opaque */
-  }
+        palette_256 [i].col [0].ch [3] = 0xff;  /* Fully opaque */
+        palette_256 [i].col [1].ch [3] = 0xff;  /* Fully opaque */
+    }
 
-  /* Transparent color */
-  palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [0].ch [3] = 0x00;
-  palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [1].ch [3] = 0x00;
+    /* Transparent color */
+    palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [0].ch [3] = 0x00;
+    palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [1].ch [3] = 0x00;
 
-  palette_initialized = TRUE;
+    palette_initialized = TRUE;
 }
 
 const ChafaColor *

@@ -33,13 +33,13 @@ G_BEGIN_DECLS
 /* Color space agnostic, using fixed point */
 typedef struct
 {
-  gint16 ch [4];
+    gint16 ch [4];
 }
 ChafaColor;
 
 typedef struct
 {
-  ChafaColor col;
+    ChafaColor col;
 }
 ChafaPixel;
 

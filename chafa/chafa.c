@@ -110,8 +110,8 @@ parse_color (const gchar *str, guint32 *col_out, GError **error)
     len = strspn (str, "#abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
     if (len < 1)
     {
-	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-		     "Unrecognized color '%s'.", str);
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unrecognized color '%s'.", str);
         goto out;
     }
 
@@ -125,8 +125,8 @@ parse_color (const gchar *str, guint32 *col_out, GError **error)
     len = strspn (p0, "0123456789abcdef");
     if (len != (gint) strlen (p0) || len < 6)
     {
-	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-		     "Unrecognized color '%s'.", str);
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unrecognized color '%s'.", str);
         goto out;
     }
 
@@ -225,18 +225,18 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else if (!g_ascii_strcasecmp (value, "2"))
         options.mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
     else if (!g_ascii_strcasecmp (value, "16"))
-	options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
+        options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
     else if (!g_ascii_strcasecmp (value, "240"))
-	options.mode = CHAFA_CANVAS_MODE_INDEXED_240;
+        options.mode = CHAFA_CANVAS_MODE_INDEXED_240;
     else if (!g_ascii_strcasecmp (value, "256"))
-	options.mode = CHAFA_CANVAS_MODE_INDEXED_256;
+        options.mode = CHAFA_CANVAS_MODE_INDEXED_256;
     else if (!g_ascii_strcasecmp (value, "full") || !g_ascii_strcasecmp (value, "rgb"))
-	options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
+        options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     else
     {
-	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-		     "Colors must be one of [none, 2, 16, 240, 256, full].");
-	result = FALSE;
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Colors must be one of [none, 2, 16, 240, 256, full].");
+        result = FALSE;
     }
 
     return result;
@@ -429,10 +429,10 @@ parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
 
         n = sscanf (value + o + 1, "%d%n", &height, &o2);
         if (n == 1 && value [o + o2 + 1] != '\0')
-	{
+        {
             width = height = -1;
             goto out;
-	}
+        }
     }
 
 out:
@@ -461,20 +461,20 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
     gboolean result = TRUE;
 
     if (!g_ascii_strcasecmp (value, "on")
-	|| !g_ascii_strcasecmp (value, "yes"))
+        || !g_ascii_strcasecmp (value, "yes"))
     {
         options.preprocess = TRUE;
     }
     else if (!g_ascii_strcasecmp (value, "off")
-	     || !g_ascii_strcasecmp (value, "no"))
+             || !g_ascii_strcasecmp (value, "no"))
     {
         options.preprocess = FALSE;
     }
     else
     {
-	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-		     "Preprocessing must be one of [on, off].");
-	result = FALSE;
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Preprocessing must be one of [on, off].");
+        result = FALSE;
     }
 
     options.preprocess_set = TRUE;
@@ -537,11 +537,11 @@ get_tty_size (void)
         return;
 
     if (w.ws_col > 0)
-	options.width = w.ws_col;
+        options.width = w.ws_col;
 
     /* We subtract one line for the user's prompt */
     if (w.ws_row > 2)
-	options.height = w.ws_row - 1;
+        options.height = w.ws_row - 1;
 
     /* If .ws_xpixel and .ws_ypixel were filled out, we could in theory
      * calculate aspect information for the font used. Unfortunately,
@@ -720,9 +720,9 @@ parse_options (int *argc, char **argv [])
     {
         options.preprocess = FALSE;
 
-	if (options.mode == CHAFA_CANVAS_MODE_FGBG
-	    || options.mode == CHAFA_CANVAS_MODE_FGBG_BGFG
-	    || options.mode == CHAFA_CANVAS_MODE_INDEXED_16)
+        if (options.mode == CHAFA_CANVAS_MODE_FGBG
+            || options.mode == CHAFA_CANVAS_MODE_FGBG_BGFG
+            || options.mode == CHAFA_CANVAS_MODE_INDEXED_16)
         {
             options.preprocess = TRUE;
         }
@@ -875,8 +875,8 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
 
     if (options.preprocess)
     {
-	MagickModulateImage (wand, 100, 150, 100);
-	MagickBrightnessContrastImage (wand, 0, 40);
+        MagickModulateImage (wand, 100, 150, 100);
+        MagickBrightnessContrastImage (wand, 0, 40);
     }
 
     if (dest_width_out)
