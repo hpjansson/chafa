@@ -52,7 +52,7 @@ struct ChafaCanvas
     ChafaCanvasCell *cells;
     guint have_alpha : 1;
     guint needs_clear : 1;
-    ChafaColor alpha_color;
+    ChafaColor bg_color;
 
     ChafaCanvasConfig config;
 };
@@ -588,20 +588,20 @@ multiply_alpha (ChafaCanvas *canvas)
 
     for ( ; p0 < p1; p0++)
     {
-        chafa_color_mix (&p0->col, &canvas->config.alpha_color, &p0->col, 1000 - ((p0->col.ch [3] * 1000) / 255));
+        chafa_color_mix (&p0->col, &canvas->bg_color, &p0->col, 1000 - ((p0->col.ch [3] * 1000) / 255));
     }
 }
 
 static void
-update_alpha_color (ChafaCanvas *canvas)
+update_bg_color (ChafaCanvas *canvas)
 {
     ChafaColor col;
 
-    chafa_unpack_color (canvas->config.alpha_color_packed_rgb, &col);
+    chafa_unpack_color (canvas->config.bg_color_packed_rgb, &col);
     if (canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D)
-        chafa_color_rgb_to_din99d (&col, &canvas->alpha_color);
+        chafa_color_rgb_to_din99d (&col, &canvas->bg_color);
     else
-        canvas->alpha_color = col;
+        canvas->bg_color = col;
 }
 
 static void
@@ -874,7 +874,7 @@ chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height)
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
         canvas->config.color_space = CHAFA_COLOR_SPACE_RGB;
 
-    update_alpha_color (canvas);
+    update_bg_color (canvas);
 
     return canvas;
 }

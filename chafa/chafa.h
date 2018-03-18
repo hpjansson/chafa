@@ -102,7 +102,7 @@ void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, guint32
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloat alpha_threshold);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_transparency_color (ChafaCanvasConfig *config, guint32 alpha_color_packed_rgb);
+void chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_packed_rgb);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_quality (ChafaCanvasConfig *config, gint quality);
 

@@ -52,8 +52,8 @@ typedef struct
     gint width, height;
     gdouble font_ratio;
     gint quality;
-    guint32 transparency_color;
-    gboolean transparency_color_set;
+    guint32 bg_color;
+    gboolean bg_color_set;
     gdouble transparency_threshold;
 }
 GlobalOptions;
@@ -169,6 +169,7 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
+    "      --bg COLOR     Background color of display [black, white].\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors       Set output color mode; one of [none, 2, 16, 240, 256,\n"
     "                     full]. Defaults to full (24-bit).\n"
@@ -189,9 +190,7 @@ print_summary (void)
     "      --symbols ...  Set output symbols to use based on an inclusion and an\n"
     "                     exclusion list. Each symbol identifier is preceded by an\n"
     "                     optional + to include, or - to exclude.\n"
-    "  -t, --transparency-color COLOR  Color to substitute for transparency [black,\n"
-    "                     white].\n"
-    "      --transparency-threshold THRESHOLD  Threshold above which full\n"
+    "  -t  --transparency-threshold THRESHOLD  Threshold above which full\n"
     "                     transparency will be used [0.0 - 1.0].\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
@@ -480,7 +479,7 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
 }
 
 static gboolean
-parse_transparency_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+parse_bg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
     guint32 col;
@@ -489,24 +488,24 @@ parse_transparency_color_arg (G_GNUC_UNUSED const gchar *option_name, const gcha
 
     if (!g_ascii_strcasecmp (value, "white"))
     {
-        options.transparency_color = 0xffffff;
+        options.bg_color = 0xffffff;
     }
     else if (!g_ascii_strcasecmp (value, "black"))
     {
-        options.transparency_color = 0x000000;
+        options.bg_color = 0x000000;
     }
     else if (!parse_color (value, &col, NULL))
     {
-	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-		     "Unrecognized transparency color '%s'.", value);
-	result = FALSE;
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unrecognized background color '%s'.", value);
+        result = FALSE;
     }
     else
     {
-        options.transparency_color = col;
+        options.bg_color = col;
     }
 
-    options.transparency_color_set = TRUE;
+    options.bg_color_set = TRUE;
     return result;
 }
 
@@ -618,6 +617,7 @@ parse_options (int *argc, char **argv [])
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
+        { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
@@ -628,8 +628,7 @@ parse_options (int *argc, char **argv [])
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
-        { "transparency-color", 't', 0, G_OPTION_ARG_CALLBACK, parse_transparency_color_arg, "Transparency color", NULL },
-        { "transparency-threshold", '\0', 0, G_OPTION_ARG_DOUBLE, &options.transparency_threshold, "Transparency threshold", NULL },
+        { "transparency-threshold", 't', 0, G_OPTION_ARG_DOUBLE, &options.transparency_threshold, "Transparency threshold", NULL },
         { NULL }
     };
 
@@ -651,7 +650,7 @@ parse_options (int *argc, char **argv [])
     options.height = 25;
     options.font_ratio = 1.0 / 2.0;
     options.quality = 5;
-    options.transparency_color = 0x00000000;
+    options.bg_color = 0x00000000;
     options.transparency_threshold = -1.0;
     get_tty_size ();
 
@@ -692,14 +691,14 @@ parse_options (int *argc, char **argv [])
 	if (options.mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK)
         {
 	    options.mode = CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE;
-            if (!options.transparency_color_set)
-                options.transparency_color = 0x00ffffff;
+            if (!options.bg_color_set)
+                options.bg_color = 0x00ffffff;
         }
 	else if (options.mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK)
         {
 	    options.mode = CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE;
-            if (!options.transparency_color_set)
-                options.transparency_color = 0x00ffffff;
+            if (!options.bg_color_set)
+                options.bg_color = 0x00ffffff;
         }
     }
 
@@ -783,7 +782,7 @@ textify (guint8 *pixels,
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_include_symbols (config, options.inc_sym);
     chafa_canvas_config_set_exclude_symbols (config, options.exc_sym);
-    chafa_canvas_config_set_transparency_color (config, options.transparency_color);
+    chafa_canvas_config_set_bg_color (config, options.bg_color);
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
     chafa_canvas_config_set_quality (config, options.quality);

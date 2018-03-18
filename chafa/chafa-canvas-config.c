@@ -38,7 +38,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
     canvas_config->include_symbols = CHAFA_SYMBOLS_ALL;
     canvas_config->exclude_symbols = CHAFA_SYMBOLS_NONE;
-    canvas_config->alpha_color_packed_rgb = 0x00000000;
+    canvas_config->bg_color_packed_rgb = 0x00000000;
     canvas_config->alpha_threshold = 127;
     canvas_config->quality = 5;
 }
@@ -143,12 +143,12 @@ chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloa
 }
 
 void
-chafa_canvas_config_set_transparency_color (ChafaCanvasConfig *config, guint32 alpha_color_packed_rgb)
+chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_packed_rgb)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
 
-    config->alpha_color_packed_rgb = alpha_color_packed_rgb;
+    config->bg_color_packed_rgb = bg_color_packed_rgb;
 }
 
 void
