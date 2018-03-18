@@ -52,6 +52,8 @@ typedef struct
     gint width, height;
     gdouble font_ratio;
     gint quality;
+    guint32 fg_color;
+    gboolean fg_color_set;
     guint32 bg_color;
     gboolean bg_color_set;
     gdouble transparency_threshold;
@@ -175,10 +177,11 @@ print_summary (void)
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-space  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
+    "      --fg COLOR     Foreground color of display [black, white].\n"
     "      --font-ratio W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
     "  -i, --invert       Invert video. For display with bright backgrounds in\n"
-    "                     color modes 2 and none.\n"
+    "                     color modes 2 and none. Swaps --fg and --bg.\n"
     "  -p, --preprocess   Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
     "  -q, --quality Q    Desired quality [1-9]. 1 is the fastest, 9 is the most\n"
@@ -479,34 +482,50 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
 }
 
 static gboolean
-parse_bg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+parse_color_str (const gchar *value, guint32 *col_out, const gchar *error_message, GError **error)
 {
+    guint32 col = 0x000000;
     gboolean result = TRUE;
-    guint32 col;
 
     /* TODO: It would be nice to support rgb.txt here */
 
     if (!g_ascii_strcasecmp (value, "white"))
     {
-        options.bg_color = 0xffffff;
+        col = 0xffffff;
     }
     else if (!g_ascii_strcasecmp (value, "black"))
     {
-        options.bg_color = 0x000000;
+        col = 0x000000;
     }
     else if (!parse_color (value, &col, NULL))
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Unrecognized background color '%s'.", value);
+                     error_message, value);
         result = FALSE;
     }
     else
     {
-        options.bg_color = col;
+        col = col;
     }
 
-    options.bg_color_set = TRUE;
+    if (result)
+        *col_out = col;
+
     return result;
+}
+
+static gboolean
+parse_fg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    options.fg_color_set = parse_color_str (value, &options.fg_color, "Unrecognized foreground color '%s'.", error);
+    return options.fg_color_set;
+}
+
+static gboolean
+parse_bg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    options.bg_color_set = parse_color_str (value, &options.bg_color, "Unrecognized background color '%s'.", error);
+    return options.bg_color_set;
 }
 
 static void
@@ -621,6 +640,7 @@ parse_options (int *argc, char **argv [])
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
+        { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "invert",      'i',  0, G_OPTION_ARG_NONE,     &options.invert,       "Inverse video (for black on white terminals)", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
@@ -650,7 +670,8 @@ parse_options (int *argc, char **argv [])
     options.height = 25;
     options.font_ratio = 1.0 / 2.0;
     options.quality = 5;
-    options.bg_color = 0x00000000;
+    options.fg_color = 0xffffff;
+    options.bg_color = 0x000000;
     options.transparency_threshold = -1.0;
     get_tty_size ();
 
@@ -688,17 +709,19 @@ parse_options (int *argc, char **argv [])
 
     if (options.invert)
     {
-	if (options.mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK)
+        guint32 temp_color;
+
+        temp_color = options.bg_color;
+        options.bg_color = options.fg_color;
+        options.fg_color = temp_color;
+
+        if (options.mode == CHAFA_CANVAS_MODE_SHAPES_WHITE_ON_BLACK)
         {
-	    options.mode = CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE;
-            if (!options.bg_color_set)
-                options.bg_color = 0x00ffffff;
+            options.mode = CHAFA_CANVAS_MODE_SHAPES_BLACK_ON_WHITE;
         }
-	else if (options.mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK)
+        else if (options.mode == CHAFA_CANVAS_MODE_INDEXED_WHITE_ON_BLACK)
         {
-	    options.mode = CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE;
-            if (!options.bg_color_set)
-                options.bg_color = 0x00ffffff;
+            options.mode = CHAFA_CANVAS_MODE_INDEXED_BLACK_ON_WHITE;
         }
     }
 
@@ -782,6 +805,7 @@ textify (guint8 *pixels,
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_include_symbols (config, options.inc_sym);
     chafa_canvas_config_set_exclude_symbols (config, options.exc_sym);
+    chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);

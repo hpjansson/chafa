@@ -38,7 +38,8 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
     canvas_config->include_symbols = CHAFA_SYMBOLS_ALL;
     canvas_config->exclude_symbols = CHAFA_SYMBOLS_NONE;
-    canvas_config->bg_color_packed_rgb = 0x00000000;
+    canvas_config->fg_color_packed_rgb = 0xffffff;
+    canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
     canvas_config->quality = 5;
 }
@@ -140,6 +141,15 @@ chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloa
 
     /* Invert the scale; internally it's more like an opacity threshold */
     config->alpha_threshold = 256.0 * (1.0 - alpha_threshold);
+}
+
+void
+chafa_canvas_config_set_fg_color (ChafaCanvasConfig *config, guint32 fg_color_packed_rgb)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    config->fg_color_packed_rgb = fg_color_packed_rgb;
 }
 
 void
