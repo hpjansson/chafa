@@ -180,7 +180,7 @@ print_summary (void)
     "      --fg COLOR     Foreground color of display [black, white].\n"
     "      --font-ratio W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
-    "  -i, --invert       Invert video. For display with bright backgrounds in\n"
+    "      --invert       Invert video. For display with bright backgrounds in\n"
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
     "  -p, --preprocess   Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
@@ -642,7 +642,7 @@ parse_options (int *argc, char **argv [])
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
-        { "invert",      'i',  0, G_OPTION_ARG_NONE,     &options.invert,       "Inverse video (for black on white terminals)", NULL },
+        { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Inverse video (for black on white terminals)", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "quality",     'q',  0, G_OPTION_ARG_INT,      &options.quality,      "Quality", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
