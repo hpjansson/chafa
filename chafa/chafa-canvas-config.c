@@ -94,7 +94,7 @@ chafa_canvas_config_unref (ChafaCanvasConfig *canvas_config)
 }
 
 ChafaCanvasMode
-chafa_canvas_config_get_canvas_mode (ChafaCanvasConfig *config)
+chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, CHAFA_CANVAS_MODE_TRUECOLOR);
     g_return_val_if_fail (config->refs > 0, CHAFA_CANVAS_MODE_TRUECOLOR);
@@ -113,7 +113,7 @@ chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode 
 }
 
 ChafaColorSpace
-chafa_canvas_config_get_color_space (ChafaCanvasConfig *config)
+chafa_canvas_config_get_color_space (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, CHAFA_COLOR_SPACE_RGB);
     g_return_val_if_fail (config->refs > 0, CHAFA_COLOR_SPACE_RGB);
@@ -132,7 +132,7 @@ chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace 
 }
 
 ChafaSymbolClass
-chafa_canvas_config_get_include_symbols (ChafaCanvasConfig *config)
+chafa_canvas_config_get_include_symbols (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, CHAFA_SYMBOLS_NONE);
     g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOLS_NONE);
@@ -150,7 +150,7 @@ chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolC
 }
 
 ChafaSymbolClass
-chafa_canvas_config_get_exclude_symbols (ChafaCanvasConfig *config)
+chafa_canvas_config_get_exclude_symbols (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, CHAFA_SYMBOLS_NONE);
     g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOLS_NONE);
@@ -168,7 +168,7 @@ chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolC
 }
 
 gfloat
-chafa_canvas_config_get_transparency_threshold (ChafaCanvasConfig *config)
+chafa_canvas_config_get_transparency_threshold (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, 0.0);
     g_return_val_if_fail (config->refs > 0, 0.0);
@@ -189,7 +189,7 @@ chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloa
 }
 
 guint32
-chafa_canvas_config_get_fg_color (ChafaCanvasConfig *config)
+chafa_canvas_config_get_fg_color (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, 0);
     g_return_val_if_fail (config->refs > 0, 0);
@@ -207,7 +207,7 @@ chafa_canvas_config_set_fg_color (ChafaCanvasConfig *config, guint32 fg_color_pa
 }
 
 guint32
-chafa_canvas_config_get_bg_color (ChafaCanvasConfig *config)
+chafa_canvas_config_get_bg_color (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, 0);
     g_return_val_if_fail (config->refs > 0, 0);
@@ -225,7 +225,7 @@ chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_pa
 }
 
 guint32
-chafa_canvas_config_get_quality (ChafaCanvasConfig *config)
+chafa_canvas_config_get_quality (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, 1);
     g_return_val_if_fail (config->refs > 0, 1);
