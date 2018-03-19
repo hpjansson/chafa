@@ -207,7 +207,7 @@ print_summary (void)
     "    # Generate 16-color output with perceptual color picking and avoid using\n"
     "    # dot and stipple symbols.\n\n"
 
-    "  chafa -c none --symbols none+block+border-solid in.png\n"
+    "  chafa -c none --symbols block+border-solid in.png\n"
     "    # Generate uncolored output using block and border symbols, but avoid the\n"
     "    # solid block symbol.\n";
 
