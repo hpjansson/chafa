@@ -96,9 +96,9 @@ void chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvas
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, guint32 include_symbols);
+void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolClass include_symbols);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, guint32 exclude_symbols);
+void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolClass exclude_symbols);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloat alpha_threshold);
 CHAFA_AVAILABLE_IN_ALL

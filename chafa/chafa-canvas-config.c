@@ -114,7 +114,7 @@ chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace 
 }
 
 void
-chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, guint32 include_symbols)
+chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolClass include_symbols)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
@@ -123,7 +123,7 @@ chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, guint32 incl
 }
 
 void
-chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, guint32 exclude_symbols)
+chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolClass exclude_symbols)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);

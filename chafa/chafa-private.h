@@ -71,8 +71,8 @@ struct ChafaCanvasConfig
 
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
-    guint32 include_symbols;
-    guint32 exclude_symbols;
+    ChafaSymbolClass include_symbols;
+    ChafaSymbolClass exclude_symbols;
     guint32 fg_color_packed_rgb;
     guint32 bg_color_packed_rgb;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
