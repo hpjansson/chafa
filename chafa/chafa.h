@@ -92,19 +92,42 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_unref (ChafaCanvasConfig *config);
 
 CHAFA_AVAILABLE_IN_ALL
+ChafaCanvasMode chafa_canvas_config_get_canvas_mode (ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode mode);
+
+CHAFA_AVAILABLE_IN_ALL
+ChafaColorSpace chafa_canvas_config_get_color_space (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space);
+
+CHAFA_AVAILABLE_IN_ALL
+ChafaSymbolClass chafa_canvas_config_get_include_symbols (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolClass include_symbols);
+
+CHAFA_AVAILABLE_IN_ALL
+ChafaSymbolClass chafa_canvas_config_get_exclude_symbols (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolClass exclude_symbols);
+
+CHAFA_AVAILABLE_IN_ALL
+gfloat chafa_canvas_config_get_transparency_threshold (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloat alpha_threshold);
+
+CHAFA_AVAILABLE_IN_ALL
+guint32 chafa_canvas_config_get_fg_color (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_fg_color (ChafaCanvasConfig *config, guint32 fg_color_packed_rgb);
+
+CHAFA_AVAILABLE_IN_ALL
+guint32 chafa_canvas_config_get_bg_color (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_packed_rgb);
+
+CHAFA_AVAILABLE_IN_ALL
+guint32 chafa_canvas_config_get_quality (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_quality (ChafaCanvasConfig *config, gint quality);
 
