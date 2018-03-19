@@ -42,6 +42,19 @@ static const ChafaSymbol symbol_defs [] =
         0, 0, FALSE
     },
     {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_VHALF | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x2580,
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "        "
+        "        "
+        "        "
+        "        ",
+        0, 0, FALSE
+    },
+    {
         CHAFA_SYMBOL_CLASS_BLOCK,
         0x2581,
         "        "
@@ -238,6 +251,45 @@ static const ChafaSymbol symbol_defs [] =
         0, 0, FALSE
     },
     {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_HHALF | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x2590,
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x2594,
+        "XXXXXXXX"
+        "        "
+        "        "
+        "        "
+        "        "
+        "        "
+        "        "
+        "        ",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x2595,
+        "       X"
+        "       X"
+        "       X"
+        "       X"
+        "       X"
+        "       X"
+        "       X"
+        "       X",
+        0, 0, FALSE
+    },
+    {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
         0x2596,
         "        "
@@ -277,6 +329,19 @@ static const ChafaSymbol symbol_defs [] =
         0, 0, FALSE
     },
     {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x2599,
+        "XXXX    "
+        "XXXX    "
+        "XXXX    "
+        "XXXX    "
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX",
+        0, 0, FALSE
+    },
+    {
         CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
         0x259a,
         "XXXX    "
@@ -287,6 +352,71 @@ static const ChafaSymbol symbol_defs [] =
         "    XXXX"
         "    XXXX"
         "    XXXX",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x259b,
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXX    "
+        "XXXX    "
+        "XXXX    "
+        "XXXX    ",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x259c,
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD,
+        0x259d,
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "        "
+        "        "
+        "        "
+        "        ",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x259e,
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "XXXX    "
+        "XXXX    "
+        "XXXX    "
+        "XXXX    ",
+        0, 0, FALSE
+    },
+    {
+        CHAFA_SYMBOL_CLASS_BLOCK | CHAFA_SYMBOL_CLASS_QUAD | CHAFA_SYMBOL_CLASS_INVERTED,
+        0x259f,
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "    XXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX"
+        "XXXXXXXX",
         0, 0, FALSE
     },
     /* Begin box drawing characters */

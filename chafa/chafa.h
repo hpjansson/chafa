@@ -61,6 +61,7 @@ typedef enum
     CHAFA_SYMBOL_CLASS_QUAD     = (1 <<  7),
     CHAFA_SYMBOL_CLASS_HHALF    = (1 <<  8),
     CHAFA_SYMBOL_CLASS_VHALF    = (1 <<  9),
+    CHAFA_SYMBOL_CLASS_INVERTED = (1 <<  10),
 }
 ChafaSymbolClass;
 
