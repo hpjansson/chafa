@@ -920,8 +920,8 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
 }
 
 void
-chafa_canvas_paint_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
-                         gint src_width, gint src_height, gint src_rowstride)
+chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
+                                gint src_width, gint src_height, gint src_rowstride)
 {
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);

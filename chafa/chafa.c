@@ -816,7 +816,7 @@ textify (guint8 *pixels,
     chafa_canvas_config_set_quality (config, options.quality);
 
     canvas = chafa_canvas_new (config, dest_width, dest_height);
-    chafa_canvas_paint_rgba (canvas, pixels, src_width, src_height, src_width * 4);
+    chafa_canvas_set_contents_rgba (canvas, pixels, src_width, src_height, src_width * 4);
     gs = chafa_canvas_build_gstring (canvas);
 
     chafa_canvas_unref (canvas);
