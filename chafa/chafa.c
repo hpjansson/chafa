@@ -42,6 +42,7 @@ typedef struct
     ChafaColorSpace color_space;
     ChafaSymbolClass inc_sym;
     ChafaSymbolClass exc_sym;
+    gboolean exc_sym_cleared;
     gboolean is_interactive;
     gboolean clear;
     gboolean verbose;
@@ -403,7 +404,10 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
         else if (is_exc)
         {
             if (sc == CHAFA_SYMBOLS_NONE)
+            {
                 options.exc_sym = CHAFA_SYMBOLS_NONE;
+                options.exc_sym_cleared = TRUE;
+            }
             options.exc_sym |= sc;
         }
         else
@@ -670,6 +674,7 @@ parse_options (int *argc, char **argv [])
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.inc_sym = CHAFA_SYMBOLS_ALL;
     options.exc_sym = CHAFA_SYMBOLS_NONE;
+    options.exc_sym_cleared = FALSE;
     options.width = 80;
     options.height = 25;
     options.font_ratio = 1.0 / 2.0;
@@ -731,6 +736,12 @@ parse_options (int *argc, char **argv [])
             options.preprocess = TRUE;
         }
     }
+
+    /* Since FGBG mode can't use escape sequences to invert, it really
+     * needs inverted symbols. In other modes they will only slow us down,
+     * so disable them unless the user specified otherwise. */
+    if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.exc_sym_cleared)
+        options.exc_sym |= CHAFA_SYMBOL_CLASS_INVERTED;
 
     g_option_context_free (context);
 
