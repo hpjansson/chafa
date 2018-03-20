@@ -914,7 +914,7 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
         }
     }
 
-    if (options.preprocess)
+    if (options.preprocess && !interrupted_by_user)
     {
         MagickModulateImage (wand, 100, 150, 100);
         MagickBrightnessContrastImage (wand, 0, 40);
@@ -945,7 +945,7 @@ group_build (Group *group, MagickWand *wand)
 {
     memset (group, 0, sizeof (*group));
 
-    for (MagickResetIterator (wand);;)
+    for (MagickResetIterator (wand); !interrupted_by_user; )
     {
         GroupFrame *frame;
 
@@ -1002,6 +1002,9 @@ run (const gchar *filename, gboolean is_single_file)
     if (MagickReadImage (wand, filename) < 1)
         goto out;
 
+    if (interrupted_by_user)
+        goto out;
+
     is_animation = MagickGetNumberImages (wand) > 1 ? TRUE : FALSE;
 
     if (is_animation)
@@ -1011,7 +1014,13 @@ run (const gchar *filename, gboolean is_single_file)
         wand = wand2;
     }
 
+    if (interrupted_by_user)
+        goto out;
+
     group_build (&group, wand);
+
+    if (interrupted_by_user)
+        goto out;
 
     do
     {
