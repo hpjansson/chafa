@@ -26,6 +26,7 @@
 #include <sys/ioctl.h>  /* ioctl */
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
+#include <termios.h>
 #include <glib.h>
 #include <wand/MagickWand.h>
 #include "chafa/chafa.h"
@@ -557,6 +558,31 @@ get_tty_size (void)
      * anything other than zero. */
 }
 
+static struct termios saved_termios;
+
+static void
+tty_options_init (void)
+{
+    struct termios t;
+
+    if (!options.is_interactive)
+        return;
+
+    tcgetattr (STDIN_FILENO, &saved_termios);
+    t = saved_termios;
+    t.c_lflag &= ~ECHO;
+    tcsetattr (STDIN_FILENO, TCSANOW, &t);
+}
+
+static void
+tty_options_deinit (void)
+{
+    if (!options.is_interactive)
+        return;
+
+    tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
+}
+
 /* I really would've preferred to use termcap, but termcap contents
  * and the TERM env var are often unreliable/unrepresentative, so
  * instead we have this.
@@ -1074,6 +1100,7 @@ run_all (GList *filenames)
     if (!filenames->next)
         is_single_file = TRUE;
 
+    tty_options_init ();
     MagickWandGenesis ();
 
     for (l = filenames; l && !interrupted_by_user; l = g_list_next (l))
@@ -1083,7 +1110,7 @@ run_all (GList *filenames)
     }
 
     MagickWandTerminus ();
-
+    tty_options_deinit ();
     return 0;
 }
 
