@@ -66,10 +66,6 @@ typedef struct
 }
 SymbolEval;
 
-static gboolean canvas_initialized;
-static gboolean have_mmx;
-static gboolean have_sse41;
-
 /* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
 static void
 fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *pixels_out)
@@ -138,7 +134,7 @@ eval_symbol_colors (const ChafaPixel *canvas_pixels, const ChafaSymbol *sym, Sym
     gint i;
 
 #ifdef HAVE_MMX_INTRINSICS
-    if (have_mmx)
+    if (chafa_have_mmx ())
         calc_colors_mmx (canvas_pixels, cols, covp);
     else
 #endif
@@ -231,7 +227,7 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
     else
     {
 #ifdef HAVE_SSE41_INTRINSICS
-        if (have_sse41)
+        if (chafa_have_sse41 ())
             error = calc_error_sse41 (canvas_pixels, cols, covp);
         else
 #endif
@@ -343,7 +339,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
-    if (have_mmx)
+    if (chafa_have_mmx ())
         leave_mmx ();
 #endif
 
@@ -807,29 +803,6 @@ build_gstring (ChafaCanvas *canvas)
     return gs;
 }
 
-static void
-chafa_init_canvas (void)
-{
-    if (canvas_initialized)
-        return;
-
-#ifdef HAVE_GCC_X86_FEATURE_BUILTINS
-    __builtin_cpu_init ();
-
-# ifdef HAVE_MMX_INTRINSICS
-    if (__builtin_cpu_supports ("mmx"))
-        have_mmx = TRUE;
-# endif
-
-# ifdef HAVE_SSE41_INTRINSICS
-    if (__builtin_cpu_supports ("sse4.1"))
-        have_sse41 = TRUE;
-# endif
-#endif
-
-    canvas_initialized = TRUE;
-}
-
 ChafaCanvas *
 chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height)
 {
@@ -838,9 +811,7 @@ chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height)
     g_return_val_if_fail (width > 0, NULL);
     g_return_val_if_fail (height > 0, NULL);
 
-    chafa_init_palette ();
-    chafa_init_symbols ();
-    chafa_init_canvas ();
+    chafa_init ();
 
     canvas = g_new0 (ChafaCanvas, 1);
     canvas->refs = 1;

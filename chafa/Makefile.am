@@ -11,6 +11,7 @@ libchafa_la_SOURCES = \
 	chafa-canvas.c \
 	chafa-canvas-config.c \
 	chafa-colors.c \
+	chafa-common.c \
 	chafa-private.h \
 	chafa-symbols.c
 

@@ -91,6 +91,10 @@ extern ChafaSymbol *chafa_fill_symbols;
 void chafa_init_palette (void);
 void chafa_init_symbols (void);
 
+void chafa_init (void);
+gboolean chafa_have_mmx (void) G_GNUC_PURE;
+gboolean chafa_have_sse41 (void) G_GNUC_PURE;
+
 void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasConfig *src);
