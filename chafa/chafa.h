@@ -30,6 +30,18 @@ G_BEGIN_DECLS
 
 #define CHAFA_AVAILABLE_IN_ALL _CHAFA_EXTERN
 
+/* Features */
+
+typedef guint32 ChafaFeatures;
+
+#define CHAFA_FEATURE_MMX           (1 << 0)
+#define CHAFA_FEATURE_SSE41         (1 << 1)
+
+CHAFA_AVAILABLE_IN_ALL
+ChafaFeatures chafa_get_builtin_features (void);
+CHAFA_AVAILABLE_IN_ALL
+ChafaFeatures chafa_get_supported_features (void);
+
 /* Color spaces */
 
 typedef enum

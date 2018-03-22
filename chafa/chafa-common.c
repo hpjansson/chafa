@@ -74,3 +74,30 @@ chafa_have_sse41 (void)
 {
     return have_sse41;
 }
+
+/* Public API */
+
+ChafaFeatures
+chafa_get_builtin_features (void)
+{
+    ChafaFeatures features = 0;
+
+#ifdef HAVE_MMX_INTRINSICS
+    features |= CHAFA_FEATURE_MMX;
+#endif
+
+#ifdef HAVE_SSE41_INTRINSICS
+    features |= CHAFA_FEATURE_SSE41;
+#endif
+
+    return features;
+}
+
+ChafaFeatures
+chafa_get_supported_features (void)
+{
+    chafa_init ();
+
+    return (have_mmx ? CHAFA_FEATURE_MMX : 0)
+        | (have_sse41 ? CHAFA_FEATURE_SSE41 : 0);
+}
