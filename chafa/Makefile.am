@@ -39,6 +39,11 @@ endif
 bin_PROGRAMS = \
 	chafa
 
+chafa_SOURCES = \
+	chafa.c \
+	named-colors.c \
+	named-colors.h
+
 chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
 chafa_LDFLAGS = $(CHAFA_LDFLAGS)
 chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) libchafa.la -lm

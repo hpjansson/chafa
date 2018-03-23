@@ -30,6 +30,7 @@
 #include <glib.h>
 #include <wand/MagickWand.h>
 #include "chafa/chafa.h"
+#include "chafa/named-colors.h"
 
 typedef struct
 {
@@ -512,18 +513,18 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
 static gboolean
 parse_color_str (const gchar *value, guint32 *col_out, const gchar *error_message, GError **error)
 {
+    const NamedColor *named_color;
     guint32 col = 0x000000;
     gboolean result = TRUE;
 
     /* TODO: It would be nice to support rgb.txt here */
 
-    if (!g_ascii_strcasecmp (value, "white"))
+    named_color = find_color_by_name (value);
+    if (named_color)
     {
-        col = 0xffffff;
-    }
-    else if (!g_ascii_strcasecmp (value, "black"))
-    {
-        col = 0x000000;
+        col = (named_color->color [0] << 16)
+            | (named_color->color [1] << 8)
+            | (named_color->color [2]);
     }
     else if (!parse_color (value, &col, NULL))
     {
