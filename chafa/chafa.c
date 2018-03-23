@@ -155,10 +155,29 @@ collect_variable_arguments (int *argc, char **argv [], gint first_arg)
     return g_list_reverse (l);
 }
 
+static const gchar copyright_notice [] =
+    "Copyright (C) 2018 Hans Petter Jansson\n"
+    "This is free software; see the source for copying conditions.  There is NO\n"
+    "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
+
 static void
 print_version (void)
 {
-    g_printerr ("Chafa version %s\n", VERSION);
+    gchar *builtin_features_str = chafa_describe_features (chafa_get_builtin_features ());
+    gchar *supported_features_str = chafa_describe_features (chafa_get_supported_features ());
+
+    g_printerr ("Chafa version %s%s%s%s%s%s%s\n\n%s\n",
+                VERSION,
+                chafa_get_builtin_features () ? " -- built with [" : " -- no optional features",
+                builtin_features_str,
+                chafa_get_builtin_features () ? "]" : "",
+                chafa_get_supported_features () ? " -- using [" : " -- none used",
+                supported_features_str,
+                chafa_get_supported_features () ? "]" : "",
+                copyright_notice);
+
+    g_free (builtin_features_str);
+    g_free (supported_features_str);
 }
 
 static void
