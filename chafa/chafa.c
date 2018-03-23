@@ -211,7 +211,7 @@ print_summary (void)
     "                     default this will be the size of your terminal, or 80x25 if\n"
     "                     size detection fails.\n"
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
-    "      --symbols ...  Set output symbols to use based on an inclusion and an\n"
+    "      --symbols ...  Employ output symbols based on an inclusion and an\n"
     "                     exclusion list. Each symbol identifier is preceded by an\n"
     "                     optional + to include, or - to exclude.\n"
     "  -t  --transparency-threshold THRESHOLD  Threshold above which full\n"
