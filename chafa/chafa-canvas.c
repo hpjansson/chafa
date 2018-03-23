@@ -928,7 +928,6 @@ chafa_canvas_build_gstring (ChafaCanvas *canvas)
     g_return_val_if_fail (canvas != NULL, NULL);
     g_return_val_if_fail (canvas->refs > 0, NULL);
 
-    maybe_clear (canvas);
     return build_gstring (canvas);
 }
 
