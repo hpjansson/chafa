@@ -930,15 +930,3 @@ chafa_canvas_build_gstring (ChafaCanvas *canvas)
 
     return build_gstring (canvas);
 }
-
-gchar *
-chafa_canvas_build_str (ChafaCanvas *canvas)
-{
-    GString *gs;
-
-    g_return_val_if_fail (canvas != NULL, NULL);
-    g_return_val_if_fail (canvas->refs > 0, NULL);
-
-    gs = build_gstring (canvas);
-    return g_string_free (gs, FALSE);
-}

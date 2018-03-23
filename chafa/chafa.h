@@ -167,8 +167,6 @@ void chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
 
 CHAFA_AVAILABLE_IN_ALL
 GString *chafa_canvas_build_gstring (ChafaCanvas *canvas);
-CHAFA_AVAILABLE_IN_ALL
-gchar *chafa_canvas_build_str (ChafaCanvas *canvas);
 
 G_END_DECLS
 
