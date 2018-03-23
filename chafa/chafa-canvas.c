@@ -703,7 +703,7 @@ maybe_clear (ChafaCanvas *canvas)
 }
 
 static GString *
-build_gstring (ChafaCanvas *canvas)
+build_ansi_gstring (ChafaCanvas *canvas)
 {
     GString *gs = g_string_new ("");
     gint x, y;
@@ -923,10 +923,10 @@ chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
 }
 
 GString *
-chafa_canvas_build_gstring (ChafaCanvas *canvas)
+chafa_canvas_build_ansi (ChafaCanvas *canvas)
 {
     g_return_val_if_fail (canvas != NULL, NULL);
     g_return_val_if_fail (canvas->refs > 0, NULL);
 
-    return build_gstring (canvas);
+    return build_ansi_gstring (canvas);
 }
