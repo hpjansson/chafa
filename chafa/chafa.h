@@ -41,6 +41,8 @@ CHAFA_AVAILABLE_IN_ALL
 ChafaFeatures chafa_get_builtin_features (void);
 CHAFA_AVAILABLE_IN_ALL
 ChafaFeatures chafa_get_supported_features (void);
+CHAFA_AVAILABLE_IN_ALL
+gchar *chafa_describe_features (ChafaFeatures features);
 
 /* Color spaces */
 

@@ -101,3 +101,20 @@ chafa_get_supported_features (void)
     return (have_mmx ? CHAFA_FEATURE_MMX : 0)
         | (have_sse41 ? CHAFA_FEATURE_SSE41 : 0);
 }
+
+gchar *
+chafa_describe_features (ChafaFeatures features)
+{
+    GString *features_gstr = g_string_new ("");
+
+    if (features & CHAFA_FEATURE_MMX)
+        g_string_append (features_gstr, "mmx ");
+    if (features & CHAFA_FEATURE_SSE41)
+        g_string_append (features_gstr, "sse4.1 ");
+
+    if (features_gstr->len > 0 && features_gstr->str [features_gstr->len - 1] == ' ')
+        g_string_truncate (features_gstr, features_gstr->len - 1);
+
+    return g_string_free (features_gstr, FALSE);
+}
+
