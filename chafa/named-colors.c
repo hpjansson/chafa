@@ -21,6 +21,12 @@
 #include <string.h>
 #include "chafa/named-colors.h"
 
+/* These colors are from Xorg's rgb.txt, filtered to remove duplicate
+ * entries with spaces in them. We handle names with spaces in the lookup
+ * function instead. Grey/gray variants were kept.
+ *
+ * For more background see https://en.wikipedia.org/wiki/X11_color_names */
+
 static const NamedColor named_colors [] =
 {
     { { 255, 250, 250 }, "snow" },
