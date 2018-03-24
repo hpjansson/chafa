@@ -21,7 +21,7 @@
 #include <string.h>
 #include "chafa/named-colors.h"
 
-/* These colors are from Xorg's rgb.txt, filtered to remove duplicate
+/* These colors are from X.Org's rgb.txt, filtered to remove duplicate
  * entries with spaces in them. We handle names with spaces in the lookup
  * function instead. Grey/gray variants were kept.
  *
