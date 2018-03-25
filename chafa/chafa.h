@@ -34,10 +34,12 @@ G_BEGIN_DECLS
 
 /* Features */
 
-typedef guint32 ChafaFeatures;
-
-#define CHAFA_FEATURE_MMX           (1 << 0)
-#define CHAFA_FEATURE_SSE41         (1 << 1)
+typedef enum
+{
+    CHAFA_FEATURE_MMX          = (1 << 0),
+    CHAFA_FEATURE_SSE41        = (1 << 1)
+}
+ChafaFeatures;
 
 CHAFA_AVAILABLE_IN_ALL
 ChafaFeatures chafa_get_builtin_features (void);
@@ -51,35 +53,37 @@ gchar *chafa_describe_features (ChafaFeatures features);
 typedef enum
 {
     CHAFA_COLOR_SPACE_RGB,
-    CHAFA_COLOR_SPACE_DIN99D
+    CHAFA_COLOR_SPACE_DIN99D,
+
+    CHAFA_COLOR_SPACE_MAX
 }
 ChafaColorSpace;
-
-#define CHAFA_COLOR_SPACE_MAX (CHAFA_COLOR_SPACE_DIN99D + 1)
 
 /* Character symbols and symbol classes */
 
 #define CHAFA_SYMBOL_WIDTH_PIXELS 8
 #define CHAFA_SYMBOL_HEIGHT_PIXELS 8
 
-typedef guint32 ChafaSymbolClass;
+typedef enum
+{
+    CHAFA_SYMBOL_CLASS_NONE        = 0,
 
-#define CHAFA_SYMBOL_CLASS_SPACE     (1 <<  0)
-#define CHAFA_SYMBOL_CLASS_SOLID     (1 <<  1)
-#define CHAFA_SYMBOL_CLASS_STIPPLE   (1 <<  2)
-#define CHAFA_SYMBOL_CLASS_BLOCK     (1 <<  3)
-#define CHAFA_SYMBOL_CLASS_BORDER    (1 <<  4)
-#define CHAFA_SYMBOL_CLASS_DIAGONAL  (1 <<  5)
-#define CHAFA_SYMBOL_CLASS_DOT       (1 <<  6)
-#define CHAFA_SYMBOL_CLASS_QUAD      (1 <<  7)
-#define CHAFA_SYMBOL_CLASS_HHALF     (1 <<  8)
-#define CHAFA_SYMBOL_CLASS_VHALF     (1 <<  9)
-#define CHAFA_SYMBOL_CLASS_INVERTED  (1 << 10)
+    CHAFA_SYMBOL_CLASS_SPACE       = (1 <<  0),
+    CHAFA_SYMBOL_CLASS_SOLID       = (1 <<  1),
+    CHAFA_SYMBOL_CLASS_STIPPLE     = (1 <<  2),
+    CHAFA_SYMBOL_CLASS_BLOCK       = (1 <<  3),
+    CHAFA_SYMBOL_CLASS_BORDER      = (1 <<  4),
+    CHAFA_SYMBOL_CLASS_DIAGONAL    = (1 <<  5),
+    CHAFA_SYMBOL_CLASS_DOT         = (1 <<  6),
+    CHAFA_SYMBOL_CLASS_QUAD        = (1 <<  7),
+    CHAFA_SYMBOL_CLASS_HHALF       = (1 <<  8),
+    CHAFA_SYMBOL_CLASS_VHALF       = (1 <<  9),
+    CHAFA_SYMBOL_CLASS_HALF        = ((CHAFA_SYMBOL_CLASS_HHALF) | (CHAFA_SYMBOL_CLASS_VHALF)),
+    CHAFA_SYMBOL_CLASS_INVERTED    = (1 << 10),
 
-#define CHAFA_SYMBOL_CLASS_HALF ((CHAFA_SYMBOL_CLASS_HHALF) | (CHAFA_SYMBOL_CLASS_VHALF))
-
-#define CHAFA_SYMBOLS_ALL  0xffffffff
-#define CHAFA_SYMBOLS_NONE 0
+    CHAFA_SYMBOL_CLASS_ALL         = 0x7fffffff
+}
+ChafaSymbolClass;
 
 /* Canvas modes */
 
@@ -90,11 +94,11 @@ typedef enum
     CHAFA_CANVAS_MODE_INDEXED_240,
     CHAFA_CANVAS_MODE_INDEXED_16,
     CHAFA_CANVAS_MODE_FGBG_BGFG,
-    CHAFA_CANVAS_MODE_FGBG
+    CHAFA_CANVAS_MODE_FGBG,
+
+    CHAFA_CANVAS_MODE_MAX
 }
 ChafaCanvasMode;
-
-#define CHAFA_CANVAS_MODE_MAX (CHAFA_CANVAS_MODE_FGBG + 1)
 
 /* Canvas config */
 

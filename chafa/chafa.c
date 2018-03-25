@@ -336,8 +336,8 @@ parse_symbol_class (const gchar *name, gint len, ChafaSymbolClass *sc_out, GErro
 {
     const SymMapping map [] =
     {
-        { "all", CHAFA_SYMBOLS_ALL },
-        { "none", CHAFA_SYMBOLS_NONE },
+        { "all", CHAFA_SYMBOL_CLASS_ALL },
+        { "none", CHAFA_SYMBOL_CLASS_NONE },
         { "space", CHAFA_SYMBOL_CLASS_SPACE },
         { "solid", CHAFA_SYMBOL_CLASS_SOLID },
         { "stipple", CHAFA_SYMBOL_CLASS_STIPPLE },
@@ -418,15 +418,15 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 
         if (is_inc)
         {
-            if (sc == CHAFA_SYMBOLS_NONE)
-                options.inc_sym = CHAFA_SYMBOLS_NONE;
+            if (sc == CHAFA_SYMBOL_CLASS_NONE)
+                options.inc_sym = CHAFA_SYMBOL_CLASS_NONE;
             options.inc_sym |= sc;
         }
         else if (is_exc)
         {
-            if (sc == CHAFA_SYMBOLS_NONE)
+            if (sc == CHAFA_SYMBOL_CLASS_NONE)
             {
-                options.exc_sym = CHAFA_SYMBOLS_NONE;
+                options.exc_sym = CHAFA_SYMBOL_CLASS_NONE;
                 options.exc_sym_cleared = TRUE;
             }
             options.exc_sym |= sc;
@@ -434,7 +434,7 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
         else
         {
             options.inc_sym = sc;
-            options.exc_sym = CHAFA_SYMBOLS_NONE;
+            options.exc_sym = CHAFA_SYMBOL_CLASS_NONE;
             is_inc = TRUE;
         }
     }
@@ -718,8 +718,8 @@ parse_options (int *argc, char **argv [])
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
     options.color_space = CHAFA_COLOR_SPACE_RGB;
-    options.inc_sym = CHAFA_SYMBOLS_ALL;
-    options.exc_sym = CHAFA_SYMBOLS_NONE;
+    options.inc_sym = CHAFA_SYMBOL_CLASS_ALL;
+    options.exc_sym = CHAFA_SYMBOL_CLASS_NONE;
     options.exc_sym_cleared = FALSE;
     options.width = 80;
     options.height = 25;

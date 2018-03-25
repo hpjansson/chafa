@@ -913,6 +913,10 @@ chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
         case CHAFA_COLOR_SPACE_DIN99D:
             rgba_to_internal_din99d (canvas, src_pixels, src_width, src_height, src_rowstride);
             break;
+
+        case CHAFA_COLOR_SPACE_MAX:
+            g_assert_not_reached ();
+            break;
     }
 
     if (canvas->config.alpha_threshold == 0)
