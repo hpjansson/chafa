@@ -851,6 +851,7 @@ textify (guint8 *pixels,
 
     config = chafa_canvas_config_new ();
 
+    chafa_canvas_config_set_size (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_include_symbols (config, options.inc_sym);
@@ -861,7 +862,7 @@ textify (guint8 *pixels,
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
     chafa_canvas_config_set_quality (config, options.quality);
 
-    canvas = chafa_canvas_new (config, dest_width, dest_height);
+    canvas = chafa_canvas_new (config);
     chafa_canvas_set_contents_rgba (canvas, pixels, src_width, src_height, src_width * 4);
     gs = chafa_canvas_build_ansi (canvas);
 

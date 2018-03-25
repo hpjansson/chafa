@@ -93,6 +93,30 @@ chafa_canvas_config_unref (ChafaCanvasConfig *canvas_config)
     }
 }
 
+void
+chafa_canvas_config_get_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    if (width_out)
+        *width_out = config->width;
+    if (height_out)
+        *height_out = config->height;
+}
+
+void
+chafa_canvas_config_set_size (ChafaCanvasConfig *config, gint width, gint height)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (width > 0);
+    g_return_if_fail (height > 0);
+
+    config->width = width;
+    config->height = height;
+}
+
 ChafaCanvasMode
 chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config)
 {

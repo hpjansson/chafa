@@ -46,7 +46,6 @@ struct ChafaCanvas
 {
     gint refs;
 
-    gint width, height;
     gint width_pixels, height_pixels;
     ChafaPixel *pixels;
     ChafaCanvasCell *cells;
@@ -506,9 +505,9 @@ update_cells (ChafaCanvas *canvas)
     gint cx, cy;
     gint i = 0;
 
-    for (cy = 0; cy < canvas->height; cy++)
+    for (cy = 0; cy < canvas->config.height; cy++)
     {
-        for (cx = 0; cx < canvas->width; cx++, i++)
+        for (cx = 0; cx < canvas->config.width; cx++, i++)
         {
             ChafaCanvasCell *cell = &canvas->cells [i];
             gunichar sym;
@@ -693,7 +692,7 @@ maybe_clear (ChafaCanvas *canvas)
     if (!canvas->needs_clear)
         return;
 
-    for (i = 0; i < canvas->width * canvas->height; i++)
+    for (i = 0; i < canvas->config.width * canvas->config.height; i++)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
 
@@ -711,9 +710,9 @@ build_ansi_gstring (ChafaCanvas *canvas)
 
     maybe_clear (canvas);
 
-    for (y = 0; y < canvas->height; y++)
+    for (y = 0; y < canvas->config.height; y++)
     {
-        for (x = 0; x < canvas->width; x++, i++)
+        for (x = 0; x < canvas->config.width; x++, i++)
         {
             ChafaCanvasCell *cell = &canvas->cells [i];
 
@@ -804,23 +803,21 @@ build_ansi_gstring (ChafaCanvas *canvas)
 }
 
 ChafaCanvas *
-chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height)
+chafa_canvas_new (ChafaCanvasConfig *config)
 {
     ChafaCanvas *canvas;
 
-    g_return_val_if_fail (width > 0, NULL);
-    g_return_val_if_fail (height > 0, NULL);
+    g_return_val_if_fail (config->width > 0, NULL);
+    g_return_val_if_fail (config->height > 0, NULL);
 
     chafa_init ();
 
     canvas = g_new0 (ChafaCanvas, 1);
     canvas->refs = 1;
-    canvas->width_pixels = width * CHAFA_SYMBOL_WIDTH_PIXELS;
-    canvas->height_pixels = height * CHAFA_SYMBOL_HEIGHT_PIXELS;
+    canvas->width_pixels = config->width * CHAFA_SYMBOL_WIDTH_PIXELS;
+    canvas->height_pixels = config->height * CHAFA_SYMBOL_HEIGHT_PIXELS;
     canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
-    canvas->width = width;
-    canvas->height = height;
-    canvas->cells = g_new (ChafaCanvasCell, width * height);
+    canvas->cells = g_new (ChafaCanvasCell, config->width * config->height);
     canvas->needs_clear = TRUE;
 
     if (config)
@@ -852,7 +849,7 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
     canvas->refs = 1;
 
     canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
-    canvas->cells = g_new (ChafaCanvasCell, orig->width * orig->height);
+    canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->needs_clear = TRUE;
 
     return canvas;

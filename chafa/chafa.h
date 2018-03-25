@@ -112,6 +112,11 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_unref (ChafaCanvasConfig *config);
 
 CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_get_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_size (ChafaCanvasConfig *config, gint width, gint height);
+
+CHAFA_AVAILABLE_IN_ALL
 ChafaCanvasMode chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode mode);
@@ -156,7 +161,7 @@ void chafa_canvas_config_set_quality (ChafaCanvasConfig *config, gint quality);
 typedef struct ChafaCanvas ChafaCanvas;
 
 CHAFA_AVAILABLE_IN_ALL
-ChafaCanvas *chafa_canvas_new (ChafaCanvasConfig *config, gint width, gint height);
+ChafaCanvas *chafa_canvas_new (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 ChafaCanvas *chafa_canvas_new_similar (ChafaCanvas *orig);
 CHAFA_AVAILABLE_IN_ALL

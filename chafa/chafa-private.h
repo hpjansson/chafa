@@ -69,6 +69,7 @@ struct ChafaCanvasConfig
 {
     gint refs;
 
+    gint width, height;
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
     ChafaSymbolClass include_symbols;
