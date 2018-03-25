@@ -16,7 +16,11 @@ libchafa_la_SOURCES = \
 	chafa-symbols.c
 
 chafaincludedir=$(includedir)/chafa
-chafainclude_HEADERS = chafa.h
+chafainclude_HEADERS = \
+	chafa.h \
+	chafa-canvas.h \
+	chafa-canvas-config.h \
+	chafa-common.h
 
 if HAVE_MMX_INTRINSICS
 noinst_LTLIBRARIES += libchafa-mmx.la

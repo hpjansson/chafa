@@ -17,27 +17,31 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __CHAFA_H__
-#define __CHAFA_H__
-#define __CHAFA_H_INSIDE__
+#ifndef __CHAFA_COMMON_H__
+#define __CHAFA_COMMON_H__
 
-#include <glib.h>
+#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
+# error "Only <chafa.h> can be included directly."
+#endif
 
 G_BEGIN_DECLS
 
-/* Exported symbol versioning/visibility */
+/* Features */
 
-#ifndef _CHAFA_EXTERN
-# define _CHAFA_EXTERN extern
-#endif
+typedef enum
+{
+    CHAFA_FEATURE_MMX          = (1 << 0),
+    CHAFA_FEATURE_SSE41        = (1 << 1)
+}
+ChafaFeatures;
 
-#define CHAFA_AVAILABLE_IN_ALL _CHAFA_EXTERN
-
-#include <chafa-common.h>
-#include <chafa-canvas-config.h>
-#include <chafa-canvas.h>
+CHAFA_AVAILABLE_IN_ALL
+ChafaFeatures chafa_get_builtin_features (void);
+CHAFA_AVAILABLE_IN_ALL
+ChafaFeatures chafa_get_supported_features (void);
+CHAFA_AVAILABLE_IN_ALL
+gchar *chafa_describe_features (ChafaFeatures features);
 
 G_END_DECLS
 
-#undef __CHAFA_H_INSIDE__
-#endif /* __CHAFA_H__ */
+#endif /* __CHAFA_COMMON_H__ */
