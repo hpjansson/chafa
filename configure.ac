@@ -4,8 +4,14 @@ dnl ----------------------------
 
 dnl --- Package configuration ---
 
+m4_define([chafa_major_version], [0])
+m4_define([chafa_minor_version], [0])
+m4_define([chafa_micro_version], [0])
+
+m4_define([chafa_version], [chafa_major_version.chafa_minor_version.chafa_micro_version])
+
 AC_PREREQ(2.59)
-AC_INIT([chafa], [0.0.0], [hpj@copyleft.no])
+AC_INIT([chafa], [chafa_version], [hpj@copyleft.no])
 AM_INIT_AUTOMAKE([1.9 foreign])
 
 AC_CONFIG_SRCDIR([chafa.pc.in])
@@ -13,11 +19,9 @@ AC_CONFIG_SRCDIR([chafa.pc.in])
 AC_CONFIG_MACRO_DIRS([m4])
 AM_CONFIG_HEADER(config.h)
 
-AC_SUBST(VERSION)
-AC_SUBST(PACKAGE)
-
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Package version])
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Package name])
+CHAFA_VERSION=chafa_version
+AC_SUBST(CHAFA_VERSION)
+AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version])
 
 dnl --- Standard setup ---
 
