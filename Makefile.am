@@ -1,4 +1,4 @@
-SUBDIRS = chafa
+SUBDIRS = chafa docs
 
 EXTRA_DIST = chafa.pc.in
 

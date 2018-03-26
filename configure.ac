@@ -62,6 +62,10 @@ dnl --- Dependency check ---
 PKG_CHECK_MODULES(MAGICKWAND, MagickWand >= 6)
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10)
 
+# Used by gtk-doc's fixxref.
+GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
+AC_SUBST(GLIB_PREFIX)
+
 dnl --- Documentation ---
 
 # gtkdocize greps for ^GTK_DOC_CHECK and parses it, so you need to have
@@ -288,4 +292,6 @@ dnl --- Output ---
 
 AC_OUTPUT(Makefile
           chafa/Makefile
-          chafa.pc)
+          chafa.pc
+          docs/Makefile
+          docs/version.xml)

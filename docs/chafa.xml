@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+               "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+]>
+<refentry id="chafa">
+
+<refentryinfo>
+<title>chafa</title>
+<productname>chafa</productname>
+<authorgroup>
+<author>
+<contrib>Developer</contrib>
+<firstname>Hans Petter</firstname>
+<surname>Jansson</surname>
+</author>
+</authorgroup>
+</refentryinfo>
+
+<refmeta>
+<refentrytitle>chafa</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="manual">User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>chafa</refname>
+<refpurpose>Character art facsimile generator</refpurpose>
+</refnamediv>
+
+<!-- TODO -->
+
+</refentry>
