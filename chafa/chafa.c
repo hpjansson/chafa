@@ -168,7 +168,7 @@ print_version (void)
     gchar *supported_features_str = chafa_describe_features (chafa_get_supported_features ());
 
     g_printerr ("Chafa version %s%s%s%s%s%s%s\n\n%s\n",
-                VERSION,
+                CHAFA_VERSION,
                 chafa_get_builtin_features () ? " -- built with [" : " -- no optional features",
                 builtin_features_str,
                 chafa_get_builtin_features () ? "]" : "",
