@@ -802,6 +802,16 @@ build_ansi_gstring (ChafaCanvas *canvas)
     return gs;
 }
 
+/**
+ * chafa_canvas_new:
+ * @config: Canvas configuration to use for this canvas
+ *
+ * Creates a new canvas with the specified configuration. The
+ * canvas makes a private copy of the configuration, so it can
+ * be changed or re-used later without affecting the canvas.
+ *
+ * Returns: The new canvas
+ **/
 ChafaCanvas *
 chafa_canvas_new (ChafaCanvasConfig *config)
 {
@@ -837,6 +847,14 @@ chafa_canvas_new (ChafaCanvasConfig *config)
     return canvas;
 }
 
+/**
+ * chafa_canvas_new_similar:
+ * @orig: Canvas to copy configuration from
+ *
+ * Creates a new canvas configured similarly to @orig.
+ *
+ * Returns: The new canvas
+ **/
 ChafaCanvas *
 chafa_canvas_new_similar (ChafaCanvas *orig)
 {
@@ -855,6 +873,12 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
     return canvas;
 }
 
+/**
+ * chafa_canvas_ref:
+ * @canvas: Canvas to add a reference to
+ *
+ * Adds a reference to @canvas.
+ **/
 void
 chafa_canvas_ref (ChafaCanvas *canvas)
 {
@@ -864,6 +888,13 @@ chafa_canvas_ref (ChafaCanvas *canvas)
     canvas->refs++;
 }
 
+/**
+ * chafa_canvas_unref:
+ * @canvas: Canvas to remove a reference from
+ *
+ * Removes a reference from @canvas. When remaining references drops to
+ * zero, the canvas is freed and can no longer be used.
+ **/
 void
 chafa_canvas_unref (ChafaCanvas *canvas)
 {
@@ -878,6 +909,16 @@ chafa_canvas_unref (ChafaCanvas *canvas)
     }
 }
 
+/**
+ * chafa_canvas_peek_config:
+ * @canvas: Canvas whose configuration to inspect
+ *
+ * Returns a pointer to the configuration belonging to @canvas.
+ * This can be inspected using the #ChafaCanvasConfig getter
+ * functions, but not changed.
+ *
+ * Returns: A pointer to the canvas' immutable configuration
+ **/
 const ChafaCanvasConfig *
 chafa_canvas_peek_config (ChafaCanvas *canvas)
 {
@@ -887,6 +928,17 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
     return &canvas->config;
 }
 
+/**
+ * chafa_canvas_set_contents_rgba:
+ * @canvas: Canvas whose pixel data to replace
+ * @src_pixels: Pointer to the start of source pixel memory
+ * @src_width: Width in pixels of source pixel data
+ * @src_height: Height in pixels of source pixel data
+ * @src_rowstride: Number of bytes between the start of each pixel row
+ *
+ * Replaces pixel data of @canvas with a copy of that found at @src_pixels.
+ * The source data must be in packed 8-bits-per-channel RGBA format.
+ **/
 void
 chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
                                 gint src_width, gint src_height, gint src_rowstride)
@@ -923,6 +975,17 @@ chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
     canvas->needs_clear = FALSE;
 }
 
+/**
+ * chafa_canvas_build_ansi:
+ * @canvas: The canvas to generate an ANSI character representation of
+ *
+ * Builds a UTF-8 string of ANSI sequences and symbols representing
+ * the canvas' current contents. This can e.g. be printed to a terminal.
+ * The exact choice of escape sequences and symbols, dimensions, etc. is
+ * determined by the configuration assigned to @canvas on its creation.
+ *
+ * Returns: A UTF-8 string of ANSI sequences and symbols
+ **/
 GString *
 chafa_canvas_build_ansi (ChafaCanvas *canvas)
 {
