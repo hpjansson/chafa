@@ -813,7 +813,7 @@ build_ansi_gstring (ChafaCanvas *canvas)
  * Returns: The new canvas
  **/
 ChafaCanvas *
-chafa_canvas_new (ChafaCanvasConfig *config)
+chafa_canvas_new (const ChafaCanvasConfig *config)
 {
     ChafaCanvas *canvas;
 

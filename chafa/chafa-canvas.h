@@ -31,7 +31,7 @@ G_BEGIN_DECLS
 typedef struct ChafaCanvas ChafaCanvas;
 
 CHAFA_AVAILABLE_IN_ALL
-ChafaCanvas *chafa_canvas_new (ChafaCanvasConfig *config);
+ChafaCanvas *chafa_canvas_new (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 ChafaCanvas *chafa_canvas_new_similar (ChafaCanvas *orig);
 CHAFA_AVAILABLE_IN_ALL
