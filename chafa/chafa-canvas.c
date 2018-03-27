@@ -940,7 +940,7 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
  * The source data must be in packed 8-bits-per-channel RGBA format.
  **/
 void
-chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, guint8 *src_pixels,
+chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, const guint8 *src_pixels,
                                 gint src_width, gint src_height, gint src_rowstride)
 {
     g_return_if_fail (canvas != NULL);
