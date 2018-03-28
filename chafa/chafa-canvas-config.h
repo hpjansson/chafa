@@ -130,9 +130,9 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_packed_rgb);
 
 CHAFA_AVAILABLE_IN_ALL
-guint32 chafa_canvas_config_get_quality (const ChafaCanvasConfig *config);
+gfloat chafa_canvas_config_get_work_factor (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_quality (ChafaCanvasConfig *config, gint quality);
+void chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_factor);
 
 G_END_DECLS
 

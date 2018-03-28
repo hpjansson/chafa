@@ -860,7 +860,10 @@ textify (guint8 *pixels,
     chafa_canvas_config_set_bg_color (config, options.bg_color);
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
-    chafa_canvas_config_set_quality (config, options.quality);
+
+    /* Quality switch takes values [1..9], we normalize to [0.0..1.0] to
+     * get the work factor. */
+    chafa_canvas_config_set_work_factor (config, (options.quality - 1) / 8.0);
 
     canvas = chafa_canvas_new (config);
     chafa_canvas_set_contents_rgba (canvas, pixels, src_width, src_height, src_width * 4);

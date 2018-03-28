@@ -41,7 +41,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->fg_color_packed_rgb = 0xffffff;
     canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
-    canvas_config->quality = 5;
+    canvas_config->work_factor = 0.5;
 }
 
 void
@@ -248,21 +248,21 @@ chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_pa
     config->bg_color_packed_rgb = bg_color_packed_rgb;
 }
 
-guint32
-chafa_canvas_config_get_quality (const ChafaCanvasConfig *config)
+gfloat
+chafa_canvas_config_get_work_factor (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, 1);
     g_return_val_if_fail (config->refs > 0, 1);
 
-    return config->quality;
+    return config->work_factor;
 }
 
 void
-chafa_canvas_config_set_quality (ChafaCanvasConfig *config, gint quality)
+chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_factor)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
-    g_return_if_fail (quality >= 1 && quality <= 9);
+    g_return_if_fail (work_factor >= 0.0 && work_factor <= 1.0);
 
-    config->quality = quality;
+    config->work_factor = work_factor;
 }

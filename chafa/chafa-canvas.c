@@ -53,6 +53,7 @@ struct ChafaCanvas
     guint needs_clear : 1;
     ChafaColor fg_color;
     ChafaColor bg_color;
+    guint work_factor_int;
 
     ChafaCanvasConfig config;
 };
@@ -291,7 +292,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
             if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
             {
-                if (canvas->config.quality >= 5)
+                if (canvas->work_factor_int >= 5)
                 {
                     fg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].fg.col,
                                                                                 canvas->config.color_space), canvas->config.color_space);
@@ -301,7 +302,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             }
             else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
             {
-                if (canvas->config.quality >= 8)
+                if (canvas->work_factor_int >= 8)
                 {
                     fg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].fg.col,
                                                                                  canvas->config.color_space), canvas->config.color_space);
@@ -311,7 +312,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             }
             else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
             {
-                if (canvas->config.quality >= 8)
+                if (canvas->work_factor_int >= 8)
                 {
                     fg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].fg.col,
                                                                                  canvas->config.color_space), canvas->config.color_space);
@@ -828,6 +829,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->height_pixels = config->height * CHAFA_SYMBOL_HEIGHT_PIXELS;
     canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
     canvas->cells = g_new (ChafaCanvasCell, config->width * config->height);
+    canvas->work_factor_int = config->work_factor * 10 + 0.5;
     canvas->needs_clear = TRUE;
 
     if (config)

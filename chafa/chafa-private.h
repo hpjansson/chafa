@@ -77,7 +77,7 @@ struct ChafaCanvasConfig
     guint32 fg_color_packed_rgb;
     guint32 bg_color_packed_rgb;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
-    gint quality;
+    gfloat work_factor;
 };
 
 /* Canvas */
