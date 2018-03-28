@@ -1024,7 +1024,15 @@ run (const gchar *filename, gboolean is_single_file)
 
     wand = NewMagickWand();
     if (MagickReadImage (wand, filename) < 1)
+    {
+        gchar *error_str;
+        ExceptionType severity;
+
+        error_str = MagickGetException (wand, &severity);
+        g_printerr ("Error: %s\n", error_str);
+        MagickRelinquishMemory (error_str);
         goto out;
+    }
 
     if (interrupted_by_user)
         goto out;
