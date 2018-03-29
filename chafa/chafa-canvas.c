@@ -256,7 +256,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
         eval [i].error = G_MAXINT;
 
         /* Always evaluate space so we get fallback colors */
-        if (chafa_symbols [i].sc != CHAFA_SYMBOL_CLASS_SPACE &&
+        if (chafa_symbols [i].sc != CHAFA_SYMBOL_TAG_SPACE &&
             (!(chafa_symbols [i].sc & canvas->config.include_symbols)
              || (chafa_symbols [i].sc & canvas->config.exclude_symbols)))
             continue;

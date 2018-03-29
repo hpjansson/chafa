@@ -44,24 +44,24 @@ ChafaColorSpace;
 
 typedef enum
 {
-    CHAFA_SYMBOL_CLASS_NONE        = 0,
+    CHAFA_SYMBOL_TAG_NONE        = 0,
 
-    CHAFA_SYMBOL_CLASS_SPACE       = (1 <<  0),
-    CHAFA_SYMBOL_CLASS_SOLID       = (1 <<  1),
-    CHAFA_SYMBOL_CLASS_STIPPLE     = (1 <<  2),
-    CHAFA_SYMBOL_CLASS_BLOCK       = (1 <<  3),
-    CHAFA_SYMBOL_CLASS_BORDER      = (1 <<  4),
-    CHAFA_SYMBOL_CLASS_DIAGONAL    = (1 <<  5),
-    CHAFA_SYMBOL_CLASS_DOT         = (1 <<  6),
-    CHAFA_SYMBOL_CLASS_QUAD        = (1 <<  7),
-    CHAFA_SYMBOL_CLASS_HHALF       = (1 <<  8),
-    CHAFA_SYMBOL_CLASS_VHALF       = (1 <<  9),
-    CHAFA_SYMBOL_CLASS_HALF        = ((CHAFA_SYMBOL_CLASS_HHALF) | (CHAFA_SYMBOL_CLASS_VHALF)),
-    CHAFA_SYMBOL_CLASS_INVERTED    = (1 << 10),
+    CHAFA_SYMBOL_TAG_SPACE       = (1 <<  0),
+    CHAFA_SYMBOL_TAG_SOLID       = (1 <<  1),
+    CHAFA_SYMBOL_TAG_STIPPLE     = (1 <<  2),
+    CHAFA_SYMBOL_TAG_BLOCK       = (1 <<  3),
+    CHAFA_SYMBOL_TAG_BORDER      = (1 <<  4),
+    CHAFA_SYMBOL_TAG_DIAGONAL    = (1 <<  5),
+    CHAFA_SYMBOL_TAG_DOT         = (1 <<  6),
+    CHAFA_SYMBOL_TAG_QUAD        = (1 <<  7),
+    CHAFA_SYMBOL_TAG_HHALF       = (1 <<  8),
+    CHAFA_SYMBOL_TAG_VHALF       = (1 <<  9),
+    CHAFA_SYMBOL_TAG_HALF        = ((CHAFA_SYMBOL_TAG_HHALF) | (CHAFA_SYMBOL_TAG_VHALF)),
+    CHAFA_SYMBOL_TAG_INVERTED    = (1 << 10),
 
-    CHAFA_SYMBOL_CLASS_ALL         = 0x7fffffff
+    CHAFA_SYMBOL_TAG_ALL         = 0x7fffffff
 }
-ChafaSymbolClass;
+ChafaSymbolTags;
 
 /* Canvas modes */
 
@@ -105,14 +105,14 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space);
 
 CHAFA_AVAILABLE_IN_ALL
-ChafaSymbolClass chafa_canvas_config_get_include_symbols (const ChafaCanvasConfig *config);
+ChafaSymbolTags chafa_canvas_config_get_include_symbols (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolClass include_symbols);
+void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolTags include_symbols);
 
 CHAFA_AVAILABLE_IN_ALL
-ChafaSymbolClass chafa_canvas_config_get_exclude_symbols (const ChafaCanvasConfig *config);
+ChafaSymbolTags chafa_canvas_config_get_exclude_symbols (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolClass exclude_symbols);
+void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolTags exclude_symbols);
 
 CHAFA_AVAILABLE_IN_ALL
 gfloat chafa_canvas_config_get_transparency_threshold (const ChafaCanvasConfig *config);

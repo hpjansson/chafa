@@ -36,8 +36,8 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
 
     canvas_config->canvas_mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
-    canvas_config->include_symbols = CHAFA_SYMBOL_CLASS_ALL;
-    canvas_config->exclude_symbols = CHAFA_SYMBOL_CLASS_NONE;
+    canvas_config->include_symbols = CHAFA_SYMBOL_TAG_ALL;
+    canvas_config->exclude_symbols = CHAFA_SYMBOL_TAG_NONE;
     canvas_config->fg_color_packed_rgb = 0xffffff;
     canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
@@ -155,17 +155,17 @@ chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace 
     config->color_space = color_space;
 }
 
-ChafaSymbolClass
+ChafaSymbolTags
 chafa_canvas_config_get_include_symbols (const ChafaCanvasConfig *config)
 {
-    g_return_val_if_fail (config != NULL, CHAFA_SYMBOL_CLASS_NONE);
-    g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOL_CLASS_NONE);
+    g_return_val_if_fail (config != NULL, CHAFA_SYMBOL_TAG_NONE);
+    g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOL_TAG_NONE);
 
     return config->include_symbols;
 }
 
 void
-chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolClass include_symbols)
+chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolTags include_symbols)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
@@ -173,17 +173,17 @@ chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolC
     config->include_symbols = include_symbols;
 }
 
-ChafaSymbolClass
+ChafaSymbolTags
 chafa_canvas_config_get_exclude_symbols (const ChafaCanvasConfig *config)
 {
-    g_return_val_if_fail (config != NULL, CHAFA_SYMBOL_CLASS_NONE);
-    g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOL_CLASS_NONE);
+    g_return_val_if_fail (config != NULL, CHAFA_SYMBOL_TAG_NONE);
+    g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOL_TAG_NONE);
 
     return config->exclude_symbols;
 }
 
 void
-chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolClass exclude_symbols)
+chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolTags exclude_symbols)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);

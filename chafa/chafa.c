@@ -42,8 +42,8 @@ typedef struct
     GList *args;
     ChafaCanvasMode mode;
     ChafaColorSpace color_space;
-    ChafaSymbolClass inc_sym;
-    ChafaSymbolClass exc_sym;
+    ChafaSymbolTags inc_sym;
+    ChafaSymbolTags exc_sym;
     gboolean exc_sym_cleared;
     gboolean is_interactive;
     gboolean clear;
@@ -327,29 +327,29 @@ out:
 typedef struct
 {
     const gchar *name;
-    ChafaSymbolClass sc;
+    ChafaSymbolTags sc;
 }
 SymMapping;
 
 static gboolean
-parse_symbol_class (const gchar *name, gint len, ChafaSymbolClass *sc_out, GError **error)
+parse_symbol_tag (const gchar *name, gint len, ChafaSymbolTags *sc_out, GError **error)
 {
     const SymMapping map [] =
     {
-        { "all", CHAFA_SYMBOL_CLASS_ALL },
-        { "none", CHAFA_SYMBOL_CLASS_NONE },
-        { "space", CHAFA_SYMBOL_CLASS_SPACE },
-        { "solid", CHAFA_SYMBOL_CLASS_SOLID },
-        { "stipple", CHAFA_SYMBOL_CLASS_STIPPLE },
-        { "block", CHAFA_SYMBOL_CLASS_BLOCK },
-        { "border", CHAFA_SYMBOL_CLASS_BORDER },
-        { "diagonal", CHAFA_SYMBOL_CLASS_DIAGONAL },
-        { "dot", CHAFA_SYMBOL_CLASS_DOT },
-        { "quad", CHAFA_SYMBOL_CLASS_QUAD },
-        { "half", CHAFA_SYMBOL_CLASS_HALF },
-        { "hhalf", CHAFA_SYMBOL_CLASS_HHALF },
-        { "vhalf", CHAFA_SYMBOL_CLASS_VHALF },
-        { "inverted", CHAFA_SYMBOL_CLASS_INVERTED },
+        { "all", CHAFA_SYMBOL_TAG_ALL },
+        { "none", CHAFA_SYMBOL_TAG_NONE },
+        { "space", CHAFA_SYMBOL_TAG_SPACE },
+        { "solid", CHAFA_SYMBOL_TAG_SOLID },
+        { "stipple", CHAFA_SYMBOL_TAG_STIPPLE },
+        { "block", CHAFA_SYMBOL_TAG_BLOCK },
+        { "border", CHAFA_SYMBOL_TAG_BORDER },
+        { "diagonal", CHAFA_SYMBOL_TAG_DIAGONAL },
+        { "dot", CHAFA_SYMBOL_TAG_DOT },
+        { "quad", CHAFA_SYMBOL_TAG_QUAD },
+        { "half", CHAFA_SYMBOL_TAG_HALF },
+        { "hhalf", CHAFA_SYMBOL_TAG_HHALF },
+        { "vhalf", CHAFA_SYMBOL_TAG_VHALF },
+        { "inverted", CHAFA_SYMBOL_TAG_INVERTED },
         { NULL, 0 }
     };
     gint i;
@@ -378,7 +378,7 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 
     while (*p0)
     {
-        ChafaSymbolClass sc;
+        ChafaSymbolTags sc;
         gint n;
 
         p0 += strspn (p0, " ");
@@ -408,7 +408,7 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
             break;
         }
 
-        if (!parse_symbol_class (p0, n, &sc, error))
+        if (!parse_symbol_tag (p0, n, &sc, error))
         {
             result = FALSE;
             break;
@@ -418,15 +418,15 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 
         if (is_inc)
         {
-            if (sc == CHAFA_SYMBOL_CLASS_NONE)
-                options.inc_sym = CHAFA_SYMBOL_CLASS_NONE;
+            if (sc == CHAFA_SYMBOL_TAG_NONE)
+                options.inc_sym = CHAFA_SYMBOL_TAG_NONE;
             options.inc_sym |= sc;
         }
         else if (is_exc)
         {
-            if (sc == CHAFA_SYMBOL_CLASS_NONE)
+            if (sc == CHAFA_SYMBOL_TAG_NONE)
             {
-                options.exc_sym = CHAFA_SYMBOL_CLASS_NONE;
+                options.exc_sym = CHAFA_SYMBOL_TAG_NONE;
                 options.exc_sym_cleared = TRUE;
             }
             options.exc_sym |= sc;
@@ -434,7 +434,7 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
         else
         {
             options.inc_sym = sc;
-            options.exc_sym = CHAFA_SYMBOL_CLASS_NONE;
+            options.exc_sym = CHAFA_SYMBOL_TAG_NONE;
             is_inc = TRUE;
         }
     }
@@ -718,8 +718,8 @@ parse_options (int *argc, char **argv [])
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
     options.color_space = CHAFA_COLOR_SPACE_RGB;
-    options.inc_sym = CHAFA_SYMBOL_CLASS_ALL;
-    options.exc_sym = CHAFA_SYMBOL_CLASS_NONE;
+    options.inc_sym = CHAFA_SYMBOL_TAG_ALL;
+    options.exc_sym = CHAFA_SYMBOL_TAG_NONE;
     options.exc_sym_cleared = FALSE;
     options.width = 80;
     options.height = 25;
@@ -787,7 +787,7 @@ parse_options (int *argc, char **argv [])
      * needs inverted symbols. In other modes they will only slow us down,
      * so disable them unless the user specified otherwise. */
     if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.exc_sym_cleared)
-        options.exc_sym |= CHAFA_SYMBOL_CLASS_INVERTED;
+        options.exc_sym |= CHAFA_SYMBOL_TAG_INVERTED;
 
     g_option_context_free (context);
 

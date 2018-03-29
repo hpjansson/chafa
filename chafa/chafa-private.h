@@ -55,7 +55,7 @@ ChafaPaletteColor;
 
 typedef struct
 {
-    ChafaSymbolClass sc;
+    ChafaSymbolTags sc;
     gunichar c;
     gchar *coverage;
     gint fg_weight, bg_weight;
@@ -72,8 +72,8 @@ struct ChafaCanvasConfig
     gint width, height;
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
-    ChafaSymbolClass include_symbols;
-    ChafaSymbolClass exclude_symbols;
+    ChafaSymbolTags include_symbols;
+    ChafaSymbolTags exclude_symbols;
     guint32 fg_color_packed_rgb;
     guint32 bg_color_packed_rgb;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
