@@ -36,18 +36,21 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
 
     canvas_config->canvas_mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
-    canvas_config->include_symbols = CHAFA_SYMBOL_TAG_ALL;
-    canvas_config->exclude_symbols = CHAFA_SYMBOL_TAG_NONE;
     canvas_config->fg_color_packed_rgb = 0xffffff;
     canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
     canvas_config->work_factor = 0.5;
+
+    chafa_symbol_map_init (&canvas_config->symbol_map);
+    chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_ALL);
 }
 
 void
 chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config)
 {
     g_return_if_fail (canvas_config != NULL);
+
+    chafa_symbol_map_deinit (&canvas_config->symbol_map);
 }
 
 void
@@ -57,6 +60,7 @@ chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasCon
     g_return_if_fail (src != NULL);
 
     memcpy (dest, src, sizeof (*dest));
+    chafa_symbol_map_copy_contents (&dest->symbol_map, &src->symbol_map);
 }
 
 /* Public */
@@ -155,40 +159,23 @@ chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace 
     config->color_space = color_space;
 }
 
-ChafaSymbolTags
-chafa_canvas_config_get_include_symbols (const ChafaCanvasConfig *config)
+const ChafaSymbolMap *
+chafa_canvas_config_get_symbol_map (const ChafaCanvasConfig *config)
 {
-    g_return_val_if_fail (config != NULL, CHAFA_SYMBOL_TAG_NONE);
-    g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOL_TAG_NONE);
+    g_return_val_if_fail (config != NULL, NULL);
+    g_return_val_if_fail (config->refs > 0, NULL);
 
-    return config->include_symbols;
+    return &config->symbol_map;
 }
 
 void
-chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolTags include_symbols)
+chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *config, const ChafaSymbolMap *symbol_map)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
 
-    config->include_symbols = include_symbols;
-}
-
-ChafaSymbolTags
-chafa_canvas_config_get_exclude_symbols (const ChafaCanvasConfig *config)
-{
-    g_return_val_if_fail (config != NULL, CHAFA_SYMBOL_TAG_NONE);
-    g_return_val_if_fail (config->refs > 0, CHAFA_SYMBOL_TAG_NONE);
-
-    return config->exclude_symbols;
-}
-
-void
-chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolTags exclude_symbols)
-{
-    g_return_if_fail (config != NULL);
-    g_return_if_fail (config->refs > 0);
-
-    config->exclude_symbols = exclude_symbols;
+    chafa_symbol_map_deinit (&config->symbol_map);
+    chafa_symbol_map_copy_contents (&config->symbol_map, symbol_map);
 }
 
 gfloat

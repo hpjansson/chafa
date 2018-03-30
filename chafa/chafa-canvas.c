@@ -251,15 +251,11 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
     fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
 
-    for (i = 0; chafa_symbols [i].c != 0; i++)
+    for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
         eval [i].error = G_MAXINT;
 
-        /* Always evaluate space so we get fallback colors */
-        if (chafa_symbols [i].sc != CHAFA_SYMBOL_TAG_SPACE &&
-            (!(chafa_symbols [i].sc & canvas->config.include_symbols)
-             || (chafa_symbols [i].sc & canvas->config.exclude_symbols)))
-            continue;
+        /* FIXME: Always evaluate space so we get fallback colors */
 
         if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
         {
@@ -270,7 +266,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
         {
             ChafaColor fg_col, bg_col;
 
-            eval_symbol_colors (canvas_pixels, &chafa_symbols [i], &eval [i]);
+            eval_symbol_colors (canvas_pixels, &canvas->config.symbol_map.symbols [i], &eval [i]);
 
             /* Threshold alpha */
 
@@ -334,7 +330,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             }
         }
 
-        eval_symbol_error (canvas, canvas_pixels, &chafa_symbols [i], &eval [i]);
+        eval_symbol_error (canvas, canvas_pixels, &canvas->config.symbol_map.symbols [i], &eval [i]);
     }
 
 #ifdef HAVE_MMX_INTRINSICS
@@ -346,12 +342,8 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
     if (error_out)
         *error_out = eval [0].error;
 
-    for (i = 0, n = 0; chafa_symbols [i].c != 0; i++)
+    for (i = 0, n = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
-        if (!(chafa_symbols [i].sc & canvas->config.include_symbols)
-            || (chafa_symbols [i].sc & canvas->config.exclude_symbols))
-            continue;
-
         if ((eval [i].fg.col.ch [0] != eval [i].bg.col.ch [0]
              || eval [i].fg.col.ch [1] != eval [i].bg.col.ch [1]
              || eval [i].fg.col.ch [2] != eval [i].bg.col.ch [2])
@@ -368,21 +360,13 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
 
     /* FIXME: Ugly duplicate code */
 
-    if (!(chafa_symbols [n].sc & canvas->config.include_symbols)
-        || (chafa_symbols [n].sc & canvas->config.exclude_symbols))
+    for (i = 0, n = -1; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
-        for (i = 0, n = -1; chafa_symbols [i].c != 0; i++)
+        if (n < 0 || eval [i].error < eval [n].error)
         {
-            if (!(chafa_symbols [i].sc & canvas->config.include_symbols)
-                || (chafa_symbols [i].sc & canvas->config.exclude_symbols))
-                continue;
-
-            if (n < 0 || eval [i].error < eval [n].error)
-            {
-                n = i;
-                if (error_out)
-                    *error_out = eval [i].error;
-            }
+            n = i;
+            if (error_out)
+                *error_out = eval [i].error;
         }
     }
 
@@ -390,10 +374,12 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
     if (n < 0)
         n = 0;
 
-    *sym_out = chafa_symbols [n].c;
+    *sym_out = canvas->config.symbol_map.symbols [n].c;
     *fg_col_out = eval [n].fg.col;
     *bg_col_out = eval [n].bg.col;
 }
+
+#if 0
 
 static void
 pick_fill_symbol_16 (ChafaCanvas *canvas, SymbolEval *eval, const ChafaColor *square_col,
@@ -500,6 +486,8 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
     return TRUE;
 }
 
+#endif
+
 static void
 update_cells (ChafaCanvas *canvas)
 {
@@ -532,6 +520,7 @@ update_cells (ChafaCanvas *canvas)
                 cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
 
+#if 0
                 /* Apply stipple symbols in solid cells (space or full block) */
                 if ((cell->fg_color == cell->bg_color
                      || cell->c == 0x20
@@ -542,6 +531,7 @@ update_cells (ChafaCanvas *canvas)
                     cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                     cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
                 }
+#endif
             }
             else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
             {
@@ -837,6 +827,8 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     else
         chafa_canvas_config_init (&canvas->config);
 
+    chafa_symbol_map_prepare (&canvas->config.symbol_map);
+
     /* In truecolor mode we don't support any fancy color spaces for now, since
      * we'd have to convert back to RGB space when emitting control codes, and
      * the code for that has yet to be written. In palette modes we just use
@@ -867,6 +859,8 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
     canvas = g_new (ChafaCanvas, 1);
     memcpy (canvas, orig, sizeof (*canvas));
     canvas->refs = 1;
+
+    chafa_canvas_config_copy_contents (&canvas->config, &orig->config);
 
     canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
@@ -905,6 +899,7 @@ chafa_canvas_unref (ChafaCanvas *canvas)
 
     if (--canvas->refs == 0)
     {
+        chafa_canvas_config_deinit (&canvas->config);
         g_free (canvas->pixels);
         g_free (canvas->cells);
         g_free (canvas);

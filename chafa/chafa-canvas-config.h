@@ -24,6 +24,8 @@
 # error "Only <chafa.h> can be included directly."
 #endif
 
+#include <chafa-symbol-map.h>
+
 G_BEGIN_DECLS
 
 /* Color spaces */
@@ -36,32 +38,6 @@ typedef enum
     CHAFA_COLOR_SPACE_MAX
 }
 ChafaColorSpace;
-
-/* Character symbols and symbol classes */
-
-#define CHAFA_SYMBOL_WIDTH_PIXELS 8
-#define CHAFA_SYMBOL_HEIGHT_PIXELS 8
-
-typedef enum
-{
-    CHAFA_SYMBOL_TAG_NONE        = 0,
-
-    CHAFA_SYMBOL_TAG_SPACE       = (1 <<  0),
-    CHAFA_SYMBOL_TAG_SOLID       = (1 <<  1),
-    CHAFA_SYMBOL_TAG_STIPPLE     = (1 <<  2),
-    CHAFA_SYMBOL_TAG_BLOCK       = (1 <<  3),
-    CHAFA_SYMBOL_TAG_BORDER      = (1 <<  4),
-    CHAFA_SYMBOL_TAG_DIAGONAL    = (1 <<  5),
-    CHAFA_SYMBOL_TAG_DOT         = (1 <<  6),
-    CHAFA_SYMBOL_TAG_QUAD        = (1 <<  7),
-    CHAFA_SYMBOL_TAG_HHALF       = (1 <<  8),
-    CHAFA_SYMBOL_TAG_VHALF       = (1 <<  9),
-    CHAFA_SYMBOL_TAG_HALF        = ((CHAFA_SYMBOL_TAG_HHALF) | (CHAFA_SYMBOL_TAG_VHALF)),
-    CHAFA_SYMBOL_TAG_INVERTED    = (1 << 10),
-
-    CHAFA_SYMBOL_TAG_ALL         = 0x7fffffff
-}
-ChafaSymbolTags;
 
 /* Canvas modes */
 
@@ -105,14 +81,9 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space);
 
 CHAFA_AVAILABLE_IN_ALL
-ChafaSymbolTags chafa_canvas_config_get_include_symbols (const ChafaCanvasConfig *config);
+const ChafaSymbolMap *chafa_canvas_config_get_symbol_map (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_include_symbols (ChafaCanvasConfig *config, ChafaSymbolTags include_symbols);
-
-CHAFA_AVAILABLE_IN_ALL
-ChafaSymbolTags chafa_canvas_config_get_exclude_symbols (const ChafaCanvasConfig *config);
-CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_exclude_symbols (ChafaCanvasConfig *config, ChafaSymbolTags exclude_symbols);
+void chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *canvas_config, const ChafaSymbolMap *symbol_map);
 
 CHAFA_AVAILABLE_IN_ALL
 gfloat chafa_canvas_config_get_transparency_threshold (const ChafaCanvasConfig *config);

@@ -845,17 +845,17 @@ textify (guint8 *pixels,
          gint src_width, gint src_height,
          gint dest_width, gint dest_height)
 {
+    ChafaSymbolMap *symbol_map;
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
     GString *gs;
 
+    symbol_map = chafa_symbol_map_new ();
     config = chafa_canvas_config_new ();
 
     chafa_canvas_config_set_size (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
     chafa_canvas_config_set_color_space (config, options.color_space);
-    chafa_canvas_config_set_include_symbols (config, options.inc_sym);
-    chafa_canvas_config_set_exclude_symbols (config, options.exc_sym);
     chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);
     if (options.transparency_threshold >= 0.0)
@@ -865,12 +865,17 @@ textify (guint8 *pixels,
      * get the work factor. */
     chafa_canvas_config_set_work_factor (config, (options.quality - 1) / 8.0);
 
+    chafa_symbol_map_add_by_tags (symbol_map, options.inc_sym);
+    chafa_symbol_map_remove_by_tags (symbol_map, options.exc_sym);
+    chafa_canvas_config_set_symbol_map (config, symbol_map);
+
     canvas = chafa_canvas_new (config);
     chafa_canvas_set_contents_rgba (canvas, pixels, src_width, src_height, src_width * 4);
     gs = chafa_canvas_build_ansi (canvas);
 
     chafa_canvas_unref (canvas);
     chafa_canvas_config_unref (config);
+    chafa_symbol_map_unref (symbol_map);
     return gs;
 }
 

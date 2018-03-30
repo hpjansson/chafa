@@ -63,6 +63,16 @@ typedef struct
 }
 ChafaSymbol;
 
+struct ChafaSymbolMap
+{
+    gint refs;
+
+    guint need_rebuild : 1;
+    GHashTable *desired_symbols;
+    ChafaSymbol *symbols;
+    gint n_symbols;
+};
+
 /* Canvas config */
 
 struct ChafaCanvasConfig
@@ -72,12 +82,11 @@ struct ChafaCanvasConfig
     gint width, height;
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
-    ChafaSymbolTags include_symbols;
-    ChafaSymbolTags exclude_symbols;
     guint32 fg_color_packed_rgb;
     guint32 bg_color_packed_rgb;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
     gfloat work_factor;
+    ChafaSymbolMap symbol_map;
 };
 
 /* Canvas */
@@ -95,6 +104,11 @@ void chafa_init_symbols (void);
 void chafa_init (void);
 gboolean chafa_have_mmx (void) G_GNUC_PURE;
 gboolean chafa_have_sse41 (void) G_GNUC_PURE;
+
+void chafa_symbol_map_init (ChafaSymbolMap *symbol_map);
+void chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map);
+void chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src);
+void chafa_symbol_map_prepare (ChafaSymbolMap *symbol_map);
 
 void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
