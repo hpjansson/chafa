@@ -24,7 +24,6 @@
 #include "chafa/chafa-private.h"
 
 ChafaSymbol *chafa_symbols;
-ChafaSymbol *chafa_fill_symbols;
 
 static const ChafaSymbol symbol_defs [] =
 {
@@ -1892,40 +1891,6 @@ static const ChafaSymbol symbol_defs [] =
     }
 };
 
-static const ChafaSymbol fill_symbol_defs [] =
-{
-    {
-        CHAFA_SYMBOL_TAG_SPACE,
-        0x20,
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        ",
-        0, 0, FALSE
-    },
-    {
-        /* Full block */
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_SOLID,
-        0x2588,
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX",
-        0, 0, FALSE
-    },
-    {
-      0, 0, "", 0, 0, FALSE
-    }
-};
-
 static gboolean symbols_initialized;
 
 static ChafaSymbol *
@@ -1984,7 +1949,6 @@ chafa_init_symbols (void)
         return;
 
     chafa_symbols = init_symbol_array (symbol_defs);
-    chafa_fill_symbols = init_symbol_array (fill_symbol_defs);
 
     symbols_initialized = TRUE;
 }
