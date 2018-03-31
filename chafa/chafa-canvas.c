@@ -355,25 +355,6 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
         }
     }
 
-    /* If we couldn't find a symbol and space is excluded by user, try again
-     * but allow symbols with equal fg/bg colors. */
-
-    /* FIXME: Ugly duplicate code */
-
-    for (i = 0, n = -1; canvas->config.symbol_map.symbols [i].c != 0; i++)
-    {
-        if (n < 0 || eval [i].error < eval [n].error)
-        {
-            n = i;
-            if (error_out)
-                *error_out = eval [i].error;
-        }
-    }
-
-    /* Fall back to space */
-    if (n < 0)
-        n = 0;
-
     *sym_out = canvas->config.symbol_map.symbols [n].c;
     *fg_col_out = eval [n].fg.col;
     *bg_col_out = eval [n].bg.col;
