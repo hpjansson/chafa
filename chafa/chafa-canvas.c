@@ -746,9 +746,53 @@ emit_ansi_256 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     }
 }
 
+/* Uses aixterm control codes for bright colors */
 static void
 emit_ansi_16 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
 {
+    for ( ; i < i_max; i++)
+    {
+        ChafaCanvasCell *cell = &canvas->cells [i];
+
+        if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+        {
+            if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+            {
+                g_string_append (gs, "\x1b[0m ");
+            }
+            else
+            {
+                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%dm%lc",
+                                        cell->bg_color < 8 ? cell->bg_color + 30
+                                                           : cell->bg_color + 90 - 8,
+                                        (wint_t) cell->c);
+            }
+        }
+        else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+        {
+            g_string_append_printf (gs, "\x1b[0m\x1b[%dm%lc",
+                                    cell->fg_color < 8 ? cell->fg_color + 30
+                                                       : cell->fg_color + 90 - 8,
+                                    (wint_t) cell->c);
+        }
+        else
+        {
+            g_string_append_printf (gs, "\x1b[0m\x1b[%dm\x1b[%dm%lc",
+                                    cell->fg_color < 8 ? cell->fg_color + 30
+                                                       : cell->fg_color + 90 - 8,
+                                    cell->bg_color < 8 ? cell->bg_color + 40
+                                                       : cell->bg_color + 100 - 8,
+                                    (wint_t) cell->c);
+        }
+    }
+}
+
+static void
+emit_ansi_16_8 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
+{
+    /* FIXME: For this to work optimally, we need to limit BG colors more during
+     * paint and consider using inverse symbols. */
+
     for ( ; i < i_max; i++)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
