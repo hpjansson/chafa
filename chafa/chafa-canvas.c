@@ -685,11 +685,8 @@ build_ansi_gstring (ChafaCanvas *canvas)
             ChafaCanvasCell *cell = &canvas->cells [i];
 
             if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
             {
-                /* FIXME: Use old school control codes for 16-color palette */
-
                 if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
                 {
                     if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
@@ -714,6 +711,38 @@ build_ansi_gstring (ChafaCanvas *canvas)
                     g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm\x1b[48;5;%dm%lc",
                                             cell->fg_color,
                                             cell->bg_color,
+                                            (wint_t) cell->c);
+                }
+            }
+            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+            {
+                if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                {
+                    if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                    {
+                        g_string_append (gs, "\x1b[0m ");
+                    }
+                    else
+                    {
+                        g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%s3%dm%lc",
+                                                cell->bg_color > 7 ? "1;" : "",
+                                                cell->bg_color % 8,
+                                                (wint_t) cell->c);
+                    }
+                }
+                else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                {
+                    g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm%lc",
+                                            cell->fg_color > 7 ? "1;" : "",
+                                            cell->fg_color % 8,
+                                            (wint_t) cell->c);
+                }
+                else
+                {
+                    g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm\x1b[4%dm%lc",
+                                            cell->fg_color > 7 ? "1;" : "",
+                                            cell->fg_color % 8,
+                                            cell->bg_color % 8,  /* FIXME: Bright background colors? */
                                             (wint_t) cell->c);
                 }
             }
