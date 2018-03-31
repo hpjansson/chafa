@@ -360,8 +360,6 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
     *bg_col_out = eval [n].bg.col;
 }
 
-#if 0
-
 static void
 pick_fill_symbol_16 (ChafaCanvas *canvas, SymbolEval *eval, const ChafaColor *square_col,
                      const gint *sym_coverage, gint fg_col, gint bg_col,
@@ -370,14 +368,13 @@ pick_fill_symbol_16 (ChafaCanvas *canvas, SymbolEval *eval, const ChafaColor *sq
     gint i;
     gint n;
 
-    for (i = 0; chafa_fill_symbols [i].c != 0; i++)
+    for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
-        const ChafaSymbol *sym = &chafa_fill_symbols [i];
+        const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [i];
         SymbolEval *e = &eval [i];
         ChafaColor mixed_col;
 
-        if (!(sym->sc & canvas->config.include_symbols)
-            || (sym->sc & canvas->config.exclude_symbols))
+        if (!(sym->sc & CHAFA_SYMBOL_TAG_STIPPLE))
             continue;
 
         e->fg.col = *chafa_get_palette_color_256 (fg_col, canvas->config.color_space);
@@ -391,12 +388,11 @@ pick_fill_symbol_16 (ChafaCanvas *canvas, SymbolEval *eval, const ChafaColor *sq
             e->error = chafa_color_diff_fast (&mixed_col, square_col, canvas->config.color_space);
     }
 
-    for (i = 0, n = -1; chafa_fill_symbols [i].c != 0; i++)
+    for (i = 0, n = -1; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
-        const ChafaSymbol *sym = &chafa_fill_symbols [i];
+        const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [i];
 
-        if (!(sym->sc & canvas->config.include_symbols)
-            || (sym->sc & canvas->config.exclude_symbols))
+        if (!(sym->sc & CHAFA_SYMBOL_TAG_STIPPLE))
             continue;
 
         if (n < 0 || eval [i].error < eval [n].error)
@@ -430,9 +426,13 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
     fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
     calc_mean_color (canvas_pixels, &square_col);
 
-    for (i = 0; chafa_fill_symbols [i].c != 0; i++)
+    for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
-        const ChafaSymbol *sym = &chafa_fill_symbols [i];
+        const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [i];
+
+        if (!(sym->sc & CHAFA_SYMBOL_TAG_STIPPLE))
+            continue;
+
         sym_coverage [i] = (sym->fg_weight * (gint) 100) / CHAFA_SYMBOL_N_PIXELS;
     }
 
@@ -457,7 +457,7 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
     if (best_sym < 0)
         return FALSE;
 
-    *sym_out = chafa_fill_symbols [best_sym].c;
+    *sym_out =  canvas->config.symbol_map.symbols [best_sym].c;
     *fg_col_out = best_eval.fg.col;
     *bg_col_out = best_eval.bg.col;
 
@@ -466,8 +466,6 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
 
     return TRUE;
 }
-
-#endif
 
 static void
 update_cells (ChafaCanvas *canvas)
@@ -501,7 +499,6 @@ update_cells (ChafaCanvas *canvas)
                 cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
 
-#if 0
                 /* Apply stipple symbols in solid cells (space or full block) */
                 if ((cell->fg_color == cell->bg_color
                      || cell->c == 0x20
@@ -512,7 +509,6 @@ update_cells (ChafaCanvas *canvas)
                     cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                     cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
                 }
-#endif
             }
             else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
             {
