@@ -1848,27 +1848,6 @@ static const ChafaSymbol symbol_defs [] =
         0, 0, FALSE
     },
     {
-        0, 0, "",
-        0, 0, FALSE
-    }
-};
-
-static const ChafaSymbol fill_symbol_defs [] =
-{
-    {
-        CHAFA_SYMBOL_TAG_SPACE,
-        0x20,
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        ",
-        0, 0, FALSE
-    },
-    {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2591,
         "22222222"
@@ -1905,6 +1884,27 @@ static const ChafaSymbol fill_symbol_defs [] =
         "88888888"
         "88888888"
         "88888888",
+        0, 0, FALSE
+    },
+    {
+        0, 0, "",
+        0, 0, FALSE
+    }
+};
+
+static const ChafaSymbol fill_symbol_defs [] =
+{
+    {
+        CHAFA_SYMBOL_TAG_SPACE,
+        0x20,
+        "        "
+        "        "
+        "        "
+        "        "
+        "        "
+        "        "
+        "        "
+        "        ",
         0, 0, FALSE
     },
     {
