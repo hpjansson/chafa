@@ -286,7 +286,8 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             /* Pick palette colors before error evaluation; this improves
              * fine detail fidelity slightly. */
 
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16_8)
             {
                 if (canvas->work_factor_int >= 5)
                 {
@@ -494,7 +495,8 @@ update_cells (ChafaCanvas *canvas)
                 cell->fg_color = chafa_pick_color_240 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_240 (&bg_col, canvas->config.color_space);
             }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+                     || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16_8)
             {
                 cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
@@ -880,6 +882,9 @@ build_ansi_gstring (ChafaCanvas *canvas)
                 break;
             case CHAFA_CANVAS_MODE_INDEXED_16:
                 emit_ansi_16 (canvas, gs, i, i_next);
+                break;
+            case CHAFA_CANVAS_MODE_INDEXED_16_8:
+                emit_ansi_16_8 (canvas, gs, i, i_next);
                 break;
             case CHAFA_CANVAS_MODE_FGBG_BGFG:
                 emit_ansi_fgbg_bgfg (canvas, gs, i, i_next);
