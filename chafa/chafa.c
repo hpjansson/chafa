@@ -211,16 +211,19 @@ print_summary (void)
     "                     default this will be the size of your terminal, or 80x25 if\n"
     "                     size detection fails.\n"
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
-    "      --symbols ...  Employ output symbols based on an inclusion and an\n"
-    "                     exclusion list. Each symbol identifier is preceded by an\n"
-    "                     optional + to include, or - to exclude.\n"
+    "      --symbols ...  Specify character symbols to employ in final output.\n"
+    "                     See below for full usage and a list of symbol classes.\n"
     "  -t  --transparency-threshold THRESHOLD  Threshold above which full\n"
     "                     transparency will be used [0.0 - 1.0].\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
-    "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Use \"none\" to\n"
-    "  clear the include/exclude lists. Some symbols belong to multiple classes,\n"
-    "  e.g. diagonals are also borders.\n\n"
+    "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Some symbols\n"
+    "  belong to multiple classes, e.g. diagonals are also borders. You can specify\n"
+    "  a list of classes separated by commas, or prefix them with + and - to add\n"
+    "  or remove symbols relative to the existing set. The ordering is significant.\n\n"
+
+    "  The default symbol set is all-stipple-inverted for all modes except for\n"
+    "  \"none\", which looks best when allowed to use inverted characters.\n\n"
 
     "Examples:\n"
 
