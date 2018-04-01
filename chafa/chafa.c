@@ -192,28 +192,28 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
-    "      --bg COLOR     Background color of display (color name or hex).\n"
+    "      --bg=COLOR     Background color of display (color name or hex).\n"
     "      --clear        Clear screen before processing each file.\n"
-    "  -c, --colors       Set output color mode; one of [none, 2, 16, 240, 256,\n"
+    "  -c, --colors=MODE  Set output color mode; one of [none, 2, 16, 240, 256,\n"
     "                     full]. Defaults to full (24-bit).\n"
-    "      --color-space  Color space used for quantization; one of [rgb, din99d].\n"
+    "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
-    "      --fg COLOR     Foreground color of display (color name or hex).\n"
-    "      --font-ratio W/H  Target font's width/height ratio. Can be specified as\n"
+    "      --fg=COLOR     Foreground color of display (color name or hex).\n"
+    "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
-    "  -p, --preprocess   Image preprocessing [on, off]. Defaults to on with 16\n"
+    "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
-    "  -q, --quality Q    Desired quality [1-9]. 1 is the fastest, 9 is the most\n"
+    "  -q, --quality=NUM  Desired quality [1-9]. 1 is the fastest, 9 is the most\n"
     "                     accurate. Defaults to 5.\n"
-    "  -s, --size WxH     Set maximum output dimensions in columns and rows. By\n"
-    "                     default this will be the size of your terminal, or 80x25 if\n"
-    "                     size detection fails.\n"
+    "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
+    "                     default this will be the size of your terminal, or 80x25\n"
+    "                     if size detection fails.\n"
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
-    "      --symbols ...  Specify character symbols to employ in final output.\n"
+    "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
-    "  -t  --transparency-threshold THRESHOLD  Threshold above which full\n"
+    "  -t  --transparency-threshold=NUM  Threshold above which full\n"
     "                     transparency will be used [0.0 - 1.0].\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
@@ -687,6 +687,8 @@ parse_options (int *argc, char **argv [])
     gboolean result = TRUE;
     const GOptionEntry option_entries [] =
     {
+        /* Note: The descriptive blurbs here are never shown to the user */
+
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
