@@ -735,13 +735,13 @@ parse_options (int *argc, char **argv [])
 
     if (!g_option_context_parse (context, argc, argv, &error))
     {
-        g_printerr ("Error: %s\n", error->message);
+        g_printerr ("%s: %s\n", options.executable_name, error->message);
         return FALSE;
     }
 
     if (options.quality < 1 || options.quality > 9)
     {
-        g_printerr ("Error: Quality must be in the range [1-9].\n");
+        g_printerr ("%s: Quality must be in the range [1-9].\n", options.executable_name);
         return FALSE;
     }
 
@@ -1035,7 +1035,10 @@ run (const gchar *filename, gboolean is_single_file)
         ExceptionType severity;
 
         error_str = MagickGetException (wand, &severity);
-        g_printerr ("Error: %s\n", error_str);
+        g_printerr ("%s: Error loading '%s': %s\n",
+                    options.executable_name,
+                    filename,
+                    error_str);
         MagickRelinquishMemory (error_str);
         goto out;
     }
