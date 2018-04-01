@@ -42,9 +42,8 @@ typedef struct
     GList *args;
     ChafaCanvasMode mode;
     ChafaColorSpace color_space;
-    ChafaSymbolTags inc_sym;
-    ChafaSymbolTags exc_sym;
-    gboolean exc_sym_cleared;
+    ChafaSymbolMap *symbol_map;
+    ChafaSymbolTags symbol_tags_specified;
     gboolean is_interactive;
     gboolean clear;
     gboolean verbose;
@@ -373,7 +372,7 @@ static gboolean
 parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     const gchar *p0 = value;
-    gboolean is_inc = FALSE, is_exc = FALSE;
+    gboolean is_add = FALSE, is_remove = FALSE;
     gboolean result = TRUE;
 
     while (*p0)
@@ -388,14 +387,14 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
         p0 += strspn (p0, ",");
         if (*p0 == '-')
         {
-            is_inc = FALSE;
-            is_exc = TRUE;
+            is_add = FALSE;
+            is_remove = TRUE;
             p0++;
         }
         else if (*p0 == '+')
         {
-            is_inc = TRUE;
-            is_exc = FALSE;
+            is_add = TRUE;
+            is_remove = FALSE;
             p0++;
         }
 
@@ -416,27 +415,25 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 
         p0 += n;
 
-        if (is_inc)
+        if (is_add)
         {
-            if (sc == CHAFA_SYMBOL_TAG_NONE)
-                options.inc_sym = CHAFA_SYMBOL_TAG_NONE;
-            options.inc_sym |= sc;
+            chafa_symbol_map_add_by_tags (options.symbol_map, sc);
         }
-        else if (is_exc)
+        else if (is_remove)
         {
-            if (sc == CHAFA_SYMBOL_TAG_NONE)
-            {
-                options.exc_sym = CHAFA_SYMBOL_TAG_NONE;
-                options.exc_sym_cleared = TRUE;
-            }
-            options.exc_sym |= sc;
+            chafa_symbol_map_remove_by_tags (options.symbol_map, sc);
         }
         else
         {
-            options.inc_sym = sc;
-            options.exc_sym = CHAFA_SYMBOL_TAG_NONE;
-            is_inc = TRUE;
+            chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
+            chafa_symbol_map_add_by_tags (options.symbol_map, sc);
+            is_add = TRUE;
+
+            /* This effectively overrides all tags */
+            sc = CHAFA_SYMBOL_TAG_ALL;
         }
+
+        options.symbol_tags_specified |= sc;
     }
 
     return result;
@@ -715,12 +712,13 @@ parse_options (int *argc, char **argv [])
     options.executable_name = g_strdup ((*argv) [0]);
 
     /* Defaults */
+    options.symbol_map = chafa_symbol_map_new ();
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
+    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_STIPPLE);
+
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
     options.color_space = CHAFA_COLOR_SPACE_RGB;
-    options.inc_sym = CHAFA_SYMBOL_TAG_ALL;
-    options.exc_sym = CHAFA_SYMBOL_TAG_NONE;
-    options.exc_sym_cleared = FALSE;
     options.width = 80;
     options.height = 25;
     options.font_ratio = 1.0 / 2.0;
@@ -786,8 +784,8 @@ parse_options (int *argc, char **argv [])
     /* Since FGBG mode can't use escape sequences to invert, it really
      * needs inverted symbols. In other modes they will only slow us down,
      * so disable them unless the user specified otherwise. */
-    if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.exc_sym_cleared)
-        options.exc_sym |= CHAFA_SYMBOL_TAG_INVERTED;
+    if (options.mode != CHAFA_CANVAS_MODE_FGBG && !(options.symbol_tags_specified & CHAFA_SYMBOL_TAG_INVERTED))
+        chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_INVERTED);
 
     g_option_context_free (context);
 
@@ -861,13 +859,11 @@ textify (guint8 *pixels,
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
 
+    chafa_canvas_config_set_symbol_map (config, options.symbol_map);
+
     /* Quality switch takes values [1..9], we normalize to [0.0..1.0] to
      * get the work factor. */
     chafa_canvas_config_set_work_factor (config, (options.quality - 1) / 8.0);
-
-    chafa_symbol_map_add_by_tags (symbol_map, options.inc_sym);
-    chafa_symbol_map_remove_by_tags (symbol_map, options.exc_sym);
-    chafa_canvas_config_set_symbol_map (config, symbol_map);
 
     canvas = chafa_canvas_new (config);
     chafa_canvas_set_contents_rgba (canvas, pixels, src_width, src_height, src_width * 4);
@@ -1184,5 +1180,8 @@ main (int argc, char *argv [])
         exit (1);
 
     ret = run_all (options.args);
+
+    if (options.symbol_map)
+        chafa_symbol_map_unref (options.symbol_map);
     return ret;
 }
