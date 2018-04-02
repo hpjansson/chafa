@@ -34,13 +34,16 @@
 
 <refsect1><title>Description</title>
 <para>
-<command>chafa</command> is a small utility that converts all kinds
-of images, including animated image formats like GIFs, into (potentially
-animated) ANSI/Unicode character output that can be displayed in a terminal.
+<command>chafa</command> is a utility that converts all kinds of images,
+including animated image formats like GIFs, into (potentially animated)
+ANSI/Unicode character output that can be displayed in a terminal. It
+supports alpha transparency and multiple color modes and color spaces, and
+combines a range of Unicode characters for optimal output.
 </para>
 <para>
 You can specify one or more input files, but the default behavior is slightly
-different with multiple files -- for instance, animation time will be limited.
+different with multiple files -- for instance, animations will not loop forever
+when there is more than one input file.
 </para>
 </refsect1>
 
@@ -51,7 +54,8 @@ different with multiple files -- for instance, animation time will be limited.
 <term><option>--bg <replaceable>color</replaceable></option></term>
 <listitem><para>
 Background color of display (color name or hex). Partially transparent input
-will be blended with this color. Defaults to black.
+will be blended with this color. Color names are based on those provided with
+X.Org. Defaults to black.
 </para></listitem>
 </varlistentry>
 
@@ -67,7 +71,10 @@ Clear screen before processing each file.
 <listitem><para>
 Set output color mode; one of [none, 2, 16, 240, 256, full]. Defaults to full
 (24-bit). The 240-color mode is recommended over the 256-color one, since the
-lower 16 colors are unreliable and tend to differ between terminals.
+lower 16 colors are unreliable and tend to differ between terminals. 16-color
+mode will use aixterm extensions to produce 16 foreground and background
+colors. 2-color mode will only emit the ANSI codes for reverse color and
+attribute reset, while "none" will emit no ANSI color codes whatsoever.
 </para></listitem>
 </varlistentry>
 
@@ -83,8 +90,9 @@ which is faster but less accurate.
 <term><option>--fg <replaceable>color</replaceable></option></term>
 <listitem><para>
 Foreground color of display (color name or hex). Together with the background
-color specified by --bg, this specifies the palette in color modes 2 and
-none. Defaults to white.
+color specified by --bg, this specifies the terminal's palette in color modes 2
+and none. Color names are based on those provided with X.Org. Defaults to
+white.
 </para></listitem>
 </varlistentry>
 
