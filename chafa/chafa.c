@@ -213,7 +213,7 @@ print_summary (void)
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
-    "  -t  --transparency-threshold=NUM  Threshold above which full\n"
+    "  -t, --transparency-threshold=NUM  Threshold above which full\n"
     "                     transparency will be used [0.0 - 1.0].\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
