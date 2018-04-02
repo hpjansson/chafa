@@ -27,6 +27,162 @@
 <refpurpose>Character art facsimile generator</refpurpose>
 </refnamediv>
 
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>chafa</command>
+<arg choice="opt" rep="repeat">OPTION</arg>
+<arg choice="opt" rep="repeat">IMAGE</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>Description</title>
+<para>
+<command>chafa</command> is a small utility that converts all kinds
+of images, including animated image formats like GIFs, into (potentially
+animated) ANSI/Unicode character output that can be displayed in a terminal.
+</para>
+<para>
+You can specify one or more input files, but the default behavior is slightly
+different with multiple files -- for instance, animation time will be limited.
+</para>
+</refsect1>
+
+<refsect1><title>Options</title>
+<variablelist>
+
+<varlistentry>
+<term><option>--bg=COLOR</option></term>
+<listitem><para>
+Background color of display (color name or hex).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--clear</option></term>
+<listitem><para>
+Clear screen before processing each file.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-c MODE, --colors=MODE</option></term>
+<listitem><para>
+Set output color mode; one of [none, 2, 16, 240, 256, full]. Defaults to full
+(24-bit).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--color-space=CS</option></term>
+<listitem><para>
+Color space used for quantization; one of [rgb, din99d]. Defaults to rgb,
+which is faster but less accurate.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--fg=COLOR</option></term>
+<listitem><para>
+Foreground color of display (color name or hex).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--font-ratio=W/H</option></term>
+<listitem><para>
+Target font's width/height ratio. Can be specified as a real number or a
+fraction. Defaults to 1/2.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--invert</option></term>
+<listitem><para>
+Invert video. For display with bright backgrounds in color modes 2 and
+none. Swaps --fg and --bg.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-p BOOL, --preprocess=BOOL</option></term>
+<listitem><para>
+Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off
+otherwise.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-q NUM, --quality=NUM</option></term>
+<listitem><para>
+Desired quality [1-9]. 1 is the fastest, 9 is the most accurate. Defaults to 5.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-s WxH, --size=WxH</option></term>
+<listitem><para>
+Set maximum output dimensions in columns and rows. By default this will be the
+size of your terminal, or 80x25 if size detection fails.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--stretch</option></term>
+<listitem><para>
+Stretch image to fit output dimensions; ignore aspect.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--symbols=SYMS</option></term>
+<listitem><para>
+Specify character symbols to employ in final output. See below for full usage
+and a list of symbol classes.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-t NUM, --transparency-threshold=NUM</option></term>
+<listitem><para>
+Threshold above which full transparency will be used [0.0 - 1.0].
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Symbols</title>
+<para>
+Accepted classes for --symbols are [all, none, space, solid, stipple, block,
+border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Some symbols
+belong to multiple classes, e.g. diagonals are also borders.
+</para>
+<para>
+You can specify a list of classes separated by commas, or prefix them with +
+and - to add or remove symbols relative to the existing set. The ordering is
+significant.
+</para>
+<para>
+The default symbol set is all-stipple-inverted for all modes except for
+"none", which looks best when allowed to use inverted characters.
+</para>
+</refsect1>
+
+<refsect1><title>Examples</title>
+<para>
+<command>chafa -c 16 --color-space din99d --symbols -dot-stipple in.jpg</command>
+</para>
+<para>
+<command>chafa -c none --symbols block+border-solid in.png</command>
+</para>
+</refsect1>
+
 <!-- TODO -->
+
+<refsect1><title>Author</title>
+  <para>
+    Written by Hans Petter Jansson <email>hpj@copyleft.no</email>.
+  </para>
+</refsect1>
 
 </refentry>
