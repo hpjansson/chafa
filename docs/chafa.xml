@@ -28,10 +28,7 @@
 </refnamediv>
 
 <refsynopsisdiv>
-<cmdsynopsis>
-<command>chafa</command>
-<arg choice="opt" rep="repeat">OPTION</arg>
-<arg choice="opt" rep="repeat">IMAGE</arg>
+<cmdsynopsis><command>chafa</command><arg choice="opt" rep="repeat">OPTION</arg><arg rep="repeat">IMAGE</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -51,9 +48,10 @@ different with multiple files -- for instance, animation time will be limited.
 <variablelist>
 
 <varlistentry>
-<term><option>--bg=COLOR</option></term>
+<term><option>--bg <replaceable>color</replaceable></option></term>
 <listitem><para>
-Background color of display (color name or hex).
+Background color of display (color name or hex). Partially transparent input
+will be blended with this color. Defaults to black.
 </para></listitem>
 </varlistentry>
 
@@ -65,15 +63,16 @@ Clear screen before processing each file.
 </varlistentry>
 
 <varlistentry>
-<term><option>-c MODE, --colors=MODE</option></term>
+<term><option>-c <replaceable>mode</replaceable>, --colors <replaceable>mode</replaceable></option></term>
 <listitem><para>
 Set output color mode; one of [none, 2, 16, 240, 256, full]. Defaults to full
-(24-bit).
+(24-bit). The 240-color mode is recommended over the 256-color one, since the
+lower 16 colors are unreliable and tend to differ between terminals.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term><option>--color-space=CS</option></term>
+<term><option>--color-space <replaceable>cs</replaceable></option></term>
 <listitem><para>
 Color space used for quantization; one of [rgb, din99d]. Defaults to rgb,
 which is faster but less accurate.
@@ -81,17 +80,26 @@ which is faster but less accurate.
 </varlistentry>
 
 <varlistentry>
-<term><option>--fg=COLOR</option></term>
+<term><option>--fg <replaceable>color</replaceable></option></term>
 <listitem><para>
-Foreground color of display (color name or hex).
+Foreground color of display (color name or hex). Together with the background
+color specified by --bg, this specifies the palette in color modes 2 and
+none. Defaults to white.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term><option>--font-ratio=W/H</option></term>
+<term><option>--font-ratio <replaceable>width</replaceable>/<replaceable>height</replaceable></option></term>
 <listitem><para>
 Target font's width/height ratio. Can be specified as a real number or a
 fraction. Defaults to 1/2.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-h, --help</option></term>
+<listitem><para>
+Show a brief help text.
 </para></listitem>
 </varlistentry>
 
@@ -104,22 +112,24 @@ none. Swaps --fg and --bg.
 </varlistentry>
 
 <varlistentry>
-<term><option>-p BOOL, --preprocess=BOOL</option></term>
+<term><option>-p <replaceable>bool</replaceable>, --preprocess <replaceable>bool</replaceable></option></term>
 <listitem><para>
 Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off
-otherwise.
+otherwise. This enhances colors and contrast prior to conversion, which can be
+useful in low-color modes.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term><option>-q NUM, --quality=NUM</option></term>
+<term><option>-q <replaceable>num</replaceable>, --quality <replaceable>num</replaceable></option></term>
 <listitem><para>
-Desired quality [1-9]. 1 is the fastest, 9 is the most accurate. Defaults to 5.
+Desired quality [1-9]. 1 is the cheapest, 9 is the most accurate. Defaults to
+5. The resources in play are CPU time and memory.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term><option>-s WxH, --size=WxH</option></term>
+<term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
 <listitem><para>
 Set maximum output dimensions in columns and rows. By default this will be the
 size of your terminal, or 80x25 if size detection fails.
@@ -134,7 +144,7 @@ Stretch image to fit output dimensions; ignore aspect.
 </varlistentry>
 
 <varlistentry>
-<term><option>--symbols=SYMS</option></term>
+<term><option>--symbols <replaceable>symbols</replaceable></option></term>
 <listitem><para>
 Specify character symbols to employ in final output. See below for full usage
 and a list of symbol classes.
@@ -142,9 +152,19 @@ and a list of symbol classes.
 </varlistentry>
 
 <varlistentry>
-<term><option>-t NUM, --transparency-threshold=NUM</option></term>
+<term><option>-t <replaceable>threshold</replaceable>, --transparency-threshold
+<replaceable>threshold</replaceable></option></term>
 <listitem><para>
-Threshold above which full transparency will be used [0.0 - 1.0].
+Threshold above which full transparency will be used [0.0 - 1.0]. Setting this
+to 0.0 will render a blank image, while a value of 1.0 will replace any
+transparency with the background color (configurable with --bg).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--version</option></term>
+<listitem><para>
+Show version, feature and copyright information.
 </para></listitem>
 </varlistentry>
 
@@ -169,20 +189,44 @@ The default symbol set is all-stipple-inverted for all modes except for
 </refsect1>
 
 <refsect1><title>Examples</title>
+<variablelist>
+<varlistentry>
+<term>chafa in.gif</term>
 <para>
-<command>chafa -c 16 --color-space din99d --symbols -dot-stipple in.jpg</command>
+Show a potentially animated GIF image in the terminal. If this is an animation,
+it will run until the user generates an interrupt (typically ctrl-c). All
+parameters will be autodetected based on the current environment.
 </para>
+</varlistentry>
+<varlistentry>
+<term>chafa -c full -s 200 in.gif</term>
 <para>
-<command>chafa -c none --symbols block+border-solid in.png</command>
+Like the above, but force truecolor output that is 200 characters wide and
+calculate the height preserving the aspect of the original image.
 </para>
+</varlistentry>
+<varlistentry>
+<term>chafa -c 16 --color-space din99d --symbols -dot in.jpg</term>
+<para>
+Generate 16-color output with perceptual color picking and avoid using dot symbols.
+</para>
+</varlistentry>
+<varlistentry>
+<term>chafa -c none --symbols block+border-solid in.png</term>
+<para>
+Generate uncolored output using block and border symbols, but avoid the solid
+block symbol.
+</para>
+</varlistentry>
+</variablelist>
 </refsect1>
 
 <!-- TODO -->
 
 <refsect1><title>Author</title>
-  <para>
+<para>
     Written by Hans Petter Jansson <email>hpj@copyleft.no</email>.
-  </para>
+</para>
 </refsect1>
 
 </refentry>
