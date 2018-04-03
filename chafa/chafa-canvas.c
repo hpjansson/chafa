@@ -831,13 +831,38 @@ emit_ansi_16_8 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
 static void
 emit_ansi_fgbg_bgfg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
 {
+    gunichar blank_symbol = 0;
+
+    if (chafa_symbol_map_has_symbol (&canvas->config.symbol_map, ' '))
+    {
+        blank_symbol = ' ';
+    }
+    else if (chafa_symbol_map_has_symbol (&canvas->config.symbol_map, 0x2588 /* Solid block */ ))
+    {
+        blank_symbol = 0x2588;
+    }
+
     for ( ; i < i_max; i++)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
+        gboolean invert = FALSE;
+        wint_t c = cell->c;
+
+        if (cell->fg_color == cell->bg_color && blank_symbol != 0)
+        {
+            c = blank_symbol;
+            if (blank_symbol == 0x2588)
+                invert = TRUE;
+        }
+
+        if (cell->bg_color == CHAFA_PALETTE_INDEX_FG)
+        {
+            invert ^= TRUE;
+        }
 
         g_string_append_printf (gs, "\x1b[%dm%lc",
-                                cell->bg_color == CHAFA_PALETTE_INDEX_FG ? 7 : 0,
-                                cell->fg_color == cell->bg_color ? ' ' : (wint_t) cell->c);
+                                invert ? 7 : 0,
+                                c);
     }
 }
 
