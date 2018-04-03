@@ -425,12 +425,23 @@ chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
 {
     gint best_error;
     gint best_index = CHAFA_PALETTE_INDEX_FG;
+    ChafaColor bg_color_opaque;
     gint error;
 
     best_error = chafa_color_diff_slow (color, fg_color, color_space);
     error = chafa_color_diff_slow (color, bg_color, color_space);
     if (error < best_error)
         best_index = CHAFA_PALETTE_INDEX_BG;
+
+    /* Consider opaque background too */
+    if (best_index != CHAFA_PALETTE_INDEX_BG)
+    {
+        bg_color_opaque = *bg_color;
+        bg_color_opaque.ch [3] = 0xff;
+        error = chafa_color_diff_slow (color, &bg_color_opaque, color_space);
+        if (error < best_error)
+            best_index = CHAFA_PALETTE_INDEX_BG;
+    }
 
     return best_index;
 }

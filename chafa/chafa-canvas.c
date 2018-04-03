@@ -553,6 +553,9 @@ update_display_colors (ChafaCanvas *canvas)
         canvas->fg_color = fg_col;
         canvas->bg_color = bg_col;
     }
+
+    canvas->fg_color.ch [3] = 0xff;
+    canvas->bg_color.ch [3] = 0x00;
 }
 
 static void
