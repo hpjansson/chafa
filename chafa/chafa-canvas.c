@@ -103,12 +103,6 @@ calc_mean_color (ChafaPixel *pixels, ChafaColor *color_out)
     *color_out = accum;
 }
 
-#ifdef HAVE_MMX_INTRINSICS
-# define calc_colors_faster calc_colors_mmx
-#else
-# define calc_colors_faster calc_colors_plain
-#endif
-
 static void
 calc_colors_plain (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
 {
