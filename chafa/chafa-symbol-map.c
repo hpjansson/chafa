@@ -134,6 +134,27 @@ chafa_symbol_map_prepare (ChafaSymbolMap *symbol_map)
     rebuild_symbols (symbol_map);
 }
 
+/* FIXME: Use gunichars as keys in hash table instead, or use binary search here */
+gboolean
+chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol)
+{
+    gint i;
+
+    g_return_val_if_fail (symbol_map != NULL, FALSE);
+
+    for (i = 0; i < symbol_map->n_symbols; i++)
+    {
+        const ChafaSymbol *sym = &symbol_map->symbols [i];
+
+        if (sym->c == symbol)
+            return TRUE;
+        if (sym->c > symbol)
+            break;
+    }
+
+    return FALSE;
+}
+
 /* Public */
 
 ChafaSymbolMap *
