@@ -77,6 +77,13 @@ chafa_have_sse41 (void)
 
 /* Public API */
 
+/**
+ * chafa_get_builtin_features:
+ *
+ * Gets a list of the platform-specific features this library was built with.
+ *
+ * Returns: A set of flags indicating features present.
+ **/
 ChafaFeatures
 chafa_get_builtin_features (void)
 {
@@ -93,6 +100,14 @@ chafa_get_builtin_features (void)
     return features;
 }
 
+/**
+ * chafa_get_supported_features:
+ *
+ * Gets a list of the platform-specific features that are built in and usable
+ * on the runtime platform.
+ *
+ * Returns: 
+ **/
 ChafaFeatures
 chafa_get_supported_features (void)
 {
@@ -102,6 +117,16 @@ chafa_get_supported_features (void)
         | (have_sse41 ? CHAFA_FEATURE_SSE41 : 0);
 }
 
+/**
+ * chafa_describe_features:
+ * @features: A set of flags representing features
+ *
+ * Takes a set of flags potentially returned from chafa_get_builtin_features ()
+ * or chafa_get_supported_features () and generates a human-readable ASCII
+ * string descriptor.
+ *
+ * Returns: A string describing the features. This must be freed by caller.
+ **/
 gchar *
 chafa_describe_features (ChafaFeatures features)
 {
@@ -117,4 +142,3 @@ chafa_describe_features (ChafaFeatures features)
 
     return g_string_free (features_gstr, FALSE);
 }
-
