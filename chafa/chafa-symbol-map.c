@@ -157,6 +157,13 @@ chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol)
 
 /* Public */
 
+/**
+ * chafa_symbol_map_new:
+ *
+ * Creates a new symbol map representing a set of Unicode symbols.
+ *
+ * Returns: The new symbol map
+ **/
 ChafaSymbolMap *
 chafa_symbol_map_new (void)
 {
@@ -167,6 +174,12 @@ chafa_symbol_map_new (void)
     return symbol_map;
 }
 
+/**
+ * chafa_symbol_map_ref:
+ * @symbol_map: Symbol map to add a reference to
+ *
+ * Adds a reference to @symbol_map.
+ **/
 void
 chafa_symbol_map_ref (ChafaSymbolMap *symbol_map)
 {
@@ -176,6 +189,13 @@ chafa_symbol_map_ref (ChafaSymbolMap *symbol_map)
     symbol_map->refs++;
 }
 
+/**
+ * chafa_symbol_map_unref:
+ * @symbol_map: Symbol map to remove a reference from
+ *
+ * Removes a reference from @symbol_map. When remaining references frops to
+ * zero, the symbol map is freed and can no longer be used.
+ **/
 void
 chafa_symbol_map_unref (ChafaSymbolMap *symbol_map)
 {
@@ -189,6 +209,13 @@ chafa_symbol_map_unref (ChafaSymbolMap *symbol_map)
     }
 }
 
+/**
+ * chafa_symbol_map_add_by_tags:
+ * @symbol_map: Symbol map to add symbols to
+ * @tags: Selector tags for symbols to add
+ *
+ * Adds symbols matching the set of @tags to @symbol_map.
+ **/
 void
 chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
 {
@@ -209,6 +236,13 @@ chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
     symbol_map->need_rebuild = TRUE;
 }
 
+/**
+ * chafa_symbol_map_remove_by_tags:
+ * @symbol_map: Symbol map to remove symbols from
+ * @tags: Selector tags for symbols to remove
+ *
+ * Removes symbols matching the set of @tags from @symbol_map.
+ **/
 void
 chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
 {
