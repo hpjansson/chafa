@@ -65,6 +65,14 @@ chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasCon
 
 /* Public */
 
+/**
+ * chafa_canvas_config_new:
+ *
+ * Creates a new #ChafaCanvasConfig with default settings. This
+ * object can later be used in the creation of a #ChafaCanvas.
+ *
+ * Returns: The new #ChafaCanvasConfig
+ **/
 ChafaCanvasConfig *
 chafa_canvas_config_new (void)
 {
@@ -75,25 +83,37 @@ chafa_canvas_config_new (void)
     return canvas_config;
 }
 
+/**
+ * chafa_canvas_config_ref:
+ * @canvas_config: #ChafaCanvasConfig to add a reference to.
+ *
+ * Adds a reference to @config.
+ **/
 void
-chafa_canvas_config_ref (ChafaCanvasConfig *canvas_config)
+chafa_canvas_config_ref (ChafaCanvasConfig *config)
 {
-    g_return_if_fail (canvas_config != NULL);
-    g_return_if_fail (canvas_config->refs > 0);
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
 
-    canvas_config->refs++;
+    config->refs++;
 }
 
+/**
+ * chafa_canvas_config_unref:
+ * @canvas_config: #ChafaCanvasConfig to remove a reference from.
+ *
+ * Removes a reference from @config.
+ **/
 void
-chafa_canvas_config_unref (ChafaCanvasConfig *canvas_config)
+chafa_canvas_config_unref (ChafaCanvasConfig *config)
 {
-    g_return_if_fail (canvas_config != NULL);
-    g_return_if_fail (canvas_config->refs > 0);
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
 
-    if (--canvas_config->refs == 0)
+    if (--config->refs == 0)
     {
-        chafa_canvas_config_deinit (canvas_config);
-        g_free (canvas_config);
+        chafa_canvas_config_deinit (config);
+        g_free (config);
     }
 }
 
@@ -121,6 +141,14 @@ chafa_canvas_config_set_size (ChafaCanvasConfig *config, gint width, gint height
     config->height = height;
 }
 
+/**
+ * chafa_canvas_config_get_canvas_mode:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's #ChafaCanvasMode.
+ *
+ * Returns: The #ChafaCanvasMode.
+ **/
 ChafaCanvasMode
 chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config)
 {
@@ -130,6 +158,13 @@ chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config)
     return config->canvas_mode;
 }
 
+/**
+ * chafa_canvas_config_set_canvas_mode:
+ * @config: A #ChafaCanvasConfig
+ * @mode: A #ChafaCanvasMode
+ *
+ * Sets @config's stored #ChafaCanvasMode to @mode.
+ **/
 void
 chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode mode)
 {
@@ -140,6 +175,14 @@ chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode 
     config->canvas_mode = mode;
 }
 
+/**
+ * chafa_canvas_config_get_color_space:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's #ChafaColorSpace.
+ *
+ * Returns: The #ChafaColorSpace.
+ **/
 ChafaColorSpace
 chafa_canvas_config_get_color_space (const ChafaCanvasConfig *config)
 {
@@ -149,6 +192,13 @@ chafa_canvas_config_get_color_space (const ChafaCanvasConfig *config)
     return config->color_space;
 }
 
+/**
+ * chafa_canvas_config_set_color_space:
+ * @config: A #ChafaCanvasConfig
+ * @color_space: A #ChafaColorSpace
+ *
+ * Sets @config's stored #ChafaColorSpace to @color_space.
+ **/
 void
 chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space)
 {
@@ -178,6 +228,13 @@ chafa_canvas_config_peek_symbol_map (const ChafaCanvasConfig *config)
     return &config->symbol_map;
 }
 
+/**
+ * chafa_canvas_config_set_symbol_map:
+ * @config: A #ChafaCanvasConfig
+ * @symbol_map: A #ChafaSymbolMap
+ *
+ * Assigns a copy of @symbol_map to @config.
+ **/
 void
 chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *config, const ChafaSymbolMap *symbol_map)
 {
@@ -188,6 +245,14 @@ chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *config, const ChafaSymbol
     chafa_symbol_map_copy_contents (&config->symbol_map, symbol_map);
 }
 
+/**
+ * chafa_canvas_config_get_transparency_threshold:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns the threshold above which full transparency will be used.
+ *
+ * Returns: The transparency threshold [0.0 - 1.0]
+ **/
 gfloat
 chafa_canvas_config_get_transparency_threshold (const ChafaCanvasConfig *config)
 {
@@ -197,6 +262,13 @@ chafa_canvas_config_get_transparency_threshold (const ChafaCanvasConfig *config)
     return 1.0 - (config->alpha_threshold / 256.0);
 }
 
+/**
+ * chafa_canvas_config_set_transparency_threshold:
+ * @config: A #ChafaCanvasConfig
+ * @alpha_threshold: The transparency threshold [0.0 - 1.0].
+ *
+ * Sets the threshold above which full transparency will be used.
+ **/
 void
 chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloat alpha_threshold)
 {
@@ -209,6 +281,15 @@ chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloa
     config->alpha_threshold = 256.0 * (1.0 - alpha_threshold);
 }
 
+/**
+ * chafa_canvas_config_get_fg_color:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Gets the assumed foreground color of the output device. This is used to
+ * determine how to apply the foreground pen in FGBG modes.
+ *
+ * Returns: Foreground color as packed RGB triplet
+ **/
 guint32
 chafa_canvas_config_get_fg_color (const ChafaCanvasConfig *config)
 {
@@ -218,6 +299,14 @@ chafa_canvas_config_get_fg_color (const ChafaCanvasConfig *config)
     return config->fg_color_packed_rgb;
 }
 
+/**
+ * chafa_canvas_config_set_fg_color:
+ * @config: A #ChafaCanvasConfig
+ * @fg_color_packed_rgb: Foreground color as packed RGB triplet
+ *
+ * Sets the assumed foreground color of the output device. This is used to
+ * determine how to apply the foreground pen in FGBG modes.
+ **/
 void
 chafa_canvas_config_set_fg_color (ChafaCanvasConfig *config, guint32 fg_color_packed_rgb)
 {
@@ -227,6 +316,15 @@ chafa_canvas_config_set_fg_color (ChafaCanvasConfig *config, guint32 fg_color_pa
     config->fg_color_packed_rgb = fg_color_packed_rgb;
 }
 
+/**
+ * chafa_canvas_config_get_bg_color:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Gets the assumed background color of the output device. This is used to
+ * determine how to apply the background pen in FGBG modes.
+ *
+ * Returns: Background color as packed RGB triplet
+ **/
 guint32
 chafa_canvas_config_get_bg_color (const ChafaCanvasConfig *config)
 {
@@ -236,6 +334,15 @@ chafa_canvas_config_get_bg_color (const ChafaCanvasConfig *config)
     return config->bg_color_packed_rgb;
 }
 
+/**
+ * chafa_canvas_config_set_bg_color:
+ * @config: A #ChafaCanvasConfig
+ * @bg_color_packed_rgb: Background color as packed RGB triplet
+ *
+ * Sets the assumed background color of the output device. This is used to
+ * determine how to apply the background and transparency pens in FGBG modes,
+ * and will also be substituted for partial transparency.
+ **/
 void
 chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_packed_rgb)
 {
@@ -245,6 +352,15 @@ chafa_canvas_config_set_bg_color (ChafaCanvasConfig *config, guint32 bg_color_pa
     config->bg_color_packed_rgb = bg_color_packed_rgb;
 }
 
+/**
+ * chafa_canvas_config_get_work_factor:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Gets the work/quality tradeoff factor. A higher value means more time
+ * and memory will be spent towards a higher quality output.
+ *
+ * Returns: The work factor [0.0 - 1.0]
+ **/
 gfloat
 chafa_canvas_config_get_work_factor (const ChafaCanvasConfig *config)
 {
@@ -254,6 +370,15 @@ chafa_canvas_config_get_work_factor (const ChafaCanvasConfig *config)
     return config->work_factor;
 }
 
+/**
+ * chafa_canvas_config_set_work_factor:
+ * @config: A #ChafaCanvasConfig
+ * @work_factor: Work factor [0.0 - 1.0]
+ *
+ * Sets the work/quality tradeoff factor. A higher value means more time
+ * and memory will be spent towards a higher quality output.
+ *
+ **/
 void
 chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_factor)
 {
