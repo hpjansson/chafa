@@ -82,7 +82,7 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace color_space);
 
 CHAFA_AVAILABLE_IN_ALL
-const ChafaSymbolMap *chafa_canvas_config_get_symbol_map (const ChafaCanvasConfig *config);
+const ChafaSymbolMap *chafa_canvas_config_peek_symbol_map (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *canvas_config, const ChafaSymbolMap *symbol_map);
 

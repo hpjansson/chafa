@@ -159,8 +159,18 @@ chafa_canvas_config_set_color_space (ChafaCanvasConfig *config, ChafaColorSpace 
     config->color_space = color_space;
 }
 
+/**
+ * chafa_canvas_config_peek_symbol_map:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns a pointer to the symbol map belonging to @config.
+ * This can be inspected using the #ChafaSymbolMap getter
+ * functions, but not changed.
+ *
+ * Returns: A pointer to the config's immutable symbol map
+ **/
 const ChafaSymbolMap *
-chafa_canvas_config_get_symbol_map (const ChafaCanvasConfig *config)
+chafa_canvas_config_peek_symbol_map (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, NULL);
     g_return_val_if_fail (config->refs > 0, NULL);
