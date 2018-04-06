@@ -25,6 +25,40 @@
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
+/**
+ * CHAFA_SYMBOL_WIDTH_PIXELS:
+ *
+ * The width of an internal symbol pixel matrix. If you are prescaling
+ * input graphics, you will get the best results when scaling to a
+ * multiple of this value.
+ **/
+
+/**
+ * CHAFA_SYMBOL_HEIGHT_PIXELS:
+ *
+ * The height of an internal symbol pixel matrix. If you are prescaling
+ * input graphics, you will get the best results when scaling to a
+ * multiple of this value.
+ **/
+
+/**
+ * ChafaSymbolTags:
+ * @CHAFA_SYMBOL_TAG_NONE: Special value meaning no symbols.
+ * @CHAFA_SYMBOL_TAG_SPACE: Space.
+ * @CHAFA_SYMBOL_TAG_SOLID: Solid (inverse of space).
+ * @CHAFA_SYMBOL_TAG_STIPPLE: Stipple symbols.
+ * @CHAFA_SYMBOL_TAG_BLOCK: Block symbols.
+ * @CHAFA_SYMBOL_TAG_BORDER: Border symbols.
+ * @CHAFA_SYMBOL_TAG_DIAGONAL: Diagonal border symbols.
+ * @CHAFA_SYMBOL_TAG_DOT: Symbols that look like isolated dots.
+ * @CHAFA_SYMBOL_TAG_QUAD: Quadrant block symbols.
+ * @CHAFA_SYMBOL_TAG_HHALF: Horizontal half block symbols.
+ * @CHAFA_SYMBOL_TAG_VHALF: Vertical half block symbols.
+ * @CHAFA_SYMBOL_TAG_HALF: Joint set of horizontal and vertical halves.
+ * @CHAFA_SYMBOL_TAG_INVERTED: Symbols that are the inverse of simpler symbols.
+ * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
+ **/
+
 /* Private */
 
 static gint

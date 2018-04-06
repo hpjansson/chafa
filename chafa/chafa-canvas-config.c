@@ -24,6 +24,25 @@
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
+/**
+ * ChafaCanvasMode:
+ * @CHAFA_CANVAS_MODE_TRUECOLOR: Truecolor.
+ * @CHAFA_CANVAS_MODE_INDEXED_256: 256 colors.
+ * @CHAFA_CANVAS_MODE_INDEXED_240: 256 colors, but avoid using the lower 16 whose values vary between terminal environments.
+ * @CHAFA_CANVAS_MODE_INDEXED_16: 16 colors using the aixterm ANSI extension.
+ * @CHAFA_CANVAS_MODE_INDEXED_16_8: 16 foreground colors, 8 background.
+ * @CHAFA_CANVAS_MODE_FGBG_BGFG: Default foreground and background colors, plus inversion.
+ * @CHAFA_CANVAS_MODE_FGBG: Default foreground and background colors. No ANSI codes will be used.
+ * @CHAFA_CANVAS_MODE_MAX: Last supported canvas mode plus one.
+ **/
+
+/**
+ * ChafaColorSpace:
+ * @CHAFA_COLOR_SPACE_RGB: RGB color space. Fast but imprecise.
+ * @CHAFA_COLOR_SPACE_DIN99D: DIN99d color space. Slower, but good perceptual color precision.
+ * @CHAFA_COLOR_SPACE_MAX: Last supported color space plus one.
+ **/
+
 /* Private */
 
 void

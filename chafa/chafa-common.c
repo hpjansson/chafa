@@ -27,6 +27,12 @@
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
+/**
+ * ChafaFeatures:
+ * @CHAFA_FEATURE_MMX: Flag indicating MMX support.
+ * @CHAFA_FEATURE_SSE41: Flag indicating SSE 4.1 support.
+ **/
+
 static gboolean chafa_initialized;
 
 static gboolean have_mmx;
