@@ -123,7 +123,7 @@ chafa_get_builtin_features (void)
  * Gets a list of the platform-specific features that are built in and usable
  * on the runtime platform.
  *
- * Returns: 
+ * Returns: A set of flags indicating usable features
  **/
 ChafaFeatures
 chafa_get_supported_features (void)

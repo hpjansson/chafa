@@ -120,7 +120,7 @@ chafa_canvas_config_new (void)
 
 /**
  * chafa_canvas_config_ref:
- * @canvas_config: #ChafaCanvasConfig to add a reference to.
+ * @config: #ChafaCanvasConfig to add a reference to.
  *
  * Adds a reference to @config.
  **/
@@ -135,7 +135,7 @@ chafa_canvas_config_ref (ChafaCanvasConfig *config)
 
 /**
  * chafa_canvas_config_unref:
- * @canvas_config: #ChafaCanvasConfig to remove a reference from.
+ * @config: #ChafaCanvasConfig to remove a reference from.
  *
  * Removes a reference from @config.
  **/
