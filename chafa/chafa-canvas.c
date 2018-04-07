@@ -38,7 +38,7 @@
  * specify any parameters, like the geometry, color space and so on, you
  * must create a #ChafaCanvasConfig first.
  *
- * You can draw an image to the canvas using chafa_canvas_set_contents_rgba ()
+ * You can draw an image to the canvas using chafa_canvas_set_contents_rgba8 ()
  * and create an ANSI text representation of the canvas' current contents
  * using chafa_canvas_build_ansi ().
  **/
@@ -1074,7 +1074,7 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
 }
 
 /**
- * chafa_canvas_set_contents_rgba:
+ * chafa_canvas_set_contents_rgba8:
  * @canvas: Canvas whose pixel data to replace
  * @src_pixels: Pointer to the start of source pixel memory
  * @src_width: Width in pixels of source pixel data
@@ -1085,8 +1085,8 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
  * The source data must be in packed 8-bits-per-channel RGBA format.
  **/
 void
-chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, const guint8 *src_pixels,
-                                gint src_width, gint src_height, gint src_rowstride)
+chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
+                                 gint src_width, gint src_height, gint src_rowstride)
 {
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);

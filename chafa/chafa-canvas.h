@@ -43,7 +43,7 @@ CHAFA_AVAILABLE_IN_ALL
 const ChafaCanvasConfig *chafa_canvas_peek_config (ChafaCanvas *canvas);
 
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_set_contents_rgba (ChafaCanvas *canvas, const guint8 *src_pixels,
+void chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
                                      gint src_width, gint src_height, gint src_rowstride);
 
 CHAFA_AVAILABLE_IN_ALL
