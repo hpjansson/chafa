@@ -27,6 +27,22 @@
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
+/**
+ * SECTION:chafa-canvas
+ * @title: ChafaCanvas
+ * @short_description: A canvas that renders to text
+ *
+ * A #ChafaCanvas is a canvas that can render its contents as text strings.
+ *
+ * To create a new #ChafaCanvas, use chafa_canvas_new (). If you want to
+ * specify any parameters, like the geometry, color space and so on, you
+ * must create a #ChafaCanvasConfig first.
+ *
+ * You can draw an image to the canvas using chafa_canvas_set_contents_rgba ()
+ * and create an ANSI text representation of the canvas' current contents
+ * using chafa_canvas_build_ansi ().
+ **/
+
 /* Maximum number of symbols in symbols[]. Used for statically allocated arrays */
 #define SYMBOLS_MAX 256
 
