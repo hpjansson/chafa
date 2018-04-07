@@ -859,7 +859,7 @@ textify (guint8 *pixels,
     symbol_map = chafa_symbol_map_new ();
     config = chafa_canvas_config_new ();
 
-    chafa_canvas_config_set_size (config, dest_width, dest_height);
+    chafa_canvas_config_set_geometry (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_fg_color (config, options.fg_color);

@@ -67,9 +67,9 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_unref (ChafaCanvasConfig *config);
 
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_get_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out);
+void chafa_canvas_config_get_geometry (const ChafaCanvasConfig *config, gint *width_out, gint *height_out);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_size (ChafaCanvasConfig *config, gint width, gint height);
+void chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint height);
 
 CHAFA_AVAILABLE_IN_ALL
 ChafaCanvasMode chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config);

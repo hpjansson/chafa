@@ -153,7 +153,7 @@ chafa_canvas_config_unref (ChafaCanvasConfig *config)
 }
 
 void
-chafa_canvas_config_get_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out)
+chafa_canvas_config_get_geometry (const ChafaCanvasConfig *config, gint *width_out, gint *height_out)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
@@ -165,7 +165,7 @@ chafa_canvas_config_get_size (const ChafaCanvasConfig *config, gint *width_out, 
 }
 
 void
-chafa_canvas_config_set_size (ChafaCanvasConfig *config, gint width, gint height)
+chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint height)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
