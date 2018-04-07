@@ -28,7 +28,7 @@
 #include "chafa/chafa-private.h"
 
 /**
- * SECTION:chafa-common
+ * SECTION:chafa-features
  * @title: Features
  * @short_description: Platform-specific feature support
  *

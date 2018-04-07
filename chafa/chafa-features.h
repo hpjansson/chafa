@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __CHAFA_COMMON_H__
-#define __CHAFA_COMMON_H__
+#ifndef __CHAFA_FEATURES_H__
+#define __CHAFA_FEATURES_H__
 
 #if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
 # error "Only <chafa.h> can be included directly."
@@ -44,4 +44,4 @@ gchar *chafa_describe_features (ChafaFeatures features);
 
 G_END_DECLS
 
-#endif /* __CHAFA_COMMON_H__ */
+#endif /* __CHAFA_FEATURES_H__ */

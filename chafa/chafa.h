@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 
 #define CHAFA_AVAILABLE_IN_ALL _CHAFA_EXTERN
 
-#include <chafa-common.h>
+#include <chafa-features.h>
 #include <chafa-canvas-config.h>
 #include <chafa-canvas.h>
 #include <chafa-symbol-map.h>

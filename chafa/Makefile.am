@@ -11,7 +11,7 @@ libchafa_la_SOURCES = \
 	chafa-canvas.c \
 	chafa-canvas-config.c \
 	chafa-colors.c \
-	chafa-common.c \
+	chafa-features.c \
 	chafa-private.h \
 	chafa-symbol-map.c \
 	chafa-symbols.c
@@ -21,7 +21,7 @@ chafainclude_HEADERS = \
 	chafa.h \
 	chafa-canvas.h \
 	chafa-canvas-config.h \
-	chafa-common.h \
+	chafa-features.h \
 	chafa-symbol-map.h
 
 if HAVE_MMX_INTRINSICS
