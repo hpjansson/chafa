@@ -152,6 +152,15 @@ chafa_canvas_config_unref (ChafaCanvasConfig *config)
     }
 }
 
+/**
+ * chafa_canvas_config_get_geometry:
+ * @config: A #ChafaCanvasConfig
+ * @width_out: Location to store width in, or %NULL
+ * @height_out: Location to store height in, or %NULL
+ *
+ * Returns @config's width and height in character cells in the
+ * provided output locations.
+ **/
 void
 chafa_canvas_config_get_geometry (const ChafaCanvasConfig *config, gint *width_out, gint *height_out)
 {
@@ -164,6 +173,14 @@ chafa_canvas_config_get_geometry (const ChafaCanvasConfig *config, gint *width_o
         *height_out = config->height;
 }
 
+/**
+ * chafa_canvas_config_set_geometry:
+ * @config: A #ChafaCanvasConfig
+ * @width: Width in character cells
+ * @height: Height in character cells
+ *
+ * Sets @config's width and height in character cells to @width x @height.
+ **/
 void
 chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint height)
 {
