@@ -25,6 +25,22 @@
 #include "chafa/chafa-private.h"
 
 /**
+ * SECTION:chafa-canvas-config
+ * @title: ChafaCanvasConfig
+ * @short_description: Describes a configuration for #ChafaCanvas
+ *
+ * A #ChafaCanvasConfig describes a set of parameters for #ChafaCanvas, such
+ * as its geometry, color space and other output characteristics.
+ *
+ * To create a new #ChafaCanvasConfig, use chafa_canvas_config_new (). You
+ * can then modify it using its setters, e.g. chafa_canvas_config_set_canvas_mode ()
+ * before assigning it to a new #ChafaCanvas with chafa_canvas_new ().
+ *
+ * Note that it is not possible to change a canvas' configuration after
+ * the canvas is created.
+ **/
+
+/**
  * ChafaCanvasMode:
  * @CHAFA_CANVAS_MODE_TRUECOLOR: Truecolor.
  * @CHAFA_CANVAS_MODE_INDEXED_256: 256 colors.
