@@ -55,8 +55,29 @@
  * @CHAFA_SYMBOL_TAG_HHALF: Horizontal half block symbols.
  * @CHAFA_SYMBOL_TAG_VHALF: Vertical half block symbols.
  * @CHAFA_SYMBOL_TAG_HALF: Joint set of horizontal and vertical halves.
- * @CHAFA_SYMBOL_TAG_INVERTED: Symbols that are the inverse of simpler symbols.
+ * @CHAFA_SYMBOL_TAG_INVERTED: Symbols that are the inverse of simpler symbols. When two symbols complement each other, only one will have this tag.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
+ **/
+
+/**
+ * SECTION:chafa-symbol-map
+ * @title: ChafaSymbolMap
+ * @short_description: Describes a selection of textual symbols
+ *
+ * A #ChafaSymbolMap describes a selection of the supported textual symbols
+ * that can be used in building a printable output string from a #ChafaCanvas.
+ *
+ * To create a new #ChafaSymbolMap, use chafa_symbol_map_new (). You can then
+ * add symbols to it using chafa_symbol_map_add_by_tags () before copying
+ * it into a #ChafaCanvasConfig using chafa_canvas_config_set_symbol_map ().
+ *
+ * Note that some symbols match multiple tags, so it makes sense to e.g.
+ * add symbols matching #CHAFA_SYMBOL_TAG_BORDER and then removing symbols
+ * matching #CHAFA_SYMBOL_TAG_DIAGONAL.
+ *
+ * The number of available symbols is a significant factor in the speed of
+ * #ChafaCanvas. For the fastest possible operation you could use a single
+ * symbol -- #CHAFA_SYMBOL_TAG_VHALF works well by itself.
  **/
 
 /* Private */
@@ -194,7 +215,8 @@ chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol)
 /**
  * chafa_symbol_map_new:
  *
- * Creates a new symbol map representing a set of Unicode symbols.
+ * Creates a new #ChafaSymbolMap representing a set of Unicode symbols. The
+ * symbol map starts out empty.
  *
  * Returns: The new symbol map
  **/
