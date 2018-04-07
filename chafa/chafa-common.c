@@ -28,6 +28,17 @@
 #include "chafa/chafa-private.h"
 
 /**
+ * SECTION:chafa-common
+ * @title: Features
+ * @short_description: Platform-specific feature support
+ *
+ * Chafa supports a few platform-specific acceleration features. These
+ * will be built in and used automatically when available. You can get
+ * information about the available features through the function calls
+ * documented in this section.
+ **/
+
+/**
  * ChafaFeatures:
  * @CHAFA_FEATURE_MMX: Flag indicating MMX support.
  * @CHAFA_FEATURE_SSE41: Flag indicating SSE 4.1 support.
