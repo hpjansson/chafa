@@ -930,8 +930,8 @@ build_ansi_gstring (ChafaCanvas *canvas)
  * @config: Canvas configuration to use for this canvas
  *
  * Creates a new canvas with the specified configuration. The
- * canvas makes a private copy of the configuration, so it can
- * be changed or re-used later without affecting the canvas.
+ * canvas makes a private copy of the configuration, so it will
+ * not be affected by subsequent changes.
  *
  * Returns: The new canvas
  **/
