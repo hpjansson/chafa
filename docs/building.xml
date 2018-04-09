@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+               "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+]>
+<refentry id="chafa-building">
+  <refmeta>
+    <refentrytitle>Compiling the Chafa package</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Chafa Library</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>Compiling the Chafa Package</refname>
+    <refpurpose>How to compile Chafa itself</refpurpose>
+  </refnamediv>
+
+  <refsect1 id="building-git">
+    <title>Building from the Git repository</title>
+    <para>
+      When building from a clean Git repository, the build files
+      must be prepared before anything else happens. The repository
+      includes a shell script for this:
+
+      <literallayout>
+        <userinput>./autogen.sh</userinput>
+      </literallayout>
+
+      Afterwards the build can proceed like it would from a source
+      package.
+    </para>
+  </refsect1>
+
+  <refsect1 id="building-src">
+    <title>Building from a source package</title>
+    <para>
+      Chafa uses a typical build system provided by
+      <application>autoconf</application>, <application>automake</application>
+      and <application>libtool</application>. You can build and install
+      Chafa like this:
+
+      <literallayout>
+        <userinput>./configure</userinput>
+        <userinput>make</userinput>
+        <userinput>make install</userinput>
+      </literallayout>
+    </para>
+
+    <para>
+      The standard options provided by <application>GNU
+      autoconf</application> may be passed to the
+      <command>configure</command> script.  Please see the
+      <application>autoconf</application> documentation or run
+      <command>./configure --help</command> for information about
+      the standard options.
+    </para>
+  </refsect1>
+  <refsect1 id="dependencies">
+    <title>Dependencies</title>
+    <para>
+      Chafa depends on the GLib library. If you want to build the
+      <command>chafa</command> command-line tool in addition to the
+      libchafa library, you will also need ImageMagick (specifically
+      the MagickWand library) and its development files.
+    </para>
+  </refsect1>
+  <refsect1 id="extra-configuration-options">
+    <title>Extra Configuration Options</title>
+
+    <para>
+      In addition to the normal options, the
+      <command>configure</command> script supports these additional
+      arguments:
+    </para>
+
+    <formalpara>
+      <title><systemitem>--disable-Bsymbolic</systemitem> and
+        <systemitem>--enable-Bsymbolic</systemitem></title>
+
+      <para>
+        By default, Chafa uses the -Bsymbolic-functions linker
+        flag to avoid intra-library PLT jumps. A side-effect
+        of this is that it is no longer possible to override
+        internal uses of Chafa functions with
+        <envar>LD_PRELOAD</envar>. Therefore, it may make
+        sense to turn this feature off in some situations.
+        The <option>--disable-Bsymbolic</option> option allows
+        you to do that.
+      </para>
+    </formalpara>
+
+    <formalpara>
+      <title><systemitem>--disable-gtk-doc</systemitem> and
+        <systemitem>--enable-gtk-doc</systemitem></title>
+
+      <para>
+        By default the <command>configure</command> script will try
+        to auto-detect whether the
+        <application>gtk-doc</application> package is installed.
+        If it is, then it will use it to extract and build the
+        documentation for the Chafa library. These options
+        can be used to explicitly control whether
+        <application>gtk-doc</application> should be
+        used or not. If it is not used, the distributed,
+        pre-generated HTML files will be installed instead of
+        building them on your machine.
+      </para>
+    </formalpara>
+
+    <formalpara>
+      <title><systemitem>--disable-man</systemitem> and
+        <systemitem>--enable-man</systemitem></title>
+
+      <para>
+        By default the <command>configure</command> script will try
+        to auto-detect whether <application>xsltproc</application>
+        and the necessary Docbook stylesheets are installed.
+        If they are, then it will use them to rebuild the included
+        man pages from the XML sources. These options can be used
+        to explicitly control whether man pages should be rebuilt
+        or not. The distribution includes pre-generated man
+        pages.
+      </para>
+    </formalpara>
+  </refsect1>
+</refentry>
