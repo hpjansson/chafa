@@ -704,23 +704,23 @@ emit_ansi_truecolor (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
             }
             else
             {
-                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[38;2;%d;%d;%dm%lc",
-                                        bg.ch [0], bg.ch [1], bg.ch [2],
-                                        (wint_t) cell->c);
+                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[38;2;%d;%d;%dm",
+                                        bg.ch [0], bg.ch [1], bg.ch [2]);
+                g_string_append_unichar (gs, cell->c);
             }
         }
         else if (bg.ch [3] < canvas->config.alpha_threshold)
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[38;2;%d;%d;%dm%lc",
-                                    fg.ch [0], fg.ch [1], fg.ch [2],
-                                    (wint_t) cell->c);
+            g_string_append_printf (gs, "\x1b[0m\x1b[38;2;%d;%d;%dm",
+                                    fg.ch [0], fg.ch [1], fg.ch [2]);
+            g_string_append_unichar (gs, cell->c);
         }
         else
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm%lc",
+            g_string_append_printf (gs, "\x1b[0m\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm",
                                     fg.ch [0], fg.ch [1], fg.ch [2],
-                                    bg.ch [0], bg.ch [1], bg.ch [2],
-                                    (wint_t) cell->c);
+                                    bg.ch [0], bg.ch [1], bg.ch [2]);
+            g_string_append_unichar (gs, cell->c);
         }
     }
 }
@@ -740,23 +740,23 @@ emit_ansi_256 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
             }
             else
             {
-                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[38;5;%dm%lc",
-                                        cell->bg_color,
-                                        (wint_t) cell->c);
+                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[38;5;%dm",
+                                        cell->bg_color);
+                g_string_append_unichar (gs, cell->c);
             }
         }
         else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm%lc",
-                                    cell->fg_color,
-                                    (wint_t) cell->c);
+            g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm",
+                                    cell->fg_color);
+            g_string_append_unichar (gs, cell->c);
         }
         else
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm\x1b[48;5;%dm%lc",
+            g_string_append_printf (gs, "\x1b[0m\x1b[38;5;%dm\x1b[48;5;%dm",
                                     cell->fg_color,
-                                    cell->bg_color,
-                                    (wint_t) cell->c);
+                                    cell->bg_color);
+            g_string_append_unichar (gs, cell->c);
         }
     }
 }
@@ -777,27 +777,27 @@ emit_ansi_16 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
             }
             else
             {
-                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%dm%lc",
+                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%dm",
                                         cell->bg_color < 8 ? cell->bg_color + 30
-                                                           : cell->bg_color + 90 - 8,
-                                        (wint_t) cell->c);
+                                                           : cell->bg_color + 90 - 8);
+                g_string_append_unichar (gs, cell->c);
             }
         }
         else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[%dm%lc",
+            g_string_append_printf (gs, "\x1b[0m\x1b[%dm",
                                     cell->fg_color < 8 ? cell->fg_color + 30
-                                                       : cell->fg_color + 90 - 8,
-                                    (wint_t) cell->c);
+                                                       : cell->fg_color + 90 - 8);
+            g_string_append_unichar (gs, cell->c);
         }
         else
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[%dm\x1b[%dm%lc",
+            g_string_append_printf (gs, "\x1b[0m\x1b[%dm\x1b[%dm",
                                     cell->fg_color < 8 ? cell->fg_color + 30
                                                        : cell->fg_color + 90 - 8,
                                     cell->bg_color < 8 ? cell->bg_color + 40
-                                                       : cell->bg_color + 100 - 8,
-                                    (wint_t) cell->c);
+                                                       : cell->bg_color + 100 - 8);
+            g_string_append_unichar (gs, cell->c);
         }
     }
 }
@@ -820,26 +820,26 @@ emit_ansi_16_8 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
             }
             else
             {
-                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%s3%dm%lc",
+                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%s3%dm",
                                         cell->bg_color > 7 ? "1;" : "",
-                                        cell->bg_color % 8,
-                                        (wint_t) cell->c);
+                                        cell->bg_color % 8);
+                g_string_append_unichar (gs, cell->c);
             }
         }
         else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm%lc",
+            g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm",
                                     cell->fg_color > 7 ? "1;" : "",
-                                    cell->fg_color % 8,
-                                    (wint_t) cell->c);
+                                    cell->fg_color % 8);
+            g_string_append_unichar (gs, cell->c);
         }
         else
         {
-            g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm\x1b[4%dm%lc",
+            g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm\x1b[4%dm",
                                     cell->fg_color > 7 ? "1;" : "",
                                     cell->fg_color % 8,
-                                    cell->bg_color % 8,  /* FIXME: Bright background colors? */
-                                    (wint_t) cell->c);
+                                    cell->bg_color % 8);  /* FIXME: Bright background colors? */
+            g_string_append_unichar (gs, cell->c);
         }
     }
 }
@@ -862,7 +862,7 @@ emit_ansi_fgbg_bgfg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
         gboolean invert = FALSE;
-        wint_t c = cell->c;
+        gunichar c = cell->c;
 
         if (cell->fg_color == cell->bg_color && blank_symbol != 0)
         {
@@ -876,9 +876,9 @@ emit_ansi_fgbg_bgfg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
             invert ^= TRUE;
         }
 
-        g_string_append_printf (gs, "\x1b[%dm%lc",
-                                invert ? 7 : 0,
-                                c);
+        g_string_append_printf (gs, "\x1b[%dm",
+                                invert ? 7 : 0);
+        g_string_append_unichar (gs, c);
     }
 }
 
@@ -889,7 +889,7 @@ emit_ansi_fgbg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
 
-        g_string_append_printf (gs, "%lc", (wint_t) cell->c);
+        g_string_append_unichar (gs, cell->c);
     }
 }
 
