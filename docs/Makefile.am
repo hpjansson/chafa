@@ -9,7 +9,8 @@ DOC_MODULE=chafa
 DOC_MAIN_SGML_FILE=chafa-docs.xml
 
 content_files = \
-	 building.xml
+	 building.xml \
+	 using.xml
 
 # The directory containing the source code. Relative to $(srcdir)
 DOC_SOURCE_DIR = $(top_srcdir)/chafa

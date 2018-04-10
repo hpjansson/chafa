@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+               "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+]>
+<refentry id="chafa-using" revision="10 Apr 2018">
+<refmeta>
+<refentrytitle>Using Chafa in your Application</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>Chafa Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+  <refname>Using Chafa in your Application</refname>
+  <refpurpose>How to use Chafa</refpurpose>
+</refnamediv>
+
+<refsect1>
+<title>Compiling your Application</title>
+
+<para>
+To compile an application using Chafa, you need to tell the compiler
+where to find the Chafa header files and libraries. This is done with the
+<application>pkg-config</application> utility.
+</para>
+<para>
+The following interactive shell session demonstrates how
+<application>pkg-config</application> is used (the actual output on
+your system may be different):
+<programlisting>
+$ pkg-config --cflags chafa
+-I/usr/include/chafa -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include
+$ pkg-config --libs chafa
+-lm -lchafa -lglib-2.0
+</programlisting>
+</para>
+<para>
+See the <ulink url="http://www.freedesktop.org/wiki/Software/pkg-config">pkg-config website</ulink>
+for more information about <application>pkg-config</application>.
+</para>
+<para>
+The simplest way to compile a program is to use the command
+substitution feature of the shell. If you enclose a command in
+backticks (<emphasis>not single quotes</emphasis>), then its
+output will be substituted into the command line before execution.
+So to compile Hello, World program using Chafa you would type the
+following:
+<programlisting>
+$ cc hello.c `pkg-config --cflags --libs chafa` -o hello
+</programlisting>
+</para>
+<note><para>
+Note that the name of the file must come before the other options
+(such as <emphasis>pkg-config</emphasis>), or else you may get an
+error from the linker.
+</para></note>
+
+<para>
+When using Chafa in your program, you only need to include the toplevel
+header <filename>chafa.h</filename>. 
+</para>
+</refsect1>
+
+<refsect1>
+<title>An Example</title>
+
+<para>
+The following program turns a 3x3 red X stored in a const array into an
+ANSI string and prints it to stdout. It can be compiled as described in the
+previous section and run without arguments.
+</para>
+
+<para>
+Note that it will output UTF-8 regardless of the current locale.
+</para>
+
+<programlisting>
+#include &lt;chafa.h&gt;
+#include &lt;stdio.h&gt;
+
+#define PIX_WIDTH 3
+#define PIX_HEIGHT 3
+#define N_CHANNELS 4
+
+int
+main (int argc, char *argv [])
+{
+    const guint8 pixels [PIX_WIDTH * PIX_HEIGHT * N_CHANNELS] =
+    {
+        0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff,
+        0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff
+    };
+    ChafaSymbolMap *symbol_map;
+    ChafaCanvasConfig *config;
+    ChafaCanvas *canvas;
+    GString *gs;
+
+    /* Specify the symbols we want */
+    symbol_map = chafa_symbol_map_new ();
+    chafa_symbol_map_add_by_tags (symbol_map, CHAFA_SYMBOL_TAG_ALL);
+
+    /* Set up a configuration with the symbols and the canvas size in characters */
+    config = chafa_canvas_config_new ();
+    chafa_canvas_config_set_geometry (config, 23, 12);
+    chafa_canvas_config_set_symbol_map (config, symbol_map);
+
+    /* Create canvas */
+    canvas = chafa_canvas_new (config);
+
+    /* Draw pixels and build ANSI string */
+    chafa_canvas_set_contents_rgba8 (canvas,
+                                     pixels,
+                                     PIX_WIDTH,
+                                     PIX_HEIGHT,
+                                     PIX_WIDTH * N_CHANNELS);
+    gs = chafa_canvas_build_ansi (canvas);
+
+    /* Print the string */
+    fwrite (gs->str, sizeof (char), gs->len, stdout);
+
+    /* Free resources */
+    g_string_free (gs, TRUE);
+    chafa_canvas_unref (canvas);
+    chafa_canvas_config_unref (config);
+    chafa_symbol_map_unref (symbol_map);
+
+    return 0;
+}
+</programlisting>
+</refsect1>
+
+</refentry>

@@ -20,6 +20,7 @@
   <chapter>
     <title>Overview</title>
     <xi:include href="building.xml"/>
+    <xi:include href="using.xml"/>
   </chapter>
 
   <chapter>
