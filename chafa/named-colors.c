@@ -18,7 +18,7 @@
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "config.h"
-#include <string.h>
+#include <string.h>  /* strlen */
 #include "chafa/named-colors.h"
 
 /* These colors are from X.Org's rgb.txt, filtered to remove duplicate

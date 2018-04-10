@@ -19,8 +19,8 @@
 
 #include "config.h"
 
-#include <stdlib.h>
-#include <math.h>
+#include <stdlib.h>  /* abs */
+#include <math.h>  /* pow, cbrt, log, sqrt, atan2, cos, sin */
 #include <glib.h>
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"

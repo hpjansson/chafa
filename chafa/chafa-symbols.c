@@ -19,7 +19,6 @@
 
 #include "config.h"
 
-#include <string.h>
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 

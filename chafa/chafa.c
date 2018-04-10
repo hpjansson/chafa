@@ -20,13 +20,12 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <string.h>
-#include <wchar.h>
-#include <locale.h>
+#include <string.h>  /* strspn, strlen, strcmp, strncmp, memset */
+#include <locale.h>  /* setlocale */
 #include <sys/ioctl.h>  /* ioctl */
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
-#include <termios.h>
+#include <termios.h>  /* tcgetattr, tcsetattr */
 #include <glib.h>
 #include <wand/MagickWand.h>
 #include "chafa/chafa.h"
