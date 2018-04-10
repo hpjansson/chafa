@@ -1079,7 +1079,9 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
  * @src_rowstride: Number of bytes between the start of each pixel row
  *
  * Replaces pixel data of @canvas with a copy of that found at @src_pixels.
- * The source data must be in packed 8-bits-per-channel RGBA format.
+ * The source data must be in packed 8-bits-per-channel RGBA format. The
+ * alpha value is expressed as opacity (0xff is opaque) and is not
+ * premultiplied.
  **/
 void
 chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
