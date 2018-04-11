@@ -63,17 +63,23 @@ init_features (void)
 #endif
 }
 
-void
-chafa_init (void)
+static gpointer
+init_once (G_GNUC_UNUSED gpointer data)
 {
-    if (chafa_initialized)
-        return;
-
-    chafa_initialized = TRUE;
-
     init_features ();
     chafa_init_palette ();
     chafa_init_symbols ();
+
+    chafa_initialized = TRUE;
+    return NULL;
+}
+
+void
+chafa_init (void)
+{
+    static GOnce once = G_ONCE_INIT;
+
+    g_once (&once, init_once, NULL);
 }
 
 gboolean
