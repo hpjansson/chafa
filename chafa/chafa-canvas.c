@@ -932,7 +932,11 @@ build_ansi_gstring (ChafaCanvas *canvas)
                 break;
         }
 
-        g_string_append (gs, "\x1b[0m\n");
+        g_string_append (gs, "\x1b[0m");
+
+        /* Last line should not end in newline */
+        if (i_next < i_max)
+            g_string_append_c (gs, '\n');
     }
 
     return gs;
@@ -1133,6 +1137,8 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
  * the canvas' current contents. This can e.g. be printed to a terminal.
  * The exact choice of escape sequences and symbols, dimensions, etc. is
  * determined by the configuration assigned to @canvas on its creation.
+ *
+ * All output lines except for the last one will end in a newline.
  *
  * Returns: A UTF-8 string of ANSI sequences and symbols
  **/

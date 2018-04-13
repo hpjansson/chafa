@@ -1118,6 +1118,7 @@ run (const gchar *filename, gboolean is_single_file)
             }
 
             fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
+            fputc ('\n', stdout);
             fflush (stdout);
 
             if (is_animation)
