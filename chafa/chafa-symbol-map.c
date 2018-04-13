@@ -252,7 +252,7 @@ chafa_symbol_map_ref (ChafaSymbolMap *symbol_map)
  * chafa_symbol_map_unref:
  * @symbol_map: Symbol map to remove a reference from
  *
- * Removes a reference from @symbol_map. When remaining references frops to
+ * Removes a reference from @symbol_map. When remaining references drops to
  * zero, the symbol map is freed and can no longer be used.
  **/
 void
