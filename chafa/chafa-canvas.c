@@ -1023,10 +1023,13 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
 void
 chafa_canvas_ref (ChafaCanvas *canvas)
 {
-    g_return_if_fail (canvas != NULL);
-    g_return_if_fail (canvas->refs > 0);
+    gint refs;
 
-    canvas->refs++;
+    g_return_if_fail (canvas != NULL);
+    refs = g_atomic_int_get (&canvas->refs);
+    g_return_if_fail (refs > 0);
+
+    g_atomic_int_inc (&canvas->refs);
 }
 
 /**
@@ -1039,10 +1042,13 @@ chafa_canvas_ref (ChafaCanvas *canvas)
 void
 chafa_canvas_unref (ChafaCanvas *canvas)
 {
-    g_return_if_fail (canvas != NULL);
-    g_return_if_fail (canvas->refs > 0);
+    gint refs;
 
-    if (--canvas->refs == 0)
+    g_return_if_fail (canvas != NULL);
+    refs = g_atomic_int_get (&canvas->refs);
+    g_return_if_fail (refs > 0);
+
+    if (g_atomic_int_dec_and_test (&canvas->refs))
     {
         chafa_canvas_config_deinit (&canvas->config);
         g_free (canvas->pixels);

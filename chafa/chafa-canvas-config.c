@@ -129,10 +129,13 @@ chafa_canvas_config_new (void)
 void
 chafa_canvas_config_ref (ChafaCanvasConfig *config)
 {
-    g_return_if_fail (config != NULL);
-    g_return_if_fail (config->refs > 0);
+    gint refs;
 
-    config->refs++;
+    g_return_if_fail (config != NULL);
+    refs = g_atomic_int_get (&config->refs);
+    g_return_if_fail (refs > 0);
+
+    g_atomic_int_inc (&config->refs);
 }
 
 /**
@@ -144,10 +147,13 @@ chafa_canvas_config_ref (ChafaCanvasConfig *config)
 void
 chafa_canvas_config_unref (ChafaCanvasConfig *config)
 {
-    g_return_if_fail (config != NULL);
-    g_return_if_fail (config->refs > 0);
+    gint refs;
 
-    if (--config->refs == 0)
+    g_return_if_fail (config != NULL);
+    refs = g_atomic_int_get (&config->refs);
+    g_return_if_fail (refs > 0);
+
+    if (g_atomic_int_dec_and_test (&config->refs))
     {
         chafa_canvas_config_deinit (config);
         g_free (config);

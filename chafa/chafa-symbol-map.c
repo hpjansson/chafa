@@ -239,10 +239,13 @@ chafa_symbol_map_new (void)
 void
 chafa_symbol_map_ref (ChafaSymbolMap *symbol_map)
 {
-    g_return_if_fail (symbol_map != NULL);
-    g_return_if_fail (symbol_map->refs > 0);
+    gint refs;
 
-    symbol_map->refs++;
+    g_return_if_fail (symbol_map != NULL);
+    refs = g_atomic_int_get (&symbol_map->refs);
+    g_return_if_fail (refs > 0);
+
+    g_atomic_int_inc (&symbol_map->refs);
 }
 
 /**
@@ -255,10 +258,13 @@ chafa_symbol_map_ref (ChafaSymbolMap *symbol_map)
 void
 chafa_symbol_map_unref (ChafaSymbolMap *symbol_map)
 {
-    g_return_if_fail (symbol_map != NULL);
-    g_return_if_fail (symbol_map->refs > 0);
+    gint refs;
 
-    if (--symbol_map->refs == 0)
+    g_return_if_fail (symbol_map != NULL);
+    refs = g_atomic_int_get (&symbol_map->refs);
+    g_return_if_fail (refs > 0);
+
+    if (g_atomic_int_dec_and_test (&symbol_map->refs))
     {
         chafa_symbol_map_deinit (symbol_map);
         g_free (symbol_map);
