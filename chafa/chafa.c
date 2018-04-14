@@ -1196,6 +1196,9 @@ proc_init (void)
 {
     struct sigaction sa = { 0 };
 
+    /* Must do this early. Buffer size probably doesn't matter */
+    setvbuf (stdout, NULL, _IOFBF, 32768);
+
     setlocale (LC_ALL, "");
 
     sa.sa_handler = sigint_handler;
