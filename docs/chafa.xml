@@ -87,6 +87,14 @@ which is faster but less accurate.
 </varlistentry>
 
 <varlistentry>
+<term><option>-d, --delay <replaceable>seconds</replaceable></option></term>
+<listitem><para>
+When showing multiple files, a real number indicating the time to show each
+file in seconds.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--fg <replaceable>color</replaceable></option></term>
 <listitem><para>
 Foreground color of display (color name or hex). Together with the background

@@ -58,6 +58,7 @@ typedef struct
     guint32 bg_color;
     gboolean bg_color_set;
     gdouble transparency_threshold;
+    gdouble inter_file_delay_s;
 }
 GlobalOptions;
 
@@ -197,6 +198,7 @@ print_summary (void)
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
+    "  -d, --delay=SECONDS  When showing multiple files, the time to show each file.\n"
     "      --fg=COLOR     Foreground color of display (color name or hex).\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
@@ -698,6 +700,7 @@ parse_options (int *argc, char **argv [])
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
+        { "delay",       'd',  0, G_OPTION_ARG_DOUBLE,   &options.inter_file_delay_s, "Delay", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
@@ -733,6 +736,7 @@ parse_options (int *argc, char **argv [])
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
     options.transparency_threshold = -1.0;
+    options.inter_file_delay_s = 3.0;
     get_tty_size ();
 
     if (!g_option_context_parse (context, argc, argv, &error))
@@ -1018,12 +1022,23 @@ group_clear (Group *group)
 }
 
 static void
+interruptible_usleep (gint us)
+{
+    while (us > 0 && !interrupted_by_user)
+    {
+        gint sleep_us = MIN (us, 50000);
+        g_usleep (sleep_us);
+        us -= sleep_us;
+    }
+}
+
+static gboolean
 run (const gchar *filename, gboolean is_single_file)
 {
     MagickWand *wand = NULL;
     guint8 *pixels;
     gboolean is_first_frame = TRUE;
-    gboolean is_animation;
+    gboolean is_animation = FALSE;
     GTimer *timer;
     Group group = { NULL };
     GList *l;
@@ -1127,7 +1142,7 @@ run (const gchar *filename, gboolean is_single_file)
                 elapsed_ms = g_timer_elapsed (timer, NULL) * 1000.0;
                 remain_ms = frame->delay_ms - elapsed_ms;
                 remain_ms = MAX (remain_ms, 0);
-                g_usleep (remain_ms * 1000);
+                interruptible_usleep (remain_ms * 1000);
             }
 
             is_first_frame = FALSE;
@@ -1139,6 +1154,8 @@ out:
     DestroyMagickWand (wand);
     group_clear (&group);
     g_timer_destroy (timer);
+
+    return is_animation;
 }
 
 static int
@@ -1159,7 +1176,14 @@ run_all (GList *filenames)
     for (l = filenames; l && !interrupted_by_user; l = g_list_next (l))
     {
         gchar *filename = l->data;
-        run (filename, is_single_file);
+        gboolean was_animation;
+
+        was_animation = run (filename, is_single_file);
+
+        if (!was_animation && l->next)
+        {
+            interruptible_usleep (options.inter_file_delay_s * 1000000.0);
+        }
     }
 
     MagickWandTerminus ();
