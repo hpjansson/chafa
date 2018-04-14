@@ -1033,7 +1033,7 @@ interruptible_usleep (gint us)
 }
 
 static gboolean
-run (const gchar *filename, gboolean is_single_file)
+run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
 {
     MagickWand *wand = NULL;
     guint8 *pixels;
@@ -1132,6 +1132,10 @@ run (const gchar *filename, gboolean is_single_file)
                 printf ("\x1b[%dA", frame->dest_height);
             }
 
+            /* Put a blank line between files in non-clear mode */
+            if (is_first_frame && !options.clear && !is_first_file)
+                fputc ('\n', stdout);
+
             fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
             fputc ('\n', stdout);
             fflush (stdout);
@@ -1178,7 +1182,7 @@ run_all (GList *filenames)
         gchar *filename = l->data;
         gboolean was_animation;
 
-        was_animation = run (filename, is_single_file);
+        was_animation = run (filename, is_single_file, l->prev ? FALSE : TRUE);
 
         if (!was_animation && l->next)
         {
