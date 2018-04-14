@@ -850,9 +850,9 @@ auto_orient_image (MagickWand *image)
 }
 
 static GString *
-textify (guint8 *pixels,
-         gint src_width, gint src_height,
-         gint dest_width, gint dest_height)
+build_string (guint8 *pixels,
+              gint src_width, gint src_height,
+              gint dest_width, gint dest_height)
 {
     ChafaSymbolMap *symbol_map;
     ChafaCanvasConfig *config;
@@ -1110,9 +1110,9 @@ run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
                                          CharPixel,
                                          pixels);
 
-                frame->gs = textify (pixels,
-                                     src_width, src_height,
-                                     frame->dest_width, frame->dest_height);
+                frame->gs = build_string (pixels,
+                                          src_width, src_height,
+                                          frame->dest_width, frame->dest_height);
                 g_free (pixels);
             }
 
@@ -1120,6 +1120,7 @@ run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
             {
                 if (is_first_frame)
                 {
+                    /* Clear */
                     printf ("\x1b[2J");
                 }
 
