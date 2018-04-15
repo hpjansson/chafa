@@ -1042,7 +1042,7 @@ interruptible_usleep (gint us)
 }
 
 static gboolean
-run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
+run (const gchar *filename, gboolean is_first_file)
 {
     MagickWand *wand = NULL;
     guint8 *pixels;
@@ -1185,13 +1185,9 @@ static int
 run_all (GList *filenames)
 {
     GList *l;
-    gboolean is_single_file = FALSE;
 
     if (!filenames)
         return 0;
-
-    if (!filenames->next)
-        is_single_file = TRUE;
 
     tty_options_init ();
     MagickWandGenesis ();
@@ -1201,7 +1197,7 @@ run_all (GList *filenames)
         gchar *filename = l->data;
         gboolean was_animation;
 
-        was_animation = run (filename, is_single_file, l->prev ? FALSE : TRUE);
+        was_animation = run (filename, l->prev ? FALSE : TRUE);
 
         if (!was_animation && options.file_duration_s != G_MAXDOUBLE)
         {
