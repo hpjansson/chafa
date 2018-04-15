@@ -52,7 +52,7 @@ typedef struct
     gboolean stretch;
     gint width, height;
     gdouble font_ratio;
-    gint quality;
+    gint work_factor;
     guint32 fg_color;
     gboolean fg_color_set;
     guint32 bg_color;
@@ -209,8 +209,6 @@ print_summary (void)
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
-    "  -q, --quality=NUM  Desired quality [1-9]. 1 is the fastest, 9 is the most\n"
-    "                     accurate. Defaults to 5.\n"
     "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
     "                     default this will be the size of your terminal, or 80x25\n"
     "                     if size detection fails.\n"
@@ -218,7 +216,9 @@ print_summary (void)
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
     "  -t, --threshold=NUM  Threshold above which full transparency will be used\n"
-    "                     [0.0 - 1.0].\n\n"
+    "                     [0.0 - 1.0].\n"
+    "  -w, --work=NUM     How hard to work in terms of CPU and memory [1-9]. 1 is the\n"
+    "                     cheapest, 9 is the most accurate. Defaults to 5.\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
     "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Some symbols\n"
@@ -708,7 +708,7 @@ parse_options (int *argc, char **argv [])
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
-        { "quality",     'q',  0, G_OPTION_ARG_INT,      &options.quality,      "Quality", NULL },
+        { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
@@ -735,7 +735,7 @@ parse_options (int *argc, char **argv [])
     options.width = 80;
     options.height = 25;
     options.font_ratio = 1.0 / 2.0;
-    options.quality = 5;
+    options.work_factor = 5;
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
     options.transparency_threshold = -1.0;
@@ -748,9 +748,9 @@ parse_options (int *argc, char **argv [])
         return FALSE;
     }
 
-    if (options.quality < 1 || options.quality > 9)
+    if (options.work_factor < 1 || options.work_factor > 9)
     {
-        g_printerr ("%s: Quality must be in the range [1-9].\n", options.executable_name);
+        g_printerr ("%s: Work factor must be in the range [1-9].\n", options.executable_name);
         return FALSE;
     }
 
@@ -881,9 +881,9 @@ build_string (guint8 *pixels,
 
     chafa_canvas_config_set_symbol_map (config, options.symbol_map);
 
-    /* Quality switch takes values [1..9], we normalize to [0.0..1.0] to
+    /* Work switch takes values [1..9], we normalize to [0.0..1.0] to
      * get the work factor. */
-    chafa_canvas_config_set_work_factor (config, (options.quality - 1) / 8.0);
+    chafa_canvas_config_set_work_factor (config, (options.work_factor - 1) / 8.0);
 
     canvas = chafa_canvas_new (config);
     chafa_canvas_set_contents_rgba8 (canvas, pixels, src_width, src_height, src_width * 4);
@@ -938,7 +938,7 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
         dest_height = MAX (dest_height, 1);
     }
 
-    if (options.quality >= 4 || options.preprocess)
+    if (options.work_factor >= 4 || options.preprocess)
     {
         gint new_width = CHAFA_SYMBOL_WIDTH_PIXELS * dest_width;
         gint new_height = CHAFA_SYMBOL_HEIGHT_PIXELS * dest_height;

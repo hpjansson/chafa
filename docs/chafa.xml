@@ -138,14 +138,6 @@ useful in low-color modes.
 </varlistentry>
 
 <varlistentry>
-<term><option>-q <replaceable>num</replaceable>, --quality <replaceable>num</replaceable></option></term>
-<listitem><para>
-Desired quality [1-9]. 1 is the cheapest, 9 is the most accurate. Defaults to
-5. The resources in play are CPU time and memory.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
 <term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
 <listitem><para>
 Set maximum output dimensions in columns and rows. By default this will be the
@@ -182,6 +174,14 @@ transparency with the background color (configurable with --bg).
 <term><option>--version</option></term>
 <listitem><para>
 Show version, feature and copyright information.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-w <replaceable>num</replaceable>, --work <replaceable>num</replaceable></option></term>
+<listitem><para>
+How hard to work in terms of CPU and memory [1-9]. 1 is the cheapest, 9 is the
+most accurate. Defaults to 5.
 </para></listitem>
 </varlistentry>
 
