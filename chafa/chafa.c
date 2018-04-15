@@ -58,7 +58,7 @@ typedef struct
     guint32 bg_color;
     gboolean bg_color_set;
     gdouble transparency_threshold;
-    gdouble inter_file_delay_s;
+    gdouble file_duration_s;
 }
 GlobalOptions;
 
@@ -198,7 +198,10 @@ print_summary (void)
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
-    "  -d, --delay=SECONDS  When showing multiple files, the time to show each file.\n"
+    "  -d, --duration=SECONDS  The time to show each file. If showing a single file,\n"
+    "                     defaults to zero for a still image and infinite for an\n"
+    "                     animation. For multiple files, defaults to 3.0. Animations\n"
+    "                     will always be played through at least once.\n"
     "      --fg=COLOR     Foreground color of display (color name or hex).\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
@@ -700,7 +703,7 @@ parse_options (int *argc, char **argv [])
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
-        { "delay",       'd',  0, G_OPTION_ARG_DOUBLE,   &options.inter_file_delay_s, "Delay", NULL },
+        { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
@@ -736,7 +739,7 @@ parse_options (int *argc, char **argv [])
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
     options.transparency_threshold = -1.0;
-    options.inter_file_delay_s = 3.0;
+    options.file_duration_s = G_MAXDOUBLE;
     get_tty_size ();
 
     if (!g_option_context_parse (context, argc, argv, &error))
@@ -790,6 +793,12 @@ parse_options (int *argc, char **argv [])
         {
             options.preprocess = TRUE;
         }
+    }
+
+    if (options.file_duration_s == G_MAXDOUBLE && options.args && options.args->next)
+    {
+        /* The default duration when we have multiple files */
+        options.file_duration_s = 3.0;
     }
 
     /* Since FGBG mode can't use escape sequences to invert, it really
@@ -1039,9 +1048,11 @@ run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
     guint8 *pixels;
     gboolean is_first_frame = TRUE;
     gboolean is_animation = FALSE;
+    gdouble anim_elapsed_s = 0.0;
     GTimer *timer;
     Group group = { NULL };
     GList *l;
+    gint loop_n = 0;
 
     timer = g_timer_new ();
 
@@ -1086,7 +1097,9 @@ run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
 
         MagickResetIterator (wand);
 
-        for (l = group.frames; l && !interrupted_by_user; l = g_list_next (l))
+        for (l = group.frames;
+             l && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
+             l = g_list_next (l))
         {
             GroupFrame *frame = l->data;
             gint elapsed_ms, remain_ms;
@@ -1148,12 +1161,17 @@ run (const gchar *filename, gboolean is_single_file, gboolean is_first_file)
                 remain_ms = frame->delay_ms - elapsed_ms;
                 remain_ms = MAX (remain_ms, 0);
                 interruptible_usleep (remain_ms * 1000);
+
+                anim_elapsed_s += MAX (elapsed_ms, frame->delay_ms) / 1000.0;
             }
 
             is_first_frame = FALSE;
         }
+
+        loop_n++;
     }
-    while (options.is_interactive && is_animation && is_single_file && !interrupted_by_user);
+    while (options.is_interactive && is_animation && !interrupted_by_user
+           && anim_elapsed_s < options.file_duration_s);
 
 out:
     DestroyMagickWand (wand);
@@ -1185,9 +1203,9 @@ run_all (GList *filenames)
 
         was_animation = run (filename, is_single_file, l->prev ? FALSE : TRUE);
 
-        if (!was_animation && l->next)
+        if (!was_animation && options.file_duration_s != G_MAXDOUBLE)
         {
-            interruptible_usleep (options.inter_file_delay_s * 1000000.0);
+            interruptible_usleep (options.file_duration_s * 1000000.0);
         }
     }
 
