@@ -169,7 +169,7 @@ and a list of symbol classes.
 </varlistentry>
 
 <varlistentry>
-<term><option>-t <replaceable>threshold</replaceable>, --transparency-threshold
+<term><option>-t <replaceable>threshold</replaceable>, --threshold
 <replaceable>threshold</replaceable></option></term>
 <listitem><para>
 Threshold above which full transparency will be used [0.0 - 1.0]. Setting this

@@ -217,8 +217,8 @@ print_summary (void)
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
-    "  -t, --transparency-threshold=NUM  Threshold above which full\n"
-    "                     transparency will be used [0.0 - 1.0].\n\n"
+    "  -t, --threshold=NUM  Threshold above which full transparency will be used\n"
+    "                     [0.0 - 1.0].\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
     "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Some symbols\n"
@@ -712,7 +712,7 @@ parse_options (int *argc, char **argv [])
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
-        { "transparency-threshold", 't', 0, G_OPTION_ARG_DOUBLE, &options.transparency_threshold, "Transparency threshold", NULL },
+        { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
         { NULL }
     };
 
