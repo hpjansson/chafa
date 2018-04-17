@@ -148,7 +148,7 @@ size of your terminal, or 80x25 if size detection fails.
 <varlistentry>
 <term><option>--stretch</option></term>
 <listitem><para>
-Stretch image to fit output dimensions; ignore aspect.
+Stretch image to fit output dimensions; ignore aspect. Implies --zoom.
 </para></listitem>
 </varlistentry>
 
@@ -182,6 +182,13 @@ Show version, feature and copyright information.
 <listitem><para>
 How hard to work in terms of CPU and memory [1-9]. 1 is the cheapest, 9 is the
 most accurate. Defaults to 5.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--zoom</option></term>
+<listitem><para>
+Allow scaling up beyond one character per pixel.
 </para></listitem>
 </varlistentry>
 

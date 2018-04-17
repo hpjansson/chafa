@@ -50,6 +50,7 @@ typedef struct
     gboolean preprocess;
     gboolean preprocess_set;
     gboolean stretch;
+    gboolean zoom;
     gint width, height;
     gdouble font_ratio;
     gint work_factor;
@@ -213,12 +214,14 @@ print_summary (void)
     "                     default this will be the size of your terminal, or 80x25\n"
     "                     if size detection fails.\n"
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
+    "                     Implies --zoom.\n"
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
     "  -t, --threshold=NUM  Threshold above which full transparency will be used\n"
     "                     [0.0 - 1.0].\n"
     "  -w, --work=NUM     How hard to work in terms of CPU and memory [1-9]. 1 is the\n"
-    "                     cheapest, 9 is the most accurate. Defaults to 5.\n\n"
+    "                     cheapest, 9 is the most accurate. Defaults to 5.\n"
+    "      --zoom         Allow scaling up beyond one character per pixel.\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
     "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Some symbols\n"
@@ -713,6 +716,7 @@ parse_options (int *argc, char **argv [])
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
+        { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
         { NULL }
     };
 
@@ -773,6 +777,9 @@ parse_options (int *argc, char **argv [])
         print_summary ();
         return FALSE;
     }
+
+    /* --stretch implies --zoom */
+    options.zoom |= options.stretch;
 
     if (options.invert)
     {
@@ -908,6 +915,12 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
 
     dest_width = options.width;
     dest_height = options.height;
+
+    if (!options.zoom)
+    {
+        dest_width = MIN (dest_width, src_width);
+        dest_height = MIN (dest_height, src_height);
+    }
 
     if (!options.stretch || dest_width < 0 || dest_height < 0)
     {
