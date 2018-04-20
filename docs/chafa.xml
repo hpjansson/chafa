@@ -216,31 +216,31 @@ The default symbol set is all-stipple-inverted for all modes except for
 <variablelist>
 <varlistentry>
 <term>chafa in.gif</term>
-<para>
+<listitem><para>
 Show a potentially animated GIF image in the terminal. If this is an animation,
 it will run until the user generates an interrupt (typically ctrl-c). All
 parameters will be autodetected based on the current environment.
-</para>
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>chafa -c full -s 200 in.gif</term>
-<para>
+<listitem><para>
 Like the above, but force truecolor output that is 200 characters wide and
 calculate the height preserving the aspect of the original image.
-</para>
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>chafa -c 16 --color-space din99d --symbols -dot in.jpg</term>
-<para>
+<listitem><para>
 Generate 16-color output with perceptual color picking and avoid using dot symbols.
-</para>
+</para></listitem>
 </varlistentry>
 <varlistentry>
 <term>chafa -c none --symbols block+border-solid in.png</term>
-<para>
+<listitem><para>
 Generate uncolored output using block and border symbols, but avoid the solid
 block symbol.
-</para>
+</para></listitem>
 </varlistentry>
 </variablelist>
 </refsect1>
