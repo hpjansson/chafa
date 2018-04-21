@@ -40,6 +40,11 @@
  * using chafa_canvas_build_ansi ().
  **/
 
+#ifdef IMPLEMENTED_16_8_MODE
+/* This goes in the public enum eventually */
+#define CHAFA_CANVAS_MODE_INDEXED_16_8 CHAFA_CANVAS_MODE_MAX
+#endif
+
 /* Maximum number of symbols in symbols[]. Used for statically allocated arrays */
 #define SYMBOLS_MAX 256
 
@@ -293,8 +298,7 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
             /* Pick palette colors before error evaluation; this improves
              * fine detail fidelity slightly. */
 
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16_8)
+            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
             {
                 if (canvas->work_factor_int >= 5)
                 {
@@ -502,8 +506,7 @@ update_cells (ChafaCanvas *canvas)
                 cell->fg_color = chafa_pick_color_240 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_240 (&bg_col, canvas->config.color_space);
             }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
-                     || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16_8)
+            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
             {
                 cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
@@ -799,6 +802,8 @@ emit_ansi_16 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     }
 }
 
+#ifdef IMPLEMENTED_16_8_MODE
+
 static void
 emit_ansi_16_8 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
 {
@@ -840,6 +845,8 @@ emit_ansi_16_8 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
         }
     }
 }
+
+#endif
 
 static void
 emit_ansi_fgbg_bgfg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
@@ -918,9 +925,11 @@ build_ansi_gstring (ChafaCanvas *canvas)
             case CHAFA_CANVAS_MODE_INDEXED_16:
                 emit_ansi_16 (canvas, gs, i, i_next);
                 break;
+#ifdef IMPLEMENTED_16_8_MODE
             case CHAFA_CANVAS_MODE_INDEXED_16_8:
                 emit_ansi_16_8 (canvas, gs, i, i_next);
                 break;
+#endif
             case CHAFA_CANVAS_MODE_FGBG_BGFG:
                 emit_ansi_fgbg_bgfg (canvas, gs, i, i_next);
                 break;
