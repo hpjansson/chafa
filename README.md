@@ -1,4 +1,4 @@
-# Chafa
+![](./docs/chafa-logo.gif)
 
 Chafa is a command-line utility that converts all kinds of images, including
 animated image formats like GIFs, into ANSI/Unicode character output that can
