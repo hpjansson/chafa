@@ -8,15 +8,18 @@ It is highly configurable, with support for alpha transparency and multiple
 color modes and color spaces, combining a range of Unicode characters for
 optimal output.
 
-The core functionality is provided by a C library with a public API that
-can be used in other projects, too.
+The core functionality is provided by a C library with a public,
+well-documented API.
 
-## Building
+## Building from git
 
-# From a git repository
+```
+./autogen.sh
+make
+sudo make install
+```
 
-./autogen.sh --prefix=/usr
+## Further reading
 
-# From source package
-
-./configure --prefix=/usr
+For tarball releases, online documentation, etc. see
+[the official web pages](https://hpjansson.org/chafa/).
