@@ -953,7 +953,7 @@ build_ansi_gstring (ChafaCanvas *canvas)
 
 /**
  * chafa_canvas_new:
- * @config: Canvas configuration to use for this canvas
+ * @config: Configuration to use or %NULL for hardcoded defaults
  *
  * Creates a new canvas with the specified configuration. The
  * canvas makes a private copy of the configuration, so it will
@@ -966,24 +966,28 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
 {
     ChafaCanvas *canvas;
 
-    g_return_val_if_fail (config->width > 0, NULL);
-    g_return_val_if_fail (config->height > 0, NULL);
+    if (config)
+    {
+        g_return_val_if_fail (config->width > 0, NULL);
+        g_return_val_if_fail (config->height > 0, NULL);
+    }
 
     chafa_init ();
 
     canvas = g_new0 (ChafaCanvas, 1);
-    canvas->refs = 1;
-    canvas->width_pixels = config->width * CHAFA_SYMBOL_WIDTH_PIXELS;
-    canvas->height_pixels = config->height * CHAFA_SYMBOL_HEIGHT_PIXELS;
-    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
-    canvas->cells = g_new (ChafaCanvasCell, config->width * config->height);
-    canvas->work_factor_int = config->work_factor * 10 + 0.5;
-    canvas->needs_clear = TRUE;
 
     if (config)
         chafa_canvas_config_copy_contents (&canvas->config, config);
     else
         chafa_canvas_config_init (&canvas->config);
+
+    canvas->refs = 1;
+    canvas->width_pixels = canvas->config.width * CHAFA_SYMBOL_WIDTH_PIXELS;
+    canvas->height_pixels = canvas->config.height * CHAFA_SYMBOL_HEIGHT_PIXELS;
+    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+    canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
+    canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5;
+    canvas->needs_clear = TRUE;
 
     chafa_symbol_map_prepare (&canvas->config.symbol_map);
 
