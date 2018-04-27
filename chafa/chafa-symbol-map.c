@@ -21,7 +21,6 @@
 
 #include <string.h>  /* memset, memcpy */
 #include <stdlib.h>  /* qsort */
-#include <glib.h>
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 

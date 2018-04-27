@@ -20,11 +20,6 @@
 #include "config.h"
 
 #include <smmintrin.h>
-
-#include <string.h>
-#include <wchar.h>
-#include <locale.h>
-#include <glib.h>
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 

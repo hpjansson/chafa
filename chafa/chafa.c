@@ -26,7 +26,6 @@
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
 #include <termios.h>  /* tcgetattr, tcsetattr */
-#include <glib.h>
 #include <wand/MagickWand.h>
 #include "chafa/chafa.h"
 #include "chafa/named-colors.h"

@@ -19,7 +19,6 @@
 
 #include "config.h"
 
-#include <glib.h>
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
