@@ -97,27 +97,30 @@ compare_symbols (const void *a, const void *b)
 static void
 rebuild_symbols (ChafaSymbolMap *symbol_map)
 {
-    
-    GHashTableIter iter;
-    gpointer key, value;
-    gint i;
-
     g_free (symbol_map->symbols);
 
     symbol_map->n_symbols = g_hash_table_size (symbol_map->desired_symbols);
     symbol_map->symbols = g_new (ChafaSymbol, symbol_map->n_symbols + 1);
 
-    g_hash_table_iter_init (&iter, symbol_map->desired_symbols);
-    i = 0;
-
-    while (g_hash_table_iter_next (&iter, &key, &value))
+    if (symbol_map->desired_symbols)
     {
-        gint src_index = GPOINTER_TO_INT (key);
-        symbol_map->symbols [i++] = chafa_symbols [src_index];
+        GHashTableIter iter;
+        gpointer key, value;
+        gint i;
+
+        g_hash_table_iter_init (&iter, symbol_map->desired_symbols);
+        i = 0;
+
+        while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+            gint src_index = GPOINTER_TO_INT (key);
+            symbol_map->symbols [i++] = chafa_symbols [src_index];
+        }
+
+        qsort (symbol_map->symbols, symbol_map->n_symbols, sizeof (ChafaSymbol),
+               compare_symbols);
     }
 
-    qsort (symbol_map->symbols, symbol_map->n_symbols, sizeof (ChafaSymbol),
-           compare_symbols);
     memset (&symbol_map->symbols [symbol_map->n_symbols], 0, sizeof (ChafaSymbol));
 
     symbol_map->need_rebuild = FALSE;
@@ -139,6 +142,159 @@ copy_hash_table (GHashTable *src)
     }
 
     return dest;
+}
+
+static void
+add_by_tags (GHashTable *sym_ht, ChafaSymbolTags tags)
+{
+    gint i;
+
+    for (i = 0; chafa_symbols [i].c != 0; i++)
+    {
+        if (chafa_symbols [i].sc & tags)
+            g_hash_table_add (sym_ht, GINT_TO_POINTER (i));
+    }
+}
+
+static void
+remove_by_tags (GHashTable *sym_ht, ChafaSymbolTags tags)
+{
+    gint i;
+
+    for (i = 0; chafa_symbols [i].c != 0; i++)
+    {
+        if (chafa_symbols [i].sc & tags)
+            g_hash_table_remove (sym_ht, GINT_TO_POINTER (i));
+    }
+}
+
+typedef struct
+{
+    const gchar *name;
+    ChafaSymbolTags sc;
+}
+SymMapping;
+
+static gboolean
+parse_symbol_tag (const gchar *name, gint len, ChafaSymbolTags *sc_out, GError **error)
+{
+    const SymMapping map [] =
+    {
+        { "all", CHAFA_SYMBOL_TAG_ALL },
+        { "none", CHAFA_SYMBOL_TAG_NONE },
+        { "space", CHAFA_SYMBOL_TAG_SPACE },
+        { "solid", CHAFA_SYMBOL_TAG_SOLID },
+        { "stipple", CHAFA_SYMBOL_TAG_STIPPLE },
+        { "block", CHAFA_SYMBOL_TAG_BLOCK },
+        { "border", CHAFA_SYMBOL_TAG_BORDER },
+        { "diagonal", CHAFA_SYMBOL_TAG_DIAGONAL },
+        { "dot", CHAFA_SYMBOL_TAG_DOT },
+        { "quad", CHAFA_SYMBOL_TAG_QUAD },
+        { "half", CHAFA_SYMBOL_TAG_HALF },
+        { "hhalf", CHAFA_SYMBOL_TAG_HHALF },
+        { "vhalf", CHAFA_SYMBOL_TAG_VHALF },
+        { "inverted", CHAFA_SYMBOL_TAG_INVERTED },
+        { NULL, 0 }
+    };
+    gint i;
+
+    for (i = 0; map [i].name; i++)
+    {
+        if (!g_ascii_strncasecmp (map [i].name, name, len))
+        {
+            *sc_out = map [i].sc;
+            return TRUE;
+        }
+    }
+
+    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                 "Unrecognized symbol tag '%.*s'.",
+                 len, name);
+    return FALSE;
+}
+
+static gboolean
+parse_selectors (ChafaSymbolMap *symbol_map, const gchar *selectors, GError **error)
+{
+    const gchar *p0 = selectors;
+    gboolean is_add = FALSE, is_remove = FALSE;
+    GHashTable *new_syms = NULL;
+    gboolean result = TRUE;
+
+    while (*p0)
+    {
+        ChafaSymbolTags sc;
+        gint n;
+
+        p0 += strspn (p0, " ,");
+        if (!*p0)
+            break;
+
+        if (*p0 == '-')
+        {
+            is_add = FALSE;
+            is_remove = TRUE;
+            p0++;
+        }
+        else if (*p0 == '+')
+        {
+            is_add = TRUE;
+            is_remove = FALSE;
+            p0++;
+        }
+
+        p0 += strspn (p0, " ");
+        if (!*p0)
+            break;
+
+        n = strspn (p0, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        if (!n)
+        {
+            g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                         "Syntax error in symbol tag selectors.");
+            goto out;
+        }
+
+        if (!parse_symbol_tag (p0, n, &sc, error))
+            goto out;
+
+        p0 += n;
+
+        if (is_add)
+        {
+            if (!new_syms)
+                new_syms = copy_hash_table (symbol_map->desired_symbols);
+            add_by_tags (new_syms, sc);
+        }
+        else if (is_remove)
+        {
+            if (!new_syms)
+                new_syms = copy_hash_table (symbol_map->desired_symbols);
+            remove_by_tags (new_syms, sc);
+        }
+        else
+        {
+            if (new_syms)
+                g_hash_table_unref (new_syms);
+            new_syms = g_hash_table_new (g_direct_hash, g_direct_equal);
+            add_by_tags (new_syms, sc);
+            is_add = TRUE;
+        }
+    }
+
+    if (symbol_map->desired_symbols)
+        g_hash_table_unref (symbol_map->desired_symbols);
+    symbol_map->desired_symbols = new_syms;
+    new_syms = NULL;
+
+    symbol_map->need_rebuild = TRUE;
+
+    result = TRUE;
+
+out:
+    if (new_syms)
+        g_hash_table_unref (new_syms);
+    return result;
 }
 
 void
@@ -280,19 +436,13 @@ chafa_symbol_map_unref (ChafaSymbolMap *symbol_map)
 void
 chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
 {
-    gint i;
-
     g_return_if_fail (symbol_map != NULL);
     g_return_if_fail (symbol_map->refs > 0);
 
     if (!symbol_map->desired_symbols)
         symbol_map->desired_symbols = g_hash_table_new (g_direct_hash, g_direct_equal);
 
-    for (i = 0; chafa_symbols [i].c != 0; i++)
-    {
-        if (chafa_symbols [i].sc & tags)
-            g_hash_table_add (symbol_map->desired_symbols, GINT_TO_POINTER (i));
-    }
+    add_by_tags (symbol_map->desired_symbols, tags);
 
     symbol_map->need_rebuild = TRUE;
 }
@@ -307,19 +457,45 @@ chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
 void
 chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
 {
-    gint i;
-
     g_return_if_fail (symbol_map != NULL);
     g_return_if_fail (symbol_map->refs > 0);
 
     if (!symbol_map->desired_symbols)
         symbol_map->desired_symbols = g_hash_table_new (g_direct_hash, g_direct_equal);
 
-    for (i = 0; chafa_symbols [i].c != 0; i++)
-    {
-        if (chafa_symbols [i].sc & tags)
-            g_hash_table_remove (symbol_map->desired_symbols, GINT_TO_POINTER (i));
-    }
+    remove_by_tags (symbol_map->desired_symbols, tags);
 
     symbol_map->need_rebuild = TRUE;
+}
+
+/**
+ * chafa_symbol_map_apply_tag_selectors:
+ * @symbol_map: Symbol map to apply selection to
+ * @selectors: A string specifying selections
+ * @error: Return location for an error, or %NULL
+ *
+ * Parses a string consisting of symbol tags separated by [+-,] and
+ * applies the pattern to @symbol_map. If the string begins with + or -,
+ * it's understood to be relative to the current set in @symbol_map,
+ * otherwise the map is cleared first.
+ *
+ * The symbol tags are string versions of #ChafaSymbolTags, i.e.
+ * [all, none, space, solid, stipple, block, border, diagonal, dot,
+ * quad, half, hhalf, vhalf].
+ *
+ * Examples: "block,border" sets map to contain symbols matching either
+ * of those tags. "+block,border-dot,stipple" adds block and border
+ * symbols then removes dot and stipple symbols.
+ *
+ * If there is a parse error, none of the changes are applied.
+ *
+ * Returns: %TRUE on success, %FALSE if there was a parse error
+ **/
+gboolean
+chafa_symbol_map_apply_selectors (ChafaSymbolMap *symbol_map, const gchar *selectors, GError **error)
+{
+    g_return_val_if_fail (symbol_map != NULL, FALSE);
+    g_return_val_if_fail (symbol_map->refs > 0, FALSE);
+
+    return parse_selectors (symbol_map, selectors, error);
 }

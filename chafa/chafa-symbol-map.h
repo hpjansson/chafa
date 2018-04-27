@@ -64,6 +64,10 @@ void chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags t
 CHAFA_AVAILABLE_IN_ALL
 void chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags);
 
+CHAFA_AVAILABLE_IN_ALL
+gboolean chafa_symbol_map_apply_selectors (ChafaSymbolMap *symbol_map,
+                                           const gchar *selectors, GError **error);
+
 G_END_DECLS
 
 #endif /* __CHAFA_SYMBOL_MAP_H__ */

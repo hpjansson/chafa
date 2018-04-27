@@ -41,7 +41,7 @@ typedef struct
     ChafaCanvasMode mode;
     ChafaColorSpace color_space;
     ChafaSymbolMap *symbol_map;
-    ChafaSymbolTags symbol_tags_specified;
+    gboolean symbols_specified;
     gboolean is_interactive;
     gboolean clear;
     gboolean verbose;
@@ -335,120 +335,11 @@ out:
     return result;
 }
 
-typedef struct
-{
-    const gchar *name;
-    ChafaSymbolTags sc;
-}
-SymMapping;
-
-static gboolean
-parse_symbol_tag (const gchar *name, gint len, ChafaSymbolTags *sc_out, GError **error)
-{
-    const SymMapping map [] =
-    {
-        { "all", CHAFA_SYMBOL_TAG_ALL },
-        { "none", CHAFA_SYMBOL_TAG_NONE },
-        { "space", CHAFA_SYMBOL_TAG_SPACE },
-        { "solid", CHAFA_SYMBOL_TAG_SOLID },
-        { "stipple", CHAFA_SYMBOL_TAG_STIPPLE },
-        { "block", CHAFA_SYMBOL_TAG_BLOCK },
-        { "border", CHAFA_SYMBOL_TAG_BORDER },
-        { "diagonal", CHAFA_SYMBOL_TAG_DIAGONAL },
-        { "dot", CHAFA_SYMBOL_TAG_DOT },
-        { "quad", CHAFA_SYMBOL_TAG_QUAD },
-        { "half", CHAFA_SYMBOL_TAG_HALF },
-        { "hhalf", CHAFA_SYMBOL_TAG_HHALF },
-        { "vhalf", CHAFA_SYMBOL_TAG_VHALF },
-        { "inverted", CHAFA_SYMBOL_TAG_INVERTED },
-        { NULL, 0 }
-    };
-    gint i;
-
-    for (i = 0; map [i].name; i++)
-    {
-        if (!g_ascii_strncasecmp (map [i].name, name, len))
-        {
-            *sc_out = map [i].sc;
-            return TRUE;
-        }
-    }
-
-    g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                 "Unrecognized symbol class '%.*s'.",
-                 len, name);
-    return FALSE;
-}
-
 static gboolean
 parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
-    const gchar *p0 = value;
-    gboolean is_add = FALSE, is_remove = FALSE;
-    gboolean result = TRUE;
-
-    while (*p0)
-    {
-        ChafaSymbolTags sc;
-        gint n;
-
-        p0 += strspn (p0, " ");
-        if (!*p0)
-            break;
-
-        p0 += strspn (p0, ",");
-        if (*p0 == '-')
-        {
-            is_add = FALSE;
-            is_remove = TRUE;
-            p0++;
-        }
-        else if (*p0 == '+')
-        {
-            is_add = TRUE;
-            is_remove = FALSE;
-            p0++;
-        }
-
-        n = strspn (p0, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        if (!n)
-        {
-            g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                         "Syntax error in symbol class list.");
-            result = FALSE;
-            break;
-        }
-
-        if (!parse_symbol_tag (p0, n, &sc, error))
-        {
-            result = FALSE;
-            break;
-        }
-
-        p0 += n;
-
-        if (is_add)
-        {
-            chafa_symbol_map_add_by_tags (options.symbol_map, sc);
-        }
-        else if (is_remove)
-        {
-            chafa_symbol_map_remove_by_tags (options.symbol_map, sc);
-        }
-        else
-        {
-            chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
-            chafa_symbol_map_add_by_tags (options.symbol_map, sc);
-            is_add = TRUE;
-
-            /* This effectively overrides all tags */
-            sc = CHAFA_SYMBOL_TAG_ALL;
-        }
-
-        options.symbol_tags_specified |= sc;
-    }
-
-    return result;
+    options.symbols_specified = TRUE;
+    return chafa_symbol_map_apply_selectors (options.symbol_map, value, error);
 }
 
 static gboolean
@@ -809,8 +700,8 @@ parse_options (int *argc, char **argv [])
 
     /* Since FGBG mode can't use escape sequences to invert, it really
      * needs inverted symbols. In other modes they will only slow us down,
-     * so disable them unless the user specified otherwise. */
-    if (options.mode != CHAFA_CANVAS_MODE_FGBG && !(options.symbol_tags_specified & CHAFA_SYMBOL_TAG_INVERTED))
+     * so disable them unless the user specified symbols of their own. */
+    if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.symbols_specified)
         chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_INVERTED);
 
     g_option_context_free (context);
