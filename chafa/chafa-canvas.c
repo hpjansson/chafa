@@ -941,7 +941,9 @@ build_ansi_gstring (ChafaCanvas *canvas)
                 break;
         }
 
-        g_string_append (gs, "\x1b[0m");
+        /* No control codes in FGBG mode */
+        if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+            g_string_append (gs, "\x1b[0m");
 
         /* Last line should not end in newline */
         if (i_next < i_max)
