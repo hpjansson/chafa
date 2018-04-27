@@ -1,0 +1,80 @@
+TODO
+====
+
+If you're particularly interested in any of this, send patches/pull requests
+or maybe just prod me a little.
+
+Minor Features/UX
+-----------------
+
+- HTML output.
+- Symbols: Math.
+- Symbols: Braille.
+- Symbols: ASCII alnum and symbols.
+- Accept image on standard input.
+- Accept -o, --output to write to file.
+- Verbose output. Show file names.
+- Add a --test option to print a test page.
+- Add a --show-symbols op to print matching symbols.
+- Add a --ping-pong option for animations.
+- Strv building API in addition to GString?
+- If FG color is transparent, see if we can use an inverted symbol and swap
+  with BG.
+  - Avoid using transparent foreground due to XFCE Terminal (other terminals?)
+    weird handling with background picture set?
+    - Except in FGBG modes.
+- Test with more terminals.
+  - iTerm?
+  - Other OSX terminals?
+  - PuTTY on Windows 8, 10?
+    - Windows 7 fonts support half, solid, some borders.
+  - Come up with some kind of support matrix.
+- Support Uxxxx symbol specification in symbol map and UI.
+
+Major features
+--------------
+
+- Lossy/lossless intra-frame compression.
+  - By desired output size.
+  - By maximum desired per-cell error.
+  - By total error?
+  - Slide window over row, calculate mean colors, calc error?
+- Lossy/lossless delta compression.
+  - Double-buffer with a checkpoint call to swap.
+    - Dirty map not enough in case each frame is composited in multiple steps.
+  - Emit difference between checkpoint state and current.
+  - Optimization: Keep a rect or region of changed area.
+  - Multiply previous symbol's new error with weight to increase or decrease
+    stability (prevent flicker)?
+- Allow getting and setting character cells (individual cells and rects).
+  - Raw mode (indexed/etc) and RGB conversion mode.
+- Drawing context with clip rect/region, etc.
+  - Potentially a context stack.
+  - Getting into NCurses territory...
+- Sixel support? Could be handled purely in ImageMagick, but maybe we could do
+  better.
+- Video playback.
+- Interactive UI (may need to be in separate tool).
+
+Optimization
+------------
+
+- Speed up 16-color mode (better fill).
+- Speed up alpha transparency code path.
+- Preload next image/frame in delay phase.
+- Reduce peak memory usage by coalescing fewer images at once?
+- Quantize colors for each cell first, then calculate errors only?
+- Don't calculate error if we're only using a single symbol (e.g. vhalf).
+- Fancy fast symbol selection based on some kind of fuzzy digest?
+- Multithreading.
+
+The Fine Material
+-----------------
+
+- Gallery of examples.
+- Tips.
+  - For scrolling, use e.g. chafa input.jpg -s 200 | less -S
+  - Rate-controlled playback with e.g. cat input.txt | pv -qL 100k
+  - Playback with awk + proper inter-frame delay.
+- Better stylesheets for man page, library reference manual.
+  - Maybe just redo the web site with Jekyll or something.
