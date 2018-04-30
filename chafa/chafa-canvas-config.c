@@ -101,6 +101,7 @@ chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasCon
 
     memcpy (dest, src, sizeof (*dest));
     chafa_symbol_map_copy_contents (&dest->symbol_map, &src->symbol_map);
+    dest->refs = 1;
 }
 
 /* Public */

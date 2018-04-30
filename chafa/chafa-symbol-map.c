@@ -335,6 +335,7 @@ chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src)
 
     dest->symbols = NULL;
     dest->need_rebuild = TRUE;
+    dest->refs = 1;
 }
 
 void
