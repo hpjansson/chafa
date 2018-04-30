@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <string.h>  /* memset */
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
@@ -1892,12 +1893,32 @@ static const ChafaSymbol symbol_defs [] =
 
 static gboolean symbols_initialized;
 
-static ChafaSymbol *
-init_symbol_array (const ChafaSymbol *defs)
+static void
+calc_weights (ChafaSymbol *sym)
 {
     gint i;
+
+    sym->fg_weight = 0;
+    sym->bg_weight = 0;
+    sym->have_mixed = FALSE;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        guchar p = sym->coverage [i];
+
+        sym->fg_weight += p;
+        sym->bg_weight += 10 - p;
+
+        if (p != 0 && p != 10)
+            sym->have_mixed = TRUE;
+    }
+}
+
+static void
+xlate_coverage (const gchar *coverage_in, gchar *coverage_out)
+{
     gchar xlate [256];
-    ChafaSymbol *syms;
+    gint i;
 
     xlate [' '] = 0;
     xlate ['0'] = 0;
@@ -1912,32 +1933,76 @@ init_symbol_array (const ChafaSymbol *defs)
     xlate ['9'] = 9;
     xlate ['X'] = 10;
 
-    syms = g_new0 (ChafaSymbol, 256);
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        guchar p = (guchar) coverage_in [i];
+        coverage_out [i] = xlate [p];
+    }
+}
+
+static void
+gen_braille_sym (gchar *cov, guint8 val)
+{
+    memset (cov, 0, CHAFA_SYMBOL_N_PIXELS);
+
+    cov [1] = cov [2] = (val & 1) * 10;
+    cov [5] = cov [6] = ((val >> 3) & 1) * 10;
+    cov += CHAFA_SYMBOL_WIDTH_PIXELS * 2;
+
+    cov [1] = cov [2] = ((val >> 1) & 1) * 10;
+    cov [5] = cov [6] = ((val >> 4) & 1) * 10;
+    cov += CHAFA_SYMBOL_WIDTH_PIXELS * 2;
+
+    cov [1] = cov [2] = ((val >> 2) & 1) * 10;
+    cov [5] = cov [6] = ((val >> 5) & 1) * 10;
+    cov += CHAFA_SYMBOL_WIDTH_PIXELS * 2;
+
+    cov [1] = cov [2] = ((val >> 6) & 1) * 10;
+    cov [5] = cov [6] = ((val >> 7) & 1) * 10;
+}
+
+static void
+generate_braille_syms (ChafaSymbol *syms, gint first_ofs)
+{
+    gunichar c;
+    gint i = first_ofs;
+
+    /* Braille 2x4 range */
+
+    c = 0x2800;
+
+    for (i = first_ofs; c < 0x2900; c++, i++)
+    {
+        ChafaSymbol *sym = &syms [i];
+
+        sym->sc = CHAFA_SYMBOL_TAG_BRAILLE;
+        sym->c = c;
+        sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
+
+        gen_braille_sym (sym->coverage, c - 0x2800);
+        calc_weights (&syms [i]);
+    }
+}
+
+static ChafaSymbol *
+init_symbol_array (const ChafaSymbol *defs)
+{
+    gint i;
+    ChafaSymbol *syms;
+
+    syms = g_new0 (ChafaSymbol, 512);
 
     for (i = 0; defs [i].c; i++)
     {
-        gint j;
-
         syms [i].sc = defs [i].sc;
         syms [i].c = defs [i].c;
         syms [i].coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
-        syms [i].fg_weight = 0;
-        syms [i].bg_weight = 0;
-        syms [i].have_mixed = FALSE;
 
-        for (j = 0; j < CHAFA_SYMBOL_N_PIXELS; j++)
-        {
-            guchar p = defs [i].coverage [j];
-            p = xlate [p];
-            syms [i].coverage [j] = p;
-            syms [i].fg_weight += p;
-            syms [i].bg_weight += 10 - p;
-
-            if (p != 0 && p != 10)
-                syms [i].have_mixed = TRUE;
-        }
+        xlate_coverage (defs [i].coverage, syms [i].coverage);
+        calc_weights (&syms [i]);
     }
 
+    generate_braille_syms (syms, i);
     return syms;
 }
 

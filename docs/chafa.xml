@@ -198,8 +198,8 @@ Allow scaling up beyond one character per pixel.
 <refsect1><title>Symbols</title>
 <para>
 Accepted classes for --symbols are [all, none, space, solid, stipple, block,
-border, diagonal, dot, quad, half, hhalf, vhalf, inverted]. Some symbols
-belong to multiple classes, e.g. diagonals are also borders.
+border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille]. Some
+symbols belong to multiple classes, e.g. diagonals are also borders.
 </para>
 <para>
 You can specify a list of classes separated by commas, or prefix them with +
@@ -207,8 +207,8 @@ and - to add or remove symbols relative to the existing set. The ordering is
 significant.
 </para>
 <para>
-The default symbol set is all-stipple-inverted for all modes except for
-"none", which looks best when allowed to use inverted characters.
+The default symbol set is all-stipple-braille-inverted for all modes except
+for "none", which uses all-stipple-braille.
 </para>
 </refsect1>
 

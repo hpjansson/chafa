@@ -46,7 +46,7 @@
 #endif
 
 /* Maximum number of symbols in symbols[]. Used for statically allocated arrays */
-#define SYMBOLS_MAX 256
+#define SYMBOLS_MAX 512
 
 /* Fixed point multiplier */
 #define FIXED_MULT 16384
