@@ -27,10 +27,11 @@
  * @title: Miscellaneous
  * @short_description: Potentially useful functions
  *
+ * Miscellaneous functions that may be useful for Chafa users.
  **/
 
 /**
- * chafa_fit_aspect:
+ * chafa_calc_canvas_geometry:
  * @src_width: Width of source
  * @src_height: Height of source
  * @dest_width_inout: Inout location for width of destination
