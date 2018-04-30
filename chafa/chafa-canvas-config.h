@@ -61,6 +61,8 @@ typedef struct ChafaCanvasConfig ChafaCanvasConfig;
 CHAFA_AVAILABLE_IN_ALL
 ChafaCanvasConfig *chafa_canvas_config_new (void);
 CHAFA_AVAILABLE_IN_ALL
+ChafaCanvasConfig *chafa_canvas_config_copy (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_ref (ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_unref (ChafaCanvasConfig *config);

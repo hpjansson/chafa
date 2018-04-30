@@ -125,6 +125,24 @@ chafa_canvas_config_new (void)
 }
 
 /**
+ * chafa_canvas_config_copy:
+ * @config: A #ChafaSymbolMap to copy.
+ *
+ * Creates a new #ChafaCanvasConfig that's a copy of @config.
+ *
+ * Returns: The new #ChafaCanvasConfig
+ **/
+ChafaCanvasConfig *
+chafa_canvas_config_copy (const ChafaCanvasConfig *config)
+{
+    ChafaCanvasConfig *new_config;
+
+    new_config = g_new (ChafaCanvasConfig, 1);
+    chafa_canvas_config_copy_contents (new_config, config);
+    return new_config;
+}
+
+/**
  * chafa_canvas_config_ref:
  * @config: #ChafaCanvasConfig to add a reference to.
  *
