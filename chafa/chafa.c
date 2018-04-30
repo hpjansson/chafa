@@ -808,40 +808,15 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
     dest_width = options.width;
     dest_height = options.height;
 
-    if (!options.zoom)
-    {
-        dest_width = MIN (dest_width, src_width);
-        dest_height = MIN (dest_height, src_height);
-    }
+    chafa_calc_canvas_geometry (src_width,
+                                src_height,
+                                &dest_width,
+                                &dest_height,
+                                options.font_ratio,
+                                options.zoom,
+                                options.stretch);
 
-    if (!options.stretch || dest_width < 0 || dest_height < 0)
-    {
-        gdouble src_aspect;
-        gdouble dest_aspect;
-
-        src_aspect = src_width / (gdouble) src_height;
-        dest_aspect = (dest_width / (gdouble) dest_height) * options.font_ratio;
-
-        if (dest_width < 1)
-        {
-            dest_width = dest_height * (src_aspect / options.font_ratio) + 0.5;
-        }
-        else if (dest_height < 1)
-        {
-            dest_height = (dest_width / src_aspect) * options.font_ratio + 0.5;
-        }
-        else if (src_aspect > dest_aspect)
-        {
-            dest_height = dest_width * (options.font_ratio / src_aspect);
-        }
-        else
-        {
-            dest_width = dest_height * (src_aspect / options.font_ratio);
-        }
-
-        dest_width = MAX (dest_width, 1);
-        dest_height = MAX (dest_height, 1);
-    }
+    /* Optionally prescale input image */
 
     if (options.work_factor >= 4 || options.preprocess)
     {

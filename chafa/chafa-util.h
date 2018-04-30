@@ -17,29 +17,26 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __CHAFA_H__
-#define __CHAFA_H__
-#define __CHAFA_H_INSIDE__
+#ifndef __CHAFA_UTIL_H__
+#define __CHAFA_UTIL_H__
 
-#include <glib.h>
+#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
+# error "Only <chafa.h> can be included directly."
+#endif
 
 G_BEGIN_DECLS
 
-/* Exported symbol versioning/visibility */
+/* Miscellaneous functions */
 
-#ifndef _CHAFA_EXTERN
-# define _CHAFA_EXTERN extern
-#endif
-
-#define CHAFA_AVAILABLE_IN_ALL _CHAFA_EXTERN
-
-#include <chafa-features.h>
-#include <chafa-canvas-config.h>
-#include <chafa-canvas.h>
-#include <chafa-symbol-map.h>
-#include <chafa-util.h>
+CHAFA_AVAILABLE_IN_ALL
+void chafa_calc_canvas_geometry (gint src_width,
+                                 gint src_height,
+                                 gint *dest_width_inout,
+                                 gint *dest_height_inout,
+                                 gfloat font_ratio,
+                                 gboolean zoom,
+                                 gboolean stretch);
 
 G_END_DECLS
 
-#undef __CHAFA_H_INSIDE__
-#endif /* __CHAFA_H__ */
+#endif /* __CHAFA_UTIL_H__ */
