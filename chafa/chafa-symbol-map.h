@@ -56,6 +56,8 @@ typedef struct ChafaSymbolMap ChafaSymbolMap;
 CHAFA_AVAILABLE_IN_ALL
 ChafaSymbolMap *chafa_symbol_map_new (void);
 CHAFA_AVAILABLE_IN_ALL
+ChafaSymbolMap *chafa_symbol_map_copy (const ChafaSymbolMap *orig_symbol_map);
+CHAFA_AVAILABLE_IN_ALL
 void chafa_symbol_map_ref (ChafaSymbolMap *symbol_map);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_symbol_map_unref (ChafaSymbolMap *symbol_map);

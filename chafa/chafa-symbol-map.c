@@ -389,6 +389,24 @@ chafa_symbol_map_new (void)
 }
 
 /**
+ * chafa_symbol_map_copy:
+ * @symbol_map: A #ChafaSymbolMap to copy.
+ *
+ * Creates a new #ChafaSymbolMap that's a copy of @symbol_map.
+ *
+ * Returns: The new #ChafaSymbolMap
+ **/
+ChafaSymbolMap *
+chafa_symbol_map_copy (const ChafaSymbolMap *symbol_map)
+{
+    ChafaSymbolMap *new_symbol_map;
+
+    new_symbol_map = g_new (ChafaSymbolMap, 1);
+    chafa_symbol_map_copy_contents (new_symbol_map, symbol_map);
+    return new_symbol_map;
+}
+
+/**
  * chafa_symbol_map_ref:
  * @symbol_map: Symbol map to add a reference to
  *
