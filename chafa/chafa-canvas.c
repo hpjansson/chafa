@@ -930,7 +930,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->refs = 1;
     canvas->width_pixels = canvas->config.width * CHAFA_SYMBOL_WIDTH_PIXELS;
     canvas->height_pixels = canvas->config.height * CHAFA_SYMBOL_HEIGHT_PIXELS;
-    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+    canvas->pixels = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5;
     canvas->needs_clear = TRUE;
@@ -970,7 +970,7 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
 
     chafa_canvas_config_copy_contents (&canvas->config, &orig->config);
 
-    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+    canvas->pixels = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->needs_clear = TRUE;
 
@@ -1066,6 +1066,8 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
     if (src_width == 0 || src_height == 0)
         return;
 
+    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+
     switch (canvas->config.color_space)
     {
         case CHAFA_COLOR_SPACE_RGB:
@@ -1086,6 +1088,9 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
 
     update_cells (canvas);
     canvas->needs_clear = FALSE;
+
+    g_free (canvas->pixels);
+    canvas->pixels = NULL;
 }
 
 /**
