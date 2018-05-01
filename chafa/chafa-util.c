@@ -27,7 +27,7 @@
  * @title: Miscellaneous
  * @short_description: Potentially useful functions
  *
- * Miscellaneous functions that may be useful for Chafa users.
+ * Miscellaneous functions that may be useful to Chafa users.
  **/
 
 /**
