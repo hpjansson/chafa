@@ -40,11 +40,6 @@
  * using chafa_canvas_build_ansi ().
  **/
 
-#ifdef IMPLEMENTED_16_8_MODE
-/* This goes in the public enum eventually */
-#define CHAFA_CANVAS_MODE_INDEXED_16_8 CHAFA_CANVAS_MODE_MAX
-#endif
-
 /* Maximum number of symbols in symbols[]. Used for statically allocated arrays */
 #define SYMBOLS_MAX 512
 
@@ -802,52 +797,6 @@ emit_ansi_16 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     }
 }
 
-#ifdef IMPLEMENTED_16_8_MODE
-
-static void
-emit_ansi_16_8 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
-{
-    /* FIXME: For this to work optimally, we need to limit BG colors more during
-     * paint and consider using inverse symbols. */
-
-    for ( ; i < i_max; i++)
-    {
-        ChafaCanvasCell *cell = &canvas->cells [i];
-
-        if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
-        {
-            if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
-            {
-                g_string_append (gs, "\x1b[0m ");
-            }
-            else
-            {
-                g_string_append_printf (gs, "\x1b[0m\x1b[7m\x1b[%s3%dm",
-                                        cell->bg_color > 7 ? "1;" : "",
-                                        cell->bg_color % 8);
-                g_string_append_unichar (gs, cell->c);
-            }
-        }
-        else if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
-        {
-            g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm",
-                                    cell->fg_color > 7 ? "1;" : "",
-                                    cell->fg_color % 8);
-            g_string_append_unichar (gs, cell->c);
-        }
-        else
-        {
-            g_string_append_printf (gs, "\x1b[0m\x1b[%s3%dm\x1b[4%dm",
-                                    cell->fg_color > 7 ? "1;" : "",
-                                    cell->fg_color % 8,
-                                    cell->bg_color % 8);  /* FIXME: Bright background colors? */
-            g_string_append_unichar (gs, cell->c);
-        }
-    }
-}
-
-#endif
-
 static void
 emit_ansi_fgbg_bgfg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
 {
@@ -925,11 +874,6 @@ build_ansi_gstring (ChafaCanvas *canvas)
             case CHAFA_CANVAS_MODE_INDEXED_16:
                 emit_ansi_16 (canvas, gs, i, i_next);
                 break;
-#ifdef IMPLEMENTED_16_8_MODE
-            case CHAFA_CANVAS_MODE_INDEXED_16_8:
-                emit_ansi_16_8 (canvas, gs, i, i_next);
-                break;
-#endif
             case CHAFA_CANVAS_MODE_FGBG_BGFG:
                 emit_ansi_fgbg_bgfg (canvas, gs, i, i_next);
                 break;

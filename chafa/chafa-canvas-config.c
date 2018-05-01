@@ -45,7 +45,6 @@
  * @CHAFA_CANVAS_MODE_INDEXED_256: 256 colors.
  * @CHAFA_CANVAS_MODE_INDEXED_240: 256 colors, but avoid using the lower 16 whose values vary between terminal environments.
  * @CHAFA_CANVAS_MODE_INDEXED_16: 16 colors using the aixterm ANSI extension.
- * @CHAFA_CANVAS_MODE_INDEXED_16_8: 16 foreground colors, 8 background.
  * @CHAFA_CANVAS_MODE_FGBG_BGFG: Default foreground and background colors, plus inversion.
  * @CHAFA_CANVAS_MODE_FGBG: Default foreground and background colors. No ANSI codes will be used.
  * @CHAFA_CANVAS_MODE_MAX: Last supported canvas mode plus one.
