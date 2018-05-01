@@ -37,7 +37,7 @@
  * @dest_width_inout: Inout location for width of destination
  * @dest_height_inout: Inout location for height of destination
  * @font_ratio: Target font's width to height ratio
- * @zoom: %TRUE to upscale image to fit maximum dimenstions, %FALSE otherwise
+ * @zoom: %TRUE to upscale image to fit maximum dimensions, %FALSE otherwise
  * @stretch: %TRUE to ignore aspect of source, %FALSE otherwise
  *
  * Calculates an optimal geometry for a #ChafaCanvas given the width and
