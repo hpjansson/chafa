@@ -212,6 +212,22 @@ CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_sse41_intrinsics})
 AM_CONDITIONAL([HAVE_SSE41_INTRINSICS], [test "$ac_cv_sse41_intrinsics" = "yes"])
 
+dnl Check for working popcnt intrinsics
+AC_MSG_CHECKING(for working popcnt intrinsics)
+SAVED_CFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -mpopcnt"
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <stdint.h>
+                  #include <nmmintrin.h>]],
+		[[uint64_t t = 0; t = _mm_popcnt_u64 (t);]])],
+	[AC_DEFINE([HAVE_POPCNT_INTRINSICS], [1], [Define if popcnt intrinsics work.])
+	 ac_cv_popcnt_intrinsics=yes],
+	[ac_cv_popcnt_intrinsics=no])
+CFLAGS="${SAVED_CFLAGS}"
+AC_MSG_RESULT(${ac_cv_popcnt_intrinsics})
+AM_CONDITIONAL([HAVE_POPCNT_INTRINSICS], [test "$ac_cv_popcnt_intrinsics" = "yes"])
+
 dnl
 dnl Check for -fvisibility=hidden to determine if we can do GNU-style
 dnl visibility attributes for symbol export control

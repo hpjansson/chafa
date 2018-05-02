@@ -103,6 +103,7 @@ void chafa_init_symbols (void);
 void chafa_init (void);
 gboolean chafa_have_mmx (void) G_GNUC_PURE;
 gboolean chafa_have_sse41 (void) G_GNUC_PURE;
+gboolean chafa_have_popcnt (void) G_GNUC_PURE;
 
 void chafa_symbol_map_init (ChafaSymbolMap *symbol_map);
 void chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map);
@@ -159,6 +160,10 @@ void leave_mmx (void);
 
 #ifdef HAVE_SSE41_INTRINSICS
 gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov) G_GNUC_PURE;
+#endif
+
+#ifdef HAVE_POPCNT_INTRINSICS
+gint chafa_pop_count_u64_builtin (guint64 v) G_GNUC_PURE;
 #endif
 
 G_END_DECLS

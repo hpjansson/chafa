@@ -42,6 +42,14 @@ libchafa_sse41_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -msse4.1
 libchafa_sse41_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
 endif
 
+if HAVE_POPCNT_INTRINSICS
+noinst_LTLIBRARIES += libchafa-popcnt.la
+libchafa_la_LIBADD += libchafa-popcnt.la
+libchafa_popcnt_la_SOURCES = chafa-popcnt.c
+libchafa_popcnt_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mpopcnt
+libchafa_popcnt_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
+endif
+
 ## --- Tools ---
 
 if WANT_TOOLS

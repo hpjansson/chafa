@@ -43,6 +43,7 @@ static gboolean chafa_initialized;
 
 static gboolean have_mmx;
 static gboolean have_sse41;
+static gboolean have_popcnt;
 
 static void
 init_features (void)
@@ -58,6 +59,11 @@ init_features (void)
 # ifdef HAVE_SSE41_INTRINSICS
     if (__builtin_cpu_supports ("sse4.1"))
         have_sse41 = TRUE;
+# endif
+
+# ifdef HAVE_POPCNT_INTRINSICS
+    if (__builtin_cpu_supports ("popcnt"))
+        have_popcnt = TRUE;
 # endif
 #endif
 }
@@ -93,6 +99,12 @@ chafa_have_sse41 (void)
     return have_sse41;
 }
 
+gboolean
+chafa_have_popcnt (void)
+{
+    return have_popcnt;
+}
+
 /* Public API */
 
 /**
@@ -115,6 +127,10 @@ chafa_get_builtin_features (void)
     features |= CHAFA_FEATURE_SSE41;
 #endif
 
+#ifdef HAVE_POPCNT_INTRINSICS
+    features |= CHAFA_FEATURE_POPCNT;
+#endif
+
     return features;
 }
 
@@ -132,7 +148,8 @@ chafa_get_supported_features (void)
     chafa_init ();
 
     return (have_mmx ? CHAFA_FEATURE_MMX : 0)
-        | (have_sse41 ? CHAFA_FEATURE_SSE41 : 0);
+      | (have_sse41 ? CHAFA_FEATURE_SSE41 : 0)
+      | (have_popcnt ? CHAFA_FEATURE_POPCNT : 0);
 }
 
 /**
@@ -154,6 +171,8 @@ chafa_describe_features (ChafaFeatures features)
         g_string_append (features_gstr, "mmx ");
     if (features & CHAFA_FEATURE_SSE41)
         g_string_append (features_gstr, "sse4.1 ");
+    if (features & CHAFA_FEATURE_POPCNT)
+        g_string_append (features_gstr, "popcnt ");
 
     if (features_gstr->len > 0 && features_gstr->str [features_gstr->len - 1] == ' ')
         g_string_truncate (features_gstr, features_gstr->len - 1);

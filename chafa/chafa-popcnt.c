@@ -17,32 +17,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __CHAFA_FEATURES_H__
-#define __CHAFA_FEATURES_H__
+#include "config.h"
 
-#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
-# error "Only <chafa.h> can be included directly."
-#endif
+#include <nmmintrin.h>
+#include "chafa/chafa.h"
+#include "chafa/chafa-private.h"
 
-G_BEGIN_DECLS
-
-/* Features */
-
-typedef enum
+gint
+chafa_pop_count_u64_builtin (guint64 v)
 {
-    CHAFA_FEATURE_MMX          = (1 << 0),
-    CHAFA_FEATURE_SSE41        = (1 << 1),
-    CHAFA_FEATURE_POPCNT       = (1 << 2),
+    return (gint) _mm_popcnt_u64 (v);
 }
-ChafaFeatures;
-
-CHAFA_AVAILABLE_IN_ALL
-ChafaFeatures chafa_get_builtin_features (void);
-CHAFA_AVAILABLE_IN_ALL
-ChafaFeatures chafa_get_supported_features (void);
-CHAFA_AVAILABLE_IN_ALL
-gchar *chafa_describe_features (ChafaFeatures features);
-
-G_END_DECLS
-
-#endif /* __CHAFA_FEATURES_H__ */
