@@ -1804,6 +1804,23 @@ xlate_coverage (const gchar *coverage_in, gchar *coverage_out)
     }
 }
 
+static guint64
+coverage_to_bitmap (const gchar *cov)
+{
+    guint64 bitmap = 0;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        bitmap <<= 1;
+
+        if (cov [i] >= 5)
+            bitmap |= 1;
+    }
+
+    return bitmap;
+}
+
 static void
 gen_braille_sym (gchar *cov, guint8 val)
 {
@@ -1845,6 +1862,7 @@ generate_braille_syms (ChafaSymbol *syms, gint first_ofs)
 
         gen_braille_sym (sym->coverage, c - 0x2800);
         calc_weights (&syms [i]);
+        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage);
     }
 }
 
@@ -1864,6 +1882,7 @@ init_symbol_array (const ChafaSymbolDef *defs)
 
         xlate_coverage (defs [i].coverage, syms [i].coverage);
         calc_weights (&syms [i]);
+        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage);
     }
 
     generate_braille_syms (syms, i);

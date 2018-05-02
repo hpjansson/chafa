@@ -60,6 +60,7 @@ typedef struct
     gchar *coverage;
     gint fg_weight, bg_weight;
     gboolean have_mixed;
+    guint64 bitmap;
 }
 ChafaSymbol;
 
