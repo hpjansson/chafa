@@ -37,6 +37,7 @@
  * ChafaFeatures:
  * @CHAFA_FEATURE_MMX: Flag indicating MMX support.
  * @CHAFA_FEATURE_SSE41: Flag indicating SSE 4.1 support.
+ * @CHAFA_FEATURE_POPCNT: Flag indicating popcnt support.
  **/
 
 static gboolean chafa_initialized;
