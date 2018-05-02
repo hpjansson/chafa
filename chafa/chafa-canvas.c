@@ -410,33 +410,24 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
 
             if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
             {
-                if (canvas->work_factor_int >= 5)
-                {
-                    fg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].fg.col,
-                                                                                canvas->config.color_space), canvas->config.color_space);
-                    bg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].bg.col,
-                                                                                canvas->config.color_space), canvas->config.color_space);
-                }
+                fg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].fg.col,
+                                                                            canvas->config.color_space), canvas->config.color_space);
+                bg_col = *chafa_get_palette_color_256 (chafa_pick_color_16 (&eval [i].bg.col,
+                                                                            canvas->config.color_space), canvas->config.color_space);
             }
             else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
             {
-                if (canvas->work_factor_int >= 8)
-                {
-                    fg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].fg.col,
-                                                                                 canvas->config.color_space), canvas->config.color_space);
-                    bg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].bg.col,
-                                                                                 canvas->config.color_space), canvas->config.color_space);
-                }
+                fg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].fg.col,
+                                                                             canvas->config.color_space), canvas->config.color_space);
+                bg_col = *chafa_get_palette_color_256 (chafa_pick_color_240 (&eval [i].bg.col,
+                                                                             canvas->config.color_space), canvas->config.color_space);
             }
             else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
             {
-                if (canvas->work_factor_int >= 8)
-                {
-                    fg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].fg.col,
-                                                                                 canvas->config.color_space), canvas->config.color_space);
-                    bg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].bg.col,
-                                                                                 canvas->config.color_space), canvas->config.color_space);
-                }
+                fg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].fg.col,
+                                                                             canvas->config.color_space), canvas->config.color_space);
+                bg_col = *chafa_get_palette_color_256 (chafa_pick_color_256 (&eval [i].bg.col,
+                                                                             canvas->config.color_space), canvas->config.color_space);
             }
 
             /* FIXME: The logic here seems overly complicated */
