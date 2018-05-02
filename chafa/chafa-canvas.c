@@ -79,9 +79,9 @@ typedef struct
 }
 SymbolEval;
 
-/* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
+/* block_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
 static void
-fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *pixels_out)
+fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *block_out)
 {
     ChafaPixel *row_p;
     ChafaPixel *end_p;
@@ -96,20 +96,20 @@ fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *pix
         ChafaPixel *p1 = p0 + CHAFA_SYMBOL_WIDTH_PIXELS;
 
         for ( ; p0 < p1; p0++)
-            pixels_out [i++] = *p0;
+            block_out [i++] = *p0;
     }
 }
 
 static void
-calc_mean_color (ChafaPixel *pixels, ChafaColor *color_out)
+calc_mean_color (ChafaPixel *block, ChafaColor *color_out)
 {
     ChafaColor accum = { 0 };
     gint i;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        chafa_color_add (&accum, &pixels->col);
-        pixels++;
+        chafa_color_add (&accum, &block->col);
+        block++;
     }
 
     chafa_color_div_scalar (&accum, CHAFA_SYMBOL_N_PIXELS);
@@ -232,9 +232,9 @@ block_to_bitmap (const ChafaPixel *block, ChafaColor *colors, ChafaColorSpace cs
 }
 
 static void
-calc_colors_plain (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
+calc_colors_plain (const ChafaPixel *block, ChafaColor *cols, const guint8 *cov)
 {
-    const gint16 *in_s16 = (const gint16 *) pixels;
+    const gint16 *in_s16 = (const gint16 *) block;
     gint i;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
@@ -249,7 +249,7 @@ calc_colors_plain (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov
 }
 
 static void
-eval_symbol_colors (const ChafaPixel *canvas_pixels, const ChafaSymbol *sym, SymbolEval *eval)
+eval_symbol_colors (const ChafaPixel *block, const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
     ChafaColor cols [11] = { 0 };
@@ -257,10 +257,10 @@ eval_symbol_colors (const ChafaPixel *canvas_pixels, const ChafaSymbol *sym, Sym
 
 #ifdef HAVE_MMX_INTRINSICS
     if (chafa_have_mmx ())
-        calc_colors_mmx (canvas_pixels, cols, covp);
+        calc_colors_mmx (block, cols, covp);
     else
 #endif
-        calc_colors_plain (canvas_pixels, cols, covp);
+        calc_colors_plain (block, cols, covp);
 
     eval->fg.col = cols [10];
     eval->bg.col = cols [0];
@@ -289,7 +289,7 @@ eval_symbol_colors (const ChafaPixel *canvas_pixels, const ChafaSymbol *sym, Sym
 }
 
 static gint
-calc_error_plain (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
+calc_error_plain (const ChafaPixel *block, const ChafaColor *cols, const guint8 *cov)
 {
     gint error = 0;
     gint i;
@@ -297,7 +297,7 @@ calc_error_plain (const ChafaPixel *pixels, const ChafaColor *cols, const guint8
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         guint8 p = *cov++;
-        const ChafaPixel *p0 = pixels++;
+        const ChafaPixel *p0 = block++;
 
         error += chafa_color_diff_fast (&cols [p], &p0->col, canvas->color_space);
     }
@@ -306,7 +306,7 @@ calc_error_plain (const ChafaPixel *pixels, const ChafaColor *cols, const guint8
 }
 
 static gint
-calc_error_with_alpha (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov, ChafaColorSpace cs)
+calc_error_with_alpha (const ChafaPixel *block, const ChafaColor *cols, const guint8 *cov, ChafaColorSpace cs)
 {
     gint error = 0;
     gint i;
@@ -314,7 +314,7 @@ calc_error_with_alpha (const ChafaPixel *pixels, const ChafaColor *cols, const g
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         guint8 p = *cov++;
-        const ChafaPixel *p0 = pixels++;
+        const ChafaPixel *p0 = block++;
 
         error += chafa_color_diff_slow (&cols [p], &p0->col, cs);
     }
@@ -323,7 +323,7 @@ calc_error_with_alpha (const ChafaPixel *pixels, const ChafaColor *cols, const g
 }
 
 static void
-eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
+eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *block,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
@@ -344,16 +344,16 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
 
     if (canvas->have_alpha)
     {
-        error = calc_error_with_alpha (canvas_pixels, cols, covp, canvas->config.color_space);
+        error = calc_error_with_alpha (block, cols, covp, canvas->config.color_space);
     }
     else
     {
 #ifdef HAVE_SSE41_INTRINSICS
         if (chafa_have_sse41 ())
-            error = calc_error_sse41 (canvas_pixels, cols, covp);
+            error = calc_error_sse41 (block, cols, covp);
         else
 #endif
-            error = calc_error_plain (canvas_pixels, cols, covp);
+            error = calc_error_plain (block, cols, covp);
     }
 
     eval->error = error;
@@ -366,12 +366,12 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
                              ChafaColor *bg_col_out,
                              gint *error_out)
 {
-    ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
+    ChafaPixel block [CHAFA_SYMBOL_N_PIXELS];
     SymbolEval eval [SYMBOLS_MAX] = { 0 };
     gint n;
     gint i;
 
-    fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
+    fetch_canvas_pixel_block (canvas, cx, cy, block);
 
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
@@ -388,7 +388,7 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
         {
             ChafaColor fg_col, bg_col;
 
-            eval_symbol_colors (canvas_pixels, &canvas->config.symbol_map.symbols [i], &eval [i]);
+            eval_symbol_colors (block, &canvas->config.symbol_map.symbols [i], &eval [i]);
 
             /* Threshold alpha */
 
@@ -443,7 +443,7 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
             }
         }
 
-        eval_symbol_error (canvas, canvas_pixels, &canvas->config.symbol_map.symbols [i], &eval [i]);
+        eval_symbol_error (canvas, block, &canvas->config.symbol_map.symbols [i], &eval [i]);
     }
 
 #ifdef HAVE_MMX_INTRINSICS
@@ -500,7 +500,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
                              ChafaColor *bg_col_out,
                              gint *error_out)
 {
-    ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
+    ChafaPixel block [CHAFA_SYMBOL_N_PIXELS];
     ChafaColor color_pair [2];
     guint64 bitmap;
     gint best_error = G_MAXINT;
@@ -508,7 +508,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
     gboolean is_inverted = FALSE;
     gint i;
 
-    fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
+    fetch_canvas_pixel_block (canvas, cx, cy, block);
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
@@ -518,10 +518,10 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
     }
     else
     {
-        pick_two_colors (canvas_pixels, color_pair);
+        pick_two_colors (block, color_pair);
     }
 
-    bitmap = block_to_bitmap (canvas_pixels, color_pair, canvas->config.color_space);
+    bitmap = block_to_bitmap (block, color_pair, canvas->config.color_space);
 
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
@@ -641,7 +641,7 @@ static gboolean
 pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
               gunichar *sym_out, ChafaColor *fg_col_out, ChafaColor *bg_col_out, gint *error_out)
 {
-    ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
+    ChafaPixel block [CHAFA_SYMBOL_N_PIXELS];
     SymbolEval eval [SYMBOLS_MAX] = { 0 };
     SymbolEval best_eval = { 0 };
     gint fg_col, bg_col;
@@ -652,8 +652,8 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
 
     best_eval.error = G_MAXINT;
 
-    fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
-    calc_mean_color (canvas_pixels, &square_col);
+    fetch_canvas_pixel_block (canvas, cx, cy, block);
+    calc_mean_color (block, &square_col);
 
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
