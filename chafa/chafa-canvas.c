@@ -116,6 +116,121 @@ calc_mean_color (ChafaPixel *pixels, ChafaColor *color_out)
     *color_out = accum;
 }
 
+static gint
+find_dominant_channel (const ChafaPixel *block)
+{
+    gint16 min [4] = { G_MAXINT16, G_MAXINT16, G_MAXINT16, G_MAXINT16 };
+    gint16 max [4] = { G_MININT16, G_MININT16, G_MININT16, G_MININT16 };
+    gint16 range [4];
+    gint ch, best_ch;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        for (ch = 0; ch < 4; ch++)
+        {
+            if (block [i].col.ch [ch] < min [ch])
+                min [ch] = block [i].col.ch [ch];
+            if (block [i].col.ch [ch] > max [ch])
+                max [ch] = block [i].col.ch [ch];
+        }
+    }
+
+    for (ch = 0; ch < 4; ch++)
+        range [ch] = max [ch] - min [ch];
+
+    best_ch = 0;
+    for (ch = 1; ch < 4; ch++)
+        if (range [ch] > range [best_ch])
+            best_ch = ch;
+
+    return best_ch;
+}
+
+static void
+sort_block_by_channel (ChafaPixel *block, gint ch)
+{
+    const gint gaps [] = { 57, 23, 10, 4, 1 };
+    gint g, i, j;
+
+    /* Since we don't care about stability and the number of elements
+     * is small and known in advance, use a simple in-place shellsort.
+     *
+     * Due to locality and callback overhead this is probably faster
+     * than qsort(), although admittedly I haven't benchmarked it.
+     *
+     * Another option is to use radix, but since we support multiple
+     * color spaces with fixed-point reals, we could get more buckets
+     * than is practical. */
+
+    for (g = 0; ; g++)
+    {
+        gint gap = gaps [g];
+
+        for (i = gap; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            ChafaPixel ptemp = block [i];
+
+            for (j = i; j >= gap && block [j - gap].col.ch [ch] > ptemp.col.ch [ch]; j -= gap)
+            {
+                block [j] = block [j - gap];
+            }
+
+            block [j] = ptemp;
+        }
+
+        /* After gap == 1 the array is always left sorted */
+        if (gap == 1)
+            break;
+    }
+}
+
+/* colors_out must point to an array of two elements */
+static void
+pick_two_colors (const ChafaPixel *block, ChafaColor *colors_out)
+{
+    ChafaPixel sorted_colors [CHAFA_SYMBOL_N_PIXELS];
+    gint best_ch;
+
+    best_ch = find_dominant_channel (block);
+
+    /* FIXME: An array of index bytes might be faster due to smaller
+     * elements, but the indirection adds overhead so it'd have to be
+     * benchmarked. */
+
+    memcpy (sorted_colors, block, sizeof (sorted_colors));
+    sort_block_by_channel (sorted_colors, best_ch);
+
+    /* Choose two colors by median cut */
+
+    colors_out [0] = sorted_colors [CHAFA_SYMBOL_N_PIXELS / 4].col;
+    colors_out [1] = sorted_colors [(CHAFA_SYMBOL_N_PIXELS * 3) / 4].col;
+}
+
+/* colors must point to an array of two elements */
+static guint64
+block_to_bitmap (const ChafaPixel *block, ChafaColor *colors, ChafaColorSpace cs)
+{
+    guint64 bitmap = 0;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        gint error [2];
+
+        bitmap <<= 1;
+
+        /* FIXME: What to do about alpha? */
+        error [0] = chafa_color_diff_fast (&block [i].col, &colors [0], cs);
+        error [1] = chafa_color_diff_fast (&block [i].col, &colors [1], cs);
+
+        if (error [0] < error [1])
+            bitmap |= 1;
+    }
+
+    return bitmap;
+}
+
 static void
 calc_colors_plain (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
 {
@@ -245,11 +360,11 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *canvas_pixels,
 }
 
 static void
-pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
-                        gunichar *sym_out,
-                        ChafaColor *fg_col_out,
-                        ChafaColor *bg_col_out,
-                        gint *error_out)
+pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
+                             gunichar *sym_out,
+                             ChafaColor *fg_col_out,
+                             ChafaColor *bg_col_out,
+                             gint *error_out)
 {
     ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
     SymbolEval eval [SYMBOLS_MAX] = { 0 };
@@ -365,6 +480,122 @@ pick_symbol_and_colors (ChafaCanvas *canvas, gint cx, gint cy,
     *sym_out = canvas->config.symbol_map.symbols [n].c;
     *fg_col_out = eval [n].fg.col;
     *bg_col_out = eval [n].bg.col;
+}
+
+static gint
+pop_count_u64 (guint64 v)
+{
+#ifdef HAVE_POPCNT_INTRINSICS
+    if (chafa_have_popcnt ())
+        return chafa_pop_count_u64_builtin (v);
+#endif
+
+    /* Generic fast population count from
+     * http://www.graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+     *
+     * Peter Kankowski has more hacks, including better SIMD versions, at
+     * https://www.strchr.com/crc32_popcnt */
+
+    v = v - ((v >> 1) & (guint64) ~(guint64) 0 / 3);
+    v = (v & (guint64) ~(guint64) 0 / 15 * 3) + ((v >> 2) & (guint64) ~(guint64) 0 / 15 * 3);
+    v = (v + (v >> 4)) & (guint64) ~(guint64) 0 / 255 * 15;
+    return (guint64) (v * ((guint64) ~(guint64) 0 / 255)) >> (sizeof (guint64) - 1) * 8;
+}
+
+static void
+pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
+                             gunichar *sym_out,
+                             ChafaColor *fg_col_out,
+                             ChafaColor *bg_col_out,
+                             gint *error_out)
+{
+    ChafaPixel canvas_pixels [CHAFA_SYMBOL_N_PIXELS];
+    ChafaColor color_pair [2];
+    guint64 bitmap;
+    gint best_error = G_MAXINT;
+    gint n_candidates = 0;
+    gboolean is_inverted = FALSE;
+    gint i;
+
+    fetch_canvas_pixel_block (canvas, cx, cy, canvas_pixels);
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+    {
+        color_pair [0] = canvas->fg_color;
+        color_pair [1] = canvas->bg_color;
+    }
+    else
+    {
+        pick_two_colors (canvas_pixels, color_pair);
+    }
+
+    bitmap = block_to_bitmap (canvas_pixels, color_pair, canvas->config.color_space);
+
+    for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
+    {
+        guint64 diff = bitmap ^ canvas->config.symbol_map.symbols [i].bitmap;
+        gint error = pop_count_u64 (diff);
+
+        if (error < best_error)
+        {
+            *sym_out = canvas->config.symbol_map.symbols [i].c;
+            best_error = error;
+            n_candidates = 1;
+        }
+        else if (error == best_error)
+            n_candidates++;
+    }
+
+    /* Try inverse symbols */
+
+    if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+    {
+        bitmap = ~bitmap;
+
+        for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
+        {
+            guint64 diff = bitmap ^ canvas->config.symbol_map.symbols [i].bitmap;
+            gint error = pop_count_u64 (diff);
+
+            if (error < best_error)
+            {
+                *sym_out = canvas->config.symbol_map.symbols [i].c;
+                is_inverted = TRUE;
+                best_error = error;
+                n_candidates = 1;
+            }
+            else if (error == best_error)
+                n_candidates++;
+        }
+    }
+
+    if (is_inverted)
+    {
+        *fg_col_out = color_pair [1];
+        *bg_col_out = color_pair [0];
+    }
+    else
+    {
+        *fg_col_out = color_pair [0];
+        *bg_col_out = color_pair [1];
+    }
+
+    /* TODO: If there is more than one candidate with the same bitmap
+     * error, differentiate by candidates' full squared error */
+
+#ifdef HAVE_MMX_INTRINSICS
+    /* Make FPU happy again */
+    if (chafa_have_mmx ())
+        leave_mmx ();
+#endif
+
+#if 0
+    g_printerr ("n_candidates = %d, best_error = %d\n", n_candidates, best_error);
+#endif
+
+    if (error_out)
+        *error_out = best_error;
 }
 
 static void
@@ -488,7 +719,11 @@ update_cells (ChafaCanvas *canvas)
             gunichar sym;
             ChafaColor fg_col, bg_col;
 
-            pick_symbol_and_colors (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
+            if (canvas->work_factor_int >= 8)
+                pick_symbol_and_colors_slow (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
+            else
+                pick_symbol_and_colors_fast (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
+
             cell->c = sym;
 
             if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
