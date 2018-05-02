@@ -8,6 +8,7 @@ Minor Features/UX
 -----------------
 
 - HTML output.
+- Symbols: Miscellaneous technical (esp. horizontal scanline 1, 3, 7, 9).
 - Symbols: Math.
 - Symbols: ASCII alnum and symbols.
 - Accept image on standard input.
@@ -22,6 +23,7 @@ Minor Features/UX
   - Avoid using transparent foreground due to XFCE Terminal (other terminals?)
     weird handling with background picture set?
     - Except in FGBG modes.
+- Optionally use FG colors only, no BG or inverse.
 - Test with more terminals.
   - iTerm?
   - Other OSX terminals?
@@ -66,6 +68,11 @@ Optimization
 - Don't calculate error if we're only using a single symbol (e.g. vhalf).
 - Fancy fast symbol selection based on some kind of fuzzy digest?
 - Multithreading.
+
+Cleanup
+-------
+
+- Use a ChafaColorPair struct internally instead of an array.
 
 The Fine Material
 -----------------
