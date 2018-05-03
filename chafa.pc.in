@@ -7,5 +7,5 @@ Name: Chafa
 Description: Image to character art facsimile
 Requires: glib-2.0
 Version: @VERSION@
-Libs: -L${libdir} -lm -lchafa
+Libs: -L${libdir} -lchafa -lm
 Cflags: -I${includedir}/chafa
