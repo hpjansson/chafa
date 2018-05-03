@@ -697,64 +697,97 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
 }
 
 static void
-update_cells (ChafaCanvas *canvas)
+update_cells_row (ChafaCanvas *canvas, gint row)
 {
     gint cx, cy;
     gint i = 0;
 
-    for (cy = 0; cy < canvas->config.height; cy++)
+    cy = row;
+    i = row * canvas->config.width;
+
+    for (cx = 0; cx < canvas->config.width; cx++, i++)
     {
-        for (cx = 0; cx < canvas->config.width; cx++, i++)
+        ChafaCanvasCell *cell = &canvas->cells [i];
+        gunichar sym;
+        ChafaColor fg_col, bg_col;
+
+        if (canvas->work_factor_int >= 8)
+            pick_symbol_and_colors_slow (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
+        else
+            pick_symbol_and_colors_fast (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
+
+        cell->c = sym;
+
+        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
         {
-            ChafaCanvasCell *cell = &canvas->cells [i];
-            gunichar sym;
-            ChafaColor fg_col, bg_col;
+            cell->fg_color = chafa_pick_color_256 (&fg_col, canvas->config.color_space);
+            cell->bg_color = chafa_pick_color_256 (&bg_col, canvas->config.color_space);
+        }
+        else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
+        {
+            cell->fg_color = chafa_pick_color_240 (&fg_col, canvas->config.color_space);
+            cell->bg_color = chafa_pick_color_240 (&bg_col, canvas->config.color_space);
+        }
+        else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+        {
+            cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
+            cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
 
-            if (canvas->work_factor_int >= 8)
-                pick_symbol_and_colors_slow (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
-            else
-                pick_symbol_and_colors_fast (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL);
-
-            cell->c = sym;
-
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
+            /* Apply stipple symbols in solid cells (space or full block) */
+            if ((cell->fg_color == cell->bg_color
+                 || cell->c == 0x20
+                 || cell->c == 0x2588 /* Full block */)
+                && pick_fill_16 (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL))
             {
-                cell->fg_color = chafa_pick_color_256 (&fg_col, canvas->config.color_space);
-                cell->bg_color = chafa_pick_color_256 (&bg_col, canvas->config.color_space);
-            }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
-            {
-                cell->fg_color = chafa_pick_color_240 (&fg_col, canvas->config.color_space);
-                cell->bg_color = chafa_pick_color_240 (&bg_col, canvas->config.color_space);
-            }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
-            {
+                cell->c = sym;
                 cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
                 cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
-
-                /* Apply stipple symbols in solid cells (space or full block) */
-                if ((cell->fg_color == cell->bg_color
-                     || cell->c == 0x20
-                     || cell->c == 0x2588 /* Full block */)
-                    && pick_fill_16 (canvas, cx, cy, &sym, &fg_col, &bg_col, NULL))
-                {
-                    cell->c = sym;
-                    cell->fg_color = chafa_pick_color_16 (&fg_col, canvas->config.color_space);
-                    cell->bg_color = chafa_pick_color_16 (&bg_col, canvas->config.color_space);
-                }
-            }
-            else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
-            {
-                cell->fg_color = chafa_pick_color_fgbg (&fg_col, canvas->config.color_space, &canvas->fg_color, &canvas->bg_color);
-                cell->bg_color = chafa_pick_color_fgbg (&bg_col, canvas->config.color_space, &canvas->fg_color, &canvas->bg_color);
-            }
-            else
-            {
-                cell->fg_color = chafa_pack_color (&fg_col);
-                cell->bg_color = chafa_pack_color (&bg_col);
             }
         }
+        else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+        {
+            cell->fg_color = chafa_pick_color_fgbg (&fg_col, canvas->config.color_space, &canvas->fg_color, &canvas->bg_color);
+            cell->bg_color = chafa_pick_color_fgbg (&bg_col, canvas->config.color_space, &canvas->fg_color, &canvas->bg_color);
+        }
+        else
+        {
+            cell->fg_color = chafa_pack_color (&fg_col);
+            cell->bg_color = chafa_pack_color (&bg_col);
+        }
     }
+}
+
+typedef struct
+{
+    gint row;
+}
+CellBuildWork;
+
+static void
+cell_build_worker (CellBuildWork *work, ChafaCanvas *canvas)
+{
+    update_cells_row (canvas, work->row);
+    g_slice_free (CellBuildWork, work);
+}
+
+static void
+update_cells (ChafaCanvas *canvas)
+{
+    GThreadPool *thread_pool = g_thread_pool_new ((GFunc) cell_build_worker,
+                                                  canvas,
+                                                  g_get_num_processors (),
+                                                  FALSE,
+                                                  NULL);
+    gint cy;
+
+    for (cy = 0; cy < canvas->config.height; cy++)
+    {
+        CellBuildWork *work = g_slice_new (CellBuildWork);
+        work->row = cy;
+        g_thread_pool_push (thread_pool, work, NULL);
+    }
+
+    g_thread_pool_free (thread_pool, FALSE, TRUE);
 }
 
 static void
