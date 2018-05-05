@@ -496,7 +496,7 @@ chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tag
 }
 
 /**
- * chafa_symbol_map_apply_tag_selectors:
+ * chafa_symbol_map_apply_selectors:
  * @symbol_map: Symbol map to apply selection to
  * @selectors: A string specifying selections
  * @error: Return location for an error, or %NULL
