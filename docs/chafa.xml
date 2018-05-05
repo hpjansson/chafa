@@ -198,8 +198,9 @@ Allow scaling up beyond one character per pixel.
 <refsect1><title>Symbols</title>
 <para>
 Accepted classes for --symbols are [all, none, space, solid, stipple, block,
-border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille]. Some
-symbols belong to multiple classes, e.g. diagonals are also borders.
+border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,
+technical]. Some symbols belong to multiple classes, e.g. diagonals are also
+borders.
 </para>
 <para>
 You can specify a list of classes separated by commas, or prefix them with +

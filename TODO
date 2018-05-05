@@ -8,7 +8,6 @@ Minor Features/UX
 -----------------
 
 - HTML output.
-- Symbols: Miscellaneous technical (esp. horizontal scanline 1, 3, 7, 9).
 - Symbols: Math.
 - Symbols: ASCII alnum and symbols.
 - Accept image on standard input.

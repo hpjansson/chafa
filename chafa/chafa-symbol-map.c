@@ -56,6 +56,7 @@
  * @CHAFA_SYMBOL_TAG_HALF: Joint set of horizontal and vertical halves.
  * @CHAFA_SYMBOL_TAG_INVERTED: Symbols that are the inverse of simpler symbols. When two symbols complement each other, only one will have this tag.
  * @CHAFA_SYMBOL_TAG_BRAILLE: Braille symbols.
+ * @CHAFA_SYMBOL_TAG_TECHNICAL: Miscellaneous technical symbols.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
  **/
 
@@ -196,6 +197,7 @@ parse_symbol_tag (const gchar *name, gint len, ChafaSymbolTags *sc_out, GError *
         { "vhalf", CHAFA_SYMBOL_TAG_VHALF },
         { "inverted", CHAFA_SYMBOL_TAG_INVERTED },
         { "braille", CHAFA_SYMBOL_TAG_BRAILLE },
+        { "technical", CHAFA_SYMBOL_TAG_TECHNICAL },
         { NULL, 0 }
     };
     gint i;
@@ -502,7 +504,7 @@ chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tag
  *
  * The symbol tags are string versions of #ChafaSymbolTags, i.e.
  * [all, none, space, solid, stipple, block, border, diagonal, dot,
- * quad, half, hhalf, vhalf, braille].
+ * quad, half, hhalf, vhalf, braille, technical].
  *
  * Examples: "block,border" sets map to contain symbols matching either
  * of those tags. "+block,border-dot,stipple" adds block and border

@@ -223,11 +223,11 @@ print_summary (void)
     "      --zoom         Allow scaling up beyond one character per pixel.\n\n"
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
-    "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille]. Some\n"
-    "  symbols belong to multiple classes, e.g. diagonals are also borders. You can\n"
-    "  specify a list of classes separated by commas, or prefix them with + and - to\n"
-    "  add or remove symbols relative to the existing set. The ordering is\n"
-    "  significant.\n\n"
+    "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,\n"
+    "  technical]. Some symbols belong to multiple classes, e.g. diagonals are also\n"
+    "  borders. You can specify a list of classes separated by commas, or prefix them\n"
+    "  with + and - to add or remove symbols relative to the existing set. The\n"
+    "  ordering is significant.\n\n"
 
     "  The default symbol set is all-stipple-braille-inverted for all modes except\n"
     "  for \"none\", which uses all-stipple-braille.\n\n"
