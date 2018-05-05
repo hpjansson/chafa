@@ -30,6 +30,10 @@ Minor Features/UX
     - Windows 7 fonts support half, solid, some borders.
   - Come up with some kind of support matrix.
 - Support Uxxxx symbol specification in symbol map and UI.
+- Optional double-width symbol support.
+  - Many geometric shapes/math symbols need this.
+  - Process two cells at a time and compare summed error to corresponding
+    sum of the two cells for double-width symbols.
 
 Major features
 --------------
