@@ -1757,6 +1757,19 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
     },
     {
+        /* Black diamond */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25c6,
+        "        "
+        "   XX   "
+        "  XXXX  "
+        " XXXXXX "
+        "  XXXX  "
+        "   XX   "
+        "        "
+        "        "
+    },
+    {
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
         "        "
