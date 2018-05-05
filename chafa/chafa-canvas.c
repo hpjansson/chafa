@@ -473,26 +473,6 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
     *bg_col_out = eval [n].bg.col;
 }
 
-static gint
-pop_count_u64 (guint64 v)
-{
-#ifdef HAVE_POPCNT_INTRINSICS
-    if (chafa_have_popcnt ())
-        return chafa_pop_count_u64_builtin (v);
-#endif
-
-    /* Generic fast population count from
-     * http://www.graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-     *
-     * Peter Kankowski has more hacks, including better SIMD versions, at
-     * https://www.strchr.com/crc32_popcnt */
-
-    v = v - ((v >> 1) & (guint64) ~(guint64) 0 / 3);
-    v = (v & (guint64) ~(guint64) 0 / 15 * 3) + ((v >> 2) & (guint64) ~(guint64) 0 / 15 * 3);
-    v = (v + (v >> 4)) & (guint64) ~(guint64) 0 / 255 * 15;
-    return (guint64) (v * ((guint64) ~(guint64) 0 / 255)) >> (sizeof (guint64) - 1) * 8;
-}
-
 static void
 pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
                              gunichar *sym_out,
@@ -526,7 +506,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {
         guint64 diff = bitmap ^ canvas->config.symbol_map.symbols [i].bitmap;
-        gint error = pop_count_u64 (diff);
+        gint error = chafa_population_count_u64 (diff);
 
         if (error < best_error)
         {
@@ -547,7 +527,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
         for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
         {
             guint64 diff = bitmap ^ canvas->config.symbol_map.symbols [i].bitmap;
-            gint error = pop_count_u64 (diff);
+            gint error = chafa_population_count_u64 (diff);
 
             if (error < best_error)
             {

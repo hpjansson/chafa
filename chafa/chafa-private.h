@@ -167,6 +167,30 @@ gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const g
 gint chafa_pop_count_u64_builtin (guint64 v) G_GNUC_PURE;
 #endif
 
+/* Inline functions */
+
+static inline gint chafa_population_count_u64 (guint64 v) G_GNUC_UNUSED;
+
+static inline gint
+chafa_population_count_u64 (guint64 v)
+{
+#ifdef HAVE_POPCNT_INTRINSICS
+    if (chafa_have_popcnt ())
+        return chafa_pop_count_u64_builtin (v);
+#endif
+
+    /* Generic fast population count from
+     * http://www.graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
+     *
+     * Peter Kankowski has more hacks, including better SIMD versions, at
+     * https://www.strchr.com/crc32_popcnt */
+
+    v = v - ((v >> 1) & (guint64) ~(guint64) 0 / 3);
+    v = (v & (guint64) ~(guint64) 0 / 15 * 3) + ((v >> 2) & (guint64) ~(guint64) 0 / 15 * 3);
+    v = (v + (v >> 4)) & (guint64) ~(guint64) 0 / 255 * 15;
+    return (guint64) (v * ((guint64) ~(guint64) 0 / 255)) >> (sizeof (guint64) - 1) * 8;
+}
+
 G_END_DECLS
 
 #endif /* __CHAFA_PRIVATE_H__ */
