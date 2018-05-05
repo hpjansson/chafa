@@ -9,7 +9,6 @@ Minor Features/UX
 
 - HTML output.
 - Symbols: Math.
-- Symbols: ASCII alnum and symbols.
 - Accept image on standard input.
 - Accept -o, --output to write to file.
 - Verbose output. Show file names.

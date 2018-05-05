@@ -58,6 +58,7 @@
  * @CHAFA_SYMBOL_TAG_BRAILLE: Braille symbols.
  * @CHAFA_SYMBOL_TAG_TECHNICAL: Miscellaneous technical symbols.
  * @CHAFA_SYMBOL_TAG_GEOMETRIC: Geometric shapes.
+ * @CHAFA_SYMBOL_TAG_ASCII: Printable ASCII characters.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
  **/
 
@@ -200,6 +201,7 @@ parse_symbol_tag (const gchar *name, gint len, ChafaSymbolTags *sc_out, GError *
         { "braille", CHAFA_SYMBOL_TAG_BRAILLE },
         { "technical", CHAFA_SYMBOL_TAG_TECHNICAL },
         { "geometric", CHAFA_SYMBOL_TAG_GEOMETRIC },
+        { "ascii", CHAFA_SYMBOL_TAG_ASCII },
         { NULL, 0 }
     };
     gint i;
@@ -506,7 +508,7 @@ chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tag
  *
  * The symbol tags are string versions of #ChafaSymbolTags, i.e.
  * [all, none, space, solid, stipple, block, border, diagonal, dot,
- * quad, half, hhalf, vhalf, braille, technical, geometric].
+ * quad, half, hhalf, vhalf, braille, technical, geometric, ascii].
  *
  * Examples: "block,border" sets map to contain symbols matching either
  * of those tags. "+block,border-dot,stipple" adds block and border

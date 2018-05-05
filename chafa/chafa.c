@@ -224,13 +224,13 @@ print_summary (void)
 
     "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
     "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,\n"
-    "  technical, geometric]. Some symbols belong to multiple classes, e.g. diagonals\n"
-    "  are also borders. You can specify a list of classes separated by commas, or\n"
-    "  prefix them with + and - to add or remove symbols relative to the existing set.\n"
-    "  The ordering is significant.\n\n"
+    "  technical, geometric, ascii]. Some symbols belong to multiple classes, e.g.\n"
+    "  diagonals are also borders. You can specify a list of classes separated by\n"
+    "  commas, or prefix them with + and - to add or remove symbols relative to the\n"
+    "  existing set. The ordering is significant.\n\n"
 
-    "  The default symbol set is all-stipple-braille-inverted for all modes except\n"
-    "  for \"none\", which uses all-stipple-braille.\n\n"
+    "  The default symbol set is all-stipple-braille-ascii+space-inverted for all\n"
+    "  modes except for \"none\", which uses all-stipple-braille-ascii+space.\n\n"
 
     "Examples:\n"
 
@@ -624,6 +624,8 @@ parse_options (int *argc, char **argv [])
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_STIPPLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BRAILLE);
+    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ASCII);
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
