@@ -223,7 +223,7 @@ parse_selectors (ChafaSymbolMap *symbol_map, const gchar *selectors, GError **er
     const gchar *p0 = selectors;
     gboolean is_add = FALSE, is_remove = FALSE;
     GHashTable *new_syms = NULL;
-    gboolean result = TRUE;
+    gboolean result = FALSE;
 
     while (*p0)
     {
