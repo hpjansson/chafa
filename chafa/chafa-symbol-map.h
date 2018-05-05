@@ -47,6 +47,7 @@ typedef enum
     CHAFA_SYMBOL_TAG_INVERTED    = (1 << 10),
     CHAFA_SYMBOL_TAG_BRAILLE     = (1 << 11),
     CHAFA_SYMBOL_TAG_TECHNICAL   = (1 << 12),
+    CHAFA_SYMBOL_TAG_GEOMETRIC   = (1 << 13),
 
     CHAFA_SYMBOL_TAG_ALL         = 0x7fffffff
 }
