@@ -688,9 +688,7 @@ parse_options (int *argc, char **argv [])
     {
         options.preprocess = FALSE;
 
-        if (options.mode == CHAFA_CANVAS_MODE_FGBG
-            || options.mode == CHAFA_CANVAS_MODE_FGBG_BGFG
-            || options.mode == CHAFA_CANVAS_MODE_INDEXED_16)
+        if (options.mode == CHAFA_CANVAS_MODE_INDEXED_16)
         {
             options.preprocess = TRUE;
         }
