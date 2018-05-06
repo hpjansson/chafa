@@ -784,6 +784,71 @@ multiply_alpha (ChafaCanvas *canvas)
     }
 }
 
+/* Wrong but cheap function to recenter pixel values around the mean using
+ * saturation addition. Greatly improves image definition in two-color
+ * modes (FGBG and FGBG_BGFG). */
+static void
+adjust_levels_rgb (ChafaCanvas *canvas)
+{
+    ChafaPixel *p0, *p1;
+    gint64 accum = 0;
+    gint chadd;
+
+    p0 = canvas->pixels;
+    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        accum += p0->col.ch [0];
+        accum += p0->col.ch [1];
+        accum += p0->col.ch [2];
+    }
+
+    accum /= (canvas->width_pixels * canvas->height_pixels * 3);
+    chadd = 128 - accum;
+    chadd = CLAMP (chadd, -100, 100);
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        p0->col.ch [0] += chadd;
+        p0->col.ch [0] = CLAMP (p0->col.ch [0], 0, 255);
+        p0->col.ch [1] += chadd;
+        p0->col.ch [1] = CLAMP (p0->col.ch [1], 0, 255);
+        p0->col.ch [2] += chadd;
+        p0->col.ch [2] = CLAMP (p0->col.ch [2], 0, 255);
+    }
+}
+
+/* See description of adjust_levels_rgb () */
+static void
+adjust_levels_din99d (ChafaCanvas *canvas)
+{
+    ChafaPixel *p0, *p1;
+    gint64 accum = 0;
+    gint chadd;
+
+    p0 = canvas->pixels;
+    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        accum += p0->col.ch [0];
+        accum += p0->col.ch [1];
+    }
+
+    accum /= (canvas->width_pixels * canvas->height_pixels * 2);
+    chadd = 128 - accum;
+    chadd = CLAMP (chadd, -100, 100);
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        p0->col.ch [0] += chadd;
+        p0->col.ch [0] = CLAMP (p0->col.ch [0], 0, 255);
+        p0->col.ch [1] += chadd;
+        p0->col.ch [1] = CLAMP (p0->col.ch [1], 0, 255);
+    }
+}
+
 static void
 update_display_colors (ChafaCanvas *canvas)
 {
@@ -1311,10 +1376,16 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
     {
         case CHAFA_COLOR_SPACE_RGB:
             rgba_to_internal_rgb (canvas, src_pixels, src_width, src_height, src_rowstride);
+            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+                adjust_levels_rgb (canvas);
             break;
 
         case CHAFA_COLOR_SPACE_DIN99D:
             rgba_to_internal_din99d (canvas, src_pixels, src_width, src_height, src_rowstride);
+            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+                adjust_levels_din99d (canvas);
             break;
 
         case CHAFA_COLOR_SPACE_MAX:
