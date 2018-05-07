@@ -939,16 +939,30 @@ run (const gchar *filename, gboolean is_first_file)
     wand = NewMagickWand();
     if (MagickReadImage (wand, filename) < 1)
     {
-        gchar *error_str;
+        gchar *error_str = NULL;
         ExceptionType severity;
+        gchar *try_filename;
+        gint r;
 
         error_str = MagickGetException (wand, &severity);
-        g_printerr ("%s: Error loading '%s': %s\n",
-                    options.executable_name,
-                    filename,
-                    error_str);
-        MagickRelinquishMemory (error_str);
-        goto out;
+
+        /* Try backup strategy for XWD. It's a file type we want to support
+         * due to the fun implications with Xvfb etc. The filenames in use
+         * tend to have no extension, and the file magic isn't very definite,
+         * so ImageMagick doesn't know what to do on its own. */
+        try_filename = g_strdup_printf ("XWD:%s", filename);
+        r = MagickReadImage (wand, try_filename);
+        g_free (try_filename);
+
+        if (r < 1)
+        {
+            g_printerr ("%s: Error loading '%s': %s\n",
+                        options.executable_name,
+                        filename,
+                        error_str);
+            MagickRelinquishMemory (error_str);
+            goto out;
+        }
     }
 
     if (interrupted_by_user)
