@@ -178,6 +178,14 @@ Show version, feature and copyright information.
 </varlistentry>
 
 <varlistentry>
+<term><option>--watch</option></term>
+<listitem><para>
+Watch a single input file, redisplaying it whenever its contents change. Will run
+until manually interrupted or, if --duration is set, until it expires.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-w <replaceable>num</replaceable>, --work <replaceable>num</replaceable></option></term>
 <listitem><para>
 How hard to work in terms of CPU and memory [1-9]. 1 is the cheapest, 9 is the

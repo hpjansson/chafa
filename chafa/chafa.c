@@ -23,6 +23,7 @@
 #include <string.h>  /* strspn, strlen, strcmp, strncmp, memset */
 #include <locale.h>  /* setlocale */
 #include <sys/ioctl.h>  /* ioctl */
+#include <sys/stat.h>  /* stat */
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
 #include <termios.h>  /* tcgetattr, tcsetattr */
@@ -50,6 +51,7 @@ typedef struct
     gboolean preprocess_set;
     gboolean stretch;
     gboolean zoom;
+    gboolean watch;
     gint width, height;
     gdouble font_ratio;
     gint work_factor;
@@ -218,6 +220,9 @@ print_summary (void)
     "                     See below for full usage and a list of symbol classes.\n"
     "  -t, --threshold=NUM  Threshold above which full transparency will be used\n"
     "                     [0.0 - 1.0].\n"
+    "      --watch        Watch a single input file, redisplaying it whenever its\n"
+    "                     contents change. Will run until manually interrupted\n"
+    "                     or, if --duration is set, until it expires.\n"
     "  -w, --work=NUM     How hard to work in terms of CPU and memory [1-9]. 1 is the\n"
     "                     cheapest, 9 is the most accurate. Defaults to 5.\n"
     "      --zoom         Allow scaling up beyond one character per pixel.\n\n"
@@ -607,6 +612,7 @@ parse_options (int *argc, char **argv [])
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
+        { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
         { NULL }
     };
@@ -669,6 +675,12 @@ parse_options (int *argc, char **argv [])
     if (options.show_help)
     {
         print_summary ();
+        return FALSE;
+    }
+
+    if (options.watch && g_list_length (options.args) != 1)
+    {
+        g_printerr ("%s: Can only use --watch with exactly one file.\n", options.executable_name);
         return FALSE;
     }
 
@@ -921,12 +933,13 @@ interruptible_usleep (gint us)
     }
 }
 
+/* FIXME: This function is ripe for refactoring, probably to something with
+ * a heap-allocated context. */
 static gboolean
-run (const gchar *filename, gboolean is_first_file)
+run (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
     MagickWand *wand = NULL;
     guint8 *pixels;
-    gboolean is_first_frame = TRUE;
     gboolean is_animation = FALSE;
     gdouble anim_elapsed_s = 0.0;
     GTimer *timer;
@@ -956,10 +969,11 @@ run (const gchar *filename, gboolean is_first_file)
 
         if (r < 1)
         {
-            g_printerr ("%s: Error loading '%s': %s\n",
-                        options.executable_name,
-                        filename,
-                        error_str);
+            if (!quiet)
+                g_printerr ("%s: Error loading '%s': %s\n",
+                            options.executable_name,
+                            filename,
+                            error_str);
             MagickRelinquishMemory (error_str);
             goto out;
         }
@@ -1065,7 +1079,7 @@ run (const gchar *filename, gboolean is_first_file)
         loop_n++;
     }
     while (options.is_interactive && is_animation && !interrupted_by_user
-           && anim_elapsed_s < options.file_duration_s);
+           && !options.watch && anim_elapsed_s < options.file_duration_s);
 
 out:
     DestroyMagickWand (wand);
@@ -1073,6 +1087,47 @@ out:
     g_timer_destroy (timer);
 
     return is_animation;
+}
+
+static int
+run_watch (const gchar *filename)
+{
+    GTimer *timer;
+    gboolean is_first_frame = TRUE;
+
+    tty_options_init ();
+    MagickWandGenesis ();
+    timer = g_timer_new ();
+
+    for ( ; !interrupted_by_user; )
+    {
+        struct stat sbuf;
+
+        if (!stat (filename, &sbuf))
+        {
+            /* Sadly we can't rely on timestamps to tell us when to reload
+             * the file, since they can take way too long to update. */
+
+            run (filename, TRUE, is_first_frame, TRUE);
+            is_first_frame = FALSE;
+
+            g_usleep (10000);
+        }
+        else
+        {
+            /* Don't hammer the path if the file is temporarily gone */
+
+            g_usleep (250000);
+        }
+
+        if (g_timer_elapsed (timer, NULL) > options.file_duration_s)
+            break;
+    }
+
+    g_timer_destroy (timer);
+    MagickWandTerminus ();
+    tty_options_deinit ();
+    return 0;
 }
 
 static int
@@ -1091,7 +1146,7 @@ run_all (GList *filenames)
         gchar *filename = l->data;
         gboolean was_animation;
 
-        was_animation = run (filename, l->prev ? FALSE : TRUE);
+        was_animation = run (filename, l->prev ? FALSE : TRUE, TRUE, FALSE);
 
         if (!was_animation && options.file_duration_s != G_MAXDOUBLE)
         {
@@ -1130,7 +1185,9 @@ main (int argc, char *argv [])
     if (!parse_options (&argc, &argv))
         exit (1);
 
-    ret = run_all (options.args);
+    ret = options.watch
+        ? run_watch (options.args->data)
+        : run_all (options.args);
 
     if (options.symbol_map)
         chafa_symbol_map_unref (options.symbol_map);
