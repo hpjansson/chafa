@@ -40,9 +40,6 @@
  * using chafa_canvas_build_ansi ().
  **/
 
-/* Maximum number of symbols in symbols[]. Used for statically allocated arrays */
-#define SYMBOLS_MAX 512
-
 /* Fixed point multiplier */
 #define FIXED_MULT 16384
 
@@ -209,7 +206,7 @@ pick_two_colors (const ChafaPixel *block, ChafaColor *colors_out)
 
 /* colors must point to an array of two elements */
 static guint64
-block_to_bitmap (const ChafaPixel *block, ChafaColor *colors, ChafaColorSpace cs)
+block_to_bitmap (const ChafaPixel *block, ChafaColor *colors)
 {
     guint64 bitmap = 0;
     gint i;
@@ -221,8 +218,8 @@ block_to_bitmap (const ChafaPixel *block, ChafaColor *colors, ChafaColorSpace cs
         bitmap <<= 1;
 
         /* FIXME: What to do about alpha? */
-        error [0] = chafa_color_diff_fast (&block [i].col, &colors [0], cs);
-        error [1] = chafa_color_diff_fast (&block [i].col, &colors [1], cs);
+        error [0] = chafa_color_diff_fast (&block [i].col, &colors [0]);
+        error [1] = chafa_color_diff_fast (&block [i].col, &colors [1]);
 
         if (error [0] < error [1])
             bitmap |= 1;
@@ -299,7 +296,7 @@ calc_error_plain (const ChafaPixel *block, const ChafaColor *cols, const guint8 
         guint8 p = *cov++;
         const ChafaPixel *p0 = block++;
 
-        error += chafa_color_diff_fast (&cols [p], &p0->col, canvas->color_space);
+        error += chafa_color_diff_fast (&cols [p], &p0->col);
     }
 
     return error;
@@ -367,7 +364,7 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas, gint cx, gint cy,
                              gint *error_out)
 {
     ChafaPixel block [CHAFA_SYMBOL_N_PIXELS];
-    SymbolEval eval [SYMBOLS_MAX] = { 0 };
+    SymbolEval eval [CHAFA_N_SYMBOLS_MAX] = { 0 };
     gint n;
     gint i;
 
@@ -484,9 +481,8 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
     ChafaColor color_pair [2];
     guint64 bitmap;
     gint best_error = G_MAXINT;
+    ChafaCandidate candidate;
     gint n_candidates = 0;
-    gboolean is_inverted = FALSE;
-    gint i;
 
     fetch_canvas_pixel_block (canvas, cx, cy, block);
 
@@ -501,47 +497,17 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
         pick_two_colors (block, color_pair);
     }
 
-    bitmap = block_to_bitmap (block, color_pair, canvas->config.color_space);
+    bitmap = block_to_bitmap (block, color_pair);
 
-    for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
-    {
-        guint64 diff = bitmap ^ canvas->config.symbol_map.symbols [i].bitmap;
-        gint error = chafa_population_count_u64 (diff);
+    n_candidates = 1;
+    chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
+                                      bitmap,
+                                      canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+                                      ? FALSE : TRUE,  /* Consider inverted? */
+                                      &candidate, &n_candidates);
+    *sym_out = canvas->config.symbol_map.symbols [candidate.symbol_index].c;
 
-        if (error < best_error)
-        {
-            *sym_out = canvas->config.symbol_map.symbols [i].c;
-            best_error = error;
-            n_candidates = 1;
-        }
-        else if (error == best_error)
-            n_candidates++;
-    }
-
-    /* Try inverse symbols */
-
-    if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
-    {
-        bitmap = ~bitmap;
-
-        for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
-        {
-            guint64 diff = bitmap ^ canvas->config.symbol_map.symbols [i].bitmap;
-            gint error = chafa_population_count_u64 (diff);
-
-            if (error < best_error)
-            {
-                *sym_out = canvas->config.symbol_map.symbols [i].c;
-                is_inverted = TRUE;
-                best_error = error;
-                n_candidates = 1;
-            }
-            else if (error == best_error)
-                n_candidates++;
-        }
-    }
-
-    if (is_inverted)
+    if (candidate.is_inverted)
     {
         *fg_col_out = color_pair [1];
         *bg_col_out = color_pair [0];
@@ -552,17 +518,13 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
         *bg_col_out = color_pair [1];
     }
 
-    /* TODO: If there is more than one candidate with the same bitmap
-     * error, differentiate by candidates' full squared error */
+    /* TODO: Calculate error for the top N candidates and pick the best one */
+    /* TODO: Calculate optimal colors */
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
     if (chafa_have_mmx ())
         leave_mmx ();
-#endif
-
-#if 0
-    g_printerr ("n_candidates = %d, best_error = %d\n", n_candidates, best_error);
 #endif
 
     if (error_out)
@@ -594,7 +556,7 @@ pick_fill_symbol_16 (ChafaCanvas *canvas, SymbolEval *eval, const ChafaColor *sq
         if (canvas->have_alpha)
             e->error = chafa_color_diff_slow (&mixed_col, square_col, canvas->config.color_space);
         else
-            e->error = chafa_color_diff_fast (&mixed_col, square_col, canvas->config.color_space);
+            e->error = chafa_color_diff_fast (&mixed_col, square_col);
     }
 
     for (i = 0, n = -1; canvas->config.symbol_map.symbols [i].c != 0; i++)
@@ -622,12 +584,12 @@ pick_fill_16 (ChafaCanvas *canvas, gint cx, gint cy,
               gunichar *sym_out, ChafaColor *fg_col_out, ChafaColor *bg_col_out, gint *error_out)
 {
     ChafaPixel block [CHAFA_SYMBOL_N_PIXELS];
-    SymbolEval eval [SYMBOLS_MAX] = { 0 };
+    SymbolEval eval [CHAFA_N_SYMBOLS_MAX] = { 0 };
     SymbolEval best_eval = { 0 };
     gint fg_col, bg_col;
     gint best_sym = -1;
     ChafaColor square_col;
-    gint sym_coverage [SYMBOLS_MAX] = { 0 };
+    gint sym_coverage [CHAFA_N_SYMBOLS_MAX] = { 0 };
     gint i;
 
     best_eval.error = G_MAXINT;

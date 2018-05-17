@@ -1969,6 +1969,7 @@ generate_braille_syms (ChafaSymbol *syms, gint first_ofs)
         gen_braille_sym (sym->coverage, c - 0x2800);
         calc_weights (&syms [i]);
         syms [i].bitmap = coverage_to_bitmap (syms [i].coverage);
+        syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
     }
 }
 
@@ -1989,6 +1990,7 @@ init_symbol_array (const ChafaSymbolDef *defs)
         xlate_coverage (defs [i].coverage, syms [i].coverage);
         calc_weights (&syms [i]);
         syms [i].bitmap = coverage_to_bitmap (syms [i].coverage);
+        syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
     }
 
     generate_braille_syms (syms, i);

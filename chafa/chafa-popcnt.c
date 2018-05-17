@@ -28,3 +28,28 @@ chafa_pop_count_u64_builtin (guint64 v)
 {
     return (gint) _mm_popcnt_u64 (v);
 }
+
+void
+chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n)
+{
+    while (n--)
+    {
+        *(vc++) = _mm_popcnt_u64 (*(vv++));
+    }
+}
+
+void
+chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gint n)
+{
+    while (n >= 4)
+    {
+        n -= 4;
+        *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
+        *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
+        *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
+        *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
+    }
+
+    while (n--)
+        *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
+}

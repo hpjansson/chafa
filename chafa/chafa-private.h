@@ -51,6 +51,7 @@ ChafaPaletteColor;
 
 /* Character symbols and symbol classes */
 
+#define CHAFA_N_SYMBOLS_MAX 1024  /* For static temp arrays */
 #define CHAFA_SYMBOL_N_PIXELS (CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS)
 
 typedef struct
@@ -61,6 +62,7 @@ typedef struct
     gint fg_weight, bg_weight;
     gboolean have_mixed;
     guint64 bitmap;
+    gint popcount;
 }
 ChafaSymbol;
 
@@ -70,9 +72,22 @@ struct ChafaSymbolMap
 
     guint need_rebuild : 1;
     GHashTable *desired_symbols;
+
+    /* Populated by chafa_symbol_map_prepare () */
     ChafaSymbol *symbols;
+    guint64 *packed_bitmaps;
     gint n_symbols;
 };
+
+/* Symbol selection candidate */
+
+typedef struct
+{
+    gint16 symbol_index;
+    guint8 hamming_distance;
+    guint8 is_inverted;
+}
+ChafaCandidate;
 
 /* Canvas config */
 
@@ -111,6 +126,11 @@ void chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map);
 void chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src);
 void chafa_symbol_map_prepare (ChafaSymbolMap *symbol_map);
 gboolean chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol);
+void chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map,
+                                       guint64 bitmap,
+                                       gboolean do_inverse,
+                                       ChafaCandidate *candidates_out,
+                                       gint *n_candidates_inout);
 
 void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
@@ -124,7 +144,7 @@ G_STMT_START { \
   (d)->ch [0] += (s)->ch [0]; (d)->ch [1] += (s)->ch [1]; (d)->ch [2] += (s)->ch [2]; (d)->ch [3] += (s)->ch [3]; \
 } G_STMT_END
 
-#define chafa_color_diff_fast(col_a, col_b, color_space) \
+#define chafa_color_diff_fast(col_a, col_b) \
 (((col_b)->ch [0] - (col_a)->ch [0]) * ((col_b)->ch [0] - (col_a)->ch [0]) \
   + ((col_b)->ch [1] - (col_a)->ch [1]) * ((col_b)->ch [1] - (col_a)->ch [1]) \
   + ((col_b)->ch [2] - (col_a)->ch [2]) * ((col_b)->ch [2] - (col_a)->ch [2]))
@@ -165,21 +185,20 @@ gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const g
 
 #ifdef HAVE_POPCNT_INTRINSICS
 gint chafa_pop_count_u64_builtin (guint64 v) G_GNUC_PURE;
+void chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n);
+void chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gint n);
 #endif
 
 /* Inline functions */
 
+static inline guint64 chafa_slow_pop_count (guint64 v) G_GNUC_UNUSED;
 static inline gint chafa_population_count_u64 (guint64 v) G_GNUC_UNUSED;
+static inline void chafa_population_count_vu64 (const guint64 *vv, gint *vc, gint n) G_GNUC_UNUSED;
 
-static inline gint
-chafa_population_count_u64 (guint64 v)
+static inline guint64
+chafa_slow_pop_count (guint64 v)
 {
-#ifdef HAVE_POPCNT_INTRINSICS
-    if (chafa_have_popcnt ())
-        return chafa_pop_count_u64_builtin (v);
-#endif
-
-    /* Generic fast population count from
+    /* Generic population count from
      * http://www.graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
      *
      * Peter Kankowski has more hacks, including better SIMD versions, at
@@ -189,6 +208,47 @@ chafa_population_count_u64 (guint64 v)
     v = (v & (guint64) ~(guint64) 0 / 15 * 3) + ((v >> 2) & (guint64) ~(guint64) 0 / 15 * 3);
     v = (v + (v >> 4)) & (guint64) ~(guint64) 0 / 255 * 15;
     return (guint64) (v * ((guint64) ~(guint64) 0 / 255)) >> (sizeof (guint64) - 1) * 8;
+}
+
+static inline gint
+chafa_population_count_u64 (guint64 v)
+{
+#ifdef HAVE_POPCNT_INTRINSICS
+    if (chafa_have_popcnt ())
+        return chafa_pop_count_u64_builtin (v);
+#endif
+
+    return chafa_slow_pop_count (v);
+}
+
+static inline void
+chafa_population_count_vu64 (const guint64 *vv, gint *vc, gint n)
+{
+#ifdef HAVE_POPCNT_INTRINSICS
+    if (chafa_have_popcnt ())
+    {
+        chafa_pop_count_vu64_builtin (vv, vc, n);
+        return;
+    }
+#endif
+
+    while (n--)
+        *(vc++) = chafa_slow_pop_count (*(vv++));
+}
+
+static inline void
+chafa_hamming_distance_vu64 (guint64 a, const guint64 *vb, gint *vc, gint n)
+{
+#ifdef HAVE_POPCNT_INTRINSICS
+    if (chafa_have_popcnt ())
+    {
+        chafa_hamming_distance_vu64_builtin (a, vb, vc, n);
+        return;
+    }
+#endif
+
+    while (n--)
+        *(vc++) = chafa_slow_pop_count (a ^ *(vb++));
 }
 
 G_END_DECLS

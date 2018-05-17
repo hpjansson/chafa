@@ -24,6 +24,9 @@
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
+/* Max number of candidates to return from chafa_symbol_map_find_candidates() */
+#define N_CANDIDATES_MAX 8
+
 /**
  * CHAFA_SYMBOL_WIDTH_PIXELS:
  *
@@ -85,6 +88,7 @@
 
 /* Private */
 
+#if 0
 static gint
 compare_symbols (const void *a, const void *b)
 {
@@ -97,11 +101,28 @@ compare_symbols (const void *a, const void *b)
         return 1;
     return 0;
 }
+#endif
+
+static gint
+compare_symbols_popcount (const void *a, const void *b)
+{
+    const ChafaSymbol *a_sym = a;
+    const ChafaSymbol *b_sym = b;
+
+    if (a_sym->popcount < b_sym->popcount)
+        return -1;
+    if (a_sym->popcount > b_sym->popcount)
+        return 1;
+    return 0;
+}
 
 static void
 rebuild_symbols (ChafaSymbolMap *symbol_map)
 {
+    gint i;
+
     g_free (symbol_map->symbols);
+    g_free (symbol_map->packed_bitmaps);
 
     symbol_map->n_symbols = g_hash_table_size (symbol_map->desired_symbols);
     symbol_map->symbols = g_new (ChafaSymbol, symbol_map->n_symbols + 1);
@@ -122,10 +143,15 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
         }
 
         qsort (symbol_map->symbols, symbol_map->n_symbols, sizeof (ChafaSymbol),
-               compare_symbols);
+               compare_symbols_popcount);
     }
 
+    /* Clear sentinel */
     memset (&symbol_map->symbols [symbol_map->n_symbols], 0, sizeof (ChafaSymbol));
+
+    symbol_map->packed_bitmaps = g_new (guint64, symbol_map->n_symbols);
+    for (i = 0; i < symbol_map->n_symbols; i++)
+        symbol_map->packed_bitmaps [i] = symbol_map->symbols [i].bitmap;
 
     symbol_map->need_rebuild = FALSE;
 }
@@ -326,6 +352,7 @@ chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map)
         g_hash_table_unref (symbol_map->desired_symbols);
 
     g_free (symbol_map->symbols);
+    g_free (symbol_map->packed_bitmaps);
 }
 
 void
@@ -340,6 +367,7 @@ chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src)
         dest->desired_symbols = copy_hash_table (dest->desired_symbols);
 
     dest->symbols = NULL;
+    dest->packed_bitmaps = NULL;
     dest->need_rebuild = TRUE;
     dest->refs = 1;
 }
@@ -372,6 +400,105 @@ chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol)
     }
 
     return FALSE;
+}
+
+/* Only call this when you know the candidate should be inserted */
+static void
+insert_candidate (ChafaCandidate *candidates, const ChafaCandidate *new_cand)
+{
+    gint i;
+
+    i = N_CANDIDATES_MAX - 1;
+
+    while (i)
+    {
+        i--;
+
+        if (new_cand->hamming_distance >= candidates [i].hamming_distance)
+        {
+            memmove (candidates + i + 2, candidates + i + 1, (N_CANDIDATES_MAX - 2 - i) * sizeof (ChafaCandidate));
+            candidates [i + 1] = *new_cand;
+            return;
+        }
+    }
+
+    memmove (candidates + 1, candidates, (N_CANDIDATES_MAX - 1) * sizeof (ChafaCandidate));
+    candidates [0] = *new_cand;
+}
+
+void
+chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map, guint64 bitmap,
+                                  gboolean do_inverse, ChafaCandidate *candidates_out, gint *n_candidates_inout)
+{
+    ChafaCandidate candidates [N_CANDIDATES_MAX] =
+    {
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE }
+    };
+    gint ham_dist [CHAFA_N_SYMBOLS_MAX];
+    gint i;
+
+    g_return_if_fail (symbol_map != NULL);
+
+    chafa_hamming_distance_vu64 (bitmap, symbol_map->packed_bitmaps, ham_dist, symbol_map->n_symbols);
+
+    if (do_inverse)
+    {
+        for (i = 0; i < symbol_map->n_symbols; i++)
+        {
+            ChafaCandidate cand;
+            gint hd = ham_dist [i];
+
+            if (hd < candidates [N_CANDIDATES_MAX - 1].hamming_distance)
+            {
+                cand.symbol_index = i;
+                cand.hamming_distance = hd;
+                cand.is_inverted = FALSE;
+                insert_candidate (candidates, &cand);
+            }
+
+            hd = 64 - hd;
+
+            if (hd < candidates [N_CANDIDATES_MAX - 1].hamming_distance)
+            {
+                cand.symbol_index = i;
+                cand.hamming_distance = hd;
+                cand.is_inverted = TRUE;
+                insert_candidate (candidates, &cand);
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < symbol_map->n_symbols; i++)
+        {
+            ChafaCandidate cand;
+            gint hd = ham_dist [i];
+
+            if (hd < candidates [N_CANDIDATES_MAX - 1].hamming_distance)
+            {
+                cand.symbol_index = i;
+                cand.hamming_distance = hd;
+                cand.is_inverted = FALSE;
+                insert_candidate (candidates, &cand);
+            }
+        }
+    }
+
+    for (i = 0; i < N_CANDIDATES_MAX; i++)
+    {
+         if (candidates [i].hamming_distance > 64)
+             break;
+    }
+
+    i = *n_candidates_inout = MIN (i, *n_candidates_inout);
+    memcpy (candidates_out, candidates, i * sizeof (ChafaCandidate));
 }
 
 /* Public */
