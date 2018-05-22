@@ -555,6 +555,14 @@ detect_canvas_mode (void)
     if (!strcmp (term, "xterm-256color"))
         mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
+    /* rxvt 256-color really is 256 colors only */
+    if (!strcmp (term, "rxvt-unicode-256color"))
+        mode = CHAFA_CANVAS_MODE_INDEXED_240;
+
+    /* Regular rxvt supports 16 colors at most */
+    if (!strcmp (term, "rxvt-unicode"))
+        mode = CHAFA_CANVAS_MODE_INDEXED_16;
+
     /* 'screen' does not like truecolor at all, but 256 colors works fine.
      * Sometimes we'll see the outer terminal appended to the TERM string,
      * like so: screen.xterm-256color */
