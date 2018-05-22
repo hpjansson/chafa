@@ -1327,7 +1327,6 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
     g_return_if_fail (src_pixels != NULL);
     g_return_if_fail (src_width >= 0);
     g_return_if_fail (src_height >= 0);
-    g_return_if_fail (src_rowstride > 0);
 
     if (src_width == 0 || src_height == 0)
         return;
