@@ -1822,6 +1822,7 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
         "        "
     },
+#if 0
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2591,
@@ -1858,6 +1859,7 @@ static const ChafaSymbolDef symbol_defs [] =
         "88888888"
         "88888888"
     },
+#endif
     {
         0, 0, ""
     }
@@ -1870,17 +1872,13 @@ calc_weights (ChafaSymbol *sym)
 
     sym->fg_weight = 0;
     sym->bg_weight = 0;
-    sym->have_mixed = FALSE;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         guchar p = sym->coverage [i];
 
         sym->fg_weight += p;
-        sym->bg_weight += 10 - p;
-
-        if (p != 0 && p != 10)
-            sym->have_mixed = TRUE;
+        sym->bg_weight += 1 - p;
     }
 }
 
@@ -1891,17 +1889,7 @@ xlate_coverage (const gchar *coverage_in, gchar *coverage_out)
     gint i;
 
     xlate [' '] = 0;
-    xlate ['0'] = 0;
-    xlate ['1'] = 1;
-    xlate ['2'] = 2;
-    xlate ['3'] = 3;
-    xlate ['4'] = 4;
-    xlate ['5'] = 5;
-    xlate ['6'] = 6;
-    xlate ['7'] = 7;
-    xlate ['8'] = 8;
-    xlate ['9'] = 9;
-    xlate ['X'] = 10;
+    xlate ['X'] = 1;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
@@ -1920,7 +1908,7 @@ coverage_to_bitmap (const gchar *cov)
     {
         bitmap <<= 1;
 
-        if (cov [i] >= 5)
+        if (cov [i])
             bitmap |= 1;
     }
 
@@ -1932,20 +1920,20 @@ gen_braille_sym (gchar *cov, guint8 val)
 {
     memset (cov, 0, CHAFA_SYMBOL_N_PIXELS);
 
-    cov [1] = cov [2] = (val & 1) * 10;
-    cov [5] = cov [6] = ((val >> 3) & 1) * 10;
+    cov [1] = cov [2] = (val & 1);
+    cov [5] = cov [6] = ((val >> 3) & 1);
     cov += CHAFA_SYMBOL_WIDTH_PIXELS * 2;
 
-    cov [1] = cov [2] = ((val >> 1) & 1) * 10;
-    cov [5] = cov [6] = ((val >> 4) & 1) * 10;
+    cov [1] = cov [2] = ((val >> 1) & 1);
+    cov [5] = cov [6] = ((val >> 4) & 1);
     cov += CHAFA_SYMBOL_WIDTH_PIXELS * 2;
 
-    cov [1] = cov [2] = ((val >> 2) & 1) * 10;
-    cov [5] = cov [6] = ((val >> 5) & 1) * 10;
+    cov [1] = cov [2] = ((val >> 2) & 1);
+    cov [5] = cov [6] = ((val >> 5) & 1);
     cov += CHAFA_SYMBOL_WIDTH_PIXELS * 2;
 
-    cov [1] = cov [2] = ((val >> 6) & 1) * 10;
-    cov [5] = cov [6] = ((val >> 7) & 1) * 10;
+    cov [1] = cov [2] = ((val >> 6) & 1);
+    cov [5] = cov [6] = ((val >> 7) & 1);
 }
 
 static void
