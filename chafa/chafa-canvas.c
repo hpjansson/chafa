@@ -43,6 +43,10 @@
 /* Fixed point multiplier */
 #define FIXED_MULT 16384
 
+/* Max candidates to consider in pick_symbol_and_colors_fast(). This is also
+ * limited by a similar constant in chafa-symbol-map.c */
+#define N_CANDIDATES_MAX 8
+
 struct ChafaCanvasCell
 {
     gunichar c;
@@ -456,9 +460,12 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
     ChafaPixel block [CHAFA_SYMBOL_N_PIXELS];
     ChafaColor color_pair [2];
     guint64 bitmap;
-    gint best_error = G_MAXINT;
-    ChafaCandidate candidate;
+    ChafaCandidate candidates [N_CANDIDATES_MAX];
+    SymbolEval eval [N_CANDIDATES_MAX];
     gint n_candidates = 0;
+    gint best_candidate = 0;
+    gint best_error = G_MAXINT;
+    gint i;
 
     fetch_canvas_pixel_block (canvas, cx, cy, block);
 
@@ -474,28 +481,59 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas, gint cx, gint cy,
     }
 
     bitmap = block_to_bitmap (block, color_pair);
+    n_candidates = CLAMP (canvas->work_factor_int, 1, N_CANDIDATES_MAX);
 
-    n_candidates = 1;
     chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
                                       bitmap,
                                       canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
                                       ? FALSE : TRUE,  /* Consider inverted? */
-                                      &candidate, &n_candidates);
-    *sym_out = canvas->config.symbol_map.symbols [candidate.symbol_index].c;
+                                      candidates, &n_candidates);
 
-    if (candidate.is_inverted)
+    g_assert (n_candidates > 0);
+
+    if (n_candidates == 1)
     {
-        *fg_col_out = color_pair [1];
-        *bg_col_out = color_pair [0];
+        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+        {
+            eval [0].fg.col = canvas->fg_color;
+            eval [0].bg.col = canvas->bg_color;
+        }
+        else
+        {
+            eval_symbol_colors (block,
+                                &canvas->config.symbol_map.symbols [candidates [0].symbol_index],
+                                &eval [0]);
+        }
     }
     else
     {
-        *fg_col_out = color_pair [0];
-        *bg_col_out = color_pair [1];
+        for (i = 0; i < n_candidates; i++)
+        {
+            const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [candidates [i].symbol_index];
+
+            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+            {
+                eval [i].fg.col = canvas->fg_color;
+                eval [i].bg.col = canvas->bg_color;
+            }
+            else
+            {
+                eval_symbol_colors (block, sym, &eval [i]);
+            }
+
+            eval_symbol_error (canvas, block, sym, &eval [i]);
+
+            if (eval [i].error < best_error)
+            {
+                best_candidate = i;
+                best_error = eval [i].error;
+            }
+        }
     }
 
-    /* TODO: Calculate error for the top N candidates and pick the best one */
-    /* TODO: Calculate optimal colors */
+    *sym_out = canvas->config.symbol_map.symbols [candidates [best_candidate].symbol_index].c;
+    *fg_col_out = eval [best_candidate].fg.col;
+    *bg_col_out = eval [best_candidate].bg.col;
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
