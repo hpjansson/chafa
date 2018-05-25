@@ -1822,44 +1822,42 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
         "        "
     },
-#if 0
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2591,
-        "22222222"
-        "22222222"
-        "22222222"
-        "22222222"
-        "22222222"
-        "22222222"
-        "22222222"
-        "22222222"
+        "X   X   "
+        "  X   X "
+        "X   X   "
+        "  X   X "
+        "X   X   "
+        "  X   X "
+        "X   X   "
+        "  X   X "
     },
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2592,
-        "55555555"
-        "55555555"
-        "55555555"
-        "55555555"
-        "55555555"
-        "55555555"
-        "55555555"
-        "55555555"
+        "X X X X "
+        " X X X X"
+        "X X X X "
+        " X X X X"
+        "X X X X "
+        " X X X X"
+        "X X X X "
+        " X X X X"
     },
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2593,
-        "88888888"
-        "88888888"
-        "88888888"
-        "88888888"
-        "88888888"
-        "88888888"
-        "88888888"
-        "88888888"
+        " XXX XXX"
+        "XX XXX X"
+        " XXX XXX"
+        "XX XXX X"
+        " XXX XXX"
+        "XX XXX X"
+        " XXX XXX"
+        "XX XXX X"
     },
-#endif
     {
         0, 0, ""
     }
