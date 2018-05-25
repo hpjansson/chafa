@@ -849,12 +849,12 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
             src_height = new_height;
 
 #if defined(HAVE_MAGICK_RESIZE_IMAGE_4)
-            MagickResizeImage (wand, src_width, src_height, LanczosFilter);
+            MagickResizeImage (wand, src_width, src_height, TriangleFilter);
 #elif defined(HAVE_MAGICK_RESIZE_IMAGE_5)
-            MagickResizeImage (wand, src_width, src_height, LanczosFilter, 1.0);
+            MagickResizeImage (wand, src_width, src_height, TriangleFilter, 1.0);
 #else
 # warning No valid MagickResizeImage detected. Trying four arguments.
-            MagickResizeImage (wand, src_width, src_height, LanczosFilter);
+            MagickResizeImage (wand, src_width, src_height, TriangleFilter);
 #endif
         }
     }
