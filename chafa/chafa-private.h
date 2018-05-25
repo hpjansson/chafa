@@ -73,9 +73,11 @@ struct ChafaSymbolMap
     GHashTable *desired_symbols;
 
     /* Populated by chafa_symbol_map_prepare () */
-    ChafaSymbol *symbols;
     guint64 *packed_bitmaps;
+    ChafaSymbol *symbols;
+    ChafaSymbol *fill_symbols;
     gint n_symbols;
+    gint n_fill_symbols;
 };
 
 /* Symbol selection candidate */

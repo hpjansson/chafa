@@ -78,6 +78,8 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
 
     chafa_symbol_map_init (&canvas_config->symbol_map);
     chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_ALL);
+
+    chafa_symbol_map_init (&canvas_config->fill_symbol_map);
 }
 
 void
@@ -86,6 +88,7 @@ chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config)
     g_return_if_fail (canvas_config != NULL);
 
     chafa_symbol_map_deinit (&canvas_config->symbol_map);
+    chafa_symbol_map_deinit (&canvas_config->fill_symbol_map);
 }
 
 void
@@ -96,6 +99,7 @@ chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasCon
 
     memcpy (dest, src, sizeof (*dest));
     chafa_symbol_map_copy_contents (&dest->symbol_map, &src->symbol_map);
+    chafa_symbol_map_copy_contents (&dest->fill_symbol_map, &src->fill_symbol_map);
     dest->refs = 1;
 }
 
@@ -320,6 +324,45 @@ chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *config, const ChafaSymbol
 
     chafa_symbol_map_deinit (&config->symbol_map);
     chafa_symbol_map_copy_contents (&config->symbol_map, symbol_map);
+}
+
+/**
+ * chafa_canvas_config_peek_fill_symbol_map:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns a pointer to the fill symbol map belonging to @config.
+ * This can be inspected using the #ChafaSymbolMap getter
+ * functions, but not changed.
+ *
+ * Fill symbols are assigned according to their overall foreground to
+ * background coverage, disregarding shape.
+ *
+ * Returns: A pointer to the config's immutable fill symbol map
+ **/
+const ChafaSymbolMap *
+chafa_canvas_config_peek_fill_symbol_map (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, NULL);
+    g_return_val_if_fail (config->refs > 0, NULL);
+
+    return &config->fill_symbol_map;
+}
+
+/**
+ * chafa_canvas_config_set_fill_symbol_map:
+ * @config: A #ChafaCanvasConfig
+ * @fill_symbol_map: A #ChafaSymbolMap
+ *
+ * Assigns a copy of @fill_symbol_map to @config.
+ **/
+void
+chafa_canvas_config_set_fill_symbol_map (ChafaCanvasConfig *config, const ChafaSymbolMap *fill_symbol_map)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    chafa_symbol_map_deinit (&config->fill_symbol_map);
+    chafa_symbol_map_copy_contents (&config->fill_symbol_map, fill_symbol_map);
 }
 
 /**
