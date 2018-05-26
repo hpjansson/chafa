@@ -104,6 +104,7 @@ struct ChafaCanvasConfig
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
     gfloat work_factor;
     ChafaSymbolMap symbol_map;
+    ChafaSymbolMap fill_symbol_map;
 };
 
 /* Canvas */
