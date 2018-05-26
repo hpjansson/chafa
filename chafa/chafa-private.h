@@ -131,6 +131,11 @@ void chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map,
                                        gboolean do_inverse,
                                        ChafaCandidate *candidates_out,
                                        gint *n_candidates_inout);
+void chafa_symbol_map_find_fill_candidates (const ChafaSymbolMap *symbol_map,
+                                            gint popcount,
+                                            gboolean do_inverse,
+                                            ChafaCandidate *candidates_out,
+                                            gint *n_candidates_inout);
 
 void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);

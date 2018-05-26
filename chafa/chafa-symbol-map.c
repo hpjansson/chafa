@@ -501,6 +501,88 @@ chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map, guint64 bitm
     memcpy (candidates_out, candidates, i * sizeof (ChafaCandidate));
 }
 
+/* Assumes symbols are sorted by ascending popcount */
+static gint
+find_closest_popcount (const ChafaSymbolMap *symbol_map, gint popcount)
+{
+    gint i, j;
+
+    i = 0;
+    j = symbol_map->n_symbols;
+
+    while (i != j)
+    {
+        gint k = (i + j) / 2;
+
+        if (popcount < symbol_map->symbols [k].popcount)
+            j = k - 1;
+        else if (popcount > symbol_map->symbols [k].popcount)
+            i = k + 1;
+        else
+            i = j = k;
+    }
+
+    return i;
+}
+
+/* Always returns zero or one candidates. We may want to do more in the future */
+void
+chafa_symbol_map_find_fill_candidates (const ChafaSymbolMap *symbol_map, gint popcount,
+                                       gboolean do_inverse, ChafaCandidate *candidates_out, gint *n_candidates_inout)
+{
+    ChafaCandidate candidates [N_CANDIDATES_MAX] =
+    {
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE },
+        { 0, 65, FALSE }
+    };
+    gint sym, distance;
+    gint i;
+
+    g_return_if_fail (symbol_map != NULL);
+
+    if (!*n_candidates_inout)
+        return;
+
+    if (symbol_map->n_symbols == 0)
+    {
+        *n_candidates_inout = 0;
+        return;
+    }
+
+    sym = find_closest_popcount (symbol_map, popcount);
+    candidates [0].symbol_index = sym;
+    candidates [0].hamming_distance = abs (popcount - symbol_map->symbols [sym].popcount);
+    candidates [0].is_inverted = FALSE;
+
+    if (do_inverse && candidates [0].hamming_distance != 0)
+    {
+        sym = find_closest_popcount (symbol_map, 64 - popcount);
+        distance = abs (64 - popcount - symbol_map->symbols [sym].popcount);
+
+        if (distance < candidates [0].hamming_distance)
+        {
+            candidates [0].symbol_index = sym;
+            candidates [0].hamming_distance = distance;
+            candidates [0].is_inverted = TRUE;
+        }
+    }
+
+    for (i = 0; i < N_CANDIDATES_MAX; i++)
+    {
+         if (candidates [i].hamming_distance > 64)
+             break;
+    }
+
+    i = *n_candidates_inout = MIN (i, *n_candidates_inout);
+    memcpy (candidates_out, candidates, i * sizeof (ChafaCandidate));
+}
+
 /* Public */
 
 /**
