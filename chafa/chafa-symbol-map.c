@@ -507,19 +507,31 @@ find_closest_popcount (const ChafaSymbolMap *symbol_map, gint popcount)
 {
     gint i, j;
 
-    i = 0;
-    j = symbol_map->n_symbols;
+    g_assert (symbol_map->n_symbols > 0);
 
-    while (i != j)
+    i = 0;
+    j = symbol_map->n_symbols - 1;
+
+    while (i < j)
     {
-        gint k = (i + j) / 2;
+        gint k = (i + j + 1) / 2;
 
         if (popcount < symbol_map->symbols [k].popcount)
             j = k - 1;
-        else if (popcount > symbol_map->symbols [k].popcount)
-            i = k + 1;
+        else if (popcount >= symbol_map->symbols [k].popcount)
+            i = k;
         else
             i = j = k;
+    }
+
+    /* If we didn't find the exact popcount, the i+1'th element may be
+     * a closer match. */
+
+    if (i < symbol_map->n_symbols - 1
+        && (abs (popcount - symbol_map->symbols [i + 1].popcount)
+            < abs (popcount - symbol_map->symbols [i].popcount)))
+    {
+        i++;
     }
 
     return i;
