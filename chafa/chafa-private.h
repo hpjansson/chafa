@@ -88,6 +88,15 @@ typedef struct
 }
 ChafaCandidate;
 
+/* Color selection candidate pair */
+
+typedef struct
+{
+    gint16 index [2];
+    gint error [2];
+}
+ChafaColorCandidates;
+
 /* Canvas config */
 
 struct ChafaCanvasConfig
@@ -165,17 +174,18 @@ void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
 void chafa_color_mix (ChafaColor *out, const ChafaColor *a, const ChafaColor *b, gint ratio);
 
 /* Takes values 0-255 for r, g, b and returns a universal palette index 0-255 */
-gint chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space) G_GNUC_PURE;
+void chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
 
 /* Takes values 0-255 for r, g, b and returns a universal palette index 16-255 */
-gint chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space) G_GNUC_PURE;
+void chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
 
 /* Takes values 0-255 for r, g, b and returns a universal palette index 0-15 */
-gint chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space) G_GNUC_PURE;
+void chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
 
 /* Takes values 0-255 for r, g, b and returns CHAFA_PALETTE_INDEX_FG or CHAFA_PALETTE_INDEX_BG */
-gint chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
-                            const ChafaColor *fg_color, const ChafaColor *bg_color) G_GNUC_PURE;
+void chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
+                            const ChafaColor *fg_color, const ChafaColor *bg_color,
+                            ChafaColorCandidates *candidates);
 
 const ChafaColor *chafa_get_palette_color_256 (guint index, ChafaColorSpace color_space) G_GNUC_CONST;
 
