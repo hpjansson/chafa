@@ -80,6 +80,11 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_ALL);
 
     chafa_symbol_map_init (&canvas_config->fill_symbol_map);
+#if 1
+    chafa_symbol_map_add_by_tags (&canvas_config->fill_symbol_map, CHAFA_SYMBOL_TAG_STIPPLE | CHAFA_SYMBOL_TAG_SPACE | CHAFA_SYMBOL_TAG_SOLID);
+#else
+    chafa_symbol_map_add_by_tags (&canvas_config->fill_symbol_map, CHAFA_SYMBOL_TAG_ASCII);
+#endif
 }
 
 void
