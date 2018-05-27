@@ -544,12 +544,29 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
         *error_out = best_error;
 }
 
+static const ChafaColor *
+get_palette_color (ChafaCanvas *canvas, gint index)
+{
+    if (index == CHAFA_PALETTE_INDEX_FG)
+        return &canvas->fg_color;
+    if (index == CHAFA_PALETTE_INDEX_BG)
+        return &canvas->bg_color;
+    if (index == CHAFA_PALETTE_INDEX_TRANSPARENT)
+        return &canvas->bg_color;
+
+    return chafa_get_palette_color_256 (index, canvas->config.color_space);
+}
+
 static void
 apply_fill (ChafaCanvas *canvas, const ChafaPixel *block, ChafaCanvasCell *cell)
 {
     ChafaColor mean;
     ChafaColor col [3];
     ChafaColorCandidates ccand;
+    ChafaCandidate sym_cand;
+    gint n_sym_cands = 1;
+    gint i, best_i = 0;
+    gint error, best_error = G_MAXINT;
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR
         || canvas->config.fill_symbol_map.n_symbols == 0)
@@ -560,30 +577,18 @@ apply_fill (ChafaCanvas *canvas, const ChafaPixel *block, ChafaCanvasCell *cell)
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
     {
         chafa_pick_color_256 (&mean, canvas->config.color_space, &ccand);
-        col [0] = *chafa_get_palette_color_256 (ccand.index [0], canvas->config.color_space);
-        col [1] = *chafa_get_palette_color_256 (ccand.index [1], canvas->config.color_space);
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
     {
         chafa_pick_color_240 (&mean, canvas->config.color_space, &ccand);
-        col [0] = *chafa_get_palette_color_256 (ccand.index [0], canvas->config.color_space);
-        col [1] = *chafa_get_palette_color_256 (ccand.index [1], canvas->config.color_space);
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
     {
         chafa_pick_color_16 (&mean, canvas->config.color_space, &ccand);
-        col [0] = *chafa_get_palette_color_256 (ccand.index [0], canvas->config.color_space);
-        col [1] = *chafa_get_palette_color_256 (ccand.index [1], canvas->config.color_space);
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
              || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
     {
-        col [0] = canvas->fg_color;
-        col [1] = canvas->bg_color;
-        col [0].ch [3] = 0xff;
-        col [1].ch [3] = 0xff;
-        mean.ch [3] = 0xff;
-
         ccand.index [0] = CHAFA_PALETTE_INDEX_FG;
         ccand.index [1] = CHAFA_PALETTE_INDEX_BG;
     }
@@ -592,54 +597,58 @@ apply_fill (ChafaCanvas *canvas, const ChafaPixel *block, ChafaCanvasCell *cell)
         g_assert_not_reached ();
     }
 
+    col [0] = *get_palette_color (canvas, ccand.index [0]);
+    col [1] = *get_palette_color (canvas, ccand.index [1]);
+
+    /* In FGBG modes, background and transparency is the same thing. Make
+     * sure we have two opaque colors for correct interpolation. */
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+        col [1].ch [3] = 0xff;
+
+    /* Make the primary color correspond to cell's BG pen, so mostly transparent
+     * cells will get a transparent BG; terminals typically don't support
+     * transparency in the FG pen. BG is also likely to cover a greater area. */
+    for (i = 0; i <= 64; i++)
     {
-        gint i, best_i = 0;
-        gint error, best_error = G_MAXINT;
-        ChafaCandidate sym_cand;
-        gint n_sym_cands = 1;
+        col [2].ch [0] = (col [0].ch [0] * (64 - i) + col [1].ch [0] * i) / 64;
+        col [2].ch [1] = (col [0].ch [1] * (64 - i) + col [1].ch [1] * i) / 64;
+        col [2].ch [2] = (col [0].ch [2] * (64 - i) + col [1].ch [2] * i) / 64;
+        col [2].ch [3] = (col [0].ch [3] * (64 - i) + col [1].ch [3] * i) / 64;
 
-        for (i = 0; i <= 64; i++)
+        error = chafa_color_diff_slow (&mean, &col [2], canvas->config.color_space);
+        if (error < best_error)
         {
-            col [2].ch [0] = (col [0].ch [0] * i + col [1].ch [0] * (64 - i)) / 64;
-            col [2].ch [1] = (col [0].ch [1] * i + col [1].ch [1] * (64 - i)) / 64;
-            col [2].ch [2] = (col [0].ch [2] * i + col [1].ch [2] * (64 - i)) / 64;
-            col [2].ch [3] = (col [0].ch [3] * i + col [1].ch [3] * (64 - i)) / 64;
-
-#if 1
-            error = chafa_color_diff_slow (&mean, &col [2], canvas->config.color_space);
-#else
-            error = chafa_color_diff_fast (&mean, &col [2]);
-#endif
-            if (error < best_error)
-            {
-                best_i = i;
-                best_error = error;
-            }
+            /* In FGBG mode there's no way to invert or set the BG color, so
+             * assign the primary color to FG pen instead. */
+            best_i = (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG ? 64 - i : i);
+            best_error = error;
         }
+    }
 
-        chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map, best_i,
-                                               canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                               ? FALSE : TRUE,  /* Consider inverted? */
-                                               &sym_cand, &n_sym_cands);
+    chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map, best_i,
+                                           canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+                                           ? FALSE : TRUE,  /* Consider inverted? */
+                                           &sym_cand, &n_sym_cands);
 
-        cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
+    cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
 
-#if 0
-        g_printerr ("Popcount: %d -> sym %d : popcount %d\n",
-                    best_i, sym_cand.symbol_index,
-                    canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].popcount);
-#endif
+    /* If we end up with a featureless symbol (space or fill), make
+     * FG color equal to BG. */
+    if (best_i == 0)
+        ccand.index [1] = ccand.index [0];
+    else if (best_i == 64)
+        ccand.index [0] = ccand.index [1];
 
-        if (sym_cand.is_inverted)
-        {
-            cell->fg_color = ccand.index [1];
-            cell->bg_color = ccand.index [0];
-        }
-        else
-        {
-            cell->fg_color = ccand.index [0];
-            cell->bg_color = ccand.index [1];
-        }
+    if (sym_cand.is_inverted)
+    {
+        cell->fg_color = ccand.index [0];
+        cell->bg_color = ccand.index [1];
+    }
+    else
+    {
+        cell->fg_color = ccand.index [1];
+        cell->bg_color = ccand.index [0];
     }
 }
 
