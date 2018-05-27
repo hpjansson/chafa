@@ -765,15 +765,7 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint 
         }
     }
 
-    if (alpha_sum == 0)
-    {
-        canvas->have_alpha = FALSE;
-    }
-    else
-    {
-        canvas->have_alpha = TRUE;
-        multiply_alpha (canvas);
-    }
+    canvas->have_alpha |= (alpha_sum == 0 ? FALSE : TRUE);
 }
 
 static void
@@ -813,15 +805,7 @@ rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gi
         }
     }
 
-    if (alpha_sum == 0)
-    {
-        canvas->have_alpha = FALSE;
-    }
-    else
-    {
-        canvas->have_alpha = TRUE;
-        multiply_alpha (canvas);
-    }
+    canvas->have_alpha |= (alpha_sum == 0 ? FALSE : TRUE);
 }
 
 static void
@@ -1249,6 +1233,9 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
             g_assert_not_reached ();
             break;
     }
+
+    if (canvas->have_alpha)
+        multiply_alpha (canvas);
 
     if (canvas->config.alpha_threshold == 0)
         canvas->have_alpha = FALSE;
