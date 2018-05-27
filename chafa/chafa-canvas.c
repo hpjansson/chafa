@@ -102,6 +102,15 @@ fetch_canvas_pixel_block (ChafaCanvas *canvas, gint cx, gint cy, ChafaPixel *blo
 }
 
 static void
+threshold_alpha (ChafaCanvas *canvas, ChafaColor *color)
+{
+    if (color->ch [3] < canvas->config.alpha_threshold)
+        color->ch [3] = 0x00;
+    else
+        color->ch [3] = 0xff;
+}
+
+static void
 calc_mean_color (const ChafaPixel *block, ChafaColor *color_out)
 {
     ChafaColor accum = { 0 };
@@ -368,15 +377,8 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
 
             /* Threshold alpha */
 
-            if (eval [i].fg.col.ch [3] < canvas->config.alpha_threshold)
-                eval [i].fg.col.ch [3] = 0x00;
-            else
-                eval [i].fg.col.ch [3] = 0xff;
-
-            if (eval [i].bg.col.ch [3] < canvas->config.alpha_threshold)
-                eval [i].bg.col.ch [3] = 0x00;
-            else
-                eval [i].bg.col.ch [3] = 0xff;
+            threshold_alpha (canvas, &eval [i].fg.col);
+            threshold_alpha (canvas, &eval [i].bg.col);
 
             fg_col = eval [i].fg.col;
             bg_col = eval [i].bg.col;
