@@ -1080,8 +1080,10 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5;
     canvas->needs_clear = TRUE;
+    canvas->have_alpha = FALSE;
 
     chafa_symbol_map_prepare (&canvas->config.symbol_map);
+    chafa_symbol_map_prepare (&canvas->config.fill_symbol_map);
 
     /* In truecolor mode we don't support any fancy color spaces for now, since
      * we'd have to convert back to RGB space when emitting control codes, and
