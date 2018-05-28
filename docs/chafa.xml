@@ -106,6 +106,14 @@ white.
 </varlistentry>
 
 <varlistentry>
+<term><option>--fill <replaceable>symbols</replaceable></option></term>
+<listitem><para>
+Specify character symbols to use for fill/gradients. Defaults to none.
+Usage is similar to that of --symbols; see below.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--font-ratio <replaceable>width</replaceable>/<replaceable>height</replaceable></option></term>
 <listitem><para>
 Target font's width/height ratio. Can be specified as a real number or a

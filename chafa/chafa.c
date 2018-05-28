@@ -42,6 +42,7 @@ typedef struct
     ChafaCanvasMode mode;
     ChafaColorSpace color_space;
     ChafaSymbolMap *symbol_map;
+    ChafaSymbolMap *fill_symbol_map;
     gboolean symbols_specified;
     gboolean is_interactive;
     gboolean clear;
@@ -205,6 +206,8 @@ print_summary (void)
     "                     animation. For multiple files, defaults to 3.0. Animations\n"
     "                     will always be played through at least once.\n"
     "      --fg=COLOR     Foreground color of display (color name or hex).\n"
+    "      --fill=SYMS    Specify character symbols to use for fill/gradients.\n"
+    "                     Defaults to none. See below for full usage.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
@@ -227,12 +230,12 @@ print_summary (void)
     "                     cheapest, 9 is the most accurate. Defaults to 5.\n"
     "      --zoom         Allow scaling up beyond one character per pixel.\n\n"
 
-    "  Accepted classes for --symbols are [all, none, space, solid, stipple, block,\n"
-    "  border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,\n"
-    "  technical, geometric, ascii]. Some symbols belong to multiple classes, e.g.\n"
-    "  diagonals are also borders. You can specify a list of classes separated by\n"
-    "  commas, or prefix them with + and - to add or remove symbols relative to the\n"
-    "  existing set. The ordering is significant.\n\n"
+    "  Accepted classes for --symbols and --fill are [all, none, space, solid,\n"
+    "  stipple, block, border, diagonal, dot, quad, half, hhalf, vhalf, inverted,\n"
+    "  braille, technical, geometric, ascii]. Some symbols belong to multiple\n"
+    "  classes, e.g. diagonals are also borders. You can specify a list of classes\n"
+    "  separated by commas, or prefix them with + and - to add or remove symbols\n"
+    "  relative to the existing set. The ordering is significant.\n\n"
 
     "  The default symbol set is all-stipple-braille-ascii+space-inverted for all\n"
     "  modes except for \"none\", which uses all-stipple-braille-ascii+space.\n\n"
@@ -346,6 +349,12 @@ parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 {
     options.symbols_specified = TRUE;
     return chafa_symbol_map_apply_selectors (options.symbol_map, value, error);
+}
+
+static gboolean
+parse_fill_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    return chafa_symbol_map_apply_selectors (options.fill_symbol_map, value, error);
 }
 
 static gboolean
@@ -612,6 +621,7 @@ parse_options (int *argc, char **argv [])
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
+        { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
@@ -634,12 +644,18 @@ parse_options (int *argc, char **argv [])
     options.executable_name = g_strdup ((*argv) [0]);
 
     /* Defaults */
+
     options.symbol_map = chafa_symbol_map_new ();
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_STIPPLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BRAILLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ASCII);
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
+
+    options.fill_symbol_map = chafa_symbol_map_new ();
+    chafa_symbol_map_add_by_tags (options.fill_symbol_map, CHAFA_SYMBOL_TAG_ALL);
+    chafa_symbol_map_remove_by_tags (options.fill_symbol_map, CHAFA_SYMBOL_TAG_ASCII);
+    chafa_symbol_map_add_by_tags (options.fill_symbol_map, CHAFA_SYMBOL_TAG_SPACE);
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
@@ -799,6 +815,7 @@ build_string (guint8 *pixels,
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
 
     chafa_canvas_config_set_symbol_map (config, options.symbol_map);
+    chafa_canvas_config_set_fill_symbol_map (config, options.fill_symbol_map);
 
     /* Work switch takes values [1..9], we normalize to [0.0..1.0] to
      * get the work factor. */
@@ -1199,5 +1216,7 @@ main (int argc, char *argv [])
 
     if (options.symbol_map)
         chafa_symbol_map_unref (options.symbol_map);
+    if (options.fill_symbol_map)
+        chafa_symbol_map_unref (options.fill_symbol_map);
     return ret;
 }
