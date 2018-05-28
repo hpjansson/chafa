@@ -263,7 +263,6 @@ eval_symbol_colors (const ChafaPixel *block, const ChafaSymbol *sym, SymbolEval 
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
     ChafaColor cols [2] = { 0 };
-    gint i;
 
 #ifdef HAVE_MMX_INTRINSICS
     if (chafa_have_mmx ())
@@ -323,7 +322,6 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaPixel *block,
     const guint8 *covp = (guint8 *) &sym->coverage [0];
     ChafaColor cols [2] = { 0 };
     gint error;
-    gint i;
 
     cols [0] = eval->bg.col;
     cols [1] = eval->fg.col;
