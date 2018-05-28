@@ -62,17 +62,10 @@ Major features
 Optimization
 ------------
 
-- Speed up 16-color mode (better fill).
 - Speed up alpha transparency code path.
 - Preload next image/frame in delay phase.
 - Reduce peak memory usage by coalescing fewer images at once?
 - Don't calculate error if we're only using a single symbol (e.g. vhalf).
-- Compare fewer bitmaps:
-  1) Keep a list of symbols sorted by bitmap pop count.
-  2) Start comparison by calculating pop count of block.
-  3) Do binary search for similar pop count in symbol list.
-  4) Search outwards in both directions from the entry found.
-  5) Stop search when difference in pop count crosses a threshold.
 
 Cleanup
 -------
