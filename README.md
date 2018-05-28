@@ -1,5 +1,5 @@
 <p align="center">
-![](./docs/chafa-logo.gif)
+<img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" />
 </p>
 
 Chafa is a command-line utility that converts all kinds of images, including
