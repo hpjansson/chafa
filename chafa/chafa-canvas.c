@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <math.h>
 #include <string.h>
 #include <glib.h>
 #include "chafa/chafa.h"
@@ -773,11 +774,120 @@ multiply_alpha (ChafaCanvas *canvas)
     }
 }
 
+/* See rgb_to_intensity_fast () */
+#define INTENSITY_MAX (256 * 8)
+
+typedef struct
+{
+    gint64 c [INTENSITY_MAX];
+}
+Histogram;
+
+static gint
+rgb_to_intensity_fast (const ChafaColor *color)
+{
+    /* Sum to 8x so we can divide by shifting later */
+    return color->ch [0] * 3 + color->ch [1] * 4 + color->ch [2];
+}
+
+static void
+calc_histogram (ChafaCanvas *canvas, Histogram *hist, gint64 *accum)
+{
+    ChafaPixel *p0, *p1;
+
+    p0 = canvas->pixels;
+    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        gint v = rgb_to_intensity_fast (&p0->col);
+        *accum += v;
+        hist->c [v]++;
+    }
+}
+
+#define CROP_PCT 20
+
+static gint16
+normalize_ch (gint16 v, gint min, gint factor)
+{
+    gint vt = v;
+
+    vt -= min;
+    if (vt < 0)
+        vt = 0;
+    vt *= factor;
+    vt /= FIXED_MULT;
+    if (vt > 255)
+        vt = 255;
+    return vt;
+}
+
+static void
+normalize_rgb (ChafaCanvas *canvas)
+{
+    Histogram hist;
+    gint64 accum = 0;
+    ChafaPixel *p0, *p1;
+    gint min, max;
+    gint64 pixels_crop;
+    gint t;
+    gint factor;
+    gint i;
+
+    memset (&hist, 0, sizeof (hist));
+    calc_histogram (canvas, &hist, &accum);
+    pixels_crop = (canvas->width_pixels * canvas->height_pixels * (((gint64) CROP_PCT * 1024) / 100)) / 1024;
+
+    /* Find lower bound */
+
+    for (i = 0, t = pixels_crop; i < INTENSITY_MAX; i++)
+    {
+        t -= hist.c [i];
+        if (t <= 0)
+            break;
+    }
+
+    min = i;
+
+    /* Find upper bound */
+
+    for (i = INTENSITY_MAX - 1, t = pixels_crop; i >= 0; i--)
+    {
+        t -= hist.c [i];
+        if (t <= 0)
+            break;
+    }
+
+    max = i;
+
+    if (min == max)
+        return;
+
+    /* Adjust intensities */
+
+    factor = ((INTENSITY_MAX - 1) * FIXED_MULT) / (max - min);
+
+#if 0
+    g_printerr ("[%d-%d] * %d, crop=%d     \n", min, max, factor, pixels_crop);
+#endif
+
+    p0 = canvas->pixels;
+    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        p0->col.ch [0] = normalize_ch (p0->col.ch [0], min / 8, factor);
+        p0->col.ch [1] = normalize_ch (p0->col.ch [1], min / 8, factor);
+        p0->col.ch [2] = normalize_ch (p0->col.ch [2], min / 8, factor);
+    }
+}
+
 /* Wrong but cheap function to recenter pixel values around the mean using
  * saturation addition. Greatly improves image definition in two-color
  * modes (FGBG and FGBG_BGFG). */
 static void
-adjust_levels_rgb (ChafaCanvas *canvas)
+adjust_brightness_rgb (ChafaCanvas *canvas)
 {
     ChafaPixel *p0, *p1;
     gint64 accum = 0;
@@ -795,7 +905,7 @@ adjust_levels_rgb (ChafaCanvas *canvas)
 
     accum /= (canvas->width_pixels * canvas->height_pixels * 3);
     chadd = 128 - accum;
-    chadd = CLAMP (chadd, -100, 100);
+    chadd = CLAMP (chadd, -120, 120);
 
     for (p0 = canvas->pixels; p0 < p1; p0++)
     {
@@ -805,6 +915,56 @@ adjust_levels_rgb (ChafaCanvas *canvas)
         p0->col.ch [1] = CLAMP (p0->col.ch [1], 0, 255);
         p0->col.ch [2] += chadd;
         p0->col.ch [2] = CLAMP (p0->col.ch [2], 0, 255);
+    }
+}
+
+#define CONTRAST 180.0
+
+static void
+adjust_levels_rgb (ChafaCanvas *canvas)
+{
+    ChafaPixel *p0, *p1;
+    gfloat factor = (259.0 * (CONTRAST + 255.0)) / (255.0 * (259.0 - CONTRAST));
+
+    p0 = canvas->pixels;
+    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+        ChafaColor col = p0->col;
+
+        col.ch [0] = (factor * (col.ch [0] - 128)) + 128;
+        col.ch [1] = (factor * (col.ch [1] - 128)) + 128;
+        col.ch [2] = (factor * (col.ch [2] - 128)) + 128;
+
+        p0->col.ch [0] = CLAMP (col.ch [0], 0, 255);
+        p0->col.ch [1] = CLAMP (col.ch [1], 0, 255);
+        p0->col.ch [2] = CLAMP (col.ch [2], 0, 255);
+    }
+}
+
+static void
+boost_saturation_rgb (ChafaCanvas *canvas)
+{
+    ChafaPixel *p0, *p1;
+
+    p0 = canvas->pixels;
+    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
+
+    for (p0 = canvas->pixels; p0 < p1; p0++)
+    {
+#define Pr .299
+#define Pg .587
+#define Pb .144
+
+        ChafaColor col = p0->col;
+        gdouble P = sqrt ((col.ch [0]) * (gdouble) (col.ch [0]) * Pr
+                         + (col.ch [1]) * (gdouble) (col.ch [1]) * Pg
+                         + (col.ch [2]) * (gdouble) (col.ch [2]) * Pb);
+
+        col.ch [0] = (P + ((gdouble) col.ch [0] - P) * 1.5);
+        col.ch [1] = (P + ((gdouble) col.ch [1] - P) * 1.5);
+        col.ch [2] = (P + ((gdouble) col.ch [2] - P) * 1.5);
     }
 }
 
@@ -1352,7 +1512,7 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
             rgba_to_internal_rgb (canvas, src_pixels, src_width, src_height, src_rowstride);
             if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
                 || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
-                adjust_levels_rgb (canvas);
+                adjust_brightness_rgb (canvas);
             break;
 
         case CHAFA_COLOR_SPACE_DIN99D:
