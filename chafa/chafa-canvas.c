@@ -71,6 +71,11 @@ struct ChafaCanvas
     guint work_factor_int;
 
     ChafaCanvasConfig config;
+
+    /* Used when setting pixel data */
+    const guint8 *src_pixels;
+    gint src_width, src_height, src_rowstride;
+    gint have_alpha_int;
 };
 
 typedef struct
@@ -1023,19 +1028,19 @@ update_display_colors (ChafaCanvas *canvas)
 }
 
 static void
-rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint height, gint rowstride)
+rgba_to_internal_rgb (ChafaCanvas *canvas, gint dest_y, const guint8 *data, gint n_rows, gint rowstride)
 {
     ChafaPixel *pixel;
     gint px, py;
     gint x_inc, y_inc;
     gint alpha_sum = 0;
 
-    x_inc = (width * FIXED_MULT) / (canvas->width_pixels);
-    y_inc = (height * FIXED_MULT) / (canvas->height_pixels);
+    x_inc = (canvas->src_width * FIXED_MULT) / (canvas->width_pixels);
+    y_inc = (canvas->src_height * FIXED_MULT) / (canvas->height_pixels);
 
-    pixel = canvas->pixels;
+    pixel = canvas->pixels + dest_y * canvas->width_pixels;
 
-    for (py = 0; py < canvas->height_pixels; py++)
+    for (py = dest_y; py < dest_y + n_rows; py++)
     {
         const guint8 *data_row_p;
 
@@ -1056,23 +1061,24 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, const guint8 *data, gint width, gint 
         }
     }
 
-    canvas->have_alpha |= (alpha_sum == 0 ? FALSE : TRUE);
+    if (alpha_sum > 0)
+        g_atomic_int_set (&canvas->have_alpha_int, 1);
 }
 
 static void
-rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gint height, gint rowstride)
+rgba_to_internal_din99d (ChafaCanvas *canvas, gint dest_y, const guint8 *data, gint n_rows, gint rowstride)
 {
     ChafaPixel *pixel;
     gint px, py;
     gint x_inc, y_inc;
     gint alpha_sum = 0;
 
-    x_inc = (width * FIXED_MULT) / (canvas->width_pixels);
-    y_inc = (height * FIXED_MULT) / (canvas->height_pixels);
+    x_inc = (canvas->src_width * FIXED_MULT) / (canvas->width_pixels);
+    y_inc = (canvas->src_height * FIXED_MULT) / (canvas->height_pixels);
 
-    pixel = canvas->pixels;
+    pixel = canvas->pixels + dest_y * canvas->width_pixels;
 
-    for (py = 0; py < canvas->height_pixels; py++)
+    for (py = dest_y; py < dest_y + n_rows; py++)
     {
         const guint8 *data_row_p;
 
@@ -1096,7 +1102,8 @@ rgba_to_internal_din99d (ChafaCanvas *canvas, const guint8 *data, gint width, gi
         }
     }
 
-    canvas->have_alpha |= (alpha_sum == 0 ? FALSE : TRUE);
+    if (alpha_sum > 0)
+        g_atomic_int_set (&canvas->have_alpha_int, 1);
 }
 
 static void
@@ -1114,6 +1121,67 @@ maybe_clear (ChafaCanvas *canvas)
         memset (cell, 0, sizeof (*cell));
         cell->c = ' ';
     }
+}
+
+#define ROWS_PER_BATCH 8
+
+typedef struct
+{
+    gint first_row;
+    gint n_rows;
+}
+PreparePixelsWork;
+
+static void
+prepare_pixels_worker (PreparePixelsWork *work, ChafaCanvas *canvas)
+{
+    switch (canvas->config.color_space)
+    {
+        case CHAFA_COLOR_SPACE_RGB:
+            rgba_to_internal_rgb (canvas,
+                                  work->first_row,
+                                  canvas->src_pixels,
+                                  work->n_rows,
+                                  canvas->src_rowstride);
+            break;
+
+        case CHAFA_COLOR_SPACE_DIN99D:
+            rgba_to_internal_din99d (canvas,
+                                     work->first_row,
+                                     canvas->src_pixels,
+                                     work->n_rows,
+                                     canvas->src_rowstride);
+            break;
+
+        case CHAFA_COLOR_SPACE_MAX:
+            g_assert_not_reached ();
+            break;
+    }
+
+    g_slice_free (PreparePixelsWork, work);
+}
+
+static void
+prepare_pixel_data (ChafaCanvas *canvas)
+{
+    GThreadPool *thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_worker,
+                                                  canvas,
+                                                  g_get_num_processors (),
+                                                  FALSE,
+                                                  NULL);
+    gint cy;
+
+    for (cy = 0; cy < canvas->height_pixels; cy += ROWS_PER_BATCH)
+    {
+        PreparePixelsWork *work = g_slice_new (PreparePixelsWork);
+
+        work->first_row = cy;
+        work->n_rows = MIN (canvas->height_pixels - cy, ROWS_PER_BATCH);
+
+        g_thread_pool_push (thread_pool, work, NULL);
+    }
+
+    g_thread_pool_free (thread_pool, FALSE, TRUE);
 }
 
 static void
@@ -1506,26 +1574,16 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
 
     canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
 
-    switch (canvas->config.color_space)
-    {
-        case CHAFA_COLOR_SPACE_RGB:
-            rgba_to_internal_rgb (canvas, src_pixels, src_width, src_height, src_rowstride);
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
-                adjust_brightness_rgb (canvas);
-            break;
+    canvas->src_pixels = src_pixels;
+    canvas->src_width = src_width;
+    canvas->src_height = src_height;
+    canvas->src_rowstride = src_rowstride;
+    canvas->have_alpha_int = 0;
 
-        case CHAFA_COLOR_SPACE_DIN99D:
-            rgba_to_internal_din99d (canvas, src_pixels, src_width, src_height, src_rowstride);
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
-                adjust_levels_din99d (canvas);
-            break;
+    prepare_pixel_data (canvas);
 
-        case CHAFA_COLOR_SPACE_MAX:
-            g_assert_not_reached ();
-            break;
-    }
+    if (canvas->have_alpha_int)
+        canvas->have_alpha = TRUE;
 
     if (canvas->have_alpha)
         multiply_alpha (canvas);
