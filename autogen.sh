@@ -35,7 +35,7 @@ fi
         DIE=1
 }
 
-(libtool --version) < /dev/null > /dev/null 2>&1 || {
+(libtoolize --version) < /dev/null > /dev/null 2>&1 || {
         MISSING_TOOLS="${MISSING_TOOLS}libtool "
         DIE=1
 }
