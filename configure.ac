@@ -265,7 +265,7 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS $MAGICKWAND_LIBS"
-AC_TRY_LINK([#include <wand/MagickWand.h>], [MagickResizeImage (0, 0, 0, 0);],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <wand/MagickWand.h>]], [[MagickResizeImage (0, 0, 0, 0);]])],
 	AC_DEFINE([HAVE_MAGICK_RESIZE_IMAGE_4], [1], [Define if MagickResizeImage takes 4 arguments.])
         AC_MSG_RESULT(yes),
         AC_MSG_RESULT(no))
@@ -277,7 +277,7 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS $MAGICKWAND_LIBS"
-AC_TRY_LINK([#include <wand/MagickWand.h>], [MagickResizeImage (0, 0, 0, 0, 1.0);],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <wand/MagickWand.h>]], [[MagickResizeImage (0, 0, 0, 0, 1.0);]])],
 	AC_DEFINE([HAVE_MAGICK_RESIZE_IMAGE_5], [1], [Define if MagickResizeImage takes 5 arguments.])
         AC_MSG_RESULT(yes),
         AC_MSG_RESULT(no))
@@ -289,7 +289,7 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$LDFLAGS $MAGICKWAND_LIBS"
-AC_TRY_LINK([#include <wand/MagickWand.h>], [MagickAutoOrientImage (0);],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <wand/MagickWand.h>]], [[MagickAutoOrientImage (0);]])],
 	AC_DEFINE([HAVE_MAGICK_AUTO_ORIENT_IMAGE], [1], [Define if we have MagickAutoOrientImage.])
         AC_MSG_RESULT(yes),
         AC_MSG_RESULT(no))
