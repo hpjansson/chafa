@@ -33,7 +33,7 @@ AC_PROG_CC
 AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
-AM_PROG_LIBTOOL
+LT_INIT
 
 dnl --- Required standards ---
 
