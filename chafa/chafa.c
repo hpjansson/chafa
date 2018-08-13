@@ -685,7 +685,7 @@ parse_options (int *argc, char **argv [])
     if (options.show_version)
     {
         print_version ();
-        return FALSE;
+        return TRUE;
     }
 
     if (*argc < 2)
