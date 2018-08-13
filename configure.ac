@@ -216,7 +216,7 @@ dnl Check for working popcnt intrinsics
 AC_MSG_CHECKING(for working popcnt intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -mpopcnt"
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <stdint.h>
                   #include <nmmintrin.h>]],
