@@ -226,7 +226,6 @@ AC_LINK_IFELSE(
 	[ac_cv_popcnt64_intrinsics=no])
 CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_popcnt64_intrinsics})
-AM_CONDITIONAL([HAVE_POPCNT64_INTRINSICS], [test "$ac_cv_popcnt64_intrinsics" = "yes"])
 
 dnl Check for working 32bit popcnt intrinsics
 AC_MSG_CHECKING(for working 32bit popcnt intrinsics)
@@ -242,7 +241,6 @@ AC_LINK_IFELSE(
 	[ac_cv_popcnt32_intrinsics=no])
 CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_popcnt32_intrinsics})
-AM_CONDITIONAL([HAVE_POPCNT32_INTRINSICS], [test "$ac_cv_popcnt32_intrinsics" = "yes"])
 
 AM_CONDITIONAL([HAVE_POPCNT_INTRINSICS],
     [test "$ac_cv_popcnt64_intrinsics" = "yes" -o "$ac_cv_popcnt32_intrinsics" = "yes"])

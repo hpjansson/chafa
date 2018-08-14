@@ -198,6 +198,10 @@ void leave_mmx (void);
 gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov) G_GNUC_PURE;
 #endif
 
+#if defined(HAVE_POPCNT64_INTRINSICS) || defined(HAVE_POPCNT32_INTRINSICS)
+#define HAVE_POPCNT_INTRINSICS
+#endif
+
 #ifdef HAVE_POPCNT_INTRINSICS
 gint chafa_pop_count_u64_builtin (guint64 v) G_GNUC_PURE;
 void chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n);
