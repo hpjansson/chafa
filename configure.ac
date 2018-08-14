@@ -212,21 +212,38 @@ CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_sse41_intrinsics})
 AM_CONDITIONAL([HAVE_SSE41_INTRINSICS], [test "$ac_cv_sse41_intrinsics" = "yes"])
 
-dnl Check for working popcnt intrinsics
-AC_MSG_CHECKING(for working popcnt intrinsics)
+dnl Check for working 64bit popcnt intrinsics
+AC_MSG_CHECKING(for working 64bit popcnt intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -mpopcnt"
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <stdint.h>
                   #include <nmmintrin.h>]],
 		[[uint64_t t = 0; t = _mm_popcnt_u64 (t);]])],
-	[AC_DEFINE([HAVE_POPCNT_INTRINSICS], [1], [Define if popcnt intrinsics work.])
-	 ac_cv_popcnt_intrinsics=yes],
-	[ac_cv_popcnt_intrinsics=no])
+	[AC_DEFINE([HAVE_POPCNT64_INTRINSICS], [1], [Define if 64bit popcnt intrinsics work.])
+	 ac_cv_popcnt64_intrinsics=yes],
+	[ac_cv_popcnt64_intrinsics=no])
 CFLAGS="${SAVED_CFLAGS}"
-AC_MSG_RESULT(${ac_cv_popcnt_intrinsics})
-AM_CONDITIONAL([HAVE_POPCNT_INTRINSICS], [test "$ac_cv_popcnt_intrinsics" = "yes"])
+AC_MSG_RESULT(${ac_cv_popcnt64_intrinsics})
+
+dnl Check for working 32bit popcnt intrinsics
+AC_MSG_CHECKING(for working 32bit popcnt intrinsics)
+SAVED_CFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -mpopcnt"
+AC_LINK_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <stdint.h>
+                  #include <nmmintrin.h>]],
+		[[uint32_t t = 0; t = _mm_popcnt_u32 (t);]])],
+	[AC_DEFINE([HAVE_POPCNT32_INTRINSICS], [1], [Define if 32bit popcnt intrinsics work.])
+	 ac_cv_popcnt32_intrinsics=yes],
+	[ac_cv_popcnt32_intrinsics=no])
+CFLAGS="${SAVED_CFLAGS}"
+AC_MSG_RESULT(${ac_cv_popcnt32_intrinsics})
+
+AM_CONDITIONAL([HAVE_POPCNT_INTRINSICS],
+    [test "$ac_cv_popcnt64_intrinsics" = "yes" -o "$ac_cv_popcnt32_intrinsics" = "yes"])
 
 dnl
 dnl Check for -fvisibility=hidden to determine if we can do GNU-style
