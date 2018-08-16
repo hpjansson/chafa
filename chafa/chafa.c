@@ -653,9 +653,6 @@ parse_options (int *argc, char **argv [])
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
 
     options.fill_symbol_map = chafa_symbol_map_new ();
-    chafa_symbol_map_add_by_tags (options.fill_symbol_map, CHAFA_SYMBOL_TAG_ALL);
-    chafa_symbol_map_remove_by_tags (options.fill_symbol_map, CHAFA_SYMBOL_TAG_ASCII);
-    chafa_symbol_map_add_by_tags (options.fill_symbol_map, CHAFA_SYMBOL_TAG_SPACE);
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
