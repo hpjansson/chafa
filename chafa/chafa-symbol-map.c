@@ -124,7 +124,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
     g_free (symbol_map->symbols);
     g_free (symbol_map->packed_bitmaps);
 
-    symbol_map->n_symbols = g_hash_table_size (symbol_map->desired_symbols);
+    symbol_map->n_symbols = symbol_map->desired_symbols ? g_hash_table_size (symbol_map->desired_symbols) : 0;
     symbol_map->symbols = g_new (ChafaSymbol, symbol_map->n_symbols + 1);
 
     if (symbol_map->desired_symbols)
