@@ -49,7 +49,6 @@ typedef struct
     gboolean verbose;
     gboolean invert;
     gboolean preprocess;
-    gboolean preprocess_set;
     gboolean stretch;
     gboolean zoom;
     gboolean watch;
@@ -421,7 +420,6 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
         result = FALSE;
     }
 
-    options.preprocess_set = TRUE;
     return result;
 }
 
