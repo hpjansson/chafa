@@ -75,6 +75,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
     canvas_config->work_factor = 0.5;
+    canvas_config->preprocessing_enabled = TRUE;
 
     chafa_symbol_map_init (&canvas_config->symbol_map);
     chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_ALL);
@@ -507,4 +508,43 @@ chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_fact
     g_return_if_fail (work_factor >= 0.0 && work_factor <= 1.0);
 
     config->work_factor = work_factor;
+}
+
+/**
+ * chafa_canvas_config_get_preprocessing_enabled:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Queries whether automatic image preprocessing is enabled. This allows
+ * Chafa to boost contrast and saturation in an attempt to improve
+ * legibility. The type of preprocessing applied (if any) depends on the
+ * canvas mode.
+ *
+ * Returns: Whether automatic preprocessing is enabled
+ **/
+gboolean
+chafa_canvas_config_get_preprocessing_enabled (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, FALSE);
+    g_return_val_if_fail (config->refs > 0, FALSE);
+
+    return config->preprocessing_enabled;
+}
+
+/**
+ * chafa_canvas_config_set_preprocessing_enabled:
+ * @config: A #ChafaCanvasConfig
+ * @preprocessing_enabled: Whether automatic preprocessing should be enabled
+ *
+ * Indicates whether automatic image preprocessing should be enabled. This
+ * allows Chafa to boost contrast and saturation in an attempt to improve
+ * legibility. The type of preprocessing applied (if any) depends on the
+ * canvas mode.
+ **/
+void
+chafa_canvas_config_set_preprocessing_enabled (ChafaCanvasConfig *config, gboolean preprocessing_enabled)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    config->preprocessing_enabled = preprocessing_enabled;
 }

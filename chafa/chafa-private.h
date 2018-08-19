@@ -112,6 +112,7 @@ struct ChafaCanvasConfig
     gfloat work_factor;
     ChafaSymbolMap symbol_map;
     ChafaSymbolMap fill_symbol_map;
+    guint preprocessing_enabled : 1;
 };
 
 /* Canvas */

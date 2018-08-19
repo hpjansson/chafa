@@ -112,6 +112,11 @@ gfloat chafa_canvas_config_get_work_factor (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_factor);
 
+CHAFA_AVAILABLE_IN_ALL
+gboolean chafa_canvas_config_get_preprocessing_enabled (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_preprocessing_enabled (ChafaCanvasConfig *config, gboolean preprocessing_enabled);
+
 G_END_DECLS
 
 #endif /* __CHAFA_CANVAS_CONFIG_H__ */

@@ -656,6 +656,7 @@ parse_options (int *argc, char **argv [])
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
+    options.preprocess = TRUE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
     options.height = 25;
@@ -715,16 +716,6 @@ parse_options (int *argc, char **argv [])
         temp_color = options.bg_color;
         options.bg_color = options.fg_color;
         options.fg_color = temp_color;
-    }
-
-    if (!options.preprocess_set)
-    {
-        options.preprocess = FALSE;
-
-        if (options.mode == CHAFA_CANVAS_MODE_INDEXED_16)
-        {
-            options.preprocess = TRUE;
-        }
     }
 
     if (options.file_duration_s == G_MAXDOUBLE && options.args && options.args->next)
@@ -808,6 +799,7 @@ build_string (guint8 *pixels,
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);
+    chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
 
@@ -852,7 +844,7 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
 
     /* Optionally prescale input image */
 
-    if (options.work_factor >= 4 || options.preprocess)
+    if (options.work_factor >= 4)
     {
         gint new_width = CHAFA_SYMBOL_WIDTH_PIXELS * dest_width;
         gint new_height = CHAFA_SYMBOL_HEIGHT_PIXELS * dest_height;
@@ -871,12 +863,6 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
             MagickResizeImage (wand, src_width, src_height, TriangleFilter);
 #endif
         }
-    }
-
-    if (options.preprocess && !interrupted_by_user)
-    {
-        MagickModulateImage (wand, 100, 150, 100);
-        MagickBrightnessContrastImage (wand, 0, 40);
     }
 
     if (dest_width_out)
