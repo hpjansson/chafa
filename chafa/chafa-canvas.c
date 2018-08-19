@@ -900,66 +900,6 @@ normalize_rgb (ChafaCanvas *canvas, gint crop_pct)
     }
 }
 
-/* Wrong but cheap function to recenter pixel values around the mean using
- * saturation addition. Greatly improves image definition in two-color
- * modes (FGBG and FGBG_BGFG). */
-static void
-adjust_brightness_rgb (ChafaCanvas *canvas)
-{
-    ChafaPixel *p0, *p1;
-    gint64 accum = 0;
-    gint chadd;
-
-    p0 = canvas->pixels;
-    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
-
-    for (p0 = canvas->pixels; p0 < p1; p0++)
-    {
-        accum += p0->col.ch [0];
-        accum += p0->col.ch [1];
-        accum += p0->col.ch [2];
-    }
-
-    accum /= (canvas->width_pixels * canvas->height_pixels * 3);
-    chadd = 128 - accum;
-    chadd = CLAMP (chadd, -120, 120);
-
-    for (p0 = canvas->pixels; p0 < p1; p0++)
-    {
-        p0->col.ch [0] += chadd;
-        p0->col.ch [0] = CLAMP (p0->col.ch [0], 0, 255);
-        p0->col.ch [1] += chadd;
-        p0->col.ch [1] = CLAMP (p0->col.ch [1], 0, 255);
-        p0->col.ch [2] += chadd;
-        p0->col.ch [2] = CLAMP (p0->col.ch [2], 0, 255);
-    }
-}
-
-#define CONTRAST 180.0
-
-static void
-adjust_levels_rgb (ChafaCanvas *canvas)
-{
-    ChafaPixel *p0, *p1;
-    gfloat factor = (259.0 * (CONTRAST + 255.0)) / (255.0 * (259.0 - CONTRAST));
-
-    p0 = canvas->pixels;
-    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
-
-    for (p0 = canvas->pixels; p0 < p1; p0++)
-    {
-        ChafaColor col = p0->col;
-
-        col.ch [0] = (factor * (col.ch [0] - 128)) + 128;
-        col.ch [1] = (factor * (col.ch [1] - 128)) + 128;
-        col.ch [2] = (factor * (col.ch [2] - 128)) + 128;
-
-        p0->col.ch [0] = CLAMP (col.ch [0], 0, 255);
-        p0->col.ch [1] = CLAMP (col.ch [1], 0, 255);
-        p0->col.ch [2] = CLAMP (col.ch [2], 0, 255);
-    }
-}
-
 static void
 boost_saturation_rgb (ChafaColor *col)
 {
@@ -981,36 +921,6 @@ clamp_color_rgb (ChafaColor *col)
     col->ch [0] = CLAMP (col->ch [0], 0, 255);
     col->ch [1] = CLAMP (col->ch [1], 0, 255);
     col->ch [2] = CLAMP (col->ch [2], 0, 255);
-}
-
-/* See description of adjust_levels_rgb () */
-static void
-adjust_levels_din99d (ChafaCanvas *canvas)
-{
-    ChafaPixel *p0, *p1;
-    gint64 accum = 0;
-    gint chadd;
-
-    p0 = canvas->pixels;
-    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
-
-    for (p0 = canvas->pixels; p0 < p1; p0++)
-    {
-        accum += p0->col.ch [0];
-        accum += p0->col.ch [1];
-    }
-
-    accum /= (canvas->width_pixels * canvas->height_pixels * 2);
-    chadd = 128 - accum;
-    chadd = CLAMP (chadd, -100, 100);
-
-    for (p0 = canvas->pixels; p0 < p1; p0++)
-    {
-        p0->col.ch [0] += chadd;
-        p0->col.ch [0] = CLAMP (p0->col.ch [0], 0, 255);
-        p0->col.ch [1] += chadd;
-        p0->col.ch [1] = CLAMP (p0->col.ch [1], 0, 255);
-    }
 }
 
 static void
