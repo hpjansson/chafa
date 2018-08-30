@@ -586,13 +586,20 @@ apply_fill (ChafaCanvas *canvas, const ChafaPixel *block, ChafaCanvasCell *cell)
     gint i, best_i = 0;
     gint error, best_error = G_MAXINT;
 
-    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR
-        || canvas->config.fill_symbol_map.n_symbols == 0)
+    if (canvas->config.fill_symbol_map.n_symbols == 0)
         return;
 
     calc_mean_color (block, &mean);
 
-    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
+    {
+        cell->bg_color = cell->fg_color = chafa_pack_color (&mean);
+        chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map, 0,
+                                               FALSE,  /* Consider inverted? */
+                                               &sym_cand, &n_sym_cands);
+        goto done;
+    }
+    else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
     {
         chafa_pick_color_256 (&mean, canvas->config.color_space, &ccand);
     }
@@ -649,8 +656,6 @@ apply_fill (ChafaCanvas *canvas, const ChafaPixel *block, ChafaCanvasCell *cell)
                                            ? FALSE : TRUE,  /* Consider inverted? */
                                            &sym_cand, &n_sym_cands);
 
-    cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
-
     /* If we end up with a featureless symbol (space or fill), make
      * FG color equal to BG. */
     if (best_i == 0)
@@ -668,6 +673,9 @@ apply_fill (ChafaCanvas *canvas, const ChafaPixel *block, ChafaCanvasCell *cell)
         cell->fg_color = ccand.index [1];
         cell->bg_color = ccand.index [0];
     }
+
+done:
+    cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
 }
 
 static void
@@ -686,6 +694,9 @@ update_cells_row (ChafaCanvas *canvas, gint row)
         gunichar sym = 0;
         ChafaColorCandidates ccand;
         ChafaColor fg_col, bg_col;
+
+        memset (cell, 0, sizeof (*cell));
+        cell->c = ' ';
 
         fetch_canvas_pixel_block (canvas, cx, cy, block);
 
