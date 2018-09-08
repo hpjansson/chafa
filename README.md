@@ -13,7 +13,20 @@ optimal output.
 The core functionality is provided by a C library with a public,
 well-documented API.
 
-## Building from git
+## Installing with Package manager
+
+### Debian testing/unstable
+
+chafa has been packaged for Debian. Issue the following command to install:
+
+```
+$ sudo apt install chafa
+```
+
+For supported Debian releases please lookup the
+[package status page](https://tracker.debian.org/pkg/chafa).
+
+## Installing from git
 
 ```
 ./autogen.sh
