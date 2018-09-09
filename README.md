@@ -15,6 +15,14 @@ well-documented API.
 
 ## Installing with Package manager
 
+### Arch Linux
+
+chafa has been added to the [community] repository. Use pacman to install:
+
+```
+$ sudo pacman -S chafa
+```
+
 ### Debian testing/unstable
 
 chafa has been packaged for Debian. Issue the following command to install:
