@@ -277,12 +277,29 @@ case "$host" in
     ;;
 esac
 
+dnl --- ImageMagick checks ---
+
+dnl ImageMagick 6 needs #include <wand/MagickWand.h>
+dnl ImageMagick 7 needs #include <MagickWand/MagickWand.h>
+
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
+AC_CHECK_HEADERS([wand/MagickWand.h])
+AC_CHECK_HEADERS([MagickWand/MagickWand.h])
+CPPFLAGS=$SAVED_CPPFLAGS
+
 AC_MSG_CHECKING(for 4-arg MagickResizeImage)
 SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <wand/MagickWand.h>]], [[MagickResizeImage (0, 0, 0, 0);]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#ifdef HAVE_WAND_MAGICKWAND_H
+# include <wand/MagickWand.h>
+#else
+# include <MagickWand/MagickWand.h>
+#endif
+]], [[MagickResizeImage (0, 0, 0, 0);]])],
 	AC_DEFINE([HAVE_MAGICK_RESIZE_IMAGE_4], [1], [Define if MagickResizeImage takes 4 arguments.])
         AC_MSG_RESULT(yes),
         AC_MSG_RESULT(no))
@@ -294,7 +311,13 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <wand/MagickWand.h>]], [[MagickResizeImage (0, 0, 0, 0, 1.0);]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#ifdef HAVE_WAND_MAGICKWAND_H
+# include <wand/MagickWand.h>
+#else
+# include <MagickWand/MagickWand.h>
+#endif
+]], [[MagickResizeImage (0, 0, 0, 0, 1.0);]])],
 	AC_DEFINE([HAVE_MAGICK_RESIZE_IMAGE_5], [1], [Define if MagickResizeImage takes 5 arguments.])
         AC_MSG_RESULT(yes),
         AC_MSG_RESULT(no))
@@ -306,7 +329,13 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <wand/MagickWand.h>]], [[MagickAutoOrientImage (0);]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#ifdef HAVE_WAND_MAGICKWAND_H
+# include <wand/MagickWand.h>
+#else
+# include <MagickWand/MagickWand.h>
+#endif
+]], [[MagickAutoOrientImage (0);]])],
 	AC_DEFINE([HAVE_MAGICK_AUTO_ORIENT_IMAGE], [1], [Define if we have MagickAutoOrientImage.])
         AC_MSG_RESULT(yes),
         AC_MSG_RESULT(no))

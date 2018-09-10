@@ -27,7 +27,13 @@
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
 #include <termios.h>  /* tcgetattr, tcsetattr */
-#include <wand/MagickWand.h>
+
+#ifdef HAVE_WAND_MAGICKWAND_H
+# include <wand/MagickWand.h>
+#else /* HAVE_MAGICKWAND_MAGICKWAND_H */
+# include <MagickWand/MagickWand.h>
+#endif
+
 #include "chafa/chafa.h"
 #include "chafa/named-colors.h"
 
