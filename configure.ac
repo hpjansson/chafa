@@ -68,7 +68,7 @@ AC_ARG_WITH(tools,
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" = "yes"])
 AS_IF([test "$with_tools" != no], [
   PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
-    [AC_MSG_ERROR([You need ImageMagick-devel to build command-line tools, or pass --without-tools to build without.])])])
+    [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on debian) to build command-line tools, or pass --without-tools to build without.])])])
 
 # Used by gtk-doc's fixxref.
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
