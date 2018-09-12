@@ -34,6 +34,14 @@ $ sudo apt install chafa
 For supported Debian releases please lookup the
 [package status page](https://tracker.debian.org/pkg/chafa).
 
+### Fedora
+
+chafa has been packaged for Fedora. Issue the following command to install:
+
+```
+$ sudo dnf install chafa
+```
+
 ## Installing from git
 
 ```
