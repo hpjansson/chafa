@@ -1759,6 +1759,84 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
     },
     {
+        /* Black Circle */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25cf,
+        "        "
+        "  XXXX  "
+        " XXXXXX "
+        " XXXXXX "
+        " XXXXXX "
+        "  XXXX  "
+        "        "
+        "        "
+    },
+    {
+        /* Black Lower Right Triangle */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25e2,
+        "       X"
+        "      XX"
+        "     XXX"
+        "    XXXX"
+        "   XXXXX"
+        "  XXXXXX"
+        " XXXXXXX"
+        "XXXXXXXX"
+    },
+    {
+        /* Black Lower Left Triangle */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25e3,
+        "X       "
+        "XX      "
+        "XXX     "
+        "XXXX    "
+        "XXXXX   "
+        "XXXXXX  "
+        "XXXXXXX "
+        "XXXXXXXX"
+    },
+    {
+        /* Black Upper Left Triangle */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25e4,
+        "XXXXXXXX"
+        "XXXXXXX "
+        "XXXXXX  "
+        "XXXXX   "
+        "XXXX    "
+        "XXX     "
+        "XX      "
+        "X       "
+    },
+    {
+        /* Black Upper Right Triangle */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25e5,
+        "XXXXXXXX"
+        " XXXXXXX"
+        "  XXXXXX"
+        "   XXXXX"
+        "    XXXX"
+        "     XXX"
+        "      XX"
+        "       X"
+    },
+    {
+        /* Black Medium Square */
+        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        0x25fc,
+        "        "
+        "        "
+        "  XXXX  "
+        "  XXXX  "
+        "  XXXX  "
+        "  XXXX  "
+        "        "
+        "        "
+    },
+    {
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
         "        "
