@@ -2043,7 +2043,7 @@ init_symbol_array (const ChafaSymbolDef *defs)
     gint i;
     ChafaSymbol *syms;
 
-    syms = g_new0 (ChafaSymbol, 512);
+    syms = g_new0 (ChafaSymbol, CHAFA_N_SYMBOLS_MAX);
 
     for (i = 0; defs [i].c; i++)
     {
