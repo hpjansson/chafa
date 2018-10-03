@@ -451,10 +451,6 @@ parse_color_str (const gchar *value, guint32 *col_out, const gchar *error_messag
                      error_message, value);
         result = FALSE;
     }
-    else
-    {
-        col = col;
-    }
 
     if (result)
         *col_out = col;
