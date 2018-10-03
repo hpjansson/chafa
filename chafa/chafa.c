@@ -436,8 +436,6 @@ parse_color_str (const gchar *value, guint32 *col_out, const gchar *error_messag
     guint32 col = 0x000000;
     gboolean result = TRUE;
 
-    /* TODO: It would be nice to support rgb.txt here */
-
     named_color = find_color_by_name (value);
     if (named_color)
     {
