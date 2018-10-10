@@ -51,7 +51,7 @@ ChafaPaletteColor;
 
 /* Character symbols and symbol classes */
 
-#define CHAFA_N_SYMBOLS_MAX 1024  /* For static temp arrays */
+#define CHAFA_N_SYMBOLS_MAX 8192  /* For static temp arrays */
 #define CHAFA_SYMBOL_N_PIXELS (CHAFA_SYMBOL_WIDTH_PIXELS * CHAFA_SYMBOL_HEIGHT_PIXELS)
 
 typedef struct
