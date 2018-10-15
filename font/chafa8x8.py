@@ -64,7 +64,7 @@ def mainCreateDataset(argv):
             image = Image.open(image)
             width, height = image.size
             for c in range(ag.Mc):
-                w = random.randrange(24, min(width, height//2, 48))
+                w = random.randrange(16, min(width, height//2, 48))
                 h = 2*w  # ratio: h/w = 2/1
                 woff = random.randrange(0, width - w)
                 hoff = random.randrange(0, height - h)
