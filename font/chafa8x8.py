@@ -81,8 +81,9 @@ def mainCreateDataset(argv):
 
 def mainClustering(argv):
     '''
-    Run K-Means algorithm on the dataset
-    (This will take some time if dataset is large enough)
+    Run K-Means algorithm on the dataset. For large-scale training,
+    MiniBatchKMeans will be much faster than KMeans.
+    (This will still take some time if dataset is large enough)
     '''
     ag = argparse.ArgumentParser()
     ag.add_argument('--dataset', type=str, default='chafa8x8.npz')
