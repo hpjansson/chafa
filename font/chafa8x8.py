@@ -64,7 +64,7 @@ def mainCreateDataset(argv):
             image = Image.open(image)
             width, height = image.size
             for c in range(ag.Mc):
-                w = random.randrange(8, min(width, height//2, 40))
+                w = random.randrange(24, min(width, height//2, 48))
                 h = 2*w  # ratio: h/w = 2/1
                 woff = random.randrange(0, width - w)
                 hoff = random.randrange(0, height - h)
@@ -88,7 +88,7 @@ def mainClustering(argv):
     ag = argparse.ArgumentParser()
     ag.add_argument('--dataset', type=str, default='chafa8x8.npz')
     ag.add_argument('--save', type=str, default='chafa8x8.raw.json')
-    ag.add_argument('-C', type=int, default=4096, help='number of clusters')
+    ag.add_argument('-C', type=int, default=5120, help='number of clusters')
     ag = ag.parse_args(argv)
 
     print(f'=> loading dataset from {ag.dataset}')
@@ -97,9 +97,9 @@ def mainClustering(argv):
     # Findout the cluster centers with KMeans
     print('=> Clustering ...')
     kmeans = MiniBatchKMeans(n_clusters=ag.C, init='k-means++',
-            init_size=37*ag.C, batch_size=ag.C,
+            init_size=37*ag.C, batch_size=8*ag.C,
             compute_labels=False, verbose=True).fit(dataset)
-    centers = (kmeans.cluster_centers_ >= 0.5).astype(np.int)
+    centers = (kmeans.cluster_centers_ >= 0.5).astype(np.uint8)
 
     # Save the result to JSON file
     centers = list(sorted([list(map(int, center)) for center in centers],
