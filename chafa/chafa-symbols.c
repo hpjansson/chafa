@@ -1775,53 +1775,53 @@ static const ChafaSymbolDef symbol_defs [] =
         /* Black Lower Right Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25e2,
-        "       X"
-        "      XX"
-        "     XXX"
-        "    XXXX"
-        "   XXXXX"
-        "  XXXXXX"
-        " XXXXXXX"
-        "XXXXXXXX"
+        "        "
+        "      X "
+        "     XX "
+        "    XXX "
+        "   XXXX "
+        "  XXXXX "
+        " XXXXXX "
+        "        "
     },
     {
         /* Black Lower Left Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25e3,
-        "X       "
-        "XX      "
-        "XXX     "
-        "XXXX    "
-        "XXXXX   "
-        "XXXXXX  "
-        "XXXXXXX "
-        "XXXXXXXX"
+        "        "
+        " X      "
+        " XX     "
+        " XXX    "
+        " XXXX   "
+        " XXXXX  "
+        " XXXXXX "
+        "        "
     },
     {
         /* Black Upper Left Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25e4,
-        "XXXXXXXX"
-        "XXXXXXX "
-        "XXXXXX  "
-        "XXXXX   "
-        "XXXX    "
-        "XXX     "
-        "XX      "
-        "X       "
+        "        "
+        " XXXXXX "
+        " XXXXX  "
+        " XXXX   "
+        " XXX    "
+        " XX     "
+        " X      "
+        "        "
     },
     {
         /* Black Upper Right Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25e5,
-        "XXXXXXXX"
-        " XXXXXXX"
-        "  XXXXXX"
-        "   XXXXX"
-        "    XXXX"
-        "     XXX"
-        "      XX"
-        "       X"
+        "        "
+        " XXXXXX "
+        "  XXXXX "
+        "   XXXX "
+        "    XXX "
+        "     XX "
+        "      X "
+        "        "
     },
     {
         /* Black Medium Square */
