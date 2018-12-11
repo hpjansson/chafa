@@ -1,6 +1,57 @@
 Chafa releases
 ==============
 
+1.0.0 (not yet released)
+------------------------
+
+This release adds features, greatly improves performance and fixes
+several bugs. Programs written for the command line and libchafa
+interfaces in this release will be supported by future versions in
+the 1.y.z series without the need for modification or recompilation.
+
+* Added ability to specify "fill" symbols to use as halftone for better
+  color approximation. This can be used to augment the regular symbol
+  selection or to replace it (with --symbols none) for a different,
+  purely intensity-based effect.
+
+* Improved preprocessing in 2-color and 16-color modes. This is optional
+  (default: on) and consists of a contrast boost and, for the 16-color
+  mode, an additional saturation boost. The new implementation lives in
+  libchafa and does not rely on ImageMagick. It is multithreaded, and due
+  to its specialized nature, much faster.
+
+* Added --watch option to continuously monitor a file.
+
+* Added more symbols:
+  - Most of the ASCII range.
+  - Braille range (github#2, thanks to Adam Borowski).
+  - Miscellaneous math and scanline symbols.
+  - More geometric symbols (black circle, triangles) (Mo Zhou).
+
+* Throughput improvements:
+  - Fast symbol candidate set reduction by median cut.
+  - Parallel processing with threads.
+  - Prescaling using bilinear interpolation instead of lanczos.
+
+* Installation instructions:
+  - New: Arch (github#12, Felix Yan).
+  - New: Debian testing/unstable (github#9, Mo Zhou).
+  - New: Fedora (github#14, Ricardo Arguello).
+  - Mention missing dependency for Debian (github#13, @medusacle).
+
+* Bug fixes:
+  github#1   -c none produces pointless \e[0m after every line (found by
+             Adam Borowski).
+  github#3   Compile error (found by Lajos Papp).
+  github#4   AM_PROG_LIBTOOL is obsolete, replace it with LT_INIT
+             (Robert-André Mauchin).
+  github#5   Port chafa to i386 architecture (Mo Zhou).
+  github#7   Chafa should not return an error when being asked for
+             --version (Mo Zhou).
+  github#10  Fix detection of MagickWand methods (Felix Yan).
+  github#11  ImageMagick 7 support (found by Felix Yan).
+  github#21  chafa.c:547: pointless assignment (found by @dcb314).
+
 0.9.0 (2018-04-24)
 ------------------
 
