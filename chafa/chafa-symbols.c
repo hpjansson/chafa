@@ -36,7 +36,7 @@ static gboolean symbols_initialized;
 
 static const ChafaSymbolDef symbol_defs [] =
 {
-#include "chafa-symbols-ascii.c"
+#include "chafa-symbols-ascii.h"
     {
         /* Horizontal Scan Line 1 */
         CHAFA_SYMBOL_TAG_TECHNICAL,

@@ -15,6 +15,7 @@ libchafa_la_SOURCES = \
 	chafa-private.h \
 	chafa-symbol-map.c \
 	chafa-symbols.c \
+	chafa-symbols-ascii.h \
 	chafa-util.c
 
 chafaincludedir=$(includedir)/chafa
