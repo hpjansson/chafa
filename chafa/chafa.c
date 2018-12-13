@@ -237,7 +237,7 @@ print_summary (void)
 
     "  Accepted classes for --symbols and --fill are [all, none, space, solid,\n"
     "  stipple, block, border, diagonal, dot, quad, half, hhalf, vhalf, inverted,\n"
-    "  braille, technical, geometric, ascii]. Some symbols belong to multiple\n"
+    "  braille, technical, geometric, ascii, extra]. Some symbols belong to multiple\n"
     "  classes, e.g. diagonals are also borders. You can specify a list of classes\n"
     "  separated by commas, or prefix them with + and - to add or remove symbols\n"
     "  relative to the existing set. The ordering is significant.\n\n"
@@ -648,6 +648,7 @@ parse_options (int *argc, char **argv [])
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_STIPPLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BRAILLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ASCII);
+    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_EXTRA);
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
 
     options.fill_symbol_map = chafa_symbol_map_new ();
