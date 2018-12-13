@@ -1,1 +1,17 @@
+Chafa is principally written and maintained by Hans Petter Jansson
+<hpj@copyleft.no>. Feel free to contact him with any questions and
+comments.
+
+There is a growing list of contributors; these can be found in the
+git log. For a complete list, you could try:
+
+git log --pretty="format:%an <%ae>" | sort -f | uniq
+
+Per 2018-12-13, this yields the following (sans duplicates):
+
+alkahest <cyphergothic@protonmail.com>
+Felix Yan <felixonmars@archlinux.org>
 Hans Petter Jansson <hpj@copyleft.no>
+Mo Zhou <cdluminate@gmail.com>
+Ricardo Arguello <ricardo.arguello@gmail.com>
+Robert-André Mauchin <zebob.m@gmail.com>
