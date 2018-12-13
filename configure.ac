@@ -127,6 +127,7 @@ AM_CONDITIONAL(ENABLE_MAN, test "$enable_man" != no)
 
 AC_MSG_CHECKING([whether to generate man pages])
 AS_IF([ test "$enable_man" != no ], [
+  enable_man=yes
   AC_MSG_RESULT([yes])
 ], [
   AC_MSG_RESULT([no])
@@ -365,3 +366,15 @@ AC_OUTPUT(Makefile
           chafa.pc
           docs/Makefile
           docs/version.xml)
+
+echo >&AS_MESSAGE_FD
+echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
+echo >&AS_MESSAGE_FD "Build man page .............. $enable_man"
+echo >&AS_MESSAGE_FD "Rebuild API documentation ... $enable_gtk_doc (--enable-gtk-doc)"
+echo >&AS_MESSAGE_FD "Support MMX ................. $ac_cv_mmx_intrinsics"
+echo >&AS_MESSAGE_FD "Support SSE 4.1 ............. $ac_cv_sse41_intrinsics"
+echo >&AS_MESSAGE_FD "Support popcount32 .......... $ac_cv_popcnt32_intrinsics"
+echo >&AS_MESSAGE_FD "Support popcount64 .......... $ac_cv_popcnt64_intrinsics"
+echo >&AS_MESSAGE_FD "Install prefix .............. $prefix"
+echo >&AS_MESSAGE_FD
+echo >&AS_MESSAGE_FD "You can now type \"gmake\" or \"make\" to build the project."
