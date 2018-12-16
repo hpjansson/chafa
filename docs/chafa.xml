@@ -224,8 +224,8 @@ and - to add or remove symbols relative to the existing set. The ordering is
 significant.
 </para>
 <para>
-The default symbol set is all-stipple-braille-ascii+space-inverted for all
-modes except for "none", which uses all-stipple-braille-ascii+space.
+The default symbol set is all-stipple-braille-ascii+space-extra-inverted for all
+modes except for "none", which uses all-stipple-braille-ascii+space-extra.
 </para>
 </refsect1>
 
