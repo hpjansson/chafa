@@ -62,7 +62,10 @@ Major features
 Optimization
 ------------
 
+- Avoid ImageMagick for common formats like GIF, PNG, JPEG and directly use
+  more efficient decoders instead. Esp. for progressive GIF decoding.
 - Speed up alpha transparency code path.
+- Speed up 240/256 indexed color mapping.
 - Preload next image/frame in delay phase.
 - Reduce peak memory usage by coalescing fewer images at once?
 - Don't calculate error if we're only using a single symbol (e.g. vhalf).
@@ -87,6 +90,8 @@ The Fine Material
   - gnome-shell in terminal
     - XDG_SESSION_TYPE=x11 DISPLAY=:99 gnome-shell
     - Run as different user.
+  - Using (unreleased) ffmpeg driver:
+    - ./ffmpeg -i movie.mkv -pix_fmt rgba -f chafa -color 16 -symbols vhalf,space -fill ascii -
 
 - Better stylesheets for man page, library reference manual.
   - Maybe just redo the web site with Jekyll or something.
