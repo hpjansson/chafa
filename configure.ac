@@ -370,7 +370,7 @@ AC_OUTPUT(Makefile
 echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
 echo >&AS_MESSAGE_FD "Build man page .............. $enable_man"
-echo >&AS_MESSAGE_FD "Rebuild API documentation ... $enable_gtk_doc (--enable-gtk-doc)"
+echo >&AS_MESSAGE_FD "Rebuild API documentation ... ${enable_gtk_doc:-no} (--enable-gtk-doc)"
 echo >&AS_MESSAGE_FD "Support MMX ................. $ac_cv_mmx_intrinsics"
 echo >&AS_MESSAGE_FD "Support SSE 4.1 ............. $ac_cv_sse41_intrinsics"
 echo >&AS_MESSAGE_FD "Support popcount32 .......... $ac_cv_popcnt32_intrinsics"
