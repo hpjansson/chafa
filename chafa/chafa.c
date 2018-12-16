@@ -242,18 +242,18 @@ print_summary (void)
     "  separated by commas, or prefix them with + and - to add or remove symbols\n"
     "  relative to the existing set. The ordering is significant.\n\n"
 
-    "  The default symbol set is all-stipple-braille-ascii+space-inverted for all\n"
-    "  modes except for \"none\", which uses all-stipple-braille-ascii+space.\n\n"
+    "  The default symbol set is all-stipple-braille-ascii+space-extra-inverted for\n"
+    "  all modes except \"none\", which uses all-stipple-braille-ascii+space-extra.\n\n"
 
     "Examples:\n"
 
-    "  chafa -c 16 --color-space din99d --symbols -dot-stipple in.jpg\n"
-    "    # Generate 16-color output with perceptual color picking and avoid using\n"
-    "    # dot and stipple symbols.\n\n"
+    "  Generate 16-color output with perceptual color picking and avoid using\n"
+    "  dot and stipple symbols:\n\n"
+    "  $ chafa -c 16 --color-space din99d --symbols -dot-stipple in.jpg\n\n"
 
-    "  chafa -c none --symbols block+border-solid in.png\n"
-    "    # Generate uncolored output using block and border symbols, but avoid the\n"
-    "    # solid block symbol.\n";
+    "  Generate uncolored output using block and border symbols, but avoid the\n"
+    "  solid block symbol:\n\n"
+    "  $ chafa -c none --symbols block+border-solid in.png\n";
 
     g_printerr ("Usage:\n  %s [OPTION...] [FILE...]\n\n%s\n",
                 options.executable_name,
