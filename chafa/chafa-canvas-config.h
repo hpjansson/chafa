@@ -90,7 +90,7 @@ void chafa_canvas_config_set_symbol_map (ChafaCanvasConfig *config, const ChafaS
 CHAFA_AVAILABLE_IN_ALL
 const ChafaSymbolMap *chafa_canvas_config_peek_fill_symbol_map (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
-void chafa_canvas_config_set_fill_symbol_map (ChafaCanvasConfig *config, const ChafaSymbolMap *symbol_map);
+void chafa_canvas_config_set_fill_symbol_map (ChafaCanvasConfig *config, const ChafaSymbolMap *fill_symbol_map);
 
 CHAFA_AVAILABLE_IN_ALL
 gfloat chafa_canvas_config_get_transparency_threshold (const ChafaCanvasConfig *config);
