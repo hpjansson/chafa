@@ -2,29 +2,53 @@ Chafa
 =====
 
 Chafa is a command-line utility that converts all kinds of images, including
-animated image formats like GIFs, into ANSI/Unicode character output that can
-be displayed in a terminal.
+animated GIFs, into ANSI/Unicode character output that can be displayed in a
+terminal.
 
 It is highly configurable, with support for alpha transparency and multiple
-color modes and color spaces, combining a range of Unicode characters for
-optimal output.
+color modes and color spaces, combining selectable ranges of Unicode
+characters to produce the desired output.
 
 The core functionality is provided by a C library with a public,
 well-documented API.
 
-Building from tarball
----------------------
+Installing from tarball
+-----------------------
 
-  ./configure
-  make
-  sudo make install
+You will need GCC, make and the GLib development package installed to
+compile Chafa from a release tarball. If you want to build the
+command-line tool `chafa` and not just the library, you will
+additionally need the ImageMagick development packages.
 
-Building from git
------------------
+Prebuilt documentation is included in the release tarball, and you do not
+need gtk-doc unless you want to make changes/rebuild it.
 
-  ./autogen.sh
-  make
-  sudo make install
+After unpacking, cd to the toplevel directory and issue the following
+shell commands:
+
+$ ./configure
+$ make
+$ sudo make install
+
+Installing from git repository
+------------------------------
+
+You will need GCC, make, Autoconf, Automake, Libtool and the GLib
+development package installed to compile Chafa from its git repository. If
+you want to build the command-line tool `chafa` and not just the library,
+you will additionally need the ImageMagick development packages.
+
+If you want to build documentation, you will also need gtk-doc.
+
+Start by cloning the repository:
+
+$ git clone https://github.com/hpjansson/chafa.git
+
+Then cd to the toplevel directory and issue the following shell commands:
+
+$ ./autogen.sh
+$ make
+$ sudo make install
 
 Further reading
 ---------------
@@ -32,4 +56,3 @@ Further reading
 For tarball releases, online documentation, etc. see the official web pages:
 
 https://hpjansson.org/chafa/
-
