@@ -12,7 +12,7 @@
     <title>Chafa Reference Manual</title>
     <releaseinfo>
       For Chafa version &version;.
-      The latest version of this documentation can be found on-line at
+      The latest version of this documentation can be found online at
       <ulink role="online-location" url="https://hpjansson.org/&package_name;/ref/index.html">https://hpjansson.org/&package_name;/ref/</ulink>.
     </releaseinfo>
   </bookinfo>
