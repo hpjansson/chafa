@@ -93,5 +93,5 @@ For tarball releases, additional documentation, etc. see [the official
 web pages](https://hpjansson.org/chafa/).
 
 <p align="center">
-<img src="https://hpjansson.org/chafa/img/example-1.gif" />
+<img src="https://hpjansson.org/chafa/img/example-2.gif" />
 </p>
