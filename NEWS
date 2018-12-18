@@ -1,6 +1,13 @@
 Chafa releases
 ==============
 
+1.0.1 (2018-12-18)
+------------------
+
+* Bug fixes:
+  [unfiled]  Bad geometry calculation when specifying one dimension
+             and omitting the other.
+
 1.0.0 (2018-12-16)
 ------------------
 
