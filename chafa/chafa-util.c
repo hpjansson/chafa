@@ -49,7 +49,9 @@
  * @dest_width_inout and @dest_height_inout must point to integers
  * containing the maximum dimensions of the canvas in character cells.
  * These will be replaced by the calculated values, which may be zero if
- * one of the input dimensions is zero.
+ * one of the input dimensions is zero. If one or both of the input
+ * parameters is negative, they will be treated as unspecified and
+ * calculated based on the remaining parameters and aspect ratio.
  *
  * @font_ratio is the font's width divided by its height. 0.5 is a typical
  * value.
@@ -67,17 +69,42 @@ chafa_calc_canvas_geometry (gint src_width,
 
     g_return_if_fail (src_width >= 0);
     g_return_if_fail (src_height >= 0);
+    g_return_if_fail (font_ratio > 0.0);
 
     if (dest_width_inout)
         dest_width = *dest_width_inout;
     if (dest_height_inout)
         dest_height = *dest_height_inout;
 
-    if (src_width < 1 || src_height < 1
-        || dest_width < 1 || dest_height < 1)
+    /* If any dimension is explicitly set to zero, width and height will
+     * both be zero. */
+    if (src_width == 0 || src_height == 0
+        || dest_width == 0 || dest_height == 0)
     {
-        *dest_width_inout = 0;
-        *dest_height_inout = 0;
+        if (dest_width_inout)
+            *dest_width_inout = 0;
+        if (dest_height_inout)
+            *dest_height_inout = 0;
+        return;
+    }
+
+    /* If both output dimensions are unspecified, make them 1/8 of their
+     * corresponding input dimensions, rounding up and accounting
+     * for font ratio. Both dimensions will be >= 1. */
+    if (dest_width < 0 && dest_height < 0)
+    {
+        if (dest_width_inout)
+        {
+            *dest_width_inout = (src_width + 7 / 8);
+            *dest_width_inout = MAX (*dest_width_inout, 1);
+        }
+
+        if (dest_height_inout)
+        {
+            *dest_height_inout = (src_height + 7 / 8) * font_ratio + 0.5;
+            *dest_height_inout = MAX (*dest_height_inout, 1);
+        }
+
         return;
     }
 
