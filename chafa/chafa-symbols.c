@@ -1941,6 +1941,19 @@ static const ChafaSymbolDef symbol_defs [] =
         "XX XXX X"
     },
     {
+        /* Greek Capital Letter Xi */
+        CHAFA_SYMBOL_TAG_EXTRA,
+        0x039e,
+        "        "
+        " XXXXXX "
+        "        "
+        "  XXXX  "
+        "        "
+        " XXXXXX "
+        "        "
+        "        "
+    },
+    {
         0, 0, ""
     }
 };
