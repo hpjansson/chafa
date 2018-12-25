@@ -175,14 +175,10 @@ print_version (void)
     gchar *builtin_features_str = chafa_describe_features (chafa_get_builtin_features ());
     gchar *supported_features_str = chafa_describe_features (chafa_get_supported_features ());
 
-    g_printerr ("Chafa version %s%s%s%s%s%s%s\n\n%s\n",
+    g_printerr ("Chafa version %s\n\nFeatures: %s\nApplying: %s\n\n%s\n",
                 CHAFA_VERSION,
-                chafa_get_builtin_features () ? " -- built with [" : " -- no optional features",
-                builtin_features_str,
-                chafa_get_builtin_features () ? "]" : "",
-                chafa_get_supported_features () ? " -- using [" : " -- none used",
-                supported_features_str,
-                chafa_get_supported_features () ? "]" : "",
+                chafa_get_builtin_features () ? builtin_features_str : "none",
+                chafa_get_supported_features () ? supported_features_str : "none",
                 copyright_notice);
 
     g_free (builtin_features_str);
