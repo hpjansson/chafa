@@ -1,0 +1,14 @@
+Notes on libnsgif as bundled with Chafa
+=======================================
+
+The libnsgif bundled with Chafa is currently based on version 0.2.1. The
+original source is here:
+
+http://www.netsurf-browser.org/projects/libnsgif/
+
+It has been slightly adapted from the original to make it fit into the Chafa
+build. It may have further modifications to make it more convenient to use
+in this context.
+
+It is my intention to submit any generally useful enhancements made for
+potential inclusion upstream.

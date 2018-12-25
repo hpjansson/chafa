@@ -164,7 +164,8 @@ collect_variable_arguments (int *argc, char **argv [], gint first_arg)
 }
 
 static const gchar copyright_notice [] =
-    "Copyright (C) 2018 Hans Petter Jansson\n"
+    "Copyright (C) 2018 Hans Petter Jansson et al.\n"
+    "Incl. libnsgif copyright (C) 2004 Richard Wilson, copyright (C) 2008 Sean Fox\n\n"
     "This is free software; see the source for copying conditions.  There is NO\n"
     "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
 

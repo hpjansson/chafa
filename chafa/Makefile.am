@@ -1,3 +1,5 @@
+SUBDIRS = libnsgif
+
 ## --- Library ---
 
 lib_LTLIBRARIES = libchafa.la
@@ -65,7 +67,7 @@ chafa_SOURCES = \
 
 chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
 chafa_LDFLAGS = $(CHAFA_LDFLAGS)
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) libchafa.la -lm
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) libchafa.la libnsgif/libnsgif.la -lm
 
 endif
 

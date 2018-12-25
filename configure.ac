@@ -363,6 +363,7 @@ dnl --- Output ---
 
 AC_OUTPUT(Makefile
           chafa/Makefile
+          chafa/libnsgif/Makefile
           chafa.pc
           docs/Makefile
           docs/version.xml)
