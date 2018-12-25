@@ -62,6 +62,8 @@ bin_PROGRAMS = \
 
 chafa_SOURCES = \
 	chafa.c \
+	gif-loader.c \
+	gif-loader.h \
 	named-colors.c \
 	named-colors.h
 

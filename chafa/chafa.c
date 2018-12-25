@@ -23,7 +23,9 @@
 #include <string.h>  /* strspn, strlen, strcmp, strncmp, memset */
 #include <locale.h>  /* setlocale */
 #include <sys/ioctl.h>  /* ioctl */
+#include <sys/types.h>  /* open */
 #include <sys/stat.h>  /* stat */
+#include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
 #include <termios.h>  /* tcgetattr, tcsetattr */
@@ -35,6 +37,7 @@
 #endif
 
 #include "chafa/chafa.h"
+#include "chafa/gif-loader.h"
 #include "chafa/named-colors.h"
 
 typedef struct
@@ -778,7 +781,7 @@ auto_orient_image (MagickWand *image)
 }
 
 static GString *
-build_string (guint8 *pixels,
+build_string (const guint8 *pixels,
               gint src_width, gint src_height,
               gint dest_width, gint dest_height)
 {
@@ -909,6 +912,32 @@ group_build (Group *group, MagickWand *wand)
 }
 
 static void
+group_build_gif (Group *group, GifLoader *loader)
+{
+    memset (group, 0, sizeof (*group));
+
+    for (gif_loader_first_frame (loader); !interrupted_by_user; )
+    {
+        GroupFrame *frame;
+
+        frame = g_new0 (GroupFrame, 1);
+
+        frame->dest_width = -1;
+        frame->dest_height = -1;
+        frame->delay_ms = -1;
+
+        /* String representation is built on demand and cached */
+
+        group->frames = g_list_prepend (group->frames, frame);
+
+        if (!gif_loader_next_frame (loader))
+            break;
+    }
+
+    group->frames = g_list_reverse (group->frames);
+}
+
+static void
 group_clear (Group *group)
 {
     GList *l;
@@ -940,7 +969,7 @@ interruptible_usleep (gint us)
 /* FIXME: This function is ripe for refactoring, probably to something with
  * a heap-allocated context. */
 static gboolean
-run (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
+run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
     MagickWand *wand = NULL;
     guint8 *pixels;
@@ -1090,6 +1119,152 @@ out:
     group_clear (&group);
     g_timer_destroy (timer);
 
+    return is_animation;
+}
+
+static gboolean
+run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean *success_out)
+{
+    GifLoader *loader = NULL;
+    const guint8 *pixels;
+    gboolean success = FALSE;
+    gboolean is_animation = FALSE;
+    gdouble anim_elapsed_s = 0.0;
+    GTimer *timer;
+    Group group = { NULL };
+    GList *l;
+    gint loop_n = 0;
+    gint fd = -1;
+
+    timer = g_timer_new ();
+
+    fd = open (filename, O_RDONLY);
+    if (fd < 0)
+        goto out;
+
+    loader = gif_loader_new_from_fd (fd);
+    if (!loader)
+        goto out;
+
+    success = TRUE;
+
+    if (interrupted_by_user)
+        goto out;
+
+    is_animation = gif_loader_get_n_frames (loader) > 1 ? TRUE : FALSE;
+
+    group_build_gif (&group, loader);
+
+    do
+    {
+        /* Outer loop repeats animation if desired */
+
+        gif_loader_first_frame (loader);
+
+        for (l = group.frames;
+             l && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
+             l = g_list_next (l))
+        {
+            GroupFrame *frame = l->data;
+            gint elapsed_ms, remain_ms;
+
+            g_timer_start (timer);
+
+            if (!frame->gs)
+            {
+                gint src_width, src_height;
+
+                pixels = gif_loader_get_frame_data (loader, &frame->delay_ms);
+                if (!pixels)
+                    goto out;
+
+                frame->delay_ms *= 10;
+
+                gif_loader_get_geometry (loader, &src_width, &src_height);
+                frame->dest_width = options.width;
+                frame->dest_height = options.height;
+                chafa_calc_canvas_geometry (src_width,
+                                            src_height,
+                                            &frame->dest_width,
+                                            &frame->dest_height,
+                                            options.font_ratio,
+                                            options.zoom,
+                                            options.stretch);
+
+                frame->gs = build_string (pixels,
+                                          src_width, src_height,
+                                          frame->dest_width, frame->dest_height);
+            }
+
+            if (options.clear)
+            {
+                if (is_first_frame)
+                {
+                    /* Clear */
+                    printf ("\x1b[2J");
+                }
+
+                /* Home cursor between frames */
+                printf ("\x1b[0f");
+            }
+            else if (!is_first_frame)
+            {
+                /* Cursor up N steps */
+                printf ("\x1b[%dA", frame->dest_height);
+            }
+
+            /* Put a blank line between files in non-clear mode */
+            if (is_first_frame && !options.clear && !is_first_file)
+                fputc ('\n', stdout);
+
+            fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
+            fputc ('\n', stdout);
+            fflush (stdout);
+
+            if (is_animation)
+            {
+                /* Account for time spent converting and printing frame */
+                elapsed_ms = g_timer_elapsed (timer, NULL) * 1000.0;
+                remain_ms = frame->delay_ms - elapsed_ms;
+                remain_ms = MAX (remain_ms, 0);
+                interruptible_usleep (remain_ms * 1000);
+
+                anim_elapsed_s += MAX (elapsed_ms, frame->delay_ms) / 1000.0;
+            }
+
+            is_first_frame = FALSE;
+            gif_loader_next_frame (loader);
+        }
+
+        loop_n++;
+    }
+    while (options.is_interactive && is_animation && !interrupted_by_user
+           && !options.watch && anim_elapsed_s < options.file_duration_s);
+
+out:
+    if (loader)
+        gif_loader_destroy (loader);
+    group_clear (&group);
+    if (fd >= 0)
+        close (fd);
+    g_timer_destroy (timer);
+
+    if (success_out)
+        *success_out = success;
+    return is_animation;
+}
+
+static gboolean
+run (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
+{
+    gboolean is_animation;
+    gboolean success = FALSE;
+
+    is_animation = run_gif (filename, is_first_file, is_first_frame, &success);
+    if (success)
+        return is_animation;
+
+    is_animation = run_magickwand (filename, is_first_file, is_first_frame, quiet);
     return is_animation;
 }
 
