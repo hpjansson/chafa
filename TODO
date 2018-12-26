@@ -62,8 +62,8 @@ Major features
 Optimization
 ------------
 
-- Avoid ImageMagick for common formats like GIF, PNG, JPEG and directly use
-  more efficient decoders instead. Esp. for progressive GIF decoding.
+- Avoid ImageMagick for remaining common formats like PNG, JPEG and directly
+  use more efficient decoders instead.
 - Speed up alpha transparency code path.
 - Speed up 240/256 indexed color mapping.
 - Preload next image/frame in delay phase.
