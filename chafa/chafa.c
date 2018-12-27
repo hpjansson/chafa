@@ -1179,6 +1179,8 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
                     goto out;
 
                 frame->delay_ms *= 10;
+                if (frame->delay_ms == 0)
+                    frame->delay_ms = 50;
 
                 gif_loader_get_geometry (loader, &src_width, &src_height);
                 frame->dest_width = options.width;
