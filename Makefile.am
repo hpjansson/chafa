@@ -1,4 +1,4 @@
-SUBDIRS = chafa docs
+SUBDIRS = chafa docs tools
 
 EXTRA_DIST = \
 	README.md \

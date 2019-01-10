@@ -366,7 +366,9 @@ AC_OUTPUT(Makefile
           chafa/libnsgif/Makefile
           chafa.pc
           docs/Makefile
-          docs/version.xml)
+          docs/version.xml
+          tools/Makefile
+          tools/fontgen/Makefile)
 
 echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
