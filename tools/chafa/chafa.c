@@ -36,9 +36,9 @@
 # include <MagickWand/MagickWand.h>
 #endif
 
-#include "chafa/chafa.h"
-#include "chafa/gif-loader.h"
-#include "chafa/named-colors.h"
+#include <chafa.h>
+#include "gif-loader.h"
+#include "named-colors.h"
 
 typedef struct
 {

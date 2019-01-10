@@ -1,4 +1,4 @@
-SUBDIRS = chafa docs tools
+SUBDIRS = chafa docs libnsgif tools
 
 EXTRA_DIST = \
 	README.md \

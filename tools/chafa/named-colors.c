@@ -19,7 +19,8 @@
 
 #include "config.h"
 #include <string.h>  /* strlen */
-#include "chafa/named-colors.h"
+
+#include "named-colors.h"
 
 /* These colors are from X.Org's rgb.txt, filtered to remove duplicate
  * entries with spaces in them. We handle names with spaces in the lookup

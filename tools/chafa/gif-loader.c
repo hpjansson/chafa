@@ -27,8 +27,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "libnsgif/libnsgif.h"
-#include "chafa/gif-loader.h"
+
+#include <libnsgif.h>
+#include "gif-loader.h"
 
 #define BYTES_PER_PIXEL 4
 #define MAX_IMAGE_BYTES (128 * 1024 * 1024)

@@ -363,11 +363,12 @@ dnl --- Output ---
 
 AC_OUTPUT(Makefile
           chafa/Makefile
-          chafa/libnsgif/Makefile
+          libnsgif/Makefile
           chafa.pc
           docs/Makefile
           docs/version.xml
           tools/Makefile
+          tools/chafa/Makefile
           tools/fontgen/Makefile)
 
 echo >&AS_MESSAGE_FD

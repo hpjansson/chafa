@@ -1,5 +1,3 @@
-SUBDIRS = libnsgif
-
 ## --- Library ---
 
 lib_LTLIBRARIES = libchafa.la
@@ -51,26 +49,6 @@ libchafa_la_LIBADD += libchafa-popcnt.la
 libchafa_popcnt_la_SOURCES = chafa-popcnt.c
 libchafa_popcnt_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mpopcnt
 libchafa_popcnt_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
-endif
-
-## --- Tools ---
-
-if WANT_TOOLS
-
-bin_PROGRAMS = \
-	chafa
-
-chafa_SOURCES = \
-	chafa.c \
-	gif-loader.c \
-	gif-loader.h \
-	named-colors.c \
-	named-colors.h
-
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
-chafa_LDFLAGS = $(CHAFA_LDFLAGS)
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) libchafa.la libnsgif/libnsgif.la -lm
-
 endif
 
 ## -- General ---

@@ -1,1 +1,1 @@
-SUBDIRS = fontgen
+SUBDIRS = chafa fontgen
