@@ -83,6 +83,7 @@ static guint32 term_colors_256 [N_TERM_COLORS] =
 };
 
 static ChafaPaletteColor palette_256 [N_TERM_COLORS];
+static guchar color_cube_216_channel_index [256];
 static gboolean palette_initialized;
 
 void
@@ -105,6 +106,19 @@ chafa_init_palette (void)
     /* Transparent color */
     palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [0].ch [3] = 0x00;
     palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [1].ch [3] = 0x00;
+
+    for (i = 0; i < 0x5f / 2; i++)
+        color_cube_216_channel_index [i] = 0;
+    for ( ; i < (0x5f + 0x87) / 2; i++)
+        color_cube_216_channel_index [i] = 1;
+    for ( ; i < (0x87 + 0xaf) / 2; i++)
+        color_cube_216_channel_index [i] = 2;
+    for ( ; i < (0xaf + 0xd7) / 2; i++)
+        color_cube_216_channel_index [i] = 3;
+    for ( ; i < (0xd7 + 0xff) / 2; i++)
+        color_cube_216_channel_index [i] = 4;
+    for ( ; i <= 0xff; i++)
+        color_cube_216_channel_index [i] = 5;
 
     palette_initialized = TRUE;
 }
@@ -355,52 +369,72 @@ update_candidates (ChafaColorCandidates *candidates, gint index, gint error)
     }
 }
 
-void
-chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
-{
-    gint i;
-
-    init_candidates (candidates);
-
-    /* All colors including transparent, but not bg or fg */
-    for (i = 0; i < 257; i++)
-    {
-        const ChafaColor *palette_color;
-        gint error;
-
-        palette_color = chafa_get_palette_color_256 (i, color_space);
-        error = chafa_color_diff_slow (color, palette_color, color_space);
-        update_candidates (candidates, i, error);
-    }
-}
-
-void
-chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
-{
-    gint i;
-
-    init_candidates (candidates);
-
-    /* Color cube and transparent, but not lower 16, bg or fg */
-    for (i = 16; i < 257; i++)
-    {
-        const ChafaColor *palette_color;
-        gint error;
-
-        palette_color = chafa_get_palette_color_256 (i, color_space);
-        error = chafa_color_diff_slow (color, palette_color, color_space);
-        update_candidates (candidates, i, error);
-    }
-}
-
-void
-chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+static void
+pick_color_216_cube (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
 {
     const ChafaColor *palette_color;
     gint error;
     gint i;
 
-    init_candidates (candidates);
+    g_assert (color_space == CHAFA_COLOR_SPACE_RGB);
+
+    i = 16 + (color_cube_216_channel_index [color->ch [0]] * 6 * 6
+              + color_cube_216_channel_index [color->ch [1]] * 6
+              + color_cube_216_channel_index [color->ch [2]]);
+    palette_color = chafa_get_palette_color_256 (i, color_space);
+    error = chafa_color_diff_slow (color, palette_color, color_space);
+    update_candidates (candidates, i, error);
+}
+
+static void
+pick_color_24_grays (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    const ChafaColor *palette_color;
+    gint error, last_error = G_MAXINT;
+    gint step, i;
+
+    g_assert (color_space == CHAFA_COLOR_SPACE_RGB);
+
+    i = 232 + 12;
+
+    palette_color = chafa_get_palette_color_256 (i, color_space);
+    last_error = chafa_color_diff_slow (color, palette_color, color_space);
+    update_candidates (candidates, i, last_error);
+
+    palette_color = chafa_get_palette_color_256 (i + 1, color_space);
+    error = chafa_color_diff_slow (color, palette_color, color_space);
+    if (error < last_error)
+    {
+        update_candidates (candidates, i, error);
+        last_error = error;
+        step = 1;
+        i++;
+    }
+    else
+    {
+        step = -1;
+    }
+
+    do
+    {
+        i += step;
+        palette_color = chafa_get_palette_color_256 (i, color_space);
+
+        error = chafa_color_diff_slow (color, palette_color, color_space);
+        if (error > last_error)
+            break;
+
+        update_candidates (candidates, i, error);
+    }
+    while (i >= 232 && i <= 255);
+}
+
+static void
+pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    const ChafaColor *palette_color;
+    gint error;
+    gint i;
 
     for (i = 0; i < 16; i++)
     {
@@ -414,6 +448,78 @@ chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, Chafa
     palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_TRANSPARENT, color_space);
     error = chafa_color_diff_slow (color, palette_color, color_space);
     update_candidates (candidates, CHAFA_PALETTE_INDEX_TRANSPARENT, error);
+}
+
+void
+chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    init_candidates (candidates);
+    pick_color_16 (color, color_space, candidates);
+}
+
+void
+chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    gint i;
+
+    init_candidates (candidates);
+
+    if (color_space == CHAFA_COLOR_SPACE_RGB)
+    {
+        /* This will try transparency too */
+        pick_color_16 (color, color_space, candidates);
+        pick_color_216_cube (color, color_space, candidates);
+        pick_color_24_grays (color, color_space, candidates);
+    }
+    else
+    {
+        /* All colors including transparent, but not bg or fg */
+        for (i = 0; i < 257; i++)
+        {
+            const ChafaColor *palette_color;
+            gint error;
+
+            palette_color = chafa_get_palette_color_256 (i, color_space);
+            error = chafa_color_diff_slow (color, palette_color, color_space);
+            update_candidates (candidates, i, error);
+        }
+    }
+}
+
+void
+chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    gint i;
+
+    init_candidates (candidates);
+
+    if (color_space == CHAFA_COLOR_SPACE_RGB)
+    {
+        const ChafaColor *palette_color;
+        gint error;
+
+        pick_color_216_cube (color, color_space, candidates);
+        pick_color_24_grays (color, color_space, candidates);
+
+        /* Try transparency */
+
+        palette_color = chafa_get_palette_color_256 (CHAFA_PALETTE_INDEX_TRANSPARENT, color_space);
+        error = chafa_color_diff_slow (color, palette_color, color_space);
+        update_candidates (candidates, CHAFA_PALETTE_INDEX_TRANSPARENT, error);
+    }
+    else
+    {
+        /* Color cube and transparent, but not lower 16, bg or fg */
+        for (i = 16; i < 257; i++)
+        {
+            const ChafaColor *palette_color;
+            gint error;
+
+            palette_color = chafa_get_palette_color_256 (i, color_space);
+            error = chafa_color_diff_slow (color, palette_color, color_space);
+            update_candidates (candidates, i, error);
+        }
+    }
 }
 
 /* Pick the best approximation of color from a palette consisting of
