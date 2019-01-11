@@ -466,10 +466,12 @@ chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, Chaf
 
     if (color_space == CHAFA_COLOR_SPACE_RGB)
     {
-        /* This will try transparency too */
-        pick_color_16 (color, color_space, candidates);
         pick_color_216_cube (color, color_space, candidates);
         pick_color_24_grays (color, color_space, candidates);
+
+        /* This will try transparency too. Do this last so ties are broken in
+         * favor of high-index colors. */
+        pick_color_16 (color, color_space, candidates);
     }
     else
     {
