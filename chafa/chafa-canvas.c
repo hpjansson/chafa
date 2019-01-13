@@ -1040,6 +1040,7 @@ bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
     guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
     gint x, y;
+    gint i;
 
     for (y = dest_y; pixel < pixel_max; y++)
     {
@@ -1050,10 +1051,14 @@ bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
             gint bayer_mod = canvas->bayer_matrix [bayer_index];
 
             /* Dither */
-            pixel->col.ch [0] += bayer_mod;
-            pixel->col.ch [1] += bayer_mod;
-            pixel->col.ch [2] += bayer_mod;
-            pixel->col.ch [3] += bayer_mod;
+            for (i = 0; i < 4; i++)
+            {
+                pixel->col.ch [i] += bayer_mod;
+                if (pixel->col.ch [i] < 0)
+                    pixel->col.ch [i] = 0;
+                if (pixel->col.ch [i] > 255)
+                    pixel->col.ch [i] = 255;
+            }
 
             pixel++;
         }
@@ -1067,6 +1072,7 @@ dither_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
     guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
     gint x, y;
+    gint i;
 
     for (y = dest_y; pixel < pixel_max; y++)
     {
@@ -1077,10 +1083,14 @@ dither_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
             gint bayer_mod = canvas->bayer_matrix [bayer_index];
 
             /* Dither */
-            pixel->col.ch [0] += bayer_mod;
-            pixel->col.ch [1] += bayer_mod;
-            pixel->col.ch [2] += bayer_mod;
-            pixel->col.ch [3] += bayer_mod;
+            for (i = 0; i < 4; i++)
+            {
+                pixel->col.ch [i] += bayer_mod;
+                if (pixel->col.ch [i] < 0)
+                    pixel->col.ch [i] = 0;
+                if (pixel->col.ch [i] > 255)
+                    pixel->col.ch [i] = 255;
+            }
 
             /* RGB -> DIN99d */
             chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
