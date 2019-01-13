@@ -25,7 +25,8 @@ chafainclude_HEADERS = \
 	chafa-canvas-config.h \
 	chafa-features.h \
 	chafa-symbol-map.h \
-	chafa-util.h
+	chafa-util.h \
+	chafa-version-macros.h
 
 if HAVE_MMX_INTRINSICS
 noinst_LTLIBRARIES += libchafa-mmx.la

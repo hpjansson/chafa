@@ -19,9 +19,20 @@ AC_CONFIG_SRCDIR([chafa.pc.in])
 AC_CONFIG_MACRO_DIRS([m4])
 AM_CONFIG_HEADER(config.h)
 
+CHAFA_MAJOR_VERSION=chafa_major_version
+CHAFA_MINOR_VERSION=chafa_minor_version
+CHAFA_MICRO_VERSION=chafa_micro_version
 CHAFA_VERSION=chafa_version
+
+AC_SUBST(CHAFA_MAJOR_VERSION)
+AC_SUBST(CHAFA_MINOR_VERSION)
+AC_SUBST(CHAFA_MICRO_VERSION)
 AC_SUBST(CHAFA_VERSION)
-AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version])
+
+AC_DEFINE(CHAFA_MAJOR_VERSION, [chafa_major_version], [Chafa major version])
+AC_DEFINE(CHAFA_MINOR_VERSION, [chafa_minor_version], [Chafa minor version])
+AC_DEFINE(CHAFA_MICRO_VERSION, [chafa_micro_version], [Chafa micro version])
+AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 
 dnl --- Standard setup ---
 

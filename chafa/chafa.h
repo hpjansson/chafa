@@ -25,13 +25,8 @@
 
 G_BEGIN_DECLS
 
-/* Exported symbol versioning/visibility */
-
-#ifndef _CHAFA_EXTERN
-# define _CHAFA_EXTERN extern
-#endif
-
-#define CHAFA_AVAILABLE_IN_ALL _CHAFA_EXTERN
+/* Version macros go before everything else */
+#include <chafa-version-macros.h>
 
 #include <chafa-features.h>
 #include <chafa-canvas-config.h>
