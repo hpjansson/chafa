@@ -50,6 +50,7 @@ typedef struct
     GList *args;
     ChafaCanvasMode mode;
     ChafaColorSpace color_space;
+    ChafaDitherMode dither_mode;
     ChafaSymbolMap *symbol_map;
     ChafaSymbolMap *fill_symbol_map;
     gboolean symbols_specified;
@@ -206,6 +207,8 @@ print_summary (void)
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
+    "      --dither=DITHER  Set output dither mode; one of [none, ordered]. No effect\n"
+    "                     with 24-bit color. Defaults to none.\n"
     "  -d, --duration=SECONDS  The time to show each file. If showing a single file,\n"
     "                     defaults to zero for a still image and infinite for an\n"
     "                     animation. For multiple files, defaults to 3.0. Animations\n"
@@ -303,6 +306,26 @@ parse_color_space_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *valu
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Color space must be one of [rgb, din99d].");
+        result = FALSE;
+    }
+
+    return result;
+}
+
+static gboolean
+parse_dither_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+
+    if (!g_ascii_strcasecmp (value, "none"))
+        options.dither_mode = CHAFA_DITHER_MODE_NONE;
+    else if (!g_ascii_strcasecmp (value, "ordered")
+             || !g_ascii_strcasecmp (value, "bayer"))
+        options.dither_mode = CHAFA_DITHER_MODE_ORDERED;
+    else
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Dither must be one of [none, ordered].");
         result = FALSE;
     }
 
@@ -617,6 +640,7 @@ parse_options (int *argc, char **argv [])
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
+        { "dither",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_arg,      "Dither", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
@@ -655,6 +679,7 @@ parse_options (int *argc, char **argv [])
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
+    options.dither_mode = CHAFA_DITHER_MODE_NONE;
     options.preprocess = TRUE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
@@ -795,6 +820,7 @@ build_string (const guint8 *pixels,
 
     chafa_canvas_config_set_geometry (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
+    chafa_canvas_config_set_dither_mode (config, options.dither_mode);
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);
