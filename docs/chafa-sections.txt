@@ -14,6 +14,7 @@ chafa_canvas_build_ansi
 <FILE>chafa-canvas-config</FILE>
 ChafaColorSpace
 ChafaCanvasMode
+ChafaDitherMode
 ChafaCanvasConfig
 chafa_canvas_config_new
 chafa_canvas_config_copy
@@ -25,6 +26,8 @@ chafa_canvas_config_get_canvas_mode
 chafa_canvas_config_set_canvas_mode
 chafa_canvas_config_get_color_space
 chafa_canvas_config_set_color_space
+chafa_canvas_config_get_dither_mode
+chafa_canvas_config_set_dither_mode
 chafa_canvas_config_get_preprocessing_enabled
 chafa_canvas_config_set_preprocessing_enabled
 chafa_canvas_config_peek_symbol_map

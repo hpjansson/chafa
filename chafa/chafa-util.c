@@ -148,3 +148,54 @@ chafa_calc_canvas_geometry (gint src_width,
     if (dest_height_inout)
         *dest_height_inout = dest_height;
 }
+
+/* --- Internal; not part of public API --- */
+
+static void
+fill_matrix_r (gint *matrix, gint matrix_size, gint sub_size, gint x, gint y, gint value, gint step)
+{
+    gint half;
+
+    if (sub_size == 1)
+    {
+        matrix [x + y * matrix_size] = value;
+        return;
+    }
+
+    half = sub_size / 2;
+
+    fill_matrix_r (matrix, matrix_size, half, x,        y,        value,            step * 4);
+    fill_matrix_r (matrix, matrix_size, half, x + half, y + half, value + step,     step * 4);
+    fill_matrix_r (matrix, matrix_size, half, x + half, y,        value + step * 2, step * 4);
+    fill_matrix_r (matrix, matrix_size, half, x,        y + half, value + step * 3, step * 4);
+}
+
+static void
+fill_matrix (gint *matrix, gint matrix_size, gdouble magnitude)
+{
+    gint maxval = matrix_size * matrix_size;
+    gdouble maxval_d = maxval;
+    gint i;
+
+    fill_matrix_r (matrix, matrix_size, matrix_size, 0, 0, 0, 1);
+
+    /* Recenter around 0 and scale so magnitude == 1.0 => -128..127 */
+
+    for (i = 0; i < matrix_size * matrix_size; i++)
+    {
+        matrix [i] = ((gdouble) matrix [i] - maxval_d / 2.0) * (256.0 / maxval_d) * magnitude + 0.5;
+    }
+}
+
+gint *
+chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude)
+{
+    gint *matrix;
+
+    g_assert (matrix_size == 2 || matrix_size == 4 || matrix_size == 8 || matrix_size == 16);
+
+    matrix = g_malloc (matrix_size * matrix_size * sizeof (gint));
+    fill_matrix (matrix, matrix_size, magnitude);
+
+    return matrix;
+}

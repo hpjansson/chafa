@@ -55,6 +55,16 @@
 #define INDEXED_16_CROP_PCT 5
 #define INDEXED_2_CROP_PCT  20
 
+/* Dithering */
+#define DITHER_CHUNK_WIDTH 4
+#define DITHER_CHUNK_HEIGHT 4
+#define DITHER_BASE_INTENSITY_FGBG 1.0
+#define DITHER_BASE_INTENSITY_16C  0.25
+#define DITHER_BASE_INTENSITY_256C 0.1
+#define BAYER_MATRIX_DIM_SHIFT 4
+#define BAYER_MATRIX_DIM (1 << (BAYER_MATRIX_DIM_SHIFT))
+#define BAYER_MATRIX_SIZE ((BAYER_MATRIX_DIM) * (BAYER_MATRIX_DIM))
+
 typedef struct
 {
     gint32 c [INTENSITY_MAX];
@@ -90,6 +100,10 @@ struct ChafaCanvas
     Histogram *hist;
     gint src_width, src_height, src_rowstride;
     gint have_alpha_int;
+
+    /* Set if we're doing bayer dithering */
+    gint *bayer_matrix;
+    gint bayer_size_shift;
 };
 
 typedef struct
@@ -1011,9 +1025,68 @@ convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
 
+    /* RGB -> DIN99d */
+
     for ( ; pixel < pixel_max; pixel++)
     {
         chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
+    }
+}
+
+static void
+bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
+{
+    ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
+    ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
+    guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
+    gint x, y;
+
+    for (y = dest_y; pixel < pixel_max; y++)
+    {
+        for (x = 0; x < canvas->width_pixels; x++)
+        {
+            gint bayer_index = (((y / DITHER_CHUNK_HEIGHT) & bayer_size_mask) << canvas->bayer_size_shift)
+              + ((x / DITHER_CHUNK_WIDTH) & bayer_size_mask);
+            gint bayer_mod = canvas->bayer_matrix [bayer_index];
+
+            /* Dither */
+            pixel->col.ch [0] += bayer_mod;
+            pixel->col.ch [1] += bayer_mod;
+            pixel->col.ch [2] += bayer_mod;
+            pixel->col.ch [3] += bayer_mod;
+
+            pixel++;
+        }
+    }
+}
+
+static void
+dither_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
+{
+    ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
+    ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
+    guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
+    gint x, y;
+
+    for (y = dest_y; pixel < pixel_max; y++)
+    {
+        for (x = 0; x < canvas->width_pixels; x++)
+        {
+            gint bayer_index = (((y / DITHER_CHUNK_HEIGHT) & bayer_size_mask) << canvas->bayer_size_shift)
+              + ((x / DITHER_CHUNK_WIDTH) & bayer_size_mask);
+            gint bayer_mod = canvas->bayer_matrix [bayer_index];
+
+            /* Dither */
+            pixel->col.ch [0] += bayer_mod;
+            pixel->col.ch [1] += bayer_mod;
+            pixel->col.ch [2] += bayer_mod;
+            pixel->col.ch [3] += bayer_mod;
+
+            /* RGB -> DIN99d */
+            chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
+
+            pixel++;
+        }
     }
 }
 
@@ -1058,9 +1131,27 @@ prepare_pixels_1_worker (PreparePixelsWork *work, ChafaCanvas *canvas)
 static void
 prepare_pixels_3_worker (PreparePixelsWork *work, ChafaCanvas *canvas)
 {
-    convert_rgb_to_din99d (canvas,
-                           work->first_row,
-                           work->n_rows);
+    if (canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D)
+    {
+        if (canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
+        {
+            dither_and_convert_rgb_to_din99d (canvas,
+                                              work->first_row,
+                                              work->n_rows);
+        }
+        else
+        {
+            convert_rgb_to_din99d (canvas,
+                                   work->first_row,
+                                   work->n_rows);
+        }
+    }
+    else
+    {
+        bayer_dither (canvas,
+                      work->first_row,
+                      work->n_rows);
+    }
 
     g_slice_free (PreparePixelsWork, work);
 }
@@ -1104,9 +1195,10 @@ prepare_pixel_data (ChafaCanvas *canvas)
             normalize_rgb (canvas, INDEXED_2_CROP_PCT);
     }
 
-    /* Third pass -- convert to DIN99d */
+    /* Third pass -- dither and/or convert to DIN99d */
 
-    if (canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D)
+    if (canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D
+        || canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
     {
         thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_3_worker,
                                          canvas,
@@ -1392,9 +1484,40 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     /* In truecolor mode we don't support any fancy color spaces for now, since
      * we'd have to convert back to RGB space when emitting control codes, and
      * the code for that has yet to be written. In palette modes we just use
-     * the palette mappings. */
+     * the palette mappings.
+     *
+     * There is also no reason to dither in truecolor mode. */
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
+    {
         canvas->config.color_space = CHAFA_COLOR_SPACE_RGB;
+        canvas->config.dither_mode = CHAFA_DITHER_MODE_NONE;
+    }
+
+    if (canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
+    {
+        gdouble dither_intensity;
+
+        switch (canvas->config.canvas_mode)
+        {
+            case CHAFA_CANVAS_MODE_INDEXED_256:
+            case CHAFA_CANVAS_MODE_INDEXED_240:
+                dither_intensity = DITHER_BASE_INTENSITY_256C;
+                break;
+            case CHAFA_CANVAS_MODE_INDEXED_16:
+                dither_intensity = DITHER_BASE_INTENSITY_16C;
+                break;
+            case CHAFA_CANVAS_MODE_FGBG:
+            case CHAFA_CANVAS_MODE_FGBG_BGFG:
+                dither_intensity = DITHER_BASE_INTENSITY_FGBG;
+                break;
+            default:
+                g_assert_not_reached ();
+                break;
+        }
+
+        canvas->bayer_size_shift = BAYER_MATRIX_DIM_SHIFT;
+        canvas->bayer_matrix = chafa_gen_bayer_matrix (BAYER_MATRIX_DIM, dither_intensity);
+    }
 
     update_display_colors (canvas);
 
@@ -1425,6 +1548,7 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
     canvas->pixels = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->needs_clear = TRUE;
+    canvas->bayer_matrix = g_memdup (orig->bayer_matrix, BAYER_MATRIX_SIZE * sizeof (gint));
 
     return canvas;
 }
@@ -1468,6 +1592,7 @@ chafa_canvas_unref (ChafaCanvas *canvas)
         chafa_canvas_config_deinit (&canvas->config);
         g_free (canvas->pixels);
         g_free (canvas->cells);
+        g_free (canvas->bayer_matrix);
         g_free (canvas);
     }
 }

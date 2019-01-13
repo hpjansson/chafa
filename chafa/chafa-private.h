@@ -106,6 +106,7 @@ struct ChafaCanvasConfig
     gint width, height;
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
+    ChafaDitherMode dither_mode;
     guint32 fg_color_packed_rgb;
     guint32 bg_color_packed_rgb;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */
@@ -150,6 +151,10 @@ void chafa_symbol_map_find_fill_candidates (const ChafaSymbolMap *symbol_map,
 void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasConfig *src);
+
+gint *chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude);
+
+/* Colors */
 
 guint32 chafa_pack_color (const ChafaColor *color) G_GNUC_PURE;
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);

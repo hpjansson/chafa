@@ -54,6 +54,17 @@ typedef enum
 }
 ChafaCanvasMode;
 
+/* Dither modes */
+
+typedef enum
+{
+    CHAFA_DITHER_MODE_NONE,
+    CHAFA_DITHER_MODE_ORDERED,
+
+    CHAFA_DITHER_MODE_MAX
+}
+ChafaDitherMode;
+
 /* Canvas config */
 
 typedef struct ChafaCanvasConfig ChafaCanvasConfig;
@@ -116,6 +127,11 @@ CHAFA_AVAILABLE_IN_ALL
 gboolean chafa_canvas_config_get_preprocessing_enabled (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_preprocessing_enabled (ChafaCanvasConfig *config, gboolean preprocessing_enabled);
+
+CHAFA_AVAILABLE_IN_1_2
+ChafaDitherMode chafa_canvas_config_get_dither_mode (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_2
+void chafa_canvas_config_set_dither_mode (ChafaCanvasConfig *config, ChafaDitherMode dither_mode);
 
 G_END_DECLS
 

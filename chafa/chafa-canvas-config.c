@@ -57,6 +57,13 @@
  * @CHAFA_COLOR_SPACE_MAX: Last supported color space plus one.
  **/
 
+/**
+ * ChafaDitherMode:
+ * @CHAFA_DITHER_MODE_NONE: No dithering.
+ * @CHAFA_DITHER_MODE_ORDERED: Ordered dithering (Bayer or similar).
+ * @CHAFA_DITHER_MODE_MAX: Last supported dither mode plus one.
+ **/
+
 /* Private */
 
 void
@@ -547,4 +554,42 @@ chafa_canvas_config_set_preprocessing_enabled (ChafaCanvasConfig *config, gboole
     g_return_if_fail (config->refs > 0);
 
     config->preprocessing_enabled = preprocessing_enabled;
+}
+
+/**
+ * chafa_canvas_config_get_dither_mode:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's #ChafaDitherMode.
+ *
+ * Returns: The #ChafaDitherMode.
+ *
+ * Since: 1.2
+ **/
+ChafaDitherMode
+chafa_canvas_config_get_dither_mode (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, CHAFA_DITHER_MODE_NONE);
+    g_return_val_if_fail (config->refs > 0, CHAFA_DITHER_MODE_NONE);
+
+    return config->dither_mode;
+}
+
+/**
+ * chafa_canvas_config_set_dither_mode:
+ * @config: A #ChafaCanvasConfig
+ * @dither_mode: A #ChafaDitherMode
+ *
+ * Sets @config's stored #ChafaDitherMode to @dither_mode.
+ *
+ * Since: 1.2
+ **/
+void
+chafa_canvas_config_set_dither_mode (ChafaCanvasConfig *config, ChafaDitherMode dither_mode)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (dither_mode < CHAFA_DITHER_MODE_MAX);
+
+    config->dither_mode = dither_mode;
 }
