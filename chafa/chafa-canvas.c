@@ -1020,6 +1020,24 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, gint dest_y, const guint8 *data, gint
 }
 
 static void
+bayer_dither_pixel (ChafaPixel *pixel, gint *matrix, gint x, gint y, guint size_shift, guint size_mask)
+{
+    gint bayer_index = (((y / DITHER_CHUNK_HEIGHT) & size_mask) << size_shift)
+        + ((x / DITHER_CHUNK_WIDTH) & size_mask);
+    gint bayer_mod = matrix [bayer_index];
+    gint i;
+
+    for (i = 0; i < 4; i++)
+    {
+        pixel->col.ch [i] += bayer_mod;
+        if (pixel->col.ch [i] < 0)
+            pixel->col.ch [i] = 0;
+        if (pixel->col.ch [i] > 255)
+            pixel->col.ch [i] = 255;
+    }
+}
+
+static void
 convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
@@ -1040,26 +1058,13 @@ bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
     guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
     gint x, y;
-    gint i;
 
     for (y = dest_y; pixel < pixel_max; y++)
     {
         for (x = 0; x < canvas->width_pixels; x++)
         {
-            gint bayer_index = (((y / DITHER_CHUNK_HEIGHT) & bayer_size_mask) << canvas->bayer_size_shift)
-              + ((x / DITHER_CHUNK_WIDTH) & bayer_size_mask);
-            gint bayer_mod = canvas->bayer_matrix [bayer_index];
-
-            /* Dither */
-            for (i = 0; i < 4; i++)
-            {
-                pixel->col.ch [i] += bayer_mod;
-                if (pixel->col.ch [i] < 0)
-                    pixel->col.ch [i] = 0;
-                if (pixel->col.ch [i] > 255)
-                    pixel->col.ch [i] = 255;
-            }
-
+            bayer_dither_pixel (pixel, canvas->bayer_matrix, x, y,
+                                canvas->bayer_size_shift, bayer_size_mask);
             pixel++;
         }
     }
@@ -1072,29 +1077,14 @@ dither_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
     guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
     gint x, y;
-    gint i;
 
     for (y = dest_y; pixel < pixel_max; y++)
     {
         for (x = 0; x < canvas->width_pixels; x++)
         {
-            gint bayer_index = (((y / DITHER_CHUNK_HEIGHT) & bayer_size_mask) << canvas->bayer_size_shift)
-              + ((x / DITHER_CHUNK_WIDTH) & bayer_size_mask);
-            gint bayer_mod = canvas->bayer_matrix [bayer_index];
-
-            /* Dither */
-            for (i = 0; i < 4; i++)
-            {
-                pixel->col.ch [i] += bayer_mod;
-                if (pixel->col.ch [i] < 0)
-                    pixel->col.ch [i] = 0;
-                if (pixel->col.ch [i] > 255)
-                    pixel->col.ch [i] = 255;
-            }
-
-            /* RGB -> DIN99d */
+            bayer_dither_pixel (pixel, canvas->bayer_matrix, x, y,
+                                canvas->bayer_size_shift, bayer_size_mask);
             chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
-
             pixel++;
         }
     }
