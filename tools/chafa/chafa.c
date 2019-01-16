@@ -207,8 +207,8 @@ print_summary (void)
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
-    "      --dither=DITHER  Set output dither mode; one of [none, ordered]. No effect\n"
-    "                     with 24-bit color. Defaults to none.\n"
+    "      --dither=DITHER  Set output dither mode; one of [none, ordered,\n"
+    "                     diffusion]. No effect with 24-bit color. Defaults to none.\n"
     "  -d, --duration=SECONDS  The time to show each file. If showing a single file,\n"
     "                     defaults to zero for a still image and infinite for an\n"
     "                     animation. For multiple files, defaults to 3.0. Animations\n"
@@ -322,10 +322,13 @@ parse_dither_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else if (!g_ascii_strcasecmp (value, "ordered")
              || !g_ascii_strcasecmp (value, "bayer"))
         options.dither_mode = CHAFA_DITHER_MODE_ORDERED;
+    else if (!g_ascii_strcasecmp (value, "diffusion")
+             || !g_ascii_strcasecmp (value, "fs"))
+        options.dither_mode = CHAFA_DITHER_MODE_DIFFUSION;
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Dither must be one of [none, ordered].");
+                     "Dither must be one of [none, ordered, diffusion].");
         result = FALSE;
     }
 
