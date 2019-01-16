@@ -51,6 +51,9 @@ typedef struct
     ChafaCanvasMode mode;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
+    gint dither_grain_width;
+    gint dither_grain_height;
+    gdouble dither_intensity;
     ChafaSymbolMap *symbol_map;
     ChafaSymbolMap *fill_symbol_map;
     gboolean symbols_specified;
@@ -209,6 +212,10 @@ print_summary (void)
     "                     Defaults to rgb, which is faster but less accurate.\n"
     "      --dither=DITHER  Set output dither mode; one of [none, ordered,\n"
     "                     diffusion]. No effect with 24-bit color. Defaults to none.\n"
+    "      --dither-grain=WxH  Set dimensions of dither grains in 1/8ths of a\n"
+    "                     character cell [1, 2, 4, 8]. Defaults to 4x4.\n"
+    "      --dither-intensity=NUM  Multiplier for dither intensity [0.0 - inf].\n"
+    "                     Defaults to 1.0.\n"
     "  -d, --duration=SECONDS  The time to show each file. If showing a single file,\n"
     "                     defaults to zero for a still image and infinite for an\n"
     "                     animation. For multiple files, defaults to 3.0. Animations\n"
@@ -431,6 +438,52 @@ out:
 }
 
 static gboolean
+parse_dither_grain_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+    gint width = -1, height = -1;
+    gint n;
+    gint o = -1;
+
+    n = sscanf (value, "%d%n", &width, &o);
+
+    if (o > 0 && value [o] == 'x' && value [o + 1] != '\0')
+    {
+        gint o2;
+
+        n = sscanf (value + o + 1, "%d%n", &height, &o2);
+        if (n == 1 && value [o + o2 + 1] != '\0')
+        {
+            width = height = -1;
+            goto out;
+        }
+    }
+
+out:
+    if (height < 0)
+        height = width;
+
+    if (width < 0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Grain size must be specified as [width]x[height] or [dim], e.g. 8x4 or 4.");
+        result = FALSE;
+    }
+    else if ((width != 1 && width != 2 && width != 4 && width != 8) ||
+             (height != 1 && height != 2 && height != 4 && height != 8))
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Grain dimensions must be exactly 1, 2, 4 or 8.");
+        result = FALSE;
+    }
+
+    options.dither_grain_width = width;
+    options.dither_grain_height = height;
+
+    return result;
+}
+
+static gboolean
 parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
@@ -644,6 +697,8 @@ parse_options (int *argc, char **argv [])
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
         { "dither",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_arg,      "Dither", NULL },
+        { "dither-grain",'\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_grain_arg, "Dither grain", NULL },
+        { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
@@ -683,6 +738,9 @@ parse_options (int *argc, char **argv [])
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     options.mode = detect_canvas_mode ();
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
+    options.dither_grain_width = 4;
+    options.dither_grain_height = 4;
+    options.dither_intensity = 1.0;
     options.preprocess = TRUE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
@@ -824,6 +882,8 @@ build_string (const guint8 *pixels,
     chafa_canvas_config_set_geometry (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
     chafa_canvas_config_set_dither_mode (config, options.dither_mode);
+    chafa_canvas_config_set_dither_grain_size (config, options.dither_grain_width, options.dither_grain_height);
+    chafa_canvas_config_set_dither_intensity (config, options.dither_intensity);
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);
