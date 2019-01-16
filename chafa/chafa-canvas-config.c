@@ -61,6 +61,7 @@
  * ChafaDitherMode:
  * @CHAFA_DITHER_MODE_NONE: No dithering.
  * @CHAFA_DITHER_MODE_ORDERED: Ordered dithering (Bayer or similar).
+ * @CHAFA_DITHER_MODE_DIFFUSION: Error diffusion dithering (Floyd-Steinberg or similar).
  * @CHAFA_DITHER_MODE_MAX: Last supported dither mode plus one.
  **/
 

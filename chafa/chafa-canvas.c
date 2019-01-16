@@ -56,8 +56,8 @@
 #define INDEXED_2_CROP_PCT  20
 
 /* Dithering */
-#define DITHER_CHUNK_WIDTH 4
-#define DITHER_CHUNK_HEIGHT 4
+#define DITHER_GRAIN_WIDTH 4
+#define DITHER_GRAIN_HEIGHT 4
 #define DITHER_BASE_INTENSITY_FGBG 1.0
 #define DITHER_BASE_INTENSITY_16C  0.25
 #define DITHER_BASE_INTENSITY_256C 0.1
@@ -1022,8 +1022,8 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, gint dest_y, const guint8 *data, gint
 static void
 bayer_dither_pixel (ChafaPixel *pixel, gint *matrix, gint x, gint y, guint size_shift, guint size_mask)
 {
-    gint bayer_index = (((y / DITHER_CHUNK_HEIGHT) & size_mask) << size_shift)
-        + ((x / DITHER_CHUNK_WIDTH) & size_mask);
+    gint bayer_index = (((y / DITHER_GRAIN_HEIGHT) & size_mask) << size_shift)
+        + ((x / DITHER_GRAIN_WIDTH) & size_mask);
     gint bayer_mod = matrix [bayer_index];
     gint i;
 
@@ -1034,6 +1034,80 @@ bayer_dither_pixel (ChafaPixel *pixel, gint *matrix, gint x, gint y, guint size_
             pixel->col.ch [i] = 0;
         if (pixel->col.ch [i] > 255)
             pixel->col.ch [i] = 255;
+    }
+}
+
+/* pixel must point to top-left pixel of the grain to be dithered */
+static void
+fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error_in,
+                 ChafaPixel *error_out_0, ChafaPixel *error_out_1,
+                 ChafaPixel *error_out_2, ChafaPixel *error_out_3)
+{
+    gint grain_size = DITHER_GRAIN_WIDTH * DITHER_GRAIN_HEIGHT;
+    ChafaPixel next_error = { 0 };
+    ChafaPixel accum = { 0 };
+    ChafaColorCandidates cand = { 0 };
+    ChafaPixel *p;
+    const ChafaColor *c;
+    gint x, y, i;
+
+    p = pixel;
+
+    for (y = 0; y < DITHER_GRAIN_HEIGHT; y++)
+    {
+        for (x = 0; x < DITHER_GRAIN_WIDTH; x++, p++)
+        {
+            for (i = 0; i < 4; i++)
+            {
+                p->col.ch [i] += error_in->col.ch [i];
+
+                if (canvas->config.color_space == CHAFA_COLOR_SPACE_RGB)
+                {
+                    if (p->col.ch [i] < 0)
+                    {
+                        next_error.col.ch [i] += p->col.ch [i];
+                        p->col.ch [i] = 0;
+                    }
+                    else if (p->col.ch [i] > 255)
+                    {
+                        next_error.col.ch [i] += p->col.ch [i] - 255;
+                        p->col.ch [i] = 255;
+                    }
+                }
+
+                accum.col.ch [i] += p->col.ch [i];
+            }
+        }
+
+        p += canvas->width_pixels - DITHER_GRAIN_WIDTH;
+    }
+
+    for (i = 0; i < 4; i++)
+        accum.col.ch [i] /= grain_size;
+
+    /* Don't try to dither alpha */
+    accum.col.ch [3] = 0xff;
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
+        chafa_pick_color_256 (&accum.col, canvas->config.color_space, &cand);
+    else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
+        chafa_pick_color_240 (&accum.col, canvas->config.color_space, &cand);
+    else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+        chafa_pick_color_16 (&accum.col, canvas->config.color_space, &cand);
+    else
+        chafa_pick_color_fgbg (&accum.col, canvas->config.color_space,
+                               &canvas->fg_color, &canvas->bg_color, &cand);
+
+    c = chafa_get_palette_color_256 (cand.index [0], canvas->config.color_space);
+
+    for (i = 0; i < 3; i++)
+    {
+        next_error.col.ch [i] = (next_error.col.ch [i] / grain_size + (accum.col.ch [i] - c->ch [i]));
+
+        error_out_0->col.ch [i] += next_error.col.ch [i] * 7 / 16;
+        error_out_1->col.ch [i] += next_error.col.ch [i] * 1 / 16;
+        error_out_2->col.ch [i] += next_error.col.ch [i] * 5 / 16;
+        error_out_3->col.ch [i] += next_error.col.ch [i] * 3 / 16;
     }
 }
 
@@ -1071,7 +1145,98 @@ bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 }
 
 static void
-dither_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
+fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
+{
+    ChafaPixel *pixel;
+    ChafaPixel error_in = { 0 };
+    ChafaPixel *error_rows;
+    ChafaPixel *error_row [2];
+    ChafaPixel *pp;
+    gint x, y;
+
+    g_assert (canvas->width_pixels % DITHER_GRAIN_WIDTH == 0);
+    g_assert (dest_y % DITHER_GRAIN_HEIGHT == 0);
+    g_assert (n_rows % DITHER_GRAIN_HEIGHT == 0);
+
+    dest_y /= DITHER_GRAIN_HEIGHT;
+    n_rows /= DITHER_GRAIN_HEIGHT;
+
+    error_rows = alloca ((canvas->width_pixels / DITHER_GRAIN_WIDTH) * 2 * sizeof (ChafaPixel));
+    error_row [0] = error_rows;
+    error_row [1] = error_rows + canvas->width_pixels / DITHER_GRAIN_WIDTH;
+
+    memset (error_row [0], 0, (canvas->width_pixels / DITHER_GRAIN_WIDTH) * sizeof (ChafaPixel));
+
+    for (y = dest_y; y < dest_y + n_rows; y++)
+    {
+        memset (error_row [1], 0, (canvas->width_pixels / DITHER_GRAIN_WIDTH) * sizeof (ChafaPixel));
+
+        if (!(y & 1))
+        {
+            /* Forwards pass */
+            pixel = canvas->pixels + y * DITHER_GRAIN_HEIGHT * canvas->width_pixels;
+
+            fs_dither_grain (canvas, pixel, error_row [0],
+                             error_row [0] + 1,
+                             error_row [1] + 1,
+                             error_row [1],
+                             error_row [1] + 1);
+            pixel += DITHER_GRAIN_WIDTH;
+
+            for (x = 1; (x + 1) * DITHER_GRAIN_WIDTH < canvas->width_pixels; x++)
+            {
+                fs_dither_grain (canvas, pixel, error_row [0] + x,
+                                 error_row [0] + x + 1,
+                                 error_row [1] + x + 1,
+                                 error_row [1] + x,
+                                 error_row [1] + x - 1);
+                pixel += DITHER_GRAIN_WIDTH;
+            }
+
+            fs_dither_grain (canvas, pixel, error_row [0] + x,
+                             error_row [1] + x,
+                             error_row [1] + x,
+                             error_row [1] + x - 1,
+                             error_row [1] + x - 1);
+        }
+        else
+        {
+            /* Backwards pass */
+            pixel = canvas->pixels + y * DITHER_GRAIN_HEIGHT * canvas->width_pixels + canvas->width_pixels - DITHER_GRAIN_WIDTH;
+
+            fs_dither_grain (canvas, pixel, error_row [0] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 1,
+                             error_row [0] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 2,
+                             error_row [1] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 2,
+                             error_row [1] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 1,
+                             error_row [1] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 2);
+
+            pixel -= DITHER_GRAIN_WIDTH;
+
+            for (x = canvas->width_pixels / DITHER_GRAIN_WIDTH - 2; x > 0; x--)
+            {
+                fs_dither_grain (canvas, pixel, error_row [0] + x,
+                                 error_row [0] + x - 1,
+                                 error_row [1] + x - 1,
+                                 error_row [1] + x,
+                                 error_row [1] + x + 1);
+                pixel -= DITHER_GRAIN_WIDTH;
+            }
+
+            fs_dither_grain (canvas, pixel, error_row [0],
+                             error_row [1],
+                             error_row [1],
+                             error_row [1] + 1,
+                             error_row [1] + 1);
+        }
+
+        pp = error_row [0];
+        error_row [0] = error_row [1];
+        error_row [1] = pp;
+    }
+}
+
+static void
+bayer_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
@@ -1088,6 +1253,13 @@ dither_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
             pixel++;
         }
     }
+}
+
+static void
+fs_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
+{
+    convert_rgb_to_din99d (canvas, dest_y, n_rows);
+    fs_dither (canvas, dest_y, n_rows);
 }
 
 static void
@@ -1135,9 +1307,15 @@ prepare_pixels_3_worker (PreparePixelsWork *work, ChafaCanvas *canvas)
     {
         if (canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
         {
-            dither_and_convert_rgb_to_din99d (canvas,
-                                              work->first_row,
-                                              work->n_rows);
+            bayer_and_convert_rgb_to_din99d (canvas,
+                                             work->first_row,
+                                             work->n_rows);
+        }
+        else if (canvas->config.dither_mode == CHAFA_DITHER_MODE_DIFFUSION)
+        {
+            fs_and_convert_rgb_to_din99d (canvas,
+                                          work->first_row,
+                                          work->n_rows);
         }
         else
         {
@@ -1146,11 +1324,17 @@ prepare_pixels_3_worker (PreparePixelsWork *work, ChafaCanvas *canvas)
                                    work->n_rows);
         }
     }
-    else
+    else if (canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
     {
         bayer_dither (canvas,
                       work->first_row,
                       work->n_rows);
+    }
+    else if (canvas->config.dither_mode == CHAFA_DITHER_MODE_DIFFUSION)
+    {
+        fs_dither (canvas,
+                   work->first_row,
+                   work->n_rows);
     }
 
     g_slice_free (PreparePixelsWork, work);
@@ -1198,7 +1382,7 @@ prepare_pixel_data (ChafaCanvas *canvas)
     /* Third pass -- dither and/or convert to DIN99d */
 
     if (canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D
-        || canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
+        || canvas->config.dither_mode != CHAFA_DITHER_MODE_NONE)
     {
         thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_3_worker,
                                          canvas,
