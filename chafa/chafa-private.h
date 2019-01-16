@@ -107,6 +107,8 @@ struct ChafaCanvasConfig
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
+    gint dither_grain_width, dither_grain_height;
+    gfloat dither_intensity;
     guint32 fg_color_packed_rgb;
     guint32 bg_color_packed_rgb;
     gint alpha_threshold;  /* 0-255. 255 = no alpha in output */

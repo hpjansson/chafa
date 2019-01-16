@@ -100,6 +100,7 @@ struct ChafaCanvas
     Histogram *hist;
     gint src_width, src_height, src_rowstride;
     gint have_alpha_int;
+    gint dither_grain_width_shift, dither_grain_height_shift;
 
     /* Set if we're doing bayer dithering */
     gint *bayer_matrix;
@@ -1020,10 +1021,10 @@ rgba_to_internal_rgb (ChafaCanvas *canvas, gint dest_y, const guint8 *data, gint
 }
 
 static void
-bayer_dither_pixel (ChafaPixel *pixel, gint *matrix, gint x, gint y, guint size_shift, guint size_mask)
+bayer_dither_pixel (ChafaCanvas *canvas, ChafaPixel *pixel, gint *matrix, gint x, gint y, guint size_shift, guint size_mask)
 {
-    gint bayer_index = (((y / DITHER_GRAIN_HEIGHT) & size_mask) << size_shift)
-        + ((x / DITHER_GRAIN_WIDTH) & size_mask);
+    gint bayer_index = (((y >> canvas->dither_grain_height_shift) & size_mask) << size_shift)
+        + ((x >> canvas->dither_grain_width_shift) & size_mask);
     gint bayer_mod = matrix [bayer_index];
     gint i;
 
@@ -1043,7 +1044,7 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
                  ChafaPixel *error_out_0, ChafaPixel *error_out_1,
                  ChafaPixel *error_out_2, ChafaPixel *error_out_3)
 {
-    gint grain_size = DITHER_GRAIN_WIDTH * DITHER_GRAIN_HEIGHT;
+    gint grain_shift = canvas->dither_grain_width_shift + canvas->dither_grain_height_shift;
     ChafaPixel next_error = { 0 };
     ChafaPixel accum = { 0 };
     ChafaColorCandidates cand = { 0 };
@@ -1053,9 +1054,9 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
 
     p = pixel;
 
-    for (y = 0; y < DITHER_GRAIN_HEIGHT; y++)
+    for (y = 0; y < canvas->config.dither_grain_height; y++)
     {
-        for (x = 0; x < DITHER_GRAIN_WIDTH; x++, p++)
+        for (x = 0; x < canvas->config.dither_grain_width; x++, p++)
         {
             for (i = 0; i < 4; i++)
             {
@@ -1079,11 +1080,11 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
             }
         }
 
-        p += canvas->width_pixels - DITHER_GRAIN_WIDTH;
+        p += canvas->width_pixels - canvas->config.dither_grain_width;
     }
 
     for (i = 0; i < 4; i++)
-        accum.col.ch [i] /= grain_size;
+        accum.col.ch [i] >>= grain_shift;
 
     /* Don't try to dither alpha */
     accum.col.ch [3] = 0xff;
@@ -1102,7 +1103,9 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
 
     for (i = 0; i < 3; i++)
     {
-        next_error.col.ch [i] = (next_error.col.ch [i] / grain_size + (accum.col.ch [i] - c->ch [i]));
+        /* FIXME: Floating point op is slow. Factor this out and make
+         * dither_intensity == 1.0 the fast path. */
+        next_error.col.ch [i] = ((next_error.col.ch [i] >> grain_shift) + (accum.col.ch [i] - c->ch [i]) * canvas->config.dither_intensity);
 
         error_out_0->col.ch [i] += next_error.col.ch [i] * 7 / 16;
         error_out_1->col.ch [i] += next_error.col.ch [i] * 1 / 16;
@@ -1137,7 +1140,7 @@ bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     {
         for (x = 0; x < canvas->width_pixels; x++)
         {
-            bayer_dither_pixel (pixel, canvas->bayer_matrix, x, y,
+            bayer_dither_pixel (canvas, pixel, canvas->bayer_matrix, x, y,
                                 canvas->bayer_size_shift, bayer_size_mask);
             pixel++;
         }
@@ -1148,49 +1151,49 @@ static void
 fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel;
-    ChafaPixel error_in = { 0 };
     ChafaPixel *error_rows;
     ChafaPixel *error_row [2];
     ChafaPixel *pp;
+    gint width_grains = canvas->width_pixels >> canvas->dither_grain_width_shift;
     gint x, y;
 
-    g_assert (canvas->width_pixels % DITHER_GRAIN_WIDTH == 0);
-    g_assert (dest_y % DITHER_GRAIN_HEIGHT == 0);
-    g_assert (n_rows % DITHER_GRAIN_HEIGHT == 0);
+    g_assert (canvas->width_pixels % canvas->config.dither_grain_width == 0);
+    g_assert (dest_y % canvas->config.dither_grain_height == 0);
+    g_assert (n_rows % canvas->config.dither_grain_height == 0);
 
-    dest_y /= DITHER_GRAIN_HEIGHT;
-    n_rows /= DITHER_GRAIN_HEIGHT;
+    dest_y >>= canvas->dither_grain_height_shift;
+    n_rows >>= canvas->dither_grain_height_shift;
 
-    error_rows = alloca ((canvas->width_pixels / DITHER_GRAIN_WIDTH) * 2 * sizeof (ChafaPixel));
+    error_rows = alloca (width_grains * 2 * sizeof (ChafaPixel));
     error_row [0] = error_rows;
-    error_row [1] = error_rows + canvas->width_pixels / DITHER_GRAIN_WIDTH;
+    error_row [1] = error_rows + width_grains;
 
-    memset (error_row [0], 0, (canvas->width_pixels / DITHER_GRAIN_WIDTH) * sizeof (ChafaPixel));
+    memset (error_row [0], 0, width_grains * sizeof (ChafaPixel));
 
     for (y = dest_y; y < dest_y + n_rows; y++)
     {
-        memset (error_row [1], 0, (canvas->width_pixels / DITHER_GRAIN_WIDTH) * sizeof (ChafaPixel));
+        memset (error_row [1], 0, width_grains * sizeof (ChafaPixel));
 
         if (!(y & 1))
         {
             /* Forwards pass */
-            pixel = canvas->pixels + y * DITHER_GRAIN_HEIGHT * canvas->width_pixels;
+            pixel = canvas->pixels + (y << canvas->dither_grain_height_shift) * canvas->width_pixels;
 
             fs_dither_grain (canvas, pixel, error_row [0],
                              error_row [0] + 1,
                              error_row [1] + 1,
                              error_row [1],
                              error_row [1] + 1);
-            pixel += DITHER_GRAIN_WIDTH;
+            pixel += canvas->config.dither_grain_width;
 
-            for (x = 1; (x + 1) * DITHER_GRAIN_WIDTH < canvas->width_pixels; x++)
+            for (x = 1; ((x + 1) << canvas->dither_grain_width_shift) < canvas->width_pixels; x++)
             {
                 fs_dither_grain (canvas, pixel, error_row [0] + x,
                                  error_row [0] + x + 1,
                                  error_row [1] + x + 1,
                                  error_row [1] + x,
                                  error_row [1] + x - 1);
-                pixel += DITHER_GRAIN_WIDTH;
+                pixel += canvas->config.dither_grain_width;
             }
 
             fs_dither_grain (canvas, pixel, error_row [0] + x,
@@ -1202,24 +1205,24 @@ fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
         else
         {
             /* Backwards pass */
-            pixel = canvas->pixels + y * DITHER_GRAIN_HEIGHT * canvas->width_pixels + canvas->width_pixels - DITHER_GRAIN_WIDTH;
+            pixel = canvas->pixels + (y << canvas->dither_grain_height_shift) * canvas->width_pixels + canvas->width_pixels - canvas->config.dither_grain_width;
 
-            fs_dither_grain (canvas, pixel, error_row [0] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 1,
-                             error_row [0] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 2,
-                             error_row [1] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 2,
-                             error_row [1] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 1,
-                             error_row [1] + canvas->width_pixels / DITHER_GRAIN_WIDTH - 2);
+            fs_dither_grain (canvas, pixel, error_row [0] + width_grains - 1,
+                             error_row [0] + width_grains - 2,
+                             error_row [1] + width_grains - 2,
+                             error_row [1] + width_grains - 1,
+                             error_row [1] + width_grains - 2);
 
-            pixel -= DITHER_GRAIN_WIDTH;
+            pixel -= canvas->config.dither_grain_width;
 
-            for (x = canvas->width_pixels / DITHER_GRAIN_WIDTH - 2; x > 0; x--)
+            for (x = width_grains - 2; x > 0; x--)
             {
                 fs_dither_grain (canvas, pixel, error_row [0] + x,
                                  error_row [0] + x - 1,
                                  error_row [1] + x - 1,
                                  error_row [1] + x,
                                  error_row [1] + x + 1);
-                pixel -= DITHER_GRAIN_WIDTH;
+                pixel -= canvas->config.dither_grain_width;
             }
 
             fs_dither_grain (canvas, pixel, error_row [0],
@@ -1247,7 +1250,7 @@ bayer_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     {
         for (x = 0; x < canvas->width_pixels; x++)
         {
-            bayer_dither_pixel (pixel, canvas->bayer_matrix, x, y,
+            bayer_dither_pixel (canvas, pixel, canvas->bayer_matrix, x, y,
                                 canvas->bayer_size_shift, bayer_size_mask);
             chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
             pixel++;
@@ -1623,6 +1626,26 @@ build_ansi_gstring (ChafaCanvas *canvas)
     return gs;
 }
 
+static gint
+calc_dither_grain_shift (gint size)
+{
+    switch (size)
+    {
+        case 1:
+            return 0;
+        case 2:
+            return 1;
+        case 4:
+            return 2;
+        case 8:
+            return 3;
+        default:
+            g_assert_not_reached ();
+    }
+
+    return 0;
+}
+
 /**
  * chafa_canvas_new:
  * @config: Configuration to use or %NULL for hardcoded defaults
@@ -1677,6 +1700,9 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
         canvas->config.dither_mode = CHAFA_DITHER_MODE_NONE;
     }
 
+    canvas->dither_grain_width_shift = calc_dither_grain_shift (canvas->config.dither_grain_width);
+    canvas->dither_grain_height_shift = calc_dither_grain_shift (canvas->config.dither_grain_height);
+
     if (canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
     {
         gdouble dither_intensity;
@@ -1700,7 +1726,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
         }
 
         canvas->bayer_size_shift = BAYER_MATRIX_DIM_SHIFT;
-        canvas->bayer_matrix = chafa_gen_bayer_matrix (BAYER_MATRIX_DIM, dither_intensity);
+        canvas->bayer_matrix = chafa_gen_bayer_matrix (BAYER_MATRIX_DIM, dither_intensity * canvas->config.dither_intensity);
     }
 
     update_display_colors (canvas);

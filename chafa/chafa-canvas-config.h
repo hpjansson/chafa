@@ -134,6 +134,16 @@ ChafaDitherMode chafa_canvas_config_get_dither_mode (const ChafaCanvasConfig *co
 CHAFA_AVAILABLE_IN_1_2
 void chafa_canvas_config_set_dither_mode (ChafaCanvasConfig *config, ChafaDitherMode dither_mode);
 
+CHAFA_AVAILABLE_IN_1_2
+void chafa_canvas_config_get_dither_grain_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out);
+CHAFA_AVAILABLE_IN_1_2
+void chafa_canvas_config_set_dither_grain_size (ChafaCanvasConfig *config, gint width, gint height);
+
+CHAFA_AVAILABLE_IN_1_2
+gfloat chafa_canvas_config_get_dither_intensity (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_2
+void chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat intensity);
+
 G_END_DECLS
 
 #endif /* __CHAFA_CANVAS_CONFIG_H__ */

@@ -79,6 +79,10 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
     canvas_config->width = 80;
     canvas_config->height = 24;
+    canvas_config->dither_mode = CHAFA_DITHER_MODE_NONE;
+    canvas_config->dither_grain_width = 4;
+    canvas_config->dither_grain_height = 4;
+    canvas_config->dither_intensity = 1.0;
     canvas_config->fg_color_packed_rgb = 0xffffff;
     canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
@@ -593,4 +597,47 @@ chafa_canvas_config_set_dither_mode (ChafaCanvasConfig *config, ChafaDitherMode 
     g_return_if_fail (dither_mode < CHAFA_DITHER_MODE_MAX);
 
     config->dither_mode = dither_mode;
+}
+
+void
+chafa_canvas_config_get_dither_grain_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    if (width_out)
+        *width_out = config->dither_grain_width;
+    if (height_out)
+        *height_out = config->dither_grain_height;
+}
+
+void
+chafa_canvas_config_set_dither_grain_size (ChafaCanvasConfig *config, gint width, gint height)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (width == 1 || width == 2 || width == 4 || width == 8);
+    g_return_if_fail (height == 1 || height == 2 || height == 4 || height == 8);
+
+    config->dither_grain_width = width;
+    config->dither_grain_height = height;
+}
+
+gfloat
+chafa_canvas_config_get_dither_intensity (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, 1.0);
+    g_return_val_if_fail (config->refs > 0, 1.0);
+
+    return config->dither_intensity;
+}
+
+void
+chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat intensity)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (intensity >= 0.0);
+
+    config->dither_intensity = intensity;
 }
