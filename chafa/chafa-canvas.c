@@ -1058,7 +1058,7 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
     {
         for (x = 0; x < canvas->config.dither_grain_width; x++, p++)
         {
-            for (i = 0; i < 4; i++)
+            for (i = 0; i < 3; i++)
             {
                 p->col.ch [i] += error_in->col.ch [i];
 
@@ -1083,7 +1083,7 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
         p += canvas->width_pixels - canvas->config.dither_grain_width;
     }
 
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < 3; i++)
         accum.col.ch [i] >>= grain_shift;
 
     /* Don't try to dither alpha */
