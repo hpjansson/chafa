@@ -425,6 +425,7 @@ pick_color_24_grays (const ChafaColor *color, ChafaColorSpace color_space, Chafa
             break;
 
         update_candidates (candidates, i, error);
+        last_error = error;
     }
     while (i >= 232 && i <= 255);
 }
