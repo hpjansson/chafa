@@ -1,0 +1,11 @@
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+before_install:
+  - sudo apt-get install -qq -y automake libtool libglib-2.0-dev libmagickwand-dev gtk-doc-tools
+
+script:
+  mkdir build && cd build && ../automake.sh --prefix=/usr --enable-gtk-doc && make -j4 && sudo make install && chafa --version
