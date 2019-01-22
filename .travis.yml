@@ -8,4 +8,4 @@ before_install:
   - sudo apt-get install -qq -y automake libtool libglib2.0-dev libmagickwand-dev gtk-doc-tools
 
 script:
-  mkdir build && cd build && ../automake.sh --prefix=/usr --enable-gtk-doc && make -j4 && sudo make install && chafa --version
+  mkdir build && cd build && ../autogen.sh --prefix=/usr --enable-gtk-doc && make -j4 && sudo make install && chafa --version
