@@ -7,7 +7,7 @@ compiler:
 before_install:
   - sudo apt-get install -qq -y automake libtool libglib2.0-dev libmagickwand-dev gtk-doc-tools docbook-xml libxml2-utils
   # Needed for ImageMagick/clang runtime not finding libomp.so
-  - export LD_LIBRARY_PATH=$(if [[ $CXX == "clang++" ]]; then echo -n '/usr/local/clang/lib'; fi)
+  - export LD_LIBRARY_PATH=$(if [[ $CC == "clang" ]]; then echo -n '/usr/local/clang/lib'; fi)
 
 script:
   mkdir build && cd build && ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man && make -j4 && sudo make install && chafa --version
