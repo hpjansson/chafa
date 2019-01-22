@@ -1,22 +1,14 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" />
-</p>
-
-<p align="center">
-<table>
-<thead>
-<tr>
-<th align="center"><a href="https://github.com/hpjansson/chafa/tree/master">master</a></th>
-<th align="center"><a href="https://github.com/hpjansson/chafa/tree/1.0">1.0</a></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center"><a href="https://travis-ci.com/hpjansson/chafa" rel="nofollow"><img src="https://travis-ci.com/hpjansson/chafa.svg?branch=master" alt="Build Status" data-canonical-src="https://travis-ci.com/hpjansson/chafa.svg?branch=master" style="max-width:100%;"></a></td>
-<td align="center"><a href="https://travis-ci.com/hpjansson/chafa" rel="nofollow"><img src="https://travis-ci.com/hpjansson/chafa.svg?branch=1.0" alt="Build Status" data-canonical-src="https://travis-ci.com/hpjansson/chafa.svg?branch=1.0" style="max-width:100%;"></a></td>
-</tr>
-</tbody>
-</table>
+<img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" /><br />
+<a href="https://travis-ci.com/hpjansson/chafa/branches" rel="nofollow">
+<img src="https://img.shields.io/travis/com/hpjansson/chafa/master.svg?label=master&style=for-the-badge" alt="Master Build Status" />
+&emsp;
+<img src="https://img.shields.io/travis/com/hpjansson/chafa/1.0.svg?label=1.0&style=for-the-badge" alt="1.0 Build Status" />
+</a>
+&emsp;
+<a href="https://github.com/hpjansson/chafa/releases">
+<img src="https://img.shields.io/github/release/hpjansson/chafa.svg?style=for-the-badge" alt="Latest Release" />
+</a>
 </p>
 
 Chafa is a command-line utility that converts all kinds of images, including
