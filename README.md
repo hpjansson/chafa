@@ -2,9 +2,22 @@
 <img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" />
 </p>
 
-| [Master](https://github.com/hpjansson/chafa/tree/master) | [1.0.x](https://github.com/hpjansson/chafa/tree/1.0) |
-| :---:  | :---: |
-| [![Build Status](https://travis-ci.com/hpjansson/chafa.svg?branch=master)](https://travis-ci.com/hpjansson/chafa) | [![Build Status](https://travis-ci.com/hpjansson/chafa.svg?branch=1.0)](https://travis-ci.com/hpjansson/chafa) |
+<p align="center">
+<table>
+<thead>
+<tr>
+<th align="center"><a href="https://github.com/hpjansson/chafa/tree/master">master</a></th>
+<th align="center"><a href="https://github.com/hpjansson/chafa/tree/1.0">1.0</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><a href="https://travis-ci.com/hpjansson/chafa" rel="nofollow"><img src="https://travis-ci.com/hpjansson/chafa.svg?branch=master" alt="Build Status" data-canonical-src="https://travis-ci.com/hpjansson/chafa.svg?branch=master" style="max-width:100%;"></a></td>
+<td align="center"><a href="https://travis-ci.com/hpjansson/chafa" rel="nofollow"><img src="https://travis-ci.com/hpjansson/chafa.svg?branch=1.0" alt="Build Status" data-canonical-src="https://travis-ci.com/hpjansson/chafa.svg?branch=1.0" style="max-width:100%;"></a></td>
+</tr>
+</tbody>
+</table>
+</p>
 
 Chafa is a command-line utility that converts all kinds of images, including
 animated GIFs, into ANSI/Unicode character output that can be displayed in a
