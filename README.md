@@ -1,5 +1,8 @@
 <p align="center">
 <img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" />
+| [Master](https://github.com/hpjansson/chafa/tree/master) | [1.0.x](https://github.com/hpjansson/chafa/tree/1.0) |
+| :---:  | :---: |
+| [![Build Status](https://travis-ci.com/hpjansson/chafa.svg?branch=master)](https://travis-ci.com/hpjansson/chafa) | [![Build Status](https://travis-ci.com/hpjansson/chafa.svg?branch=1.0)](https://travis-ci.com/hpjansson/chafa) |
 </p>
 
 Chafa is a command-line utility that converts all kinds of images, including
