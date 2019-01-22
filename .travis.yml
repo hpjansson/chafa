@@ -6,7 +6,7 @@ compiler:
 
 before_install:
   - sudo apt-get install -qq -y automake libtool libglib2.0-dev libmagickwand-dev gtk-doc-tools
-  - sudo apt-get install -qq -y libomp  # Needed for ImageMagick/clang runtime
+  - sudo apt-get install -qq -y libomp-dev  # Needed for ImageMagick/clang runtime
 
 script:
   mkdir build && cd build && ../autogen.sh --prefix=/usr --enable-gtk-doc && make -j4 && sudo make install && chafa --version
