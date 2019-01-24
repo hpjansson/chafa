@@ -5,7 +5,7 @@ noinst_LTLIBRARIES =
 
 libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS)
 libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 1:1:1
-libchafa_la_LIBADD = $(GLIB_LIBS)
+libchafa_la_LIBADD = $(GLIB_LIBS) -lm
 
 libchafa_la_SOURCES = \
 	chafa-canvas.c \
@@ -65,7 +65,7 @@ chafa_SOURCES = \
 
 chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
 chafa_LDFLAGS = $(CHAFA_LDFLAGS)
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) libchafa.la -lm
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) libchafa.la
 
 endif
 
