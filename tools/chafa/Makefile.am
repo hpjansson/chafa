@@ -12,7 +12,7 @@ chafa_SOURCES = \
 
 chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
 chafa_LDFLAGS = $(CHAFA_LDFLAGS)
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la -lm
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la
 
 endif
 
