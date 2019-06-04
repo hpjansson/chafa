@@ -54,6 +54,18 @@ Chafa has been packaged for Fedora. Issue the following command to install:
 $ sudo dnf install chafa
 ```
 
+### openSUSE
+
+Chafa is available in the [graphics](https://build.opensuse.org/package/show/graphics/chafa) devel project for openSUSE.
+
+Add and install it via:
+
+```sh
+$ sudo zypper ar -f obs://graphics graphics
+$ sudo zypper ref
+$ sudo zypper in chafa
+```
+
 ## Installing from tarball
 
 You will need GCC, make and the GLib development package installed to
