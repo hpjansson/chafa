@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include "config.h"
+
 /* Enum switches must handle every value */
 #ifdef __GNUC__
 # pragma GCC diagnostic error "-Wswitch"

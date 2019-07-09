@@ -2308,10 +2308,12 @@ get_host_pixel_type (SmolPixelType pixel_type)
 static SmolBool
 have_avx2 (void)
 {
+#ifdef HAVE_GCC_X86_FEATURE_BUILTINS
     __builtin_cpu_init ();
 
     if (__builtin_cpu_supports ("avx2"))
         return TRUE;
+#endif
 
     return FALSE;
 }
