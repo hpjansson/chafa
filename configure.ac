@@ -224,6 +224,21 @@ CFLAGS="${SAVED_CFLAGS}"
 AC_MSG_RESULT(${ac_cv_sse41_intrinsics})
 AM_CONDITIONAL([HAVE_SSE41_INTRINSICS], [test "$ac_cv_sse41_intrinsics" = "yes"])
 
+dnl Check for working AVX2 intrinsics
+AC_MSG_CHECKING(for working AVX2 intrinsics)
+SAVED_CFLAGS="${CFLAGS}"
+CFLAGS="${CFLAGS} -mavx2"
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM(
+		[[#include <immintrin.h>]],
+		[[__m256i t = { 0 }; __m256i r = _mm256_abs_epi32 (t);]])],
+	[AC_DEFINE([HAVE_AVX2_INTRINSICS], [1], [Define if AVX2 intrinsics work.])
+	 ac_cv_avx2_intrinsics=yes],
+	[ac_cv_avx2_intrinsics=no])
+CFLAGS="${SAVED_CFLAGS}"
+AC_MSG_RESULT(${ac_cv_avx2_intrinsics})
+AM_CONDITIONAL([HAVE_AVX2_INTRINSICS], [test "$ac_cv_avx2_intrinsics" = "yes"])
+
 dnl Check for working 64bit popcnt intrinsics
 AC_MSG_CHECKING(for working 64bit popcnt intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
@@ -374,6 +389,7 @@ dnl --- Output ---
 
 AC_OUTPUT(Makefile
           chafa/Makefile
+          chafa/smolscale/Makefile
           libnsgif/Makefile
           chafa.pc
           docs/Makefile
@@ -388,6 +404,7 @@ echo >&AS_MESSAGE_FD "Build man page .............. $enable_man"
 echo >&AS_MESSAGE_FD "Rebuild API documentation ... ${enable_gtk_doc:-no} (--enable-gtk-doc)"
 echo >&AS_MESSAGE_FD "Support MMX ................. $ac_cv_mmx_intrinsics"
 echo >&AS_MESSAGE_FD "Support SSE 4.1 ............. $ac_cv_sse41_intrinsics"
+echo >&AS_MESSAGE_FD "Support AVX2 ................ $ac_cv_avx2_intrinsics"
 echo >&AS_MESSAGE_FD "Support popcount32 .......... $ac_cv_popcnt32_intrinsics"
 echo >&AS_MESSAGE_FD "Support popcount64 .......... $ac_cv_popcnt64_intrinsics"
 echo >&AS_MESSAGE_FD "Install prefix .............. $prefix"

@@ -1,0 +1,42 @@
+Smolscale
+=========
+
+Smolscale is a smol piece of C code for quickly scaling images to a reasonable
+level of quality using CPU resources only (no GPU). It operates on 4-channel
+data with 32 bits per pixel, i.e. packed RGBA, ARGB, BGRA, etc. It supports
+both premultiplied and unassociated alpha and can convert between the two. It
+is host byte ordering agnostic.
+
+The design goals are:
+
+* High throughput: Optimized code, within reason. Easily parallelizable.
+
+* Decent quality: No "jaggies" as produced by nearest-neighbor scaling.
+
+* Low memory overhead: Mostly on the stack.
+
+* Simplicity: A modern C toolchain as the only dependency.
+
+* Ease of use: One-shot and row-batch APIs.
+
+Usage
+-----
+
+First, read COPYING. If your project meets the requirements, you should be
+able to copy the following files into it and add it to your build with
+minimal fuss:
+
+  smolscale.c
+  smolscale.h
+  smolscale-private.h
+
+If you want AVX2 SIMD support, optionally copy this additional file and
+compile everything with -DSMOL_WITH_AVX2:
+
+  smolscale-avx2.c
+
+Keep in mind that this file is mostly just a straight copy of the generic
+code for the time being. Still, you will get a performance boost by building
+it with -mavx2 and letting Smolscale pick the implementation at runtime.
+
+The API documentation lives in smolscale.h along with the public declarations.

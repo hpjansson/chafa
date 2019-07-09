@@ -1,0 +1,14 @@
+This software is Copyright © 2019 Hans Petter Jansson. All rights reserved.
+
+You may use and redistribute this software under the terms and conditions laid
+out in either the BSD 4-clause license (see COPYING.BSD-4) or the LGPL
+version 3 (see COPYING.LGPLv3).
+
+The practical intent is that you should be able to use the software in
+an LGPLv3-compatible project without giving credit (although it would be nice
+if you did so). However, if you're using it in a closed-source project, you
+must either publish it separately in an LGPLv3-licensed library and link
+with that, or credit the contributors in your advertising materials.
+
+If you want to use it under a different license, feel free to contact me by
+e-mail at <hpj@cl.no>.
