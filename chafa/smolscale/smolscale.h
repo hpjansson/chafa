@@ -53,6 +53,14 @@ void smol_scale_destroy (SmolScaleCtx *scale_ctx);
 
 void smol_scale_batch (const SmolScaleCtx *scale_ctx, uint32_t first_outrow, uint32_t n_outrows);
 
+/* Like smol_scale_batch(), but will write the output rows to outrows_dest
+ * instead of relative to pixels_out address handed to smol_scale_new(). The
+ * other parameters from init (size, rowstride, etc) will still be used. */
+
+void smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
+                            void *outrows_dest,
+                            uint32_t first_outrow, uint32_t n_outrows);
+
 #ifdef __cplusplus
 }
 #endif

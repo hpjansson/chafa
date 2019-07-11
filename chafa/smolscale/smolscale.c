@@ -1962,6 +1962,7 @@ scale_outrow (const SmolScaleCtx *scale_ctx,
 
 static void
 do_rows (const SmolScaleCtx *scale_ctx,
+         void *outrows_dest,
          uint32_t row_out_index,
          uint32_t n_rows)
 {
@@ -1989,7 +1990,8 @@ do_rows (const SmolScaleCtx *scale_ctx,
 
     for (i = row_out_index; i < row_out_index + n_rows; i++)
     {
-        scale_outrow (scale_ctx, &vertical_ctx, i, outrow_ofs_to_pointer (scale_ctx, i));
+        scale_outrow (scale_ctx, &vertical_ctx, i, outrows_dest);
+        outrows_dest = (uint8_t *) outrows_dest + scale_ctx->rowstride_out;
     }
 }
 
@@ -2552,7 +2554,10 @@ smol_scale_simple (SmolPixelType pixel_type_in,
                      width_in, height_in, rowstride_in,
                      pixel_type_out, pixels_out,
                      width_out, height_out, rowstride_out);
-    do_rows (&scale_ctx, 0, scale_ctx.height_out);
+    do_rows (&scale_ctx,
+             outrow_ofs_to_pointer (&scale_ctx, 0),
+             0,
+             scale_ctx.height_out);
     smol_scale_finalize (&scale_ctx);
 }
 
@@ -2561,5 +2566,20 @@ smol_scale_batch (const SmolScaleCtx *scale_ctx,
                   uint32_t first_out_row,
                   uint32_t n_out_rows)
 {
-    do_rows (scale_ctx, first_out_row, n_out_rows);
+    do_rows (scale_ctx,
+             outrow_ofs_to_pointer (scale_ctx, first_out_row),
+             first_out_row,
+             n_out_rows);
+}
+
+void
+smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
+                       void *outrows_dest,
+                       uint32_t first_out_row,
+                       uint32_t n_out_rows)
+{
+    do_rows (scale_ctx,
+             outrows_dest,
+             first_out_row,
+             n_out_rows);
 }
