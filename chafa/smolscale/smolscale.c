@@ -1991,7 +1991,7 @@ do_rows (const SmolScaleCtx *scale_ctx,
     for (i = row_out_index; i < row_out_index + n_rows; i++)
     {
         scale_outrow (scale_ctx, &vertical_ctx, i, outrows_dest);
-        outrows_dest = (uint8_t *) outrows_dest + scale_ctx->rowstride_out;
+        outrows_dest = (uint32_t *) outrows_dest + scale_ctx->rowstride_out;
     }
 }
 
