@@ -1368,6 +1368,7 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
      * - Scale and convert pixel format
      * - Apply local preprocessing like saturation boost (optional)
      * - Generate histogram for later passes (e.g. for normalization)
+     * - Figure out if we have alpha transparency
      */
 
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
