@@ -1328,8 +1328,8 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
      * ----------
      *
      * - Scale and convert pixel format
-     * - Apply local preprocessing like saturation boost
-     * - Generate histogram for normalization pass
+     * - Apply local preprocessing like saturation boost (optional)
+     * - Generate histogram for later passes (e.g. for normalization)
      */
 
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
@@ -1432,9 +1432,9 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
     /* Second pass
      * -----------
      *
-     * - Normalization
-     * - Dithering
-     * - Color space conversion (DIN99d)
+     * - Normalization (optional)
+     * - Dithering (optional)
+     * - Color space conversion; DIN99d (optional)
      */
 
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
