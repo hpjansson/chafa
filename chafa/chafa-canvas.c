@@ -809,20 +809,6 @@ update_cells (ChafaCanvas *canvas)
     g_thread_pool_free (thread_pool, FALSE, TRUE);
 }
 
-static void
-multiply_alpha (ChafaCanvas *canvas)
-{
-    ChafaPixel *p0, *p1;
-
-    p0 = canvas->pixels;
-    p1 = p0 + canvas->width_pixels * canvas->height_pixels;
-
-    for ( ; p0 < p1; p0++)
-    {
-        chafa_color_mix (&p0->col, &canvas->bg_color, &p0->col, 1000 - ((p0->col.ch [3] * 1000) / 255));
-    }
-}
-
 static gint
 rgb_to_intensity_fast (const ChafaColor *color)
 {
@@ -1406,6 +1392,10 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
                                prep_ctx->canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16 ? INDEXED_16_CROP_PCT : INDEXED_2_CROP_PCT);
     }
 
+    /* Report alpha situation */
+    if (prep_ctx->canvas->have_alpha_int)
+        prep_ctx->canvas->have_alpha = TRUE;
+
     g_free (batches);
 }
 
@@ -1415,6 +1405,22 @@ typedef struct
     gint n_rows;
 }
 PreparePixelsBatch2;
+
+static void
+composite_alpha_on_bg (ChafaCanvas *canvas, gint first_row, gint n_rows)
+{
+    ChafaPixel *p0, *p1;
+
+    p0 = canvas->pixels + first_row * canvas->width_pixels;
+    p1 = p0 + n_rows * canvas->width_pixels;
+
+    for ( ; p0 < p1; p0++)
+    {
+        p0->col.ch [0] += (canvas->bg_color.ch [0] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [1] += (canvas->bg_color.ch [1] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [2] += (canvas->bg_color.ch [2] * (255 - (guint32) p0->col.ch [3])) / 255;
+    }
+}
 
 static void
 prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
@@ -1460,6 +1466,10 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
                    work->first_row,
                    work->n_rows);
     }
+
+    /* Must do this after DIN99d conversion, since bg_color will be DIN99d too */
+    if (canvas->have_alpha)
+        composite_alpha_on_bg (canvas, work->first_row, work->n_rows);
 }
 
 static gboolean
@@ -1469,6 +1479,7 @@ need_pass_2 (ChafaCanvas *canvas)
          && (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
              || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
              || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG))
+        || canvas->have_alpha
         || canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D
         || canvas->config.dither_mode != CHAFA_DITHER_MODE_NONE)
         return TRUE;
@@ -1542,7 +1553,7 @@ prepare_pixel_data (ChafaCanvas *canvas)
                                          canvas->src_width,
                                          canvas->src_height,
                                          canvas->src_rowstride,
-                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
                                          NULL,
                                          canvas->width_pixels,
                                          canvas->height_pixels,
@@ -2008,12 +2019,6 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
     canvas->have_alpha_int = 0;
 
     prepare_pixel_data (canvas);
-
-    if (canvas->have_alpha_int)
-        canvas->have_alpha = TRUE;
-
-    if (canvas->have_alpha)
-        multiply_alpha (canvas);
 
     if (canvas->config.alpha_threshold == 0)
         canvas->have_alpha = FALSE;
