@@ -22,6 +22,7 @@
 #include <math.h>
 #include <string.h>
 #include <glib.h>
+#include "smolscale/smolscale.h"
 #include "chafa/chafa.h"
 #include "chafa/chafa-private.h"
 
@@ -1241,6 +1242,7 @@ typedef struct
     gint n_rows_per_batch_pixels;
     gint n_batches_cells;
     gint n_rows_per_batch_cells;
+    SmolScaleCtx *scale_ctx;
 }
 PrepareContext;
 
@@ -1253,7 +1255,36 @@ typedef struct
 PreparePixelsBatch1;
 
 static void
-prepare_pixels_1_worker (PreparePixelsBatch1 *work, PrepareContext *prep_ctx)
+prepare_pixels_1_inner (PreparePixelsBatch1 *work,
+                        PrepareContext *prep_ctx,
+                        const guint8 *data_p,
+                        ChafaPixel *pixel_out,
+                        gint *alpha_sum)
+{
+    ChafaColor *col = &pixel_out->col;
+    gint v;
+
+    col->ch [0] = data_p [0];
+    col->ch [1] = data_p [1];
+    col->ch [2] = data_p [2];
+    col->ch [3] = data_p [3];
+
+    *alpha_sum += (0xff - col->ch [3]);
+
+    if (prep_ctx->canvas->config.preprocessing_enabled
+        && prep_ctx->canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+    {
+        boost_saturation_rgb (col);
+        clamp_color_rgb (col);
+    }
+
+    /* Build histogram */
+    v = rgb_to_intensity_fast (col);
+    work->hist.c [v]++;
+}
+
+static void
+prepare_pixels_1_worker_nearest (PreparePixelsBatch1 *work, PrepareContext *prep_ctx)
 {
     ChafaPixel *pixel;
     ChafaCanvas *canvas;
@@ -1285,32 +1316,39 @@ prepare_pixels_1_worker (PreparePixelsBatch1 *work, PrepareContext *prep_ctx)
         for (px = 0; px < canvas->width_pixels; px++)
         {
             const guint8 *data_p = data_row_p + ((px * x_inc) / FIXED_MULT) * 4;
-            ChafaColor col;
-            gint v;
-
-            col.ch [0] = *data_p++;
-            col.ch [1] = *data_p++;
-            col.ch [2] = *data_p++;
-            col.ch [3] = *data_p;
-
-            alpha_sum += (0xff - col.ch [3]);
-
-            if (canvas->config.preprocessing_enabled
-                && canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
-            {
-                boost_saturation_rgb (&col);
-                clamp_color_rgb (&col);
-            }
-
-            pixel->col = col;
-
-            /* Build histogram */
-            v = rgb_to_intensity_fast (&pixel->col);
-            work->hist.c [v]++;
-
-            pixel++;
+            prepare_pixels_1_inner (work, prep_ctx, data_p, pixel++, &alpha_sum);
         }
     }
+
+    if (alpha_sum > 0)
+        g_atomic_int_set (&canvas->have_alpha_int, 1);
+}
+
+static void
+prepare_pixels_1_worker_smooth (PreparePixelsBatch1 *work, PrepareContext *prep_ctx)
+{
+    ChafaCanvas *canvas = prep_ctx->canvas;
+    ChafaPixel *pixel, *pixel_max;
+    gint alpha_sum = 0;
+    guint8 *scaled_data;
+    const guint8 *data_p;
+
+    canvas = prep_ctx->canvas;
+
+    scaled_data = g_malloc (canvas->width_pixels * work->n_rows * sizeof (guint32));
+    smol_scale_batch_full (prep_ctx->scale_ctx, scaled_data, work->first_row, work->n_rows);
+
+    data_p = scaled_data;
+    pixel = canvas->pixels + work->first_row * canvas->width_pixels;
+    pixel_max = pixel + work->n_rows * canvas->width_pixels;
+
+    while (pixel < pixel_max)
+    {
+        prepare_pixels_1_inner (work, prep_ctx, data_p, pixel++, &alpha_sum);
+        data_p += 4;
+    }
+
+    g_free (scaled_data);
 
     if (alpha_sum > 0)
         g_atomic_int_set (&canvas->have_alpha_int, 1);
@@ -1334,7 +1372,9 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
 
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
 
-    thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_1_worker,
+    thread_pool = g_thread_pool_new ((GFunc) (prep_ctx->canvas->work_factor_int < 3
+                                              ? prepare_pixels_1_worker_nearest
+                                              : prepare_pixels_1_worker_smooth),
                                      prep_ctx,
                                      g_get_num_processors (),
                                      FALSE,
@@ -1477,8 +1517,23 @@ prepare_pixel_data (ChafaCanvas *canvas)
     prep_ctx.n_batches_cells = (canvas->config.height + n_cpus - 1) / n_cpus;
     prep_ctx.n_rows_per_batch_cells = (canvas->config.height + prep_ctx.n_batches_cells - 1) / prep_ctx.n_batches_cells;
 
+    /* FIXME: Allow user to specify input pixel type. Use premultiplied
+     * for opaque images. */
+    prep_ctx.scale_ctx = smol_scale_new (SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                         (const guint32 *) canvas->src_pixels,
+                                         canvas->src_width,
+                                         canvas->src_height,
+                                         canvas->src_rowstride,
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                         NULL,
+                                         canvas->width_pixels,
+                                         canvas->height_pixels,
+                                         canvas->width_pixels * sizeof (guint32));
+
     prepare_pixels_pass_1 (&prep_ctx);
     prepare_pixels_pass_2 (&prep_ctx);
+
+    smol_scale_destroy (prep_ctx.scale_ctx);
 }
 
 static void
