@@ -1462,6 +1462,20 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
     }
 }
 
+static gboolean
+need_pass_2 (ChafaCanvas *canvas)
+{
+    if ((canvas->config.preprocessing_enabled
+         && (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+             || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
+             || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG))
+        || canvas->config.color_space == CHAFA_COLOR_SPACE_DIN99D
+        || canvas->config.dither_mode != CHAFA_DITHER_MODE_NONE)
+        return TRUE;
+
+    return FALSE;
+}
+
 static void
 prepare_pixels_pass_2 (PrepareContext *prep_ctx)
 {
@@ -1477,6 +1491,9 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
      * - Dithering (optional)
      * - Color space conversion; DIN99d (optional)
      */
+
+    if (!need_pass_2 (prep_ctx->canvas))
+        return;
 
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
 
