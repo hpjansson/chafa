@@ -930,29 +930,6 @@ process_image (MagickWand *wand, gint *dest_width_out, gint *dest_height_out)
                                 options.zoom,
                                 options.stretch);
 
-    /* Optionally prescale input image */
-
-    if (options.work_factor >= 4)
-    {
-        gint new_width = CHAFA_SYMBOL_WIDTH_PIXELS * dest_width;
-        gint new_height = CHAFA_SYMBOL_HEIGHT_PIXELS * dest_height;
-
-        if (new_width < src_width || new_height < src_height)
-        {
-            src_width = new_width;
-            src_height = new_height;
-
-#if defined(HAVE_MAGICK_RESIZE_IMAGE_4)
-            MagickResizeImage (wand, src_width, src_height, TriangleFilter);
-#elif defined(HAVE_MAGICK_RESIZE_IMAGE_5)
-            MagickResizeImage (wand, src_width, src_height, TriangleFilter, 1.0);
-#else
-# warning No valid MagickResizeImage detected. Trying four arguments.
-            MagickResizeImage (wand, src_width, src_height, TriangleFilter);
-#endif
-        }
-    }
-
     if (dest_width_out)
         *dest_width_out = dest_width;
     if (dest_height_out)
