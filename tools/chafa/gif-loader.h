@@ -21,12 +21,13 @@
 #define __GIF_LOADER_H__
 
 #include <glib.h>
+#include "file-mapping.h"
 
 G_BEGIN_DECLS
 
 typedef struct GifLoader GifLoader;
 
-GifLoader *gif_loader_new_from_fd (gint fd);
+GifLoader *gif_loader_new_from_mapping (FileMapping *mapping);
 void gif_loader_destroy (GifLoader *loader);
 
 void gif_loader_get_geometry (GifLoader *loader, gint *width_out, gint *height_out);

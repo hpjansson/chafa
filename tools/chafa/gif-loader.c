@@ -36,7 +36,8 @@
 
 struct GifLoader
 {
-    guint8 *file_data;
+    FileMapping *mapping;
+    const guint8 *file_data;
     size_t file_data_len;
     gif_animation gif;
     gif_result code;
@@ -98,110 +99,8 @@ gif_loader_new (void)
     return g_new0 (GifLoader, 1);
 }
 
-static gint
-safe_read (gint fd, void *buf, size_t len)
-{
-   size_t ntotal = 0;
-   guint8 *buffer = buf;
-
-   while (len > 0)
-   {
-       unsigned int nread;
-       int iread;
-
-       /* Passing nread > INT_MAX to read is implementation defined in POSIX
-        * 1003.1, therefore despite the unsigned argument portable code must
-        * limit the value to INT_MAX!
-        */
-       if (len > INT_MAX)
-           nread = INT_MAX;
-       else
-           nread = (unsigned int)/*SAFE*/len;
-
-       iread = read (fd, buffer, nread);
-
-       if (iread == -1)
-       {
-           /* This is the devil in the details, a read can terminate early with 0
-            * bytes read because of EINTR, yet it still returns -1 otherwise end
-            * of file cannot be distinguished.
-            */
-           if (errno != EINTR)
-           {
-               /* I.e. a permanent failure */
-               return 0;
-           }
-       }
-       else if (iread < 0)
-       {
-           /* Not a valid 'read' result: */
-           return 0;
-       }
-       else if (iread > 0)
-       {
-           /* Continue reading until a permanent failure, or EOF */
-           buffer += iread;
-           len -= (unsigned int)/*SAFE*/iread;
-           ntotal += (unsigned int)/*SAFE*/iread;
-       }
-       else
-           return ntotal;
-   }
-
-   return ntotal; /* len == 0 */
-}
-
-static gboolean
-check_is_gif_file (gint fd)
-{
-    const gchar gif_magic [] = "GIF89a";
-    guint8 buf [8];
-
-    if (lseek (fd, 0, SEEK_SET) != 0)
-        return FALSE;
-
-    if ((gint) safe_read (fd, buf, strlen (gif_magic)) != (gint) strlen (gif_magic))
-        return FALSE;
-
-    if (memcmp (gif_magic, buf, strlen (gif_magic)))
-        return FALSE;
-
-    return TRUE;
-}
-
-static guint8 *
-load_file (gint fd, size_t *data_size)
-{
-    struct stat sb;
-    guint8 *buffer;
-    size_t size;
-    size_t n;
-
-    if (fstat (fd, &sb)) {
-        return NULL;
-    }
-
-    size = sb.st_size;
-
-    buffer = g_try_malloc (size);
-    if (!buffer) {
-        g_printerr ("Unable to allocate %lld bytes\n",
-                    (long long) size);
-        return NULL;
-    }
-
-    n = safe_read (fd, buffer, size);
-    if (n != size) {
-        g_free (buffer);
-        return NULL;
-    }
-
-    *data_size = size;
-    return buffer;
-}
-
 GifLoader *
-gif_loader_new_from_fd (gint fd)
+gif_loader_new_from_mapping (FileMapping *mapping)
 {
     gif_bitmap_callback_vt bitmap_callbacks =
     {
@@ -215,17 +114,15 @@ gif_loader_new_from_fd (gint fd)
     GifLoader *loader;
     gif_result code;
 
-    g_return_val_if_fail (fd >= 0, NULL);
+    g_return_val_if_fail (mapping != NULL, NULL);
 
-    if (!check_is_gif_file (fd))
+    if (!file_mapping_has_magic (mapping, 0, "GIF89a", 6))
         return NULL;
 
-    if (lseek (fd, 0, SEEK_SET) != 0)
-        return FALSE;
-
     loader = gif_loader_new ();
+    loader->mapping = mapping;
 
-    loader->file_data = load_file (fd, &loader->file_data_len);
+    loader->file_data = file_mapping_get_data (loader->mapping, &loader->file_data_len);
     if (!loader->file_data)
     {
         gif_loader_destroy (loader);
@@ -237,7 +134,7 @@ gif_loader_new_from_fd (gint fd)
 
     do
     {
-        code = gif_initialise (&loader->gif, loader->file_data_len, loader->file_data);
+        code = gif_initialise (&loader->gif, loader->file_data_len, (gpointer) loader->file_data);
 
         if (code != GIF_OK && code != GIF_WORKING)
         {
@@ -254,8 +151,8 @@ gif_loader_new_from_fd (gint fd)
 void
 gif_loader_destroy (GifLoader *loader)
 {
-    if (loader->file_data)
-        g_free (loader->file_data);
+    if (loader->mapping)
+        file_mapping_destroy (loader->mapping);
 
     if (loader->gif_is_initialized)
         gif_finalise (&loader->gif);

@@ -1191,6 +1191,7 @@ out:
 static gboolean
 run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean *success_out)
 {
+    FileMapping *mapping = NULL;
     GifLoader *loader = NULL;
     const guint8 *pixels;
     gboolean success = FALSE;
@@ -1200,17 +1201,19 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
     Group group = { NULL };
     GList *l;
     gint loop_n = 0;
-    gint fd = -1;
 
     timer = g_timer_new ();
 
-    fd = open (filename, O_RDONLY);
-    if (fd < 0)
+    mapping = file_mapping_new (filename);
+    if (!mapping)
         goto out;
 
-    loader = gif_loader_new_from_fd (fd);
+    loader = gif_loader_new_from_mapping (mapping);
     if (!loader)
         goto out;
+
+    /* Loader owns the mapping now */
+    mapping = NULL;
 
     success = TRUE;
 
@@ -1313,8 +1316,8 @@ out:
     if (loader)
         gif_loader_destroy (loader);
     group_clear (&group);
-    if (fd >= 0)
-        close (fd);
+    if (mapping)
+        file_mapping_destroy (mapping);
     g_timer_destroy (timer);
 
     if (success_out)
