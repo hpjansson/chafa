@@ -5,6 +5,8 @@ bin_PROGRAMS = \
 
 chafa_SOURCES = \
 	chafa.c \
+	file-mapping.c \
+	file-mapping.h \
 	gif-loader.c \
 	gif-loader.h \
 	named-colors.c \

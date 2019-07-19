@@ -146,6 +146,8 @@ AS_IF([ test "$enable_man" != no ], [
 
 dnl --- Specific checks ---
 
+AC_CHECK_FUNCS(mmap)
+
 dnl
 dnl Check for -Bsymbolic-functions linker flag used to avoid
 dnl intra-library PLT jumps, if available.
