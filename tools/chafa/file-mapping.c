@@ -242,6 +242,24 @@ file_mapping_get_data (FileMapping *file_mapping, gsize *length_out)
 }
 
 gboolean
+file_mapping_taste (FileMapping *file_mapping, gpointer out, goffset ofs, gsize length)
+{
+    if (file_mapping->fd < 0)
+        file_mapping->fd = open_file (file_mapping);
+
+    if (file_mapping->fd < 0)
+        return FALSE;
+
+    if (lseek (file_mapping->fd, ofs, SEEK_SET) != ofs)
+        return FALSE;
+
+    if (safe_read (file_mapping->fd, out, length) != length)
+        return FALSE;
+
+    return TRUE;
+}
+
+gboolean
 file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer data, gsize length)
 {
     gchar *buf;
