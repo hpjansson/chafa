@@ -102,6 +102,7 @@ struct ChafaCanvas
     /* Used when setting pixel data */
     const guint8 *src_pixels;
     Histogram *hist;
+    ChafaPixelType src_pixel_type;
     gint src_width, src_height, src_rowstride;
     gint have_alpha_int;
     gint dither_grain_width_shift, dither_grain_height_shift;
@@ -1359,7 +1360,8 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
 
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
 
-    thread_pool = g_thread_pool_new ((GFunc) (prep_ctx->canvas->work_factor_int < 3
+    thread_pool = g_thread_pool_new ((GFunc) ((prep_ctx->canvas->work_factor_int < 3
+                                               && prep_ctx->canvas->src_pixel_type == CHAFA_PIXEL_RGBA8_UNASSOCIATED)
                                               ? prepare_pixels_1_worker_nearest
                                               : prepare_pixels_1_worker_smooth),
                                      prep_ctx,
@@ -1548,7 +1550,7 @@ prepare_pixel_data (ChafaCanvas *canvas)
 
     /* FIXME: Allow user to specify input pixel type. Use premultiplied
      * for opaque images. */
-    prep_ctx.scale_ctx = smol_scale_new (SMOL_PIXEL_RGBA8_UNASSOCIATED,
+    prep_ctx.scale_ctx = smol_scale_new ((SmolPixelType) canvas->src_pixel_type,
                                          (const guint32 *) canvas->src_pixels,
                                          canvas->src_width,
                                          canvas->src_height,
@@ -2012,6 +2014,57 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
     canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
     canvas->hist = g_new (Histogram, 1);
 
+    canvas->src_pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+    canvas->src_pixels = src_pixels;
+    canvas->src_width = src_width;
+    canvas->src_height = src_height;
+    canvas->src_rowstride = src_rowstride;
+    canvas->have_alpha_int = 0;
+
+    prepare_pixel_data (canvas);
+
+    if (canvas->config.alpha_threshold == 0)
+        canvas->have_alpha = FALSE;
+
+    update_cells (canvas);
+    canvas->needs_clear = FALSE;
+
+    g_free (canvas->hist);
+    g_free (canvas->pixels);
+    canvas->pixels = NULL;
+}
+
+/**
+ * chafa_canvas_set_contents:
+ * @canvas: Canvas whose pixel data to replace
+ * @src_pixel_type: Pixel format of @src_pixels
+ * @src_pixels: Pointer to the start of source pixel memory
+ * @src_width: Width in pixels of source pixel data
+ * @src_height: Height in pixels of source pixel data
+ * @src_rowstride: Number of bytes between the start of each pixel row
+ *
+ * Replaces pixel data of @canvas with a copy of that found at @src_pixels,
+ * which must be in one of the formats supported by #ChafaPixelType.
+ **/
+void
+chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
+                           const guint8 *src_pixels,
+                           gint src_width, gint src_height, gint src_rowstride)
+{
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
+    g_return_if_fail (src_pixels != NULL);
+    g_return_if_fail (src_width >= 0);
+    g_return_if_fail (src_height >= 0);
+
+    if (src_width == 0 || src_height == 0)
+        return;
+
+    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+    canvas->hist = g_new (Histogram, 1);
+
+    canvas->src_pixel_type = src_pixel_type;
     canvas->src_pixels = src_pixels;
     canvas->src_width = src_width;
     canvas->src_height = src_height;

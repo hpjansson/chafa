@@ -28,6 +28,29 @@ G_BEGIN_DECLS
 
 /* Canvas */
 
+typedef enum
+{
+    /* 32 bits per pixel */
+
+    CHAFA_PIXEL_RGBA8_PREMULTIPLIED,
+    CHAFA_PIXEL_BGRA8_PREMULTIPLIED,
+    CHAFA_PIXEL_ARGB8_PREMULTIPLIED,
+    CHAFA_PIXEL_ABGR8_PREMULTIPLIED,
+
+    CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+    CHAFA_PIXEL_BGRA8_UNASSOCIATED,
+    CHAFA_PIXEL_ARGB8_UNASSOCIATED,
+    CHAFA_PIXEL_ABGR8_UNASSOCIATED,
+
+    /* 24 bits per pixel */
+
+    CHAFA_PIXEL_RGB8,
+    CHAFA_PIXEL_BGR8,
+
+    CHAFA_PIXEL_MAX
+}
+ChafaPixelType;
+
 typedef struct ChafaCanvas ChafaCanvas;
 
 CHAFA_AVAILABLE_IN_ALL
@@ -42,9 +65,15 @@ void chafa_canvas_unref (ChafaCanvas *canvas);
 CHAFA_AVAILABLE_IN_ALL
 const ChafaCanvasConfig *chafa_canvas_peek_config (ChafaCanvas *canvas);
 
-CHAFA_AVAILABLE_IN_ALL
+CHAFA_DEPRECATED_IN_1_2
 void chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
                                      gint src_width, gint src_height, gint src_rowstride);
+
+
+CHAFA_AVAILABLE_IN_1_2
+void chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
+                                const guint8 *src_pixels,
+                                gint src_width, gint src_height, gint src_rowstride);
 
 CHAFA_AVAILABLE_IN_ALL
 GString *chafa_canvas_build_ansi (ChafaCanvas *canvas);
