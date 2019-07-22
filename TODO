@@ -84,8 +84,8 @@ The Fine Material
   - Playback with awk + proper inter-frame delay.
   - X11 applications in terminal
     1) Xvfb :99 -ac -fbdir t -screen 0 1440x900x24 &
-    2) DISPLAY=:99 lament &
-    3) chafa -w 1 --watch t/Xvfb_screen0
+    2) DISPLAY=:99 lament -root &
+    3) chafa --watch t/Xvfb_screen0
   - gnome-shell in terminal
     - XDG_SESSION_TYPE=x11 DISPLAY=:99 gnome-shell
     - Run as different user.
