@@ -105,8 +105,8 @@ typedef void (SmolVFilterFunc) (const SmolScaleCtx *scale_ctx,
 
 #define SMOL_CONV_UNDEFINED { 0, NULL, NULL }
 #define SMOL_CONV(un_from_order, un_from_type, un_to_order, un_to_type, pk_from_order, pk_from_type, pk_to_order, pk_to_type, storage_bits) \
-{ storage_bits / 8, unpack_row_##un_from_order##_##un_from_type##_to_##un_to_order##_##un_to_type##_##storage_bits##bpp, \
-pack_row_##pk_from_order##_##pk_from_type##_to_##pk_to_order##_##pk_to_type##_##storage_bits##bpp }
+{ storage_bits / 8, (SmolUnpackRowFunc *) unpack_row_##un_from_order##_##un_from_type##_to_##un_to_order##_##un_to_type##_##storage_bits##bpp, \
+(SmolPackRowFunc *) pack_row_##pk_from_order##_##pk_from_type##_to_##pk_to_order##_##pk_to_type##_##storage_bits##bpp }
 
 typedef struct
 {

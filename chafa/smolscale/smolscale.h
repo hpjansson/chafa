@@ -13,6 +13,8 @@ extern "C" {
 
 typedef enum
 {
+    /* 32 bits per pixel */
+
     SMOL_PIXEL_RGBA8_PREMULTIPLIED,
     SMOL_PIXEL_BGRA8_PREMULTIPLIED,
     SMOL_PIXEL_ARGB8_PREMULTIPLIED,
@@ -22,6 +24,11 @@ typedef enum
     SMOL_PIXEL_BGRA8_UNASSOCIATED,
     SMOL_PIXEL_ARGB8_UNASSOCIATED,
     SMOL_PIXEL_ABGR8_UNASSOCIATED,
+
+    /* 24 bits per pixel */
+
+    SMOL_PIXEL_RGB8,
+    SMOL_PIXEL_BGR8,
 
     SMOL_PIXEL_MAX
 }

@@ -176,6 +176,44 @@ pack_row_1324_p_to_1234_p_64bpp (const uint64_t * SMOL_RESTRICT row_in,
     }
 }
 
+static void
+pack_row_132a_p_to_123_p_64bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                uint8_t * SMOL_RESTRICT row_out,
+                                uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        /* FIXME: Would be faster to shift directly */
+        uint32_t p = pack_pixel_1324_p_to_1234_p_64bpp (*(row_in++));
+        *(row_out++) = p >> 24;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 8;
+    }
+}
+
+static void
+pack_row_132a_p_to_321_p_64bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                uint8_t * SMOL_RESTRICT row_out,
+                                uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        /* FIXME: Would be faster to shift directly */
+        uint32_t p = pack_pixel_1324_p_to_1234_p_64bpp (*(row_in++));
+        *(row_out++) = p >> 8;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 24;
+    }
+}
+
 #define DEF_PACK_FROM_1324_P_TO_P_64BPP(a, b, c, d)                     \
 static SMOL_INLINE uint32_t                                             \
 pack_pixel_1324_p_to_##a##b##c##d##_p_64bpp (uint64_t in)               \
@@ -253,6 +291,41 @@ DEF_PACK_FROM_1234_P_TO_P_128BPP (3, 2, 1, 4)
 DEF_PACK_FROM_1234_P_TO_P_128BPP (4, 1, 2, 3)
 DEF_PACK_FROM_1234_P_TO_P_128BPP (4, 3, 2, 1)
 
+static void
+pack_row_123a_p_to_123_p_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        *(row_out++) = *row_in >> 32;
+        *(row_out++) = *(row_in++);
+        *(row_out++) = *(row_in++) >> 32;
+    }
+}
+
+static void
+pack_row_123a_p_to_321_p_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        *(row_out++) = row_in [1] >> 32;
+        *(row_out++) = row_in [0];
+        *(row_out++) = row_in [0] >> 32;
+        row_in += 2;
+    }
+}
+
 /* Pack p (alpha last) -> u */
 
 static SMOL_INLINE uint32_t
@@ -275,6 +348,42 @@ pack_row_132a_p_to_1234_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
     while (row_out != row_out_max)
     {
         *(row_out++) = pack_pixel_132a_p_to_1234_u_64bpp (*(row_in++));
+    }
+}
+
+static void
+pack_row_132a_p_to_123_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                uint8_t * SMOL_RESTRICT row_out,
+                                uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_132a_p_to_1234_u_64bpp (*(row_in++));
+        *(row_out++) = p >> 24;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 8;
+    }
+}
+
+static void
+pack_row_132a_p_to_321_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                uint8_t * SMOL_RESTRICT row_out,
+                                uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_132a_p_to_1234_u_64bpp (*(row_in++));
+        *(row_out++) = p >> 8;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 24;
     }
 }
 
@@ -332,6 +441,44 @@ DEF_PACK_FROM_123A_P_TO_U_128BPP (3, 2, 1, 4)
 DEF_PACK_FROM_123A_P_TO_U_128BPP (4, 1, 2, 3)
 DEF_PACK_FROM_123A_P_TO_U_128BPP (4, 3, 2, 1)
 
+static void
+pack_row_123a_p_to_123_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_123a_p_to_1234_u_128bpp (row_in);
+        row_in += 2;
+        *(row_out++) = p >> 24;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 8;
+    }
+}
+
+static void
+pack_row_123a_p_to_321_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_123a_p_to_1234_u_128bpp (row_in);
+        row_in += 2;
+        *(row_out++) = p >> 8;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 24;
+    }
+}
+
 /* Pack p (alpha first) -> u */
 
 static SMOL_INLINE uint32_t
@@ -354,6 +501,42 @@ pack_row_a324_p_to_1234_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
     while (row_out != row_out_max)
     {
         *(row_out++) = pack_pixel_a324_p_to_1234_u_64bpp (*(row_in++));
+    }
+}
+
+static void
+pack_row_a324_p_to_234_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                uint8_t * SMOL_RESTRICT row_out,
+                                uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_a324_p_to_1234_u_64bpp (*(row_in++));
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 8;
+        *(row_out++) = p;
+    }
+}
+
+static void
+pack_row_a324_p_to_432_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                uint8_t * SMOL_RESTRICT row_out,
+                                uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_a324_p_to_1234_u_64bpp (*(row_in++));
+        *(row_out++) = p;
+        *(row_out++) = p >> 8;
+        *(row_out++) = p >> 16;
     }
 }
 
@@ -411,6 +594,44 @@ DEF_PACK_FROM_A234_P_TO_U_128BPP (1, 4, 3, 2)
 DEF_PACK_FROM_A234_P_TO_U_128BPP (2, 3, 4, 1)
 DEF_PACK_FROM_A234_P_TO_U_128BPP (4, 3, 2, 1)
 
+static void
+pack_row_a234_p_to_234_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_a234_p_to_1234_u_128bpp (row_in);
+        row_in += 2;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 8;
+        *(row_out++) = p;
+    }
+}
+
+static void
+pack_row_a234_p_to_432_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels * 3;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_a234_p_to_1234_u_128bpp (row_in);
+        row_in += 2;
+        *(row_out++) = p;
+        *(row_out++) = p >> 8;
+        *(row_out++) = p >> 16;
+    }
+}
+
 /* Pack i (alpha last) to u */
 
 static SMOL_INLINE uint32_t
@@ -440,6 +661,44 @@ pack_row_123a_i_to_1234_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
     {
         *(row_out++) = pack_pixel_123a_i_to_1234_u_128bpp (row_in);
         row_in += 2;
+    }
+}
+
+static void
+pack_row_123a_i_to_123_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_123a_i_to_1234_u_128bpp (row_in);
+        row_in += 2;
+        *(row_out++) = p >> 24;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 8;
+    }
+}
+
+static void
+pack_row_123a_i_to_321_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
+                                 uint8_t * SMOL_RESTRICT row_out,
+                                 uint32_t n_pixels)
+{
+    uint8_t *row_out_max = row_out + n_pixels;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        uint32_t p = pack_pixel_123a_i_to_1234_u_128bpp (row_in);
+        row_in += 2;
+        *(row_out++) = p >> 8;
+        *(row_out++) = p >> 16;
+        *(row_out++) = p >> 24;
     }
 }
 
@@ -498,6 +757,29 @@ unpack_row_1234_p_to_1324_p_64bpp (const uint32_t * SMOL_RESTRICT row_in,
     }
 }
 
+static SMOL_INLINE uint64_t
+unpack_pixel_123_p_to_132a_p_64bpp (const uint8_t *p)
+{
+    return ((uint64_t) p [0] << 48) | ((uint32_t) p [1] << 16)
+        | ((uint64_t) p [2] << 32) | 0xff;
+}
+
+static void
+unpack_row_123_p_to_132a_p_64bpp (const uint8_t * SMOL_RESTRICT row_in,
+                                  uint64_t * SMOL_RESTRICT row_out,
+                                  uint32_t n_pixels)
+{
+    uint64_t *row_out_max = row_out + n_pixels;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        *(row_out++) = unpack_pixel_123_p_to_132a_p_64bpp (row_in);
+        row_in += 3;
+    }
+}
+
 static SMOL_INLINE void
 unpack_pixel_1234_p_to_1234_p_128bpp (uint32_t p,
                                       uint64_t *out)
@@ -519,6 +801,31 @@ unpack_row_1234_p_to_1234_p_128bpp (const uint32_t * SMOL_RESTRICT row_in,
     while (row_out != row_out_max)
     {
         unpack_pixel_1234_p_to_1234_p_128bpp (*(row_in++), row_out);
+        row_out += 2;
+    }
+}
+
+static SMOL_INLINE void
+unpack_pixel_123_p_to_123a_p_128bpp (const uint8_t *in,
+                                     uint64_t *out)
+{
+    out [0] = ((uint64_t) in [0] << 32) | in [1];
+    out [1] = ((uint64_t) in [2] << 32) | 0xff;
+}
+
+static void
+unpack_row_123_p_to_123a_p_128bpp (const uint8_t * SMOL_RESTRICT row_in,
+                                    uint64_t * SMOL_RESTRICT row_out,
+                                    uint32_t n_pixels)
+{
+    uint64_t *row_out_max = row_out + n_pixels * 2;
+
+    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+
+    while (row_out != row_out_max)
+    {
+        unpack_pixel_123_p_to_123a_p_128bpp (row_in, row_out);
+        row_in += 3;
         row_out += 2;
     }
 }
@@ -1803,6 +2110,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1324, p, 132a, p, 3214, u, 64),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1324, p, 132a, p, 4123, u, 64),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1324, p, 132a, p, 4321, u, 64),
+        /* RGB8      */ SMOL_CONV (1234, p, 1324, p, 132a, p, 123, u, 64),
+        /* BGR8      */ SMOL_CONV (1234, p, 1324, p, 132a, p, 321, u, 64),
     },
     /* BGRA8 pre -> */
     {
@@ -1814,6 +2123,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1324, p, 132a, p, 1234, u, 64),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1324, p, 132a, p, 4321, u, 64),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1324, p, 132a, p, 4123, u, 64),
+        /* RGB8      */ SMOL_CONV (1234, p, 1324, p, 132a, p, 321, u, 64),
+        /* BGR8      */ SMOL_CONV (1234, p, 1324, p, 132a, p, 123, u, 64),
     },
     /* ARGB8 pre -> */
     {
@@ -1825,6 +2136,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1324, p, a324, p, 4321, u, 64),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1324, p, a324, p, 1234, u, 64),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1324, p, a324, p, 1432, u, 64),
+        /* RGB8      */ SMOL_CONV (1234, p, 1324, p, a324, p, 234, u, 64),
+        /* BGR8      */ SMOL_CONV (1234, p, 1324, p, a324, p, 432, u, 64),
     },
     /* ABGR8 pre -> */
     {
@@ -1836,6 +2149,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1324, p, a324, p, 2341, u, 64),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1324, p, a324, p, 1432, u, 64),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1324, p, a324, p, 1234, u, 64),
+        /* RGB8      */ SMOL_CONV (1234, p, 1324, p, a324, p, 432, u, 64),
+        /* BGR8      */ SMOL_CONV (1234, p, 1324, p, a324, p, 234, u, 64),
     },
     /* RGBA8 un -> */
     {
@@ -1847,6 +2162,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 3214, u, 128),
         /* ARGB8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4123, u, 128),
         /* ABGR8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4321, u, 128),
+        /* RGB8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 123, u, 128),
+        /* BGR8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 321, u, 128),
     },
     /* BGRA8 un -> */
     {
@@ -1858,6 +2175,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 1234, u, 128),
         /* ARGB8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4321, u, 128),
         /* ABGR8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4123, u, 128),
+        /* RGB8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 321, u, 128),
+        /* BGR8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 123, u, 128),
     },
     /* ARGB8 un -> */
     {
@@ -1869,6 +2188,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 3214, u, 128),
         /* ARGB8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4123, u, 128),
         /* ABGR8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4321, u, 128),
+        /* RGB8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 123, u, 128),
+        /* BGR8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 321, u, 128),
     },
     /* ABGR8 un -> */
     {
@@ -1879,7 +2200,35 @@ static const SmolConversionTable avx2_conversions =
         /* RGBA8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 3214, u, 128),
         /* BGRA8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 1234, u, 128),
         /* ARGB8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4321, u, 128),
-        /* ABGR8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4123, u, 128)
+        /* ABGR8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4123, u, 128),
+        /* RGB8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 321, u, 128),
+        /* BGR8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 123, u, 128),
+    },
+    /* RGB8 -> */
+    {
+        /* RGBA8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 1234, p, 64),
+        /* BGRA8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 3214, p, 64),
+        /* ARGB8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 4123, p, 64),
+        /* ABGR8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 4321, p, 64),
+        /* RGBA8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 1234, p, 64),
+        /* BGRA8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 3214, p, 64),
+        /* ARGB8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 4123, p, 64),
+        /* ABGR8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 4321, p, 64),
+        /* RGB8      */ SMOL_CONV (123, p, 132a, p, 132a, p, 123, p, 64),
+        /* BGR8      */ SMOL_CONV (123, p, 132a, p, 132a, p, 321, p, 64),
+    },
+    /* BGR8 -> */
+    {
+        /* RGBA8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 3214, p, 64),
+        /* BGRA8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 1234, p, 64),
+        /* ARGB8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 4321, p, 64),
+        /* ABGR8 pre */ SMOL_CONV (123, p, 132a, p, 1324, p, 4123, p, 64),
+        /* RGBA8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 3214, p, 64),
+        /* BGRA8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 1234, p, 64),
+        /* ARGB8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 4321, p, 64),
+        /* ABGR8 un  */ SMOL_CONV (123, p, 132a, p, 1324, p, 4123, p, 64),
+        /* RGB8      */ SMOL_CONV (123, p, 132a, p, 132a, p, 321, p, 64),
+        /* BGR8      */ SMOL_CONV (123, p, 132a, p, 132a, p, 123, p, 64),
     }
     },
 
@@ -1897,6 +2246,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1234, p, 123a, p, 3214, u, 128),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1234, p, 123a, p, 4123, u, 128),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1234, p, 123a, p, 4321, u, 128),
+        /* RGB8      */ SMOL_CONV (1234, p, 1234, p, 123a, p, 123, u, 128),
+        /* BGR8      */ SMOL_CONV (1234, p, 1234, p, 123a, p, 321, u, 128),
     },
     /* BGRA8 pre -> */
     {
@@ -1908,6 +2259,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1234, p, 123a, p, 1234, u, 128),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1234, p, 123a, p, 4321, u, 128),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1234, p, 123a, p, 4123, u, 128),
+        /* RGB8      */ SMOL_CONV (1234, p, 1234, p, 123a, p, 321, u, 128),
+        /* BGR8      */ SMOL_CONV (1234, p, 1234, p, 123a, p, 123, u, 128),
     },
     /* ARGB8 pre -> */
     {
@@ -1919,6 +2272,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1234, p, a234, p, 4321, u, 128),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1234, p, a234, p, 1234, u, 128),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1234, p, a234, p, 1432, u, 128),
+        /* RGB8      */ SMOL_CONV (1234, p, 1234, p, a234, p, 234, u, 128),
+        /* BGR8      */ SMOL_CONV (1234, p, 1234, p, a234, p, 432, u, 128),
     },
     /* ABGR8 pre -> */
     {
@@ -1930,6 +2285,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (1234, p, 1234, p, a234, p, 2341, u, 128),
         /* ARGB8 un  */ SMOL_CONV (1234, p, 1234, p, a234, p, 1432, u, 128),
         /* ABGR8 un  */ SMOL_CONV (1234, p, 1234, p, a234, p, 1234, u, 128),
+        /* RGB8      */ SMOL_CONV (1234, p, 1234, p, a234, p, 432, u, 128),
+        /* BGR8      */ SMOL_CONV (1234, p, 1234, p, a234, p, 234, u, 128),
     },
     /* RGBA8 un -> */
     {
@@ -1941,6 +2298,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 3214, u, 128),
         /* ARGB8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4123, u, 128),
         /* ABGR8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4321, u, 128),
+        /* RGB8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 123, u, 128),
+        /* BGR8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 321, u, 128),
     },
     /* BGRA8 un -> */
     {
@@ -1952,6 +2311,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 1234, u, 128),
         /* ARGB8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4321, u, 128),
         /* ABGR8 un  */ SMOL_CONV (123a, u, 123a, i, 123a, i, 4123, u, 128),
+        /* RGB8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 321, u, 128),
+        /* BGR8      */ SMOL_CONV (123a, u, 123a, i, 123a, i, 123, u, 128),
     },
     /* ARGB8 un -> */
     {
@@ -1963,6 +2324,8 @@ static const SmolConversionTable avx2_conversions =
         /* BGRA8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 3214, u, 128),
         /* ARGB8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4123, u, 128),
         /* ABGR8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4321, u, 128),
+        /* RGB8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 123, u, 128),
+        /* BGR8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 321, u, 128),
     },
     /* ABGR8 un -> */
     {
@@ -1973,7 +2336,35 @@ static const SmolConversionTable avx2_conversions =
         /* RGBA8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 3214, u, 128),
         /* BGRA8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 1234, u, 128),
         /* ARGB8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4321, u, 128),
-        /* ABGR8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4123, u, 128)
+        /* ABGR8 un  */ SMOL_CONV (a234, u, 234a, i, 123a, i, 4123, u, 128),
+        /* RGB8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 321, u, 128),
+        /* BGR8      */ SMOL_CONV (a234, u, 234a, i, 123a, i, 123, u, 128),
+    },
+    /* RGB8 -> */
+    {
+        /* RGBA8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 1234, p, 128),
+        /* BGRA8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 3214, p, 128),
+        /* ARGB8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 4123, p, 128),
+        /* ABGR8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 4321, p, 128),
+        /* RGBA8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 1234, p, 128),
+        /* BGRA8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 3214, p, 128),
+        /* ARGB8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 4123, p, 128),
+        /* ABGR8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 4321, p, 128),
+        /* RGB8      */ SMOL_CONV (123, p, 123a, p, 123a, p, 123, p, 128),
+        /* BGR8      */ SMOL_CONV (123, p, 123a, p, 123a, p, 321, p, 128),
+    },
+    /* BGR8 -> */
+    {
+        /* RGBA8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 3214, p, 128),
+        /* BGRA8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 1234, p, 128),
+        /* ARGB8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 4321, p, 128),
+        /* ABGR8 pre */ SMOL_CONV (123, p, 123a, p, 1234, p, 4123, p, 128),
+        /* RGBA8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 3214, p, 128),
+        /* BGRA8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 1234, p, 128),
+        /* ARGB8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 4321, p, 128),
+        /* ABGR8 un  */ SMOL_CONV (123, p, 123a, p, 1234, p, 4123, p, 128),
+        /* RGB8      */ SMOL_CONV (123, p, 123a, p, 123a, p, 321, p, 128),
+        /* BGR8      */ SMOL_CONV (123, p, 123a, p, 123a, p, 123, p, 128),
     }
 } }
 };
