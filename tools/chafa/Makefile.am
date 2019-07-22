@@ -10,7 +10,9 @@ chafa_SOURCES = \
 	gif-loader.c \
 	gif-loader.h \
 	named-colors.c \
-	named-colors.h
+	named-colors.h \
+	xwd-loader.c \
+	xwd-loader.h
 
 chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
 chafa_LDFLAGS = $(CHAFA_LDFLAGS)
