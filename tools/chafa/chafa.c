@@ -1071,10 +1071,18 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
     xwd_loader = xwd_loader_new_from_mapping (file_mapping);
     if (!xwd_loader)
     {
+        PixelWand *color;
+
         file_mapping_destroy (file_mapping);
         file_mapping = NULL;
 
-        wand = NewMagickWand();
+        wand = NewMagickWand ();
+
+        color = NewPixelWand ();
+        PixelSetColor (color, "none");
+        MagickSetBackgroundColor (wand, color);
+        DestroyPixelWand (color);
+
         if (MagickReadImage (wand, filename) < 1)
         {
             gchar *error_str = NULL;
