@@ -39,6 +39,7 @@
 #include <chafa.h>
 #include "gif-loader.h"
 #include "named-colors.h"
+#include "xwd-loader.h"
 
 typedef struct
 {
@@ -867,8 +868,8 @@ auto_orient_image (MagickWand *image)
 }
 
 static GString *
-build_string (const guint8 *pixels,
-              gint src_width, gint src_height,
+build_string (ChafaPixelType pixel_type, const guint8 *pixels,
+              gint src_width, gint src_height, gint src_rowstride,
               gint dest_width, gint dest_height)
 {
     ChafaSymbolMap *symbol_map;
@@ -899,7 +900,7 @@ build_string (const guint8 *pixels,
     chafa_canvas_config_set_work_factor (config, (options.work_factor - 1) / 8.0);
 
     canvas = chafa_canvas_new (config);
-    chafa_canvas_set_contents_rgba8 (canvas, pixels, src_width, src_height, src_width * 4);
+    chafa_canvas_set_contents (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);
     gs = chafa_canvas_build_ansi (canvas);
 
     chafa_canvas_unref (canvas);
@@ -1004,6 +1005,21 @@ group_build_gif (Group *group, GifLoader *loader)
 }
 
 static void
+group_build_xwd (Group *group)
+{
+    GroupFrame *frame;
+
+    memset (group, 0, sizeof (*group));
+
+    frame = g_new0 (GroupFrame, 1);
+    frame->dest_width = -1;
+    frame->dest_height = -1;
+    frame->delay_ms = -1;
+
+    group->frames = g_list_prepend (group->frames, frame);
+}
+
+static void
 group_clear (Group *group)
 {
     GList *l;
@@ -1038,71 +1054,90 @@ static gboolean
 run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
     MagickWand *wand = NULL;
-    guint8 *pixels;
     gboolean is_animation = FALSE;
     gdouble anim_elapsed_s = 0.0;
     GTimer *timer;
     Group group = { NULL };
     GList *l;
     gint loop_n = 0;
+    FileMapping *file_mapping;
+    XwdLoader *xwd_loader;
 
     timer = g_timer_new ();
 
-    wand = NewMagickWand();
-    if (MagickReadImage (wand, filename) < 1)
+    /* Try XWD fast path first */
+
+    file_mapping = file_mapping_new (filename);
+    xwd_loader = xwd_loader_new_from_mapping (file_mapping);
+    if (!xwd_loader)
     {
-        gchar *error_str = NULL;
-        ExceptionType severity;
-        gchar *try_filename;
-        gint r;
+        file_mapping_destroy (file_mapping);
+        file_mapping = NULL;
 
-        error_str = MagickGetException (wand, &severity);
-
-        /* Try backup strategy for XWD. It's a file type we want to support
-         * due to the fun implications with Xvfb etc. The filenames in use
-         * tend to have no extension, and the file magic isn't very definite,
-         * so ImageMagick doesn't know what to do on its own. */
-        try_filename = g_strdup_printf ("XWD:%s", filename);
-        r = MagickReadImage (wand, try_filename);
-        g_free (try_filename);
-
-        if (r < 1)
+        wand = NewMagickWand();
+        if (MagickReadImage (wand, filename) < 1)
         {
-            if (!quiet)
-                g_printerr ("%s: Error loading '%s': %s\n",
-                            options.executable_name,
-                            filename,
-                            error_str);
-            MagickRelinquishMemory (error_str);
-            goto out;
+            gchar *error_str = NULL;
+            ExceptionType severity;
+            gchar *try_filename;
+            gint r;
+
+            error_str = MagickGetException (wand, &severity);
+
+            /* Try backup strategy for XWD. It's a file type we want to support
+             * due to the fun implications with Xvfb etc. The filenames in use
+             * tend to have no extension, and the file magic isn't very definite,
+             * so ImageMagick doesn't know what to do on its own. */
+            try_filename = g_strdup_printf ("XWD:%s", filename);
+            r = MagickReadImage (wand, try_filename);
+            g_free (try_filename);
+
+            if (r < 1)
+            {
+                if (!quiet)
+                    g_printerr ("%s: Error loading '%s': %s\n",
+                                options.executable_name,
+                                filename,
+                                error_str);
+                MagickRelinquishMemory (error_str);
+                goto out;
+            }
         }
     }
 
     if (interrupted_by_user)
         goto out;
 
-    is_animation = MagickGetNumberImages (wand) > 1 ? TRUE : FALSE;
-
-    if (is_animation)
+    if (xwd_loader)
     {
-        MagickWand *wand2 = MagickCoalesceImages (wand);
-        wand = DestroyMagickWand (wand);
-        wand = wand2;
+        group_build_xwd (&group);
     }
+    else /* wand */
+    {
+        is_animation = MagickGetNumberImages (wand) > 1 ? TRUE : FALSE;
 
-    if (interrupted_by_user)
-        goto out;
+        if (is_animation)
+        {
+            MagickWand *wand2 = MagickCoalesceImages (wand);
+            wand = DestroyMagickWand (wand);
+            wand = wand2;
+        }
 
-    group_build (&group, wand);
+        if (interrupted_by_user)
+            goto out;
 
-    if (interrupted_by_user)
-        goto out;
+        group_build (&group, wand);
+
+        if (interrupted_by_user)
+            goto out;
+    }
 
     do
     {
         /* Outer loop repeats animation if desired */
 
-        MagickResetIterator (wand);
+        if (wand)
+            MagickResetIterator (wand);
 
         for (l = group.frames;
              l && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
@@ -1111,29 +1146,63 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
             GroupFrame *frame = l->data;
             gint elapsed_ms, remain_ms;
 
-            MagickNextImage (wand);
+            if (wand)
+                MagickNextImage (wand);
 
             g_timer_start (timer);
 
             if (!frame->gs)
             {
-                gint src_width, src_height;
+                ChafaPixelType pixel_type;
+                gint src_width, src_height, src_rowstride;
+                const guint8 *pixels;
 
-                src_width = MagickGetImageWidth (wand);
-                src_height = MagickGetImageHeight (wand);
+                if (xwd_loader)
+                {
+                    pixels = xwd_loader_get_image_data (xwd_loader,
+                                                        &pixel_type,
+                                                        &src_width,
+                                                        &src_height,
+                                                        &src_rowstride);
 
-                pixels = g_malloc (src_width * src_height * 4);
-                MagickExportImagePixels (wand,
-                                         0, 0,
-                                         src_width, src_height,
-                                         "RGBA",
-                                         CharPixel,
-                                         pixels);
+                    /* FIXME: This shouldn't happen -- but if it does, our
+                     * options for handling it gracefully here aren't great.
+                     * Needs refactoring. */
+                    if (!pixels)
+                        break;
 
-                frame->gs = build_string (pixels,
-                                          src_width, src_height,
+                    frame->dest_width = options.width;
+                    frame->dest_height = options.height;
+                    chafa_calc_canvas_geometry (src_width,
+                                                src_height,
+                                                &frame->dest_width,
+                                                &frame->dest_height,
+                                                options.font_ratio,
+                                                options.zoom,
+                                                options.stretch);
+                }
+                else /* wand */
+                {
+                    src_width = MagickGetImageWidth (wand);
+                    src_height = MagickGetImageHeight (wand);
+                    src_rowstride = src_width * 4;
+
+                    pixels = g_malloc (src_height * src_rowstride);
+                    MagickExportImagePixels (wand,
+                                             0, 0,
+                                             src_width, src_height,
+                                             "RGBA",
+                                             CharPixel,
+                                             (void *) pixels);
+                    pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+                }
+
+                frame->gs = build_string (pixel_type, pixels,
+                                          src_width, src_height, src_rowstride,
                                           frame->dest_width, frame->dest_height);
-                g_free (pixels);
+
+                if (!xwd_loader)
+                    g_free ((void *) pixels);
             }
 
             if (options.clear)
@@ -1181,7 +1250,10 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
            && !options.watch && anim_elapsed_s < options.file_duration_s);
 
 out:
-    DestroyMagickWand (wand);
+    if (wand)
+        DestroyMagickWand (wand);
+    if (xwd_loader)
+        xwd_loader_destroy (xwd_loader);
     group_clear (&group);
     g_timer_destroy (timer);
 
@@ -1262,8 +1334,8 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
                                             options.zoom,
                                             options.stretch);
 
-                frame->gs = build_string (pixels,
-                                          src_width, src_height,
+                frame->gs = build_string (CHAFA_PIXEL_RGBA8_UNASSOCIATED, pixels,
+                                          src_width, src_height, src_width * 4,
                                           frame->dest_width, frame->dest_height);
             }
 
