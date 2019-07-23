@@ -87,6 +87,34 @@ which is faster but less accurate.
 </varlistentry>
 
 <varlistentry>
+<term><option>--dither <replaceable>type</replaceable></option></term>
+<listitem><para>
+Type of dithering to apply during quantization. One of [none, ordered,
+diffusion]. "Bayer" is a synonym for "ordered", and "fs" (Floyd-Steinberg) is
+a synonym for "diffusion".
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--dither-grain <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
+<listitem><para>
+Dimensions of grain used when dithering. Specified as width x height, where
+each can be one of [1, 2, 4, 8] pixels. One character cell is by definition 8
+pixels across in both dimensions. Defaults to 4x4.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--dither-intensity <replaceable>intensity</replaceable></option></term>
+<listitem><para>
+Intensity of dithering pattern. Ranges from 0.0 to infinity, with 1.0 considered
+neutral. Lower values tend to reduce the amount of dithering done, while higher
+values increase it. In practice, values higher than 10.0 are unlikely to produce
+useful results.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-d, --duration <replaceable>seconds</replaceable></option></term>
 <listitem><para>
 Time to show each file. If showing a single file, defaults to zero for a still
