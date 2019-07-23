@@ -2002,36 +2002,8 @@ void
 chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
                                  gint src_width, gint src_height, gint src_rowstride)
 {
-    g_return_if_fail (canvas != NULL);
-    g_return_if_fail (canvas->refs > 0);
-    g_return_if_fail (src_pixels != NULL);
-    g_return_if_fail (src_width >= 0);
-    g_return_if_fail (src_height >= 0);
-
-    if (src_width == 0 || src_height == 0)
-        return;
-
-    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
-    canvas->hist = g_new (Histogram, 1);
-
-    canvas->src_pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
-    canvas->src_pixels = src_pixels;
-    canvas->src_width = src_width;
-    canvas->src_height = src_height;
-    canvas->src_rowstride = src_rowstride;
-    canvas->have_alpha_int = 0;
-
-    prepare_pixel_data (canvas);
-
-    if (canvas->config.alpha_threshold == 0)
-        canvas->have_alpha = FALSE;
-
-    update_cells (canvas);
-    canvas->needs_clear = FALSE;
-
-    g_free (canvas->hist);
-    g_free (canvas->pixels);
-    canvas->pixels = NULL;
+    chafa_canvas_set_contents (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+                               src_pixels, src_width, src_height, src_rowstride);
 }
 
 /**
