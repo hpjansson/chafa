@@ -1,11 +1,13 @@
 <SECTION>
 <FILE>chafa-canvas</FILE>
 ChafaCanvas
+ChafaPixelType
 chafa_canvas_new
 chafa_canvas_new_similar
 chafa_canvas_ref
 chafa_canvas_unref
 chafa_canvas_peek_config
+chafa_canvas_set_contents
 chafa_canvas_set_contents_rgba8
 chafa_canvas_build_ansi
 </SECTION>
@@ -42,6 +44,12 @@ chafa_canvas_config_get_bg_color
 chafa_canvas_config_set_bg_color
 chafa_canvas_config_get_work_factor
 chafa_canvas_config_set_work_factor
+chafa_canvas_config_get_dither_mode
+chafa_canvas_config_set_dither_mode
+chafa_canvas_config_get_dither_grain_size
+chafa_canvas_config_set_dither_grain_size
+chafa_canvas_config_get_dither_intensity
+chafa_canvas_config_set_dither_intensity
 </SECTION>
 
 <SECTION>

@@ -599,6 +599,16 @@ chafa_canvas_config_set_dither_mode (ChafaCanvasConfig *config, ChafaDitherMode 
     config->dither_mode = dither_mode;
 }
 
+/**
+ * chafa_canvas_config_get_dither_grain_size:
+ * @config: A #ChafaCanvasConfig
+ * @width_out: Pointer to a location to store grain width
+ * @height_out: Pointer to a location to store grain height
+ *
+ * Returns @config's dither grain size in @width_out and @height_out.
+ *
+ * Since: 1.2
+ **/
 void
 chafa_canvas_config_get_dither_grain_size (const ChafaCanvasConfig *config, gint *width_out, gint *height_out)
 {
@@ -611,6 +621,18 @@ chafa_canvas_config_get_dither_grain_size (const ChafaCanvasConfig *config, gint
         *height_out = config->dither_grain_height;
 }
 
+/**
+ * chafa_canvas_config_set_dither_grain_size:
+ * @config: A #ChafaCanvasConfig
+ * @width: The desired grain width (1, 2, 4 or 8)
+ * @height: The desired grain height (1, 2, 4 or 8)
+ *
+ * Sets @config's stored dither grain size to @width by @height pixels. These
+ * values can be 1, 2, 4 or 8. 8 corresponds to the size of an entire
+ * character cell. The default is 4 pixels by 4 pixels.
+ *
+ * Since: 1.2
+ **/
 void
 chafa_canvas_config_set_dither_grain_size (ChafaCanvasConfig *config, gint width, gint height)
 {
@@ -623,6 +645,18 @@ chafa_canvas_config_set_dither_grain_size (ChafaCanvasConfig *config, gint width
     config->dither_grain_height = height;
 }
 
+/**
+ * chafa_canvas_config_get_dither_intensity:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns the relative intensity of the dithering pattern applied during
+ * image conversion. 1.0 is the default, corresponding to a moderate
+ * intensity. 
+ *
+ * Returns: The relative dithering intensity
+ *
+ * Since: 1.2
+ **/
 gfloat
 chafa_canvas_config_get_dither_intensity (const ChafaCanvasConfig *config)
 {
@@ -632,6 +666,18 @@ chafa_canvas_config_get_dither_intensity (const ChafaCanvasConfig *config)
     return config->dither_intensity;
 }
 
+/**
+ * chafa_canvas_config_set_dither_intensity:
+ * @config: A #ChafaCanvasConfig
+ * @intensity: Desired relative dithering intensity
+ *
+ * Sets @config's stored relative intensity of the dithering pattern applied
+ * during image conversion. 1.0 is the default, corresponding to a moderate
+ * intensity. Possible values range from 0.0 to infinity, but in practice,
+ * values above 10.0 are rarely useful.
+ *
+ * Since: 1.2
+ **/
 void
 chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat intensity)
 {

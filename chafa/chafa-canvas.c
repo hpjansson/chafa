@@ -37,9 +37,25 @@
  * specify any parameters, like the geometry, color space and so on, you
  * must create a #ChafaCanvasConfig first.
  *
- * You can draw an image to the canvas using chafa_canvas_set_contents_rgba8 ()
+ * You can draw an image to the canvas using chafa_canvas_set_contents ()
  * and create an ANSI text representation of the canvas' current contents
  * using chafa_canvas_build_ansi ().
+ **/
+
+/**
+ * ChafaPixelType:
+ * @CHAFA_PIXEL_RGBA8_PREMULTIPLIED: Premultiplied RGBA, 8 bits per channel
+ * @CHAFA_PIXEL_BGRA8_PREMULTIPLIED: Premultiplied BGRA, 8 bits per channel
+ * @CHAFA_PIXEL_ARGB8_PREMULTIPLIED: Premultiplied ARGB, 8 bits per channel
+ * @CHAFA_PIXEL_ABGR8_PREMULTIPLIED: Premultiplied ABGR, 8 bits per channel
+ * @CHAFA_PIXEL_RGBA8_UNASSOCIATED: Unassociated RGBA, 8 bits per channel
+ * @CHAFA_PIXEL_BGRA8_UNASSOCIATED: Unassociated BGRA, 8 bits per channel
+ * @CHAFA_PIXEL_ARGB8_UNASSOCIATED: Unassociated ARGB, 8 bits per channel
+ * @CHAFA_PIXEL_ABGR8_UNASSOCIATED: Unassociated ABGR, 8 bits per channel
+ * @CHAFA_PIXEL_RGB8: Packed RGB (no alpha), 8 bits per channel
+ * @CHAFA_PIXEL_BGR8: Packed BGR (no alpha), 8 bits per channel
+ *
+ * Pixel formats supported by #ChafaCanvas.
  **/
 
 /* Fixed point multiplier */
@@ -1986,27 +2002,6 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
 }
 
 /**
- * chafa_canvas_set_contents_rgba8:
- * @canvas: Canvas whose pixel data to replace
- * @src_pixels: Pointer to the start of source pixel memory
- * @src_width: Width in pixels of source pixel data
- * @src_height: Height in pixels of source pixel data
- * @src_rowstride: Number of bytes between the start of each pixel row
- *
- * Replaces pixel data of @canvas with a copy of that found at @src_pixels.
- * The source data must be in packed 8-bits-per-channel RGBA format. The
- * alpha value is expressed as opacity (0xff is opaque) and is not
- * premultiplied.
- **/
-void
-chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
-                                 gint src_width, gint src_height, gint src_rowstride)
-{
-    chafa_canvas_set_contents (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
-                               src_pixels, src_width, src_height, src_rowstride);
-}
-
-/**
  * chafa_canvas_set_contents:
  * @canvas: Canvas whose pixel data to replace
  * @src_pixel_type: Pixel format of @src_pixels
@@ -2017,6 +2012,8 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
  *
  * Replaces pixel data of @canvas with a copy of that found at @src_pixels,
  * which must be in one of the formats supported by #ChafaPixelType.
+ *
+ * Since: 1.2
  **/
 void
 chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
@@ -2054,6 +2051,29 @@ chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     g_free (canvas->hist);
     g_free (canvas->pixels);
     canvas->pixels = NULL;
+}
+
+/**
+ * chafa_canvas_set_contents_rgba8:
+ * @canvas: Canvas whose pixel data to replace
+ * @src_pixels: Pointer to the start of source pixel memory
+ * @src_width: Width in pixels of source pixel data
+ * @src_height: Height in pixels of source pixel data
+ * @src_rowstride: Number of bytes between the start of each pixel row
+ *
+ * Replaces pixel data of @canvas with a copy of that found at @src_pixels.
+ * The source data must be in packed 8-bits-per-channel RGBA format. The
+ * alpha value is expressed as opacity (0xff is opaque) and is not
+ * premultiplied.
+ *
+ * Deprecated: 1.2: Use chafa_canvas_set_contents() instead.
+ **/
+void
+chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
+                                 gint src_width, gint src_height, gint src_rowstride)
+{
+    chafa_canvas_set_contents (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+                               src_pixels, src_width, src_height, src_rowstride);
 }
 
 /**
