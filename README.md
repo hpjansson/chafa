@@ -54,6 +54,14 @@ Chafa has been packaged for Fedora. Issue the following command to install:
 $ sudo dnf install chafa
 ```
 
+### Guix
+
+# Chafa has been packaged for Guix. Issue the following command to install:
+
+```sh
+$ guix install chafa
+```
+
 ### openSUSE
 
 Chafa is available in the [graphics](https://build.opensuse.org/package/show/graphics/chafa) devel project for openSUSE.
