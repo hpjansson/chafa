@@ -1304,11 +1304,11 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
 
     group_build_gif (&group, loader);
 
+    gif_loader_first_frame (loader);
+
     do
     {
         /* Outer loop repeats animation if desired */
-
-        gif_loader_first_frame (loader);
 
         for (l = group.frames;
              l && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
@@ -1345,6 +1345,8 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
                 frame->gs = build_string (CHAFA_PIXEL_RGBA8_UNASSOCIATED, pixels,
                                           src_width, src_height, src_width * 4,
                                           frame->dest_width, frame->dest_height);
+
+                gif_loader_next_frame (loader);
             }
 
             if (options.clear)
@@ -1384,7 +1386,6 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
             }
 
             is_first_frame = FALSE;
-            gif_loader_next_frame (loader);
         }
 
         loop_n++;
