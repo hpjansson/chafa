@@ -56,7 +56,7 @@ $ sudo dnf install chafa
 
 ### Guix
 
-# Chafa has been packaged for Guix. Issue the following command to install:
+Chafa has been packaged for Guix. Issue the following command to install:
 
 ```sh
 $ guix install chafa
