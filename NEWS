@@ -1,6 +1,43 @@
 Chafa releases
 ==============
 
+1.2.0 (TBD)
+-----------
+
+This is a feature and performance release.
+
+* Added --dither, --dither-grain and --dither-intensity options. These
+  allow for sub-cell dithering in quantized modes (none, 2, 16, 240
+  and 256). Especially beneficial when used with -p off.
+
+* Added API for ordered and diffusion-based dithering in quantization.
+
+* Added API support for multiple 8bpc pixel modes: RGB, BGR, RGBA, BGRA,
+  ARGB, ABGR with either premultiplied or unassociated alpha channels.
+
+* Smooth scaling is now done internally, meaning libchafa consumers no
+  longer need to prescale images.
+
+* Implemented a machine learning tool that can generate custom fonts
+  for efficient image reproduction from a provided dataset. This is
+  left uninstalled since it's still experimental (Mo Zhou).
+
+* Throughput improvements:
+  - GIF animations now start playing instantly.
+  - GIF CPU overhead reduced by 75%, peak memory use down 95%-99% (!).
+  - XWD common case CPU overhead down 60-70%, peak memory down 70%.
+  - Additional halving of CPU overhead in 240- and 256-color modes.
+  - Streamlined pixel pipeline for better parallelization.
+
+* Installation instructions:
+  - New: Guix (Guy Fleury Iteriteka).
+  - New: openSUSE (Michael Vetter).
+
+* Bug fixes:
+  [unfiled]  Certain SVGs had transparency replaced with a white
+             background (nemo).
+  [unfiled]  -lm dependency belongs in libchafa, not frontend.
+
 1.0.1 (2018-12-18)
 ------------------
 
