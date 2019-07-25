@@ -1565,8 +1565,6 @@ prepare_pixel_data (ChafaCanvas *canvas)
     prep_ctx.n_batches_cells = (canvas->config.height + n_cpus - 1) / n_cpus;
     prep_ctx.n_rows_per_batch_cells = (canvas->config.height + prep_ctx.n_batches_cells - 1) / prep_ctx.n_batches_cells;
 
-    /* FIXME: Allow user to specify input pixel type. Use premultiplied
-     * for opaque images. */
     prep_ctx.scale_ctx = smol_scale_new ((SmolPixelType) canvas->src_pixel_type,
                                          (const guint32 *) canvas->src_pixels,
                                          canvas->src_width,
