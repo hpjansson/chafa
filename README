@@ -18,7 +18,7 @@ Installing with package manager
 -------------------------------
 
 Chafa is available as packages for many software distributions. A few are
-listed below, along with its command-line installation instructions:
+listed below, along with their command-line installation instructions:
 
 Arch Linux .... pacman -S chafa
 Brew .......... brew install chafa
