@@ -17,6 +17,9 @@
 <a href="https://hpjansson.org/chafa/download/">
 <img src="https://img.shields.io/github/release/hpjansson/chafa.svg?style=for-the-badge" alt="Latest Release" />
 </a>
+<br />
+
+<a href="https://hpjansson.org/chafa/">About</a> • <a href="https://hpjansson.org/chafa/gallery/>Gallery</a> • <a href="https://hpjansson.org/chafa/download/">Packages</a> • <a href="https://hpjansson.org/chafa/development/">Development</a>
 </p>
 
 Chafa is a command-line utility that converts all kinds of images, including
