@@ -1,12 +1,20 @@
+<!-- This file exists mostly to get a pretty page on git web hosts. See
+  -- README (with no extension) for readable plaintext instructions, or
+  -- go to https://hpjansson.org/chafa/ in a web browser -->
+
 <p align="center">
-<img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" /><br />
+<a href="https://hpjansson.org/chafa/">
+  <img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" />
+</a>
+<br />
+
 <a href="https://travis-ci.com/hpjansson/chafa/branches" rel="nofollow">
 <img src="https://img.shields.io/travis/com/hpjansson/chafa/master.svg?label=master&style=for-the-badge" alt="Master Build Status" />
 &emsp;
 <img src="https://img.shields.io/travis/com/hpjansson/chafa/1.0.svg?label=1.0&style=for-the-badge" alt="1.0 Build Status" />
 </a>
 &emsp;
-<a href="https://github.com/hpjansson/chafa/releases">
+<a href="https://hpjansson.org/chafa/download/">
 <img src="https://img.shields.io/github/release/hpjansson/chafa.svg?style=for-the-badge" alt="Latest Release" />
 </a>
 </p>
@@ -23,77 +31,15 @@ The core functionality is provided by a C library with a public,
 well-documented API.
 
 It has [official web pages](https://hpjansson.org/chafa/) and [C API
-documentation](http://hpjansson.org/chafa/ref/) online.
+documentation](https://hpjansson.org/chafa/ref/) online. Check out the
+[gallery](https://hpjansson.org/chafa/gallery/) for screenshots.
 
-## Installing with Package manager
+## Installing
 
-### Arch Linux
-
-Chafa has been added to the [community] repository. Use pacman to install:
-
-```sh
-$ sudo pacman -S chafa
-```
-
-### Debian testing/unstable
-
-Chafa has been packaged for Debian. Issue the following command to install:
-
-```sh
-$ sudo apt install chafa
-```
-
-For supported Debian releases, please see the
-[package status page](https://tracker.debian.org/pkg/chafa).
-
-### Fedora
-
-Chafa has been packaged for Fedora. Issue the following command to install:
-
-```sh
-$ sudo dnf install chafa
-```
-
-### Guix
-
-Chafa has been packaged for Guix. Issue the following command to install:
-
-```sh
-$ guix install chafa
-```
-
-### openSUSE
-
-Chafa is available in the [graphics](https://build.opensuse.org/package/show/graphics/chafa) devel project for openSUSE.
-
-Add and install it via:
-
-```sh
-$ sudo zypper ar -f obs://graphics graphics
-$ sudo zypper ref
-$ sudo zypper in chafa
-```
-
-## Installing from tarball
-
-You will need GCC, make and the GLib development package installed to
-compile Chafa from a release tarball. If you want to build the
-command-line tool `chafa` and not just the library, you will
-additionally need the ImageMagick development packages.
-
-Prebuilt documentation is included in the release tarball, and you
-do not need gtk-doc unless you want to make changes/rebuild it.
-
-After unpacking, cd to the toplevel directory and issue the following
-shell commands:
-
-```sh
-$ ./configure
-$ make
-$ sudo make install
-```
-
-## Installing from git repository
+Chafa is most likely packaged for your distribution, so if you're not
+going to hack on it, you're better off using
+[official packages](https://hpjansson.org/chafa/download/). If you want to
+build the latest and greatest yourself, read on.
 
 You will need GCC, make, Autoconf, Automake, Libtool and the GLib
 development package installed to compile Chafa from its git repository. If
@@ -116,11 +62,4 @@ $ make
 $ sudo make install
 ```
 
-## Further reading
-
-For tarball releases, additional documentation, etc. see [the official
-web pages](https://hpjansson.org/chafa/).
-
-<p align="center">
-<img src="https://hpjansson.org/chafa/img/example-1.gif" />
-</p>
+That should do it!

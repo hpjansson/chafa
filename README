@@ -12,6 +12,26 @@ characters to produce the desired output.
 The core functionality is provided by a C library with a public,
 well-documented API.
 
+For the most up-to-date information, please see https://hpjansson.org/chafa/
+
+Installing with package manager
+-------------------------------
+
+Chafa is available as packages for many software distributions. A few are
+listed below, along with its command-line installation instructions:
+
+Arch Linux .... pacman -S chafa
+Brew .......... brew install chafa
+Debian ........ apt install chafa
+Fedora ........ dnf install chafa
+Gentoo ........ emerge media-gfx/chafa
+Guix .......... guix install chafa
+Kali Linux .... apt install chafa
+openSUSE ...... zypper ar -f obs://graphics graphics && zypper in chafa
+Ubuntu ........ apt install chafa
+
+See https://hpjansson.org/chafa/download/ for more.
+
 Installing from tarball
 -----------------------
 
@@ -49,10 +69,3 @@ Then cd to the toplevel directory and issue the following shell commands:
 $ ./autogen.sh
 $ make
 $ sudo make install
-
-Further reading
----------------
-
-For tarball releases, online documentation, etc. see the official web pages:
-
-https://hpjansson.org/chafa/
