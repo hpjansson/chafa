@@ -22,10 +22,6 @@
 
 <p align="center"><a href="https://hpjansson.org/chafa/">About</a> • <a href="https://hpjansson.org/chafa/gallery/">Gallery</a> • <a href="https://hpjansson.org/chafa/download/">Packages</a> • <a href="https://hpjansson.org/chafa/development/">Development</a></p>
 
-||
-|:--:|
-| <a href="https://hpjansson.org/chafa/">About</a> • <a href="https://hpjansson.org/chafa/gallery/">Gallery</a> • <a href="https://hpjansson.org/chafa/download/">Packages</a> • <a href="https://hpjansson.org/chafa/development/">Development</a> |
-
 Chafa is a command-line utility that converts all kinds of images, including
 animated GIFs, into ANSI/Unicode character output that can be displayed in a
 terminal.
