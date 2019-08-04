@@ -2001,7 +2001,7 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
 }
 
 /**
- * chafa_canvas_set_contents:
+ * chafa_canvas_draw_all_pixels:
  * @canvas: Canvas whose pixel data to replace
  * @src_pixel_type: Pixel format of @src_pixels
  * @src_pixels: Pointer to the start of source pixel memory
@@ -2015,9 +2015,9 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
  * Since: 1.2
  **/
 void
-chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
-                           const guint8 *src_pixels,
-                           gint src_width, gint src_height, gint src_rowstride)
+chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
+                              const guint8 *src_pixels,
+                              gint src_width, gint src_height, gint src_rowstride)
 {
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);
@@ -2065,14 +2065,14 @@ chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
  * alpha value is expressed as opacity (0xff is opaque) and is not
  * premultiplied.
  *
- * Deprecated: 1.2: Use chafa_canvas_set_contents() instead.
+ * Deprecated: 1.2: Use chafa_canvas_draw_all_pixels() instead.
  **/
 void
 chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
                                  gint src_width, gint src_height, gint src_rowstride)
 {
-    chafa_canvas_set_contents (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
-                               src_pixels, src_width, src_height, src_rowstride);
+    chafa_canvas_draw_all_pixels (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+                                  src_pixels, src_width, src_height, src_rowstride);
 }
 
 /**

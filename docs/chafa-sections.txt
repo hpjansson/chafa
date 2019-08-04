@@ -7,9 +7,9 @@ chafa_canvas_new_similar
 chafa_canvas_ref
 chafa_canvas_unref
 chafa_canvas_peek_config
-chafa_canvas_set_contents
-chafa_canvas_set_contents_rgba8
+chafa_canvas_draw_all_pixels
 chafa_canvas_build_ansi
+chafa_canvas_set_contents_rgba8
 </SECTION>
 
 <SECTION>

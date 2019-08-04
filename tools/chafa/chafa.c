@@ -900,7 +900,7 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_work_factor (config, (options.work_factor - 1) / 8.0);
 
     canvas = chafa_canvas_new (config);
-    chafa_canvas_set_contents (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);
+    chafa_canvas_draw_all_pixels (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);
     gs = chafa_canvas_build_ansi (canvas);
 
     chafa_canvas_unref (canvas);

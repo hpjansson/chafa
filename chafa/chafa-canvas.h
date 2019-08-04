@@ -71,9 +71,9 @@ void chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pix
 
 
 CHAFA_AVAILABLE_IN_1_2
-void chafa_canvas_set_contents (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
-                                const guint8 *src_pixels,
-                                gint src_width, gint src_height, gint src_rowstride);
+void chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
+                                   const guint8 *src_pixels,
+                                   gint src_width, gint src_height, gint src_rowstride);
 
 CHAFA_AVAILABLE_IN_ALL
 GString *chafa_canvas_build_ansi (ChafaCanvas *canvas);
