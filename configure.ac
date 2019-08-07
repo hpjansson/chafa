@@ -11,8 +11,8 @@ m4_define([chafa_micro_version], [0])
 m4_define([chafa_version], [chafa_major_version.chafa_minor_version.chafa_micro_version])
 
 AC_PREREQ(2.59)
-AC_INIT([chafa], [chafa_version], [hpj@copyleft.no])
-AM_INIT_AUTOMAKE([1.9 foreign])
+AC_INIT([chafa], chafa_version, [hpj@copyleft.no])
+AM_INIT_AUTOMAKE([1.9 foreign dist-xz no-dist-gzip -Wall])
 
 AC_CONFIG_SRCDIR([chafa.pc.in])
 
@@ -44,6 +44,7 @@ AC_PROG_CC
 AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
+AM_PROG_AR
 LT_INIT
 
 dnl --- Required standards ---
