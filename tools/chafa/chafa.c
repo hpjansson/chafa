@@ -639,8 +639,14 @@ detect_canvas_mode (void)
     /* Terminals that advertise 256 colors usually support truecolor too,
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
      * regardless. */
-    if (!strcmp (term, "xterm-256color"))
+    if (!strcmp (term, "xterm-256color")
+        || !strcmp (term, "xterm-kitty"))
         mode = CHAFA_CANVAS_MODE_TRUECOLOR;
+
+    /* mlterm's truecolor support seems to be broken; it looks like a color
+     * allocation issue. */
+    if (!strcmp (term, "mlterm"))
+        mode = CHAFA_CANVAS_MODE_INDEXED_240;
 
     /* rxvt 256-color really is 256 colors only */
     if (!strcmp (term, "rxvt-unicode-256color"))
