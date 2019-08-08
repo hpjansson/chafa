@@ -31,6 +31,13 @@
 
 #include "file-mapping.h"
 
+#ifdef HAVE_MMAP
+/* Workaround for non-Linux platforms */
+# ifndef MAP_NORESERVE
+#  define MAP_NORESERVE 0
+# endif
+#endif
+
 struct FileMapping
 {
     gchar *path;
