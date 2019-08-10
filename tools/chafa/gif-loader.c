@@ -111,23 +111,21 @@ gif_loader_new_from_mapping (FileMapping *mapping)
         bitmap_test_opaque,
         bitmap_modified
     };
-    GifLoader *loader;
     gif_result code;
+    GifLoader *loader = NULL;
+    gboolean success = FALSE;
 
     g_return_val_if_fail (mapping != NULL, NULL);
 
     if (!file_mapping_has_magic (mapping, 0, "GIF89a", 6))
-        return NULL;
+        goto out;
 
     loader = gif_loader_new ();
     loader->mapping = mapping;
 
     loader->file_data = file_mapping_get_data (loader->mapping, &loader->file_data_len);
     if (!loader->file_data)
-    {
-        gif_loader_destroy (loader);
-        loader = NULL;
-    }
+        goto out;
 
     gif_create (&loader->gif, &bitmap_callbacks);
     loader->gif_is_initialized = TRUE;
@@ -137,13 +135,24 @@ gif_loader_new_from_mapping (FileMapping *mapping)
         code = gif_initialise (&loader->gif, loader->file_data_len, (gpointer) loader->file_data);
 
         if (code != GIF_OK && code != GIF_WORKING)
-        {
-            gif_loader_destroy (loader);
-            loader = NULL;
-            break;
-        }
+            goto out;
     }
     while (code != GIF_OK);
+
+    success = TRUE;
+
+out:
+    if (!success)
+    {
+        if (loader)
+        {
+            if (loader->gif_is_initialized)
+                gif_finalise (&loader->gif);
+
+            g_free (loader);
+            loader = NULL;
+        }
+    }
 
     return loader;
 }
