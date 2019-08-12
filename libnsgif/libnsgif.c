@@ -122,13 +122,13 @@ gif_initialise_sprite(gif_animation *gif,
 static gif_result
 gif_initialise_frame_extensions(gif_animation *gif, const int frame)
 {
-        unsigned char *gif_data, *gif_end;
+        const unsigned char *gif_data, *gif_end;
         int gif_bytes;
         unsigned int block_size;
 
         /* Get our buffer position etc.	*/
-        gif_data = (unsigned char *)(gif->gif_data + gif->buffer_position);
-        gif_end = (unsigned char *)(gif->gif_data + gif->buffer_size);
+        gif_data = (const unsigned char *)(gif->gif_data + gif->buffer_position);
+        gif_end = (const unsigned char *)(gif->gif_data + gif->buffer_size);
 
         /* Initialise the extensions */
         while (gif_data < gif_end && gif_data[0] == GIF_EXTENSION_INTRODUCER) {
@@ -254,20 +254,21 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         int frame;
         gif_frame *temp_buf;
 
-        unsigned char *gif_data, *gif_end;
+        const unsigned char *gif_data, *gif_end;
         int gif_bytes;
         unsigned int flags = 0;
         unsigned int width, height, offset_x, offset_y;
         unsigned int block_size, colour_table_size;
         bool first_image = true;
         gif_result return_value;
+        bool premature_eof = false;
 
         /* Get the frame to decode and our data position */
         frame = gif->frame_count;
 
         /* Get our buffer position etc. */
-        gif_data = (unsigned char *)(gif->gif_data + gif->buffer_position);
-        gif_end = (unsigned char *)(gif->gif_data + gif->buffer_size);
+        gif_data = (const unsigned char *)(gif->gif_data + gif->buffer_position);
+        gif_end = (const unsigned char *)(gif->gif_data + gif->buffer_size);
         gif_bytes = (gif_end - gif_data);
 
         /* Check if we've finished */
@@ -441,10 +442,9 @@ static gif_result gif_initialise_frame(gif_animation *gif)
                          * better to partially load the gif than not at all.
                          */
                         if (gif_bytes >= 2) {
-                                gif_data[0] = 0;
-                                gif_data[1] = GIF_TRAILER;
                                 gif_bytes = 1;
                                 ++gif_data;
+                                premature_eof = true;
                                 break;
                         } else {
                                 return GIF_INSUFFICIENT_FRAME_DATA;
@@ -464,7 +464,7 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         if (gif_bytes < 1) {
                 return GIF_INSUFFICIENT_FRAME_DATA;
         } else {
-                if (gif_data[0] == GIF_TRAILER) {
+                if (premature_eof || gif_data[0] == GIF_TRAILER) {
                         return GIF_OK;
                 }
         }
@@ -483,13 +483,13 @@ static gif_result gif_initialise_frame(gif_animation *gif)
  */
 static gif_result gif_skip_frame_extensions(gif_animation *gif)
 {
-        unsigned char *gif_data, *gif_end;
+        const unsigned char *gif_data, *gif_end;
         int gif_bytes;
         unsigned int block_size;
 
         /* Get our buffer position etc.	*/
-        gif_data = (unsigned char *)(gif->gif_data + gif->buffer_position);
-        gif_end = (unsigned char *)(gif->gif_data + gif->buffer_size);
+        gif_data = (const unsigned char *)(gif->gif_data + gif->buffer_position);
+        gif_end = (const unsigned char *)(gif->gif_data + gif->buffer_size);
         gif_bytes = (gif_end - gif_data);
 
         /* Skip the extensions */
@@ -584,7 +584,7 @@ gif_internal_decode_frame(gif_animation *gif,
                           bool clear_image)
 {
         unsigned int index = 0;
-        unsigned char *gif_data, *gif_end;
+        const unsigned char *gif_data, *gif_end;
         int gif_bytes;
         unsigned int width, height, offset_x, offset_y;
         unsigned int flags, colour_table_size, interlace;
@@ -929,7 +929,7 @@ void gif_create(gif_animation *gif, gif_bitmap_callback_vt *bitmap_callbacks)
 /* exported function documented in libnsgif.h */
 gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
 {
-        unsigned char *gif_data;
+        const unsigned char *gif_data;
         unsigned int index;
         gif_result return_value;
 
