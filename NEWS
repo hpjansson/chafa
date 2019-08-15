@@ -1,6 +1,20 @@
 Chafa releases
 ==============
 
+1.2.1 (2019-08-15)
+------------------
+
+This minor release fixes a few bugs and improves terminal detection.
+
+* Detect kitty and mlterm virtual terminals and apply optimal defaults
+  accordingly.
+
+* Make Automake build more strict and fix a few compatibility nits.
+
+* Bug fixes:
+  github#30  Failed to build on hurd-i386 (found by Mo Zhou).
+  [unfiled]  Crash on certain broken GIFs.
+
 1.2.0 (2019-08-04)
 ------------------
 
