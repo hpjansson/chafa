@@ -70,7 +70,10 @@ struct ChafaSymbolMap
     gint refs;
 
     guint need_rebuild : 1;
-    GHashTable *desired_symbols;
+    guint use_builtin_glyphs : 1;
+
+    GHashTable *glyphs;
+    GArray *selectors;
 
     /* Populated by chafa_symbol_map_prepare () */
     guint64 *packed_bitmaps;

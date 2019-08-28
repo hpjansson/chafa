@@ -408,9 +408,12 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
                              ChafaColor *bg_col_out,
                              gint *error_out)
 {
-    SymbolEval eval [CHAFA_N_SYMBOLS_MAX] = { 0 };
+    SymbolEval *eval;
     gint n;
     gint i;
+
+    eval = g_alloca (sizeof (SymbolEval) * (canvas->config.symbol_map.n_symbols + 1));
+    memset (eval, 0, sizeof (SymbolEval) * (canvas->config.symbol_map.n_symbols + 1));
 
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
     {

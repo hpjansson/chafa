@@ -67,14 +67,39 @@ void chafa_symbol_map_ref (ChafaSymbolMap *symbol_map);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_symbol_map_unref (ChafaSymbolMap *symbol_map);
 
+/* --- Selectors --- */
+
 CHAFA_AVAILABLE_IN_ALL
 void chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags);
 
+CHAFA_AVAILABLE_IN_1_4
+void chafa_symbol_map_add_by_range (ChafaSymbolMap *symbol_map,
+                                    gunichar first, gunichar last);
+CHAFA_AVAILABLE_IN_1_4
+void chafa_symbol_map_remove_by_range (ChafaSymbolMap *symbol_map,
+                                       gunichar first, gunichar last);
+
 CHAFA_AVAILABLE_IN_ALL
 gboolean chafa_symbol_map_apply_selectors (ChafaSymbolMap *symbol_map,
                                            const gchar *selectors, GError **error);
+
+/* --- Glyphs --- */
+
+CHAFA_AVAILABLE_IN_1_4
+gboolean chafa_symbol_map_get_allow_builtin_glyphs (ChafaSymbolMap *symbol_map);
+CHAFA_AVAILABLE_IN_1_4
+void chafa_symbol_map_set_allow_builtin_glyphs (ChafaSymbolMap *symbol_map,
+                                                gboolean use_builtin_glyphs);
+
+CHAFA_AVAILABLE_IN_1_4
+void chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
+                                 gunichar code_point,
+                                 ChafaPixelType pixel_format,
+                                 gpointer pixels,
+                                 gint width, gint height,
+                                 gint rowstride);
 
 G_END_DECLS
 
