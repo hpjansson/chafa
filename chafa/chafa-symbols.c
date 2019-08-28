@@ -2036,3 +2036,31 @@ chafa_init_symbols (void)
 
     symbols_initialized = TRUE;
 }
+
+ChafaSymbolTags
+chafa_get_tags_for_char (gunichar c)
+{
+    gint i;
+
+    chafa_init_symbols ();
+
+    for (i = 0; chafa_symbols [i].c != 0; i++)
+    {
+        if (chafa_symbols [i].c == c)
+            return chafa_symbols [i].sc;
+    }
+
+    if (c <= 0x7f)
+        return CHAFA_SYMBOL_TAG_ASCII;
+
+    if (c >= 0x2300 && c <= 0x23ff)
+        return CHAFA_SYMBOL_TAG_TECHNICAL;
+
+    if (c >= 0x25a0 && c <= 0x25ff)
+        return CHAFA_SYMBOL_TAG_GEOMETRIC;
+
+    if (c >= 0x2800 && c <= 0x28ff)
+        return CHAFA_SYMBOL_TAG_BRAILLE;
+
+    return CHAFA_SYMBOL_TAG_EXTRA;
+}

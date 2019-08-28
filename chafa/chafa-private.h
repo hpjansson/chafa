@@ -128,6 +128,7 @@ extern ChafaSymbol *chafa_symbols;
 
 void chafa_init_palette (void);
 void chafa_init_symbols (void);
+ChafaSymbolTags chafa_get_tags_for_char (gunichar c);
 
 void chafa_init (void);
 gboolean chafa_have_mmx (void) G_GNUC_PURE;
