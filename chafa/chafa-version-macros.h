@@ -31,6 +31,7 @@ G_BEGIN_DECLS
 
 #define CHAFA_VERSION_1_0 (G_ENCODE_VERSION (1, 0))
 #define CHAFA_VERSION_1_2 (G_ENCODE_VERSION (1, 2))
+#define CHAFA_VERSION_1_4 (G_ENCODE_VERSION (1, 4))
 
 /* Evaluates to the current stable version; for development cycles,
  * this means the next stable target. */
@@ -130,6 +131,20 @@ G_BEGIN_DECLS
 # define CHAFA_AVAILABLE_IN_1_2                 G_UNAVAILABLE(1, 2)
 #else
 # define CHAFA_AVAILABLE_IN_1_2                 _CHAFA_EXTERN
+#endif
+
+#if CHAFA_VERSION_MIN_REQUIRED >= CHAFA_VERSION_1_4
+# define CHAFA_DEPRECATED_IN_1_4                G_DEPRECATED
+# define CHAFA_DEPRECATED_IN_1_4_FOR(f)         G_DEPRECATED_FOR(f)
+#else
+# define CHAFA_DEPRECATED_IN_1_4                _CHAFA_EXTERN
+# define CHAFA_DEPRECATED_IN_1_4_FOR(f)         _CHAFA_EXTERN
+#endif
+
+#if CHAFA_VERSION_MAX_ALLOWED < CHAFA_VERSION_1_4
+# define CHAFA_AVAILABLE_IN_1_4                 G_UNAVAILABLE(1, 4)
+#else
+# define CHAFA_AVAILABLE_IN_1_4                 _CHAFA_EXTERN
 #endif
 
 G_END_DECLS
