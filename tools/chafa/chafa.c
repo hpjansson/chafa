@@ -878,12 +878,10 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
               gint src_width, gint src_height, gint src_rowstride,
               gint dest_width, gint dest_height)
 {
-    ChafaSymbolMap *symbol_map;
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
     GString *gs;
 
-    symbol_map = chafa_symbol_map_new ();
     config = chafa_canvas_config_new ();
 
     chafa_canvas_config_set_geometry (config, dest_width, dest_height);
@@ -911,7 +909,6 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
 
     chafa_canvas_unref (canvas);
     chafa_canvas_config_unref (config);
-    chafa_symbol_map_unref (symbol_map);
     return gs;
 }
 
