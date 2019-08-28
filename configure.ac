@@ -72,6 +72,7 @@ dnl AC_DEFINE([_POSIX_C_SOURCE], [200809L], [Minimum POSIX standard we need])
 dnl --- Dependency check ---
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10)
+PKG_CHECK_MODULES(FREETYPE, freetype2 >= 2.0.0)
 
 AC_ARG_WITH(tools,
   [AS_HELP_STRING([--without-tools], [don't build command-line tools [default=on]])],

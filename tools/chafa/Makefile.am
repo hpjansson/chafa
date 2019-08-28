@@ -7,6 +7,8 @@ chafa_SOURCES = \
 	chafa.c \
 	file-mapping.c \
 	file-mapping.h \
+	font-loader.c \
+	font-loader.h \
 	gif-loader.c \
 	gif-loader.h \
 	named-colors.c \
@@ -14,9 +16,9 @@ chafa_SOURCES = \
 	xwd-loader.c \
 	xwd-loader.h
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(FREETYPE_CFLAGS)
 chafa_LDFLAGS = $(CHAFA_LDFLAGS)
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la
 
 endif
 

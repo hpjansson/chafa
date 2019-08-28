@@ -37,6 +37,7 @@
 #endif
 
 #include <chafa.h>
+#include "font-loader.h"
 #include "gif-loader.h"
 #include "named-colors.h"
 #include "xwd-loader.h"
@@ -226,6 +227,8 @@ print_summary (void)
     "                     Defaults to none. See below for full usage.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
+    "      --glyph-file=FILE  Load glyph information from FILE, which can be any\n"
+    "                     font file supported by FreeType (TTF, PCF, etc).\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
@@ -485,6 +488,56 @@ out:
 }
 
 static gboolean
+parse_glyph_file_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = FALSE;
+    FileMapping *file_mapping;
+    FontLoader *font_loader;
+    gunichar c;
+    gpointer c_bitmap;
+    gint width, height;
+
+    file_mapping = file_mapping_new (value);
+    if (!file_mapping)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unable to open glyph file '%s'.", value);
+        goto out;
+    }
+
+    font_loader = font_loader_new_from_mapping (file_mapping);
+    if (!font_loader)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unable to load glyph file '%s'.", value);
+        goto out;
+    }
+
+    /* Font loader owns it now */
+    file_mapping = NULL;
+
+    while (font_loader_get_next_glyph (font_loader, &c, &c_bitmap, &width, &height))
+    {
+        chafa_symbol_map_add_glyph (options.symbol_map, c,
+                                    CHAFA_PIXEL_RGBA8_PREMULTIPLIED, c_bitmap,
+                                    width, height, width * 4);
+        chafa_symbol_map_add_glyph (options.fill_symbol_map, c,
+                                    CHAFA_PIXEL_RGBA8_PREMULTIPLIED, c_bitmap,
+                                    width, height, width * 4);
+        g_free (c_bitmap);
+    }
+
+    font_loader_destroy (font_loader);
+
+    result = TRUE;
+
+out:
+    if (file_mapping)
+        file_mapping_destroy (file_mapping);
+    return result;
+}
+
+static gboolean
 parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
@@ -710,6 +763,7 @@ parse_options (int *argc, char **argv [])
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
+        { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
