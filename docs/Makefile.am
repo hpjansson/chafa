@@ -41,17 +41,22 @@ include $(top_srcdir)/gtk-doc.make
 
 # Other files to distribute
 EXTRA_DIST +=				\
-	version.xml.in
+	version.xml.in			\
+	style.css
 
 ########################################################################
 
 man_MANS =
+manhtml =
 
 if ENABLE_MAN
 
 man_MANS += \
-	chafa.1	\
-	chafa.html
+	chafa.1
+
+manhtml += chafa.html
+
+all-local: $(manhtml)
 
 XSLTPROC_FLAGS = \
         --nonet \
@@ -66,7 +71,7 @@ XSLTPROC_FLAGS = \
 .xml.1:
 	$(AM_V_GEN) $(XSLTPROC) $(XSLTPROC_FLAGS) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
-.xml.html:
+chafa.html: $(srcdir)/chafa.xml
 	$(AM_V_GEN) $(XSLTPROC) $(XSLTPROC_FLAGS) http://docbook.sourceforge.net/release/xsl/current/html/onechunk.xsl $<
 
 dist-local-check-mans-enabled:
@@ -74,7 +79,7 @@ dist-local-check-mans-enabled:
 
 else
 
-$(man_MANS):
+$(man_MANS) chafa.html:
 	echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
 	echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild > $@
 
@@ -86,9 +91,9 @@ dist-local-check-mans-enabled:
 endif
 
 CLEANFILES ?=
-CLEANFILES += $(man_MANS)
+CLEANFILES += $(man_MANS) $(manhtml)
 
-EXTRA_DIST += $(man_MANS)
+EXTRA_DIST += chafa.xml $(man_MANS) $(manhtml) manpage.css
 
 dist-hook-local: dist-local-check-mans-enabled all-local
 
