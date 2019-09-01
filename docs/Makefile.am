@@ -50,7 +50,8 @@ man_MANS =
 if ENABLE_MAN
 
 man_MANS += \
-	chafa.1
+	chafa.1	\
+	chafa.html
 
 XSLTPROC_FLAGS = \
         --nonet \
@@ -58,10 +59,15 @@ XSLTPROC_FLAGS = \
         --stringparam funcsynopsis.style ansi \
         --stringparam man.th.extra1.suppress 1 \
         --stringparam man.authors.section.enabled 0 \
-        --stringparam man.copyright.section.enabled 0
+        --stringparam man.copyright.section.enabled 0 \
+        --stringparam root.filename chafa \
+        --stringparam html.stylesheet manpage.css
 
 .xml.1:
 	$(AM_V_GEN) $(XSLTPROC) $(XSLTPROC_FLAGS) http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+
+.xml.html:
+	$(AM_V_GEN) $(XSLTPROC) $(XSLTPROC_FLAGS) http://docbook.sourceforge.net/release/xsl/current/html/onechunk.xsl $<
 
 dist-local-check-mans-enabled:
 	if grep "Man generation disabled" $(man_MANS) >/dev/null; then $(RM) $(man_MANS); fi
