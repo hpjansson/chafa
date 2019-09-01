@@ -2,7 +2,8 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
                "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
 ]>
-<refentry id="chafa">
+
+<refentry id="chafa" xmlns:xlink="http://www.w3.org/1999/xlink">
 
 <refentryinfo>
 <title>chafa</title>
@@ -290,11 +291,16 @@ block symbol.
 </variablelist>
 </refsect1>
 
-<!-- TODO -->
+<refsect1><title>Further Reading</title>
+<para>
+See the <link xlink:href="https://hpjansson.org/chafa/">Chafa homepage</link>
+for more information.
+</para>
+</refsect1>
 
 <refsect1><title>Author</title>
 <para>
-    Written by Hans Petter Jansson <email>hpj@copyleft.no</email>.
+    Written by <link xlink:href="https://hpjansson.org/">Hans Petter Jansson</link> <email>hpj@copyleft.no</email>.
 </para>
 </refsect1>
 
