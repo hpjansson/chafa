@@ -1725,12 +1725,12 @@ static const ChafaSymbolDef symbol_defs [] =
         CHAFA_SYMBOL_TAG_EXTRA,
         0x25e2,
         "        "
-        "      X "
+        "        "
         "     XX "
         "    XXX "
         "   XXXX "
-        "  XXXXX "
         " XXXXXX "
+        "        "
         "        "
     },
     {
@@ -1739,12 +1739,12 @@ static const ChafaSymbolDef symbol_defs [] =
         CHAFA_SYMBOL_TAG_EXTRA,
         0x25e3,
         "        "
-        " X      "
+        "        "
         " XX     "
         " XXX    "
         " XXXX   "
-        " XXXXX  "
         " XXXXXX "
+        "        "
         "        "
     },
     {
@@ -1753,12 +1753,12 @@ static const ChafaSymbolDef symbol_defs [] =
         CHAFA_SYMBOL_TAG_EXTRA,
         0x25e4,
         "        "
+        "        "
         " XXXXXX "
-        " XXXXX  "
         " XXXX   "
         " XXX    "
         " XX     "
-        " X      "
+        "        "
         "        "
     },
     {
@@ -1767,12 +1767,12 @@ static const ChafaSymbolDef symbol_defs [] =
         CHAFA_SYMBOL_TAG_EXTRA,
         0x25e5,
         "        "
+        "        "
         " XXXXXX "
-        "  XXXXX "
         "   XXXX "
         "    XXX "
         "     XX "
-        "      X "
+        "        "
         "        "
     },
     {
