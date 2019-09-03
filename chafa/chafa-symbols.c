@@ -41,8 +41,8 @@ static const ChafaSymbolDef symbol_defs [] =
         /* Horizontal Scan Line 1 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23ba,
-        "XXXXXXXX"
         "        "
+        "XXXXXXXX"
         "        "
         "        "
         "        "
@@ -56,8 +56,8 @@ static const ChafaSymbolDef symbol_defs [] =
         0x23bb,
         "        "
         "        "
-        "XXXXXXXX"
         "        "
+        "XXXXXXXX"
         "        "
         "        "
         "        "
@@ -71,8 +71,8 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
         "XXXXXXXX"
+        "        "
         "        "
         "        "
     },
@@ -86,8 +86,8 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
         "        "
         "        "
-        "        "
         "XXXXXXXX"
+        "        "
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_INVERTED,
