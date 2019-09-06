@@ -76,6 +76,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->refs = 1;
 
     canvas_config->canvas_mode = CHAFA_CANVAS_MODE_TRUECOLOR;
+    canvas_config->color_extractor = CHAFA_COLOR_EXTRACTOR_MEDIAN;
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
     canvas_config->width = 80;
     canvas_config->height = 24;
@@ -267,6 +268,25 @@ chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode 
     g_return_if_fail (mode < CHAFA_CANVAS_MODE_MAX);
 
     config->canvas_mode = mode;
+}
+
+ChafaColorExtractor
+chafa_canvas_config_get_color_extractor (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, CHAFA_COLOR_SPACE_RGB);
+    g_return_val_if_fail (config->refs > 0, CHAFA_COLOR_SPACE_RGB);
+
+    return config->color_extractor;
+}
+
+void
+chafa_canvas_config_set_color_extractor (ChafaCanvasConfig *config, ChafaColorExtractor color_extractor)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (color_extractor < CHAFA_COLOR_EXTRACTOR_MAX);
+
+    config->color_extractor = color_extractor;
 }
 
 /**

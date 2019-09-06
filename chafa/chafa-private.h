@@ -110,6 +110,7 @@ struct ChafaCanvasConfig
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
+    ChafaColorExtractor color_extractor;
     gint dither_grain_width, dither_grain_height;
     gfloat dither_intensity;
     guint32 fg_color_packed_rgb;

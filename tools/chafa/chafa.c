@@ -51,6 +51,7 @@ typedef struct
 
     GList *args;
     ChafaCanvasMode mode;
+    ChafaColorExtractor color_extractor;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
     gint dither_grain_width;
@@ -298,6 +299,25 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Colors must be one of [none, 2, 16, 240, 256, full].");
+        result = FALSE;
+    }
+
+    return result;
+}
+
+static gboolean
+parse_color_extractor_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+
+    if (!g_ascii_strcasecmp (value, "average"))
+        options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
+    else if (!g_ascii_strcasecmp (value, "median"))
+        options.color_extractor = CHAFA_COLOR_EXTRACTOR_MEDIAN;
+    else
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Color extractor must be one of [average, median].");
         result = FALSE;
     }
 
@@ -755,6 +775,7 @@ parse_options (int *argc, char **argv [])
         { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
+        { "color-extractor", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_extractor_arg, "Color extractor (average or median)", NULL },
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
         { "dither",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_arg,      "Dither", NULL },
         { "dither-grain",'\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_grain_arg, "Dither grain", NULL },
@@ -803,6 +824,7 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_height = 4;
     options.dither_intensity = 1.0;
     options.preprocess = TRUE;
+    options.color_extractor = CHAFA_COLOR_EXTRACTOR_MEDIAN;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
     options.height = 25;
@@ -943,6 +965,7 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_dither_mode (config, options.dither_mode);
     chafa_canvas_config_set_dither_grain_size (config, options.dither_grain_width, options.dither_grain_height);
     chafa_canvas_config_set_dither_intensity (config, options.dither_intensity);
+    chafa_canvas_config_set_color_extractor (config, options.color_extractor);
     chafa_canvas_config_set_color_space (config, options.color_space);
     chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);

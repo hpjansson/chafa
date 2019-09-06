@@ -28,6 +28,17 @@
 
 G_BEGIN_DECLS
 
+/* Color extractor */
+
+typedef enum
+{
+    CHAFA_COLOR_EXTRACTOR_AVERAGE,
+    CHAFA_COLOR_EXTRACTOR_MEDIAN,
+
+    CHAFA_COLOR_EXTRACTOR_MAX
+}
+ChafaColorExtractor;
+
 /* Color spaces */
 
 typedef enum
@@ -88,6 +99,11 @@ CHAFA_AVAILABLE_IN_ALL
 ChafaCanvasMode chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode mode);
+
+CHAFA_AVAILABLE_IN_1_4
+ChafaColorExtractor chafa_canvas_config_get_color_extractor (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_4
+void chafa_canvas_config_set_color_extractor (ChafaCanvasConfig *config, ChafaColorExtractor color_extractor);
 
 CHAFA_AVAILABLE_IN_ALL
 ChafaColorSpace chafa_canvas_config_get_color_space (const ChafaCanvasConfig *config);
