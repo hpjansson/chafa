@@ -80,6 +80,15 @@ attribute reset, while "none" will emit no ANSI color codes whatsoever.
 </varlistentry>
 
 <varlistentry>
+<term><option>--color-extractor <replaceable>extractor</replaceable></option></term>
+<listitem><para>
+Method for extracting color from an area; one of [average, median]. Median
+normally produces crisper output, while average is slightly faster and may
+perform better on noisy images. Defaults to median.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--color-space <replaceable>cs</replaceable></option></term>
 <listitem><para>
 Color space used for quantization; one of [rgb, din99d]. Defaults to rgb,
