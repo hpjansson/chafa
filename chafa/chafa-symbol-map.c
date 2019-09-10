@@ -135,7 +135,7 @@ compare_symbols (const void *a, const void *b)
 #endif
 
 static guint8 *
-bitmap_to_coverage (guint64 bitmap)
+bitmap_to_bytes (guint64 bitmap)
 {
     guint8 *cov = g_malloc0 (CHAFA_SYMBOL_N_PIXELS);
     gint i;
@@ -148,6 +148,104 @@ bitmap_to_coverage (guint64 bitmap)
     return cov;
 }
 
+/* Input format must always be RGBA8. old_format is just an indicator of how
+ * the channel values are to be extracted. */
+static void
+pixels_to_coverage (const guint8 *pixels_in, ChafaPixelType old_format, guint8 *pixels_out)
+{
+    gint i;
+
+    if (old_format == CHAFA_PIXEL_RGB8 || old_format == CHAFA_PIXEL_BGR8)
+    {
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+            pixels_out [i] = (pixels_in [i * 4] + pixels_in [i * 4 + 1] + pixels_in [i * 4 + 2]) / 3;
+    }
+    else
+    {
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+            pixels_out [i] = pixels_in [i * 4 + 3];
+    }
+}
+
+static void
+sharpen_coverage (const guint8 *cov_in, guint8 *cov_out)
+{
+    gint k [3] [3] =
+    {
+        /* Sharpen + boost contrast */
+        {  0, -1,  0 },
+        { -1,  6, -1 },
+        {  0, -1,  0 }
+    };
+    gint x, y;
+    gint i, j;
+
+    for (y = 0; y < 8; y++)
+    {
+        for (x = 0; x < 8; x++)
+        {
+            gint sum = 0;
+
+            for (i = 0; i < 3; i++)
+            {
+                for (j = 0; j < 3; j++)
+                {
+                    gint a = x + i - 1, b = y + j - 1;
+
+                    /* At edges, just clone the border pixels outwards */
+                    a = CLAMP (a, 0, 7);
+                    b = CLAMP (b, 0, 7);
+
+                    sum += (gint) cov_in [a + b * 8] * k [i] [j];
+                }
+            }
+
+            cov_out [x + y * 8] = CLAMP (sum, 0, 255);
+        }
+    }
+}
+
+static guint64
+coverage_to_bitmap (const guint8 *cov)
+{
+    guint64 bitmap = 0;
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        bitmap <<= 1;
+        if (cov [i] > 127)
+            bitmap |= 1;
+    }
+
+    return bitmap;
+}
+
+static void
+dump_coverage (const guint8 *cov)
+{
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        if (cov [i] > 127)
+        {
+            DEBUG (g_printerr ("@@"));
+        }
+        else
+        {
+            DEBUG (g_printerr ("--"));
+        }
+
+        if (!((i + 1) % 8))
+        {
+            DEBUG (g_printerr ("\n"));
+        }
+    }
+
+    DEBUG (g_printerr ("\n"));
+}
+
 static guint64
 glyph_to_bitmap (gint width, gint height,
                  gint rowstride,
@@ -155,8 +253,11 @@ glyph_to_bitmap (gint width, gint height,
                  gpointer pixels)
 {
     guint8 scaled_pixels [CHAFA_SYMBOL_N_PIXELS * 4];
-    guint64 bitmap = 0;
-    gint i;
+    guint8 cov [CHAFA_SYMBOL_N_PIXELS];
+    guint8 sharpened_cov [CHAFA_SYMBOL_N_PIXELS];
+    guint64 bitmap;
+
+    /* Scale to cell dimensions */
 
     smol_scale_simple ((SmolPixelType) pixel_format, pixels, width, height, rowstride,
                        SMOL_PIXEL_RGBA8_PREMULTIPLIED,
@@ -164,41 +265,13 @@ glyph_to_bitmap (gint width, gint height,
                        CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS,
                        CHAFA_SYMBOL_WIDTH_PIXELS * 4);
 
-    if (pixel_format == CHAFA_PIXEL_RGB8 || pixel_format == CHAFA_PIXEL_BGR8)
-    {
-        /* No alpha in input; use R+G+B */
+    /* Generate coverage map */
 
-        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-        {
-            bitmap <<= 1;
-            if (scaled_pixels [i * 4] + scaled_pixels [i * 4 + 1]
-                + scaled_pixels [i * 4 + 2] > 127 * 3)
-                bitmap |= 1;
-        }
-    }
-    else
-    {
-        /* Use alpha channel for coverage */
-
-        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-        {
-            bitmap <<= 1;
-            if (scaled_pixels [i * 4 + 3] > 127)
-            {
-                bitmap |= 1;
-                DEBUG (g_printerr ("@@"));
-            }
-            else
-            {
-                DEBUG (g_printerr ("--"));
-            }
-
-            if (!((i + 1) % 8))
-            {
-                DEBUG (g_printerr ("\n"));
-            }
-        }
-    }
+    pixels_to_coverage (scaled_pixels, pixel_format, cov);
+    sharpen_coverage (cov, sharpened_cov);
+    DEBUG (dump_coverage (cov));
+    DEBUG (dump_coverage (sharpened_cov));
+    bitmap = coverage_to_bitmap (sharpened_cov);
 
     return bitmap;
 }
@@ -344,7 +417,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->sc = tags;
             sym->c = glyph->c;
             sym->bitmap = glyph->bitmap;
-            sym->coverage = (gchar *) bitmap_to_coverage (glyph->bitmap);
+            sym->coverage = (gchar *) bitmap_to_bytes (glyph->bitmap);
             sym->popcount = chafa_population_count_u64 (glyph->bitmap);
             sym->fg_weight = sym->popcount;
             sym->bg_weight = 64 - sym->popcount;
