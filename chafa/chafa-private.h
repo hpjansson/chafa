@@ -43,12 +43,6 @@ typedef struct
 }
 ChafaPixel;
 
-typedef struct
-{
-    ChafaColor col [CHAFA_COLOR_SPACE_MAX];
-}
-ChafaPaletteColor;
-
 /* Character symbols and symbol classes */
 
 #define CHAFA_N_SYMBOLS_MAX 1024  /* For static temp arrays */
@@ -99,6 +93,35 @@ typedef struct
     gint error [2];
 }
 ChafaColorCandidates;
+
+/* Palette */
+
+typedef struct
+{
+    ChafaColor col [CHAFA_COLOR_SPACE_MAX];
+}
+ChafaPaletteColor;
+
+#define CHAFA_OCT_TREE_INDEX_NULL -1
+
+typedef struct
+{
+    gint8 branch_bit;
+    gint8 n_children;
+    guint16 prefix [3];
+    gint16 child_index [8];
+}
+ChafaPaletteOctNode;
+
+typedef struct
+{
+    ChafaPaletteColor colors [256];
+    gint n_colors;
+    gint16 oct_tree_root [CHAFA_COLOR_SPACE_MAX];
+    gint16 oct_tree_first_free [CHAFA_COLOR_SPACE_MAX];
+    ChafaPaletteOctNode oct_tree [CHAFA_COLOR_SPACE_MAX] [256];
+}
+ChafaPalette;
 
 /* Canvas config */
 
@@ -162,6 +185,13 @@ void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanv
 gint *chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude);
 
 /* Colors */
+
+void chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
+                             ChafaColorSpace color_space, gfloat alpha_threshold);
+gint chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
+                                   const ChafaColor *color);
+const ChafaColor *chafa_palette_get_color (const ChafaPalette *palette, ChafaColorSpace color_space,
+                                           gint index);
 
 guint32 chafa_pack_color (const ChafaColor *color) G_GNUC_PURE;
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);
