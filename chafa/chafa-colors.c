@@ -568,11 +568,16 @@ find_dominant_channel (gconstpointer pixels, gint n_pixels)
     {
         /* This should yield branch-free code where possible */
         min [0] = MIN (min [0], *p);
-        max [0] = MAX (max [0], *(p++));
+        max [0] = MAX (max [0], *p);
+        p++;
         min [1] = MIN (min [1], *p);
-        max [1] = MAX (max [1], *(p++));
+        max [1] = MAX (max [1], *p);
+        p++;
         min [2] = MIN (min [2], *p);
-        max [2] = MAX (max [2], *(p++));
+        max [2] = MAX (max [2], *p);
+
+        /* Skip alpha */
+        p += 2;
     }
 
     diff [0] = max [0] - min [0];
@@ -1000,21 +1005,20 @@ gen_oct_tree (ChafaPalette *palette, ChafaColorSpace color_space)
 
 static gint
 extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint n_samples,
-                 gfloat alpha_threshold)
+                 gint alpha_threshold)
 {
-    gint alpha_threshold_int = (alpha_threshold * 255.0);
     const guint32 *p = pixels;
     guint32 *p_out = pixels_out;
     gint step;
     gint i;
 
-    step = n_pixels / n_samples;
+    step = (n_pixels / n_samples) + 1;
     step = MAX (step, 1);
 
     for (i = 0; i < n_pixels; i += step)
     {
         gint alpha = p [i] >> 24;
-        if (alpha < alpha_threshold_int)
+        if (alpha < alpha_threshold)
             continue;
         *(p_out++) = p [i];
     }
@@ -1025,12 +1029,12 @@ extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint 
 /* pixels must point to RGBA8888 data to sample */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
-                        ChafaColorSpace color_space, gfloat alpha_threshold)
+                        ChafaColorSpace color_space, gint alpha_threshold)
 {
     guint32 *pixels_copy;
     gint copy_n_pixels;
 
-    pixels_copy = g_malloc (n_pixels * sizeof (guint32));
+    pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
     copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, N_SAMPLES, alpha_threshold);
 
     DEBUG (g_printerr ("Extracted %d samples.\n", copy_n_pixels));
@@ -1082,6 +1086,7 @@ linear_subtree_nearest_color (const ChafaPalette *palette,
         }
         else
         {
+            node = &palette->oct_tree [color_space] [index - 256];
             linear_subtree_nearest_color (palette, node, color_space, color, best_index, best_error);
         }
     }
@@ -1097,10 +1102,20 @@ oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace colo
     gint16 index;
 
     index = palette->oct_tree_root [color_space];
+#if 0
+    g_printerr ("Root: %d\n", index);
+#endif
 
     for (;;)
     {
         node = &palette->oct_tree [color_space] [index - 256];
+#if 0
+        g_printerr ("Branch: %d  Bit: %d  Index: %d\n",
+                    get_color_branch (color, node->branch_bit),
+                    node->branch_bit,
+                    index);
+#endif
+
         index = node->child_index [get_color_branch (color, node->branch_bit)];
 
         if (index == CHAFA_OCT_TREE_INDEX_NULL || index < 256 || !prefix_match (node, color))
