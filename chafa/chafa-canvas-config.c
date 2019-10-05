@@ -65,6 +65,13 @@
  * @CHAFA_DITHER_MODE_MAX: Last supported dither mode plus one.
  **/
 
+/**
+ * ChafaPixelMode:
+ * @CHAFA_PIXEL_MODE_SYMBOLS: Pixel data is approximated using character symbols ("ANSI art").
+ * @CHAFA_PIXEL_MODE_SIXELS: Pixel data is encoded as sixels.
+ * @CHAFA_PIXEL_MODE_MAX: Last supported pixel mode plus one.
+ **/
+
 /* Private */
 
 void
@@ -78,8 +85,11 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->canvas_mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     canvas_config->color_extractor = CHAFA_COLOR_EXTRACTOR_MEDIAN;
     canvas_config->color_space = CHAFA_COLOR_SPACE_RGB;
+    canvas_config->pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
     canvas_config->width = 80;
     canvas_config->height = 24;
+    canvas_config->cell_width = 8;
+    canvas_config->cell_height = 8;
     canvas_config->dither_mode = CHAFA_DITHER_MODE_NONE;
     canvas_config->dither_grain_width = 4;
     canvas_config->dither_grain_height = 4;
@@ -234,6 +244,47 @@ chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint he
 
     config->width = width;
     config->height = height;
+}
+
+/**
+ * chafa_canvas_config_get_cell_geometry:
+ * @config: A #ChafaCanvasConfig
+ * @cell_width_out: Location to store cell width in, or %NULL
+ * @cell_height_out: Location to store cell height in, or %NULL
+ *
+ * Returns @config's cell width and height in pixels in the
+ * provided output locations.
+ **/
+void
+chafa_canvas_config_get_cell_geometry (const ChafaCanvasConfig *config, gint *cell_width_out, gint *cell_height_out)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    if (cell_width_out)
+        *cell_width_out = config->cell_width;
+    if (cell_height_out)
+        *cell_height_out = config->cell_height;
+}
+
+/**
+ * chafa_canvas_config_set_cell_geometry:
+ * @config: A #ChafaCanvasConfig
+ * @cell_width: Cell width in pixels
+ * @cell_height: Cell height in pixels
+ *
+ * Sets @config's cell width and height in pixels to @cell_width x @cell_height.
+ **/
+void
+chafa_canvas_config_set_cell_geometry (ChafaCanvasConfig *config, gint cell_width, gint cell_height)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (cell_width > 0);
+    g_return_if_fail (cell_height > 0);
+
+    config->cell_width = cell_width;
+    config->cell_height = cell_height;
 }
 
 /**
@@ -706,4 +757,42 @@ chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat inte
     g_return_if_fail (intensity >= 0.0);
 
     config->dither_intensity = intensity;
+}
+
+/**
+ * chafa_canvas_config_get_pixel_mode:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's #ChafaPixelMode.
+ *
+ * Returns: The #ChafaPixelMode.
+ *
+ * Since: 1.4
+ **/
+ChafaPixelMode
+chafa_canvas_config_get_pixel_mode (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, CHAFA_PIXEL_MODE_SYMBOLS);
+    g_return_val_if_fail (config->refs > 0, CHAFA_PIXEL_MODE_SYMBOLS);
+
+    return config->pixel_mode;
+}
+
+/**
+ * chafa_canvas_config_set_pixel_mode:
+ * @config: A #ChafaCanvasConfig
+ * @pixel_mode: A #ChafaPixelMode
+ *
+ * Sets @config's stored #ChafaPixelMode to @pixel_mode.
+ *
+ * Since: 1.4
+ **/
+void
+chafa_canvas_config_set_pixel_mode (ChafaCanvasConfig *config, ChafaPixelMode pixel_mode)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+    g_return_if_fail (pixel_mode < CHAFA_PIXEL_MODE_MAX);
+
+    config->pixel_mode = pixel_mode;
 }

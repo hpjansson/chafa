@@ -123,6 +123,35 @@ typedef struct
 }
 ChafaPalette;
 
+/* Indexed-color image */
+
+typedef struct
+{
+    guint32 *bits;
+    guint n_bits;
+}
+ChafaBitfield;
+
+typedef struct
+{
+    gint width, height;
+    ChafaPalette palette;
+    guint8 *pixels;
+    ChafaBitfield opacity_bits;
+}
+ChafaIndexedImage;
+
+/* Sixel subcanvas */
+
+typedef struct
+{
+    gint width, height;
+    ChafaColorSpace color_space;
+    gint alpha_threshold;
+    ChafaIndexedImage *image;
+}
+ChafaSixelCanvas;
+
 /* Canvas config */
 
 struct ChafaCanvasConfig
@@ -130,10 +159,12 @@ struct ChafaCanvasConfig
     gint refs;
 
     gint width, height;
+    gint cell_width, cell_height;
     ChafaCanvasMode canvas_mode;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
     ChafaColorExtractor color_extractor;
+    ChafaPixelMode pixel_mode;
     gint dither_grain_width, dither_grain_height;
     gfloat dither_intensity;
     guint32 fg_color_packed_rgb;
@@ -184,10 +215,30 @@ void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanv
 
 gint *chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude);
 
+/* Indexed images */
+
+ChafaIndexedImage *chafa_indexed_image_new (gint width, gint height);
+void chafa_indexed_image_destroy (ChafaIndexedImage *indexed_image);
+void chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
+                                      ChafaColorSpace color_space,
+                                      ChafaPixelType src_pixel_type,
+                                      gconstpointer src_pixels,
+                                      gint src_width, gint src_height, gint src_rowstride,
+                                      gint dest_width, gint dest_height,
+                                      gint alpha_threshold);
+
+/* Sixel subcanvas */
+
+ChafaSixelCanvas *chafa_sixel_canvas_new (gint width, gint height, ChafaColorSpace color_space, gint alpha_threshold);
+void chafa_sixel_canvas_destroy (ChafaSixelCanvas *sixel_canvas);
+void chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelType src_pixel_type,
+                                         gconstpointer src_pixels,
+                                         gint src_width, gint src_height, gint src_rowstride);
+
 /* Colors */
 
 void chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
-                             ChafaColorSpace color_space, gfloat alpha_threshold);
+                             ChafaColorSpace color_space, gint alpha_threshold);
 gint chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                                    const ChafaColor *color);
 const ChafaColor *chafa_palette_get_color (const ChafaPalette *palette, ChafaColorSpace color_space,

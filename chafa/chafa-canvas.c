@@ -127,6 +127,9 @@ struct ChafaCanvas
     /* Set if we're doing bayer dithering */
     gint *bayer_matrix;
     gint bayer_size_shift;
+
+    /* Set if we're in sixel mode */
+    ChafaSixelCanvas *sixel_canvas;
 };
 
 typedef struct
@@ -2047,8 +2050,21 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
         chafa_canvas_config_init (&canvas->config);
 
     canvas->refs = 1;
-    canvas->width_pixels = canvas->config.width * CHAFA_SYMBOL_WIDTH_PIXELS;
-    canvas->height_pixels = canvas->config.height * CHAFA_SYMBOL_HEIGHT_PIXELS;
+
+
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        /* ANSI art */
+        canvas->width_pixels = canvas->config.width * CHAFA_SYMBOL_WIDTH_PIXELS;
+        canvas->height_pixels = canvas->config.height * CHAFA_SYMBOL_HEIGHT_PIXELS;
+    }
+    else
+    {
+        /* Sixels or other accurate pixel mode */
+        canvas->width_pixels = canvas->config.width * canvas->config.cell_width;
+        canvas->height_pixels = canvas->config.height * canvas->config.cell_height;
+    }
+
     canvas->pixels = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5;
@@ -2225,27 +2241,60 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
     if (src_width == 0 || src_height == 0)
         return;
 
-    canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
-    canvas->hist = g_new (Histogram, 1);
+    if (canvas->pixels)
+    {
+        g_free (canvas->pixels);
+        canvas->pixels = NULL;
+    }
 
-    canvas->src_pixel_type = src_pixel_type;
-    canvas->src_pixels = src_pixels;
-    canvas->src_width = src_width;
-    canvas->src_height = src_height;
-    canvas->src_rowstride = src_rowstride;
-    canvas->have_alpha_int = 0;
+    if (canvas->sixel_canvas)
+    {
+        chafa_sixel_canvas_destroy (canvas->sixel_canvas);
+        canvas->sixel_canvas = NULL;
+    }
 
-    prepare_pixel_data (canvas);
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        /* Symbol mode */
 
-    if (canvas->config.alpha_threshold == 0)
-        canvas->have_alpha = FALSE;
+        canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+        canvas->hist = g_new (Histogram, 1);
 
-    update_cells (canvas);
-    canvas->needs_clear = FALSE;
+        canvas->src_pixel_type = src_pixel_type;
+        canvas->src_pixels = src_pixels;
+        canvas->src_width = src_width;
+        canvas->src_height = src_height;
+        canvas->src_rowstride = src_rowstride;
+        canvas->have_alpha_int = 0;
 
-    g_free (canvas->hist);
-    g_free (canvas->pixels);
-    canvas->pixels = NULL;
+        prepare_pixel_data (canvas);
+
+        if (canvas->config.alpha_threshold == 0)
+            canvas->have_alpha = FALSE;
+
+        update_cells (canvas);
+        canvas->needs_clear = FALSE;
+
+        g_free (canvas->pixels);
+        canvas->pixels = NULL;
+
+        g_free (canvas->hist);
+        canvas->hist = NULL;
+    }
+    else
+    {
+        /* Sixel mode */
+
+        canvas->sixel_canvas = chafa_sixel_canvas_new (canvas->width_pixels,
+                                                       canvas->height_pixels,
+                                                       canvas->config.color_space,
+                                                       canvas->config.alpha_threshold);
+        chafa_sixel_canvas_draw_all_pixels (canvas->sixel_canvas,
+                                            src_pixel_type,
+                                            src_pixels,
+                                            src_width, src_height,
+                                            src_rowstride);
+    }
 }
 
 /**
@@ -2287,8 +2336,24 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
 GString *
 chafa_canvas_build_ansi (ChafaCanvas *canvas)
 {
+    GString *str;
+
     g_return_val_if_fail (canvas != NULL, NULL);
     g_return_val_if_fail (canvas->refs > 0, NULL);
 
-    return build_ansi_gstring (canvas);
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        str = build_ansi_gstring (canvas);
+    }
+    else
+    {
+        /* Sixel mode */
+
+        str = g_string_new ("\x1bP0;1;0q");
+        g_string_append_printf (str, "\"1;1;%d;%d", canvas->width_pixels, canvas->height_pixels);
+        chafa_sixel_canvas_build_ansi (canvas->sixel_canvas, str);
+        g_string_append (str, "\x1b\\");
+    }
+
+    return str;
 }

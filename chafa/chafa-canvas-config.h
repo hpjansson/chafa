@@ -77,6 +77,17 @@ typedef enum
 }
 ChafaDitherMode;
 
+/* Pixel modes */
+
+typedef enum
+{
+    CHAFA_PIXEL_MODE_SYMBOLS,
+    CHAFA_PIXEL_MODE_SIXELS,
+
+    CHAFA_PIXEL_MODE_MAX
+}
+ChafaPixelMode;
+
 /* Canvas config */
 
 typedef struct ChafaCanvasConfig ChafaCanvasConfig;
@@ -94,6 +105,11 @@ CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_get_geometry (const ChafaCanvasConfig *config, gint *width_out, gint *height_out);
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint height);
+
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_get_cell_geometry (const ChafaCanvasConfig *config, gint *cell_width_out, gint *cell_height_out);
+CHAFA_AVAILABLE_IN_ALL
+void chafa_canvas_config_set_cell_geometry (ChafaCanvasConfig *config, gint cell_width, gint cell_height);
 
 CHAFA_AVAILABLE_IN_ALL
 ChafaCanvasMode chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config);
@@ -159,6 +175,11 @@ CHAFA_AVAILABLE_IN_1_2
 gfloat chafa_canvas_config_get_dither_intensity (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_1_2
 void chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat intensity);
+
+CHAFA_AVAILABLE_IN_1_4
+ChafaPixelMode chafa_canvas_config_get_pixel_mode (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_4
+void chafa_canvas_config_set_pixel_mode (ChafaCanvasConfig *config, ChafaPixelMode pixel_mode);
 
 G_END_DECLS
 

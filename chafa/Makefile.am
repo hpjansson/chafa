@@ -15,6 +15,7 @@ libchafa_la_SOURCES = \
 	chafa-colors.c \
 	chafa-features.c \
 	chafa-private.h \
+	chafa-sixel.c \
 	chafa-symbol-map.c \
 	chafa-symbols.c \
 	chafa-symbols-ascii.h \
