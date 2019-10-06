@@ -929,6 +929,9 @@ oct_tree_insert_color (ChafaPalette *palette, ChafaColorSpace color_space, gint1
                 DEBUG (g_printerr ("8\n"));
                 new_index = node_index;
                 new_node = node;
+
+                /* Branch bit may change; reinsert both children */
+                node->child_index [branch] = CHAFA_OCT_TREE_INDEX_NULL;
             }
             else
             {
@@ -946,7 +949,7 @@ oct_tree_insert_color (ChafaPalette *palette, ChafaColorSpace color_space, gint1
             g_assert (get_color_branch (old_col, new_node->branch_bit) != get_color_branch (col, new_node->branch_bit));
             g_assert (new_node->branch_bit >= 0);
             g_assert (new_node->branch_bit < 16);
-            g_assert (new_node->branch_bit < old_branch_bit);
+            g_assert (new_node->n_children < 2 || new_node->branch_bit < old_branch_bit);
 
             new_mask = branch_bit_to_prefix_mask (new_node->branch_bit);
             new_node->prefix [0] = col->ch [0] & new_mask;
