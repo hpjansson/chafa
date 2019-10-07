@@ -1255,11 +1255,60 @@ oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace colo
     return best_index;
 }
 
+typedef struct
+{
+    ChafaPalette *palette;
+    ChafaColorSpace color_space;
+    ChafaPaletteOctNode *found_node;
+    gint16 found_index;
+}
+OctTreeSearchCtx;
+
+static void
+find_deep_node_r (OctTreeSearchCtx *ctx, gint16 index)
+{
+    ChafaPaletteOctNode *node;
+    gint i;
+
+    node = &ctx->palette->oct_tree [ctx->color_space] [index - 256];
+
+    if (!ctx->found_node || node->branch_bit < ctx->found_node->branch_bit)
+    {
+        ctx->found_node = node;
+        ctx->found_index = index;
+    }
+
+    for (i = 0; i < 8; i++)
+    {
+        gint16 child_index = node->child_index [i];
+
+        if (ctx->found_node->branch_bit == 0)
+            return;
+
+        if (child_index != CHAFA_OCT_TREE_INDEX_NULL && child_index >= 256)
+        {
+            find_deep_node_r (ctx, child_index);
+        }
+    }
+}
+
+static gint16
+find_deep_node (const ChafaPalette *palette, ChafaColorSpace color_space)
+{
+    OctTreeSearchCtx ctx = { NULL };
+
+    ctx.palette = (ChafaPalette *) palette;
+    ctx.color_space = color_space;
+
+    find_deep_node_r (&ctx, palette->oct_tree_root [color_space]);
+    return ctx.found_index;
+}
+
 gint
 chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                               const ChafaColor *color)
 {
-#if 0
+#if 1
     return linear_nearest_color (palette, color_space, color);
 #else
     return oct_tree_lookup_nearest_color (palette, color_space, color);
