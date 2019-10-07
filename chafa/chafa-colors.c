@@ -1111,6 +1111,7 @@ oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace colo
 
     for (;;)
     {
+        parent_node = node;
         node = &palette->oct_tree [color_space] [index - 256];
 #if 0
         g_printerr ("Branch: %d  Bit: %d  Index: %d\n",
@@ -1125,7 +1126,8 @@ oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace colo
             break;
     }
 
-    linear_subtree_nearest_color (palette, node, color_space, color, &best_index, &best_error);
+    linear_subtree_nearest_color (palette, /* parent_node ? parent_node : */ node,
+                                  color_space, color, &best_index, &best_error);
     return best_index;
 }
 
