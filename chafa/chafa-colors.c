@@ -998,7 +998,6 @@ gen_oct_tree (ChafaPalette *palette, ChafaColorSpace color_space)
                                            palette->oct_tree_root [color_space]);
     }
 
-    palette->n_colors = n_colors;
     DEBUG (g_printerr ("Indexed %d colors. Root branch bit = %d.\n",
                        n_colors,
                        palette->oct_tree [color_space] [palette->oct_tree_root [color_space] - 256].branch_bit));
