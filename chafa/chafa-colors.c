@@ -1092,6 +1092,44 @@ clean_up (ChafaPalette *palette_out)
     }
 }
 
+static void
+dump_octree (const ChafaPalette *palette,
+             const ChafaPaletteOctNode *node, ChafaColorSpace color_space)
+{
+    gint i;
+
+    g_printerr ("{ ");
+
+    for (i = 0; i < 8; i++)
+    {
+        g_printerr ("%d ", node->child_index [i]);
+    }
+
+    g_printerr ("}\n");
+
+    for (i = 0; i < 8; i++)
+    {
+        gint16 index;
+
+        index = node->child_index [i];
+        if (index == CHAFA_OCT_TREE_INDEX_NULL)
+            continue;
+
+        if (index < 256)
+        {
+        }
+        else
+        {
+            const ChafaPaletteOctNode *child_node = &palette->oct_tree [color_space] [index - 256];
+
+            g_printerr ("-> (%d) ", index);
+            dump_octree (palette, child_node, color_space);
+        }
+    }
+
+    g_printerr ("<- ");
+}
+
 /* pixels must point to RGBA8888 data to sample */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
