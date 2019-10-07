@@ -1028,6 +1028,70 @@ extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint 
     return ((ptrdiff_t) p_out - (ptrdiff_t) pixels_out) / 4;
 }
 
+static void
+clean_up (ChafaPalette *palette_out)
+{
+    gint i, j;
+    gint best_diff = G_MAXINT;
+    gint best_pair = 1;
+
+    /* Reserve 0th pen for transparency and move colors up.
+     * Eliminate duplicates and colors that would be the same in
+     * sixel representation (0..100). */
+
+    g_printerr ("Colors before: %d\n", palette_out->n_colors);
+
+    for (i = 1, j = 0; i < palette_out->n_colors; i++)
+    {
+        ChafaColor *a, *b;
+        gint diff, t;
+
+        a = &palette_out->colors [j].col [CHAFA_COLOR_SPACE_RGB];
+        b = &palette_out->colors [i].col [CHAFA_COLOR_SPACE_RGB];
+
+        /* Dividing by 256 is strictly not correct, but it's close enough for
+         * comparison purposes, and a lot faster too. */
+        t = (gint) (a->ch [0] * 100) / 256 - (gint) (b->ch [0] * 100) / 256;
+        diff = t * t;
+        t = (gint) (a->ch [1] * 100) / 256 - (gint) (b->ch [1] * 100) / 256;
+        diff += t * t;
+        t = (gint) (a->ch [2] * 100) / 256 - (gint) (b->ch [2] * 100) / 256;
+        diff += t * t;
+
+        if (diff == 0)
+        {
+            g_printerr ("%d and %d are the same\n", j, i);
+            continue;
+        }
+        else if (diff < best_diff)
+        {
+            best_pair = j;
+            best_diff = diff;
+        }
+
+        palette_out->colors [++j] = palette_out->colors [i];
+    }
+
+    palette_out->n_colors = j;
+
+    g_printerr ("Colors after: %d\n", palette_out->n_colors);
+
+    g_assert (palette_out->n_colors >= 0 && palette_out->n_colors < 256);
+
+    if (palette_out->n_colors < 256)
+    {
+        g_printerr ("Color 0 moved to end (%d)\n", palette_out->n_colors);
+        palette_out->colors [palette_out->n_colors] = palette_out->colors [0];
+        palette_out->n_colors++;
+    }
+    else
+    {
+        /* Delete one color to make room for transparency */
+        palette_out->colors [best_pair] = palette_out->colors [0];
+        g_printerr ("Color 0 replaced %d\n", best_pair);
+    }
+}
+
 /* pixels must point to RGBA8888 data to sample */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
@@ -1051,6 +1115,7 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     palette_out->n_colors = 256;
     g_free (pixels_copy);
 
+    clean_up (palette_out);
     gen_oct_tree (palette_out, CHAFA_COLOR_SPACE_RGB);
 
     if (color_space == CHAFA_COLOR_SPACE_DIN99D)
