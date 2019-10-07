@@ -531,7 +531,7 @@ build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p)
         rep_schar = sixel_data_to_schar (&srow [0], expanded_pen);
         n_reps = 1;
 
-        for (i = 0; i < width; i++)
+        for (i = 1; i < width; i++)
         {
             gchar schar = sixel_data_to_schar (&srow [i], expanded_pen);
 
