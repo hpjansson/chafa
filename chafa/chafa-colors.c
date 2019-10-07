@@ -992,7 +992,7 @@ gen_oct_tree (ChafaPalette *palette, ChafaColorSpace color_space)
     node->prefix [1] = 0;
     node->prefix [2] = 0;
 
-    for (i = 0; i < palette->n_colors; i++)
+    for (i = 1; i < palette->n_colors; i++)
     {
         n_colors += oct_tree_insert_color (palette, color_space, i, CHAFA_OCT_TREE_INDEX_NULL,
                                            palette->oct_tree_root [color_space]);
