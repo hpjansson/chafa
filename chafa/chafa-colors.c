@@ -1089,8 +1089,8 @@ linear_subtree_nearest_color (const ChafaPalette *palette,
         }
         else
         {
-            node = &palette->oct_tree [color_space] [index - 256];
-            linear_subtree_nearest_color (palette, node, color_space, color, best_index, best_error);
+            const ChafaPaletteOctNode *child_node = &palette->oct_tree [color_space] [index - 256];
+            linear_subtree_nearest_color (palette, child_node, color_space, color, best_index, best_error);
         }
     }
 }
