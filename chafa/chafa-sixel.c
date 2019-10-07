@@ -624,7 +624,7 @@ build_sixel_palette (ChafaSixelCanvas *sixel_canvas, GString *out_str)
     gchar *p = str;
     gint pen;
 
-    for (pen = 1; pen < 256; pen++)
+    for (pen = 1; pen < sixel_canvas->image->palette.n_colors; pen++)
     {
         const ChafaColor *col;
 
