@@ -1185,7 +1185,7 @@ static gint16
 oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space,
                                const ChafaColor *color)
 {
-    const ChafaPaletteOctNode *node;
+    const ChafaPaletteOctNode *node = NULL, *parent_node;
     gint16 best_index = CHAFA_OCT_TREE_INDEX_NULL;
     gint best_error = G_MAXINT;
     gint16 index;
