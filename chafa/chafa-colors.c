@@ -1160,6 +1160,28 @@ linear_subtree_nearest_color (const ChafaPalette *palette,
 }
 
 static gint16
+linear_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space, const ChafaColor *color)
+{
+    gint i;
+    gint16 best_index = 1;
+    gint best_error = G_MAXINT;
+
+    for (i = 1; i < palette->n_colors; i++)
+    {
+        const ChafaColor *try_color = &palette->colors [i].col [color_space];
+        gint error = chafa_color_diff_fast (color, try_color);
+
+        if (error < best_error)
+        {
+            best_index = i;
+            best_error = error;
+        }
+    }
+
+    return best_index;
+}
+
+static gint16
 oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space,
                                const ChafaColor *color)
 {
@@ -1199,7 +1221,11 @@ gint
 chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                               const ChafaColor *color)
 {
+#if 0
+    return linear_nearest_color (palette, color_space, color);
+#else
     return oct_tree_lookup_nearest_color (palette, color_space, color);
+#endif
 }
 
 const ChafaColor *
