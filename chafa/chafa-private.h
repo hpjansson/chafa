@@ -253,9 +253,9 @@ G_STMT_START { \
 } G_STMT_END
 
 #define chafa_color_diff_fast(col_a, col_b) \
-(((col_b)->ch [0] - (col_a)->ch [0]) * ((col_b)->ch [0] - (col_a)->ch [0]) \
-  + ((col_b)->ch [1] - (col_a)->ch [1]) * ((col_b)->ch [1] - (col_a)->ch [1]) \
-  + ((col_b)->ch [2] - (col_a)->ch [2]) * ((col_b)->ch [2] - (col_a)->ch [2]))
+(((col_b)->ch [0] - (col_a)->ch [0]) * (gint) ((col_b)->ch [0] - (col_a)->ch [0]) \
+  + ((col_b)->ch [1] - (col_a)->ch [1]) * (gint) ((col_b)->ch [1] - (col_a)->ch [1]) \
+  + ((col_b)->ch [2] - (col_a)->ch [2]) * (gint) ((col_b)->ch [2] - (col_a)->ch [2]))
 
 /* Required to get alpha right */
 gint chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space) G_GNUC_PURE;
