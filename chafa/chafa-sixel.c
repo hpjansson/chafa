@@ -237,6 +237,9 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
         col.ch [2] = src_p [2];
         col.ch [3] = src_p [3];
 
+        if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
+            chafa_color_rgb_to_din99d (&col, &col);
+
         index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
                                               ctx->color_space,
                                               &col);
