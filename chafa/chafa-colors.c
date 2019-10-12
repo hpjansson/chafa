@@ -669,6 +669,81 @@ sort_by_channel (gpointer pixels, gint n_pixels, gint ch)
 }
 
 static void
+average_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_out)
+{
+    guint8 *p = pixels + first_ofs * sizeof (guint32);
+    guint8 *pixels_end;
+    gint ch [3] = { 0 };
+
+    pixels_end = p + n_pixels * sizeof (guint32);
+
+    for ( ; p < pixels_end; p += 4)
+    {
+        ch [0] += p [0];
+        ch [1] += p [1];
+        ch [2] += p [2];
+    }
+
+    col_out->ch [0] = (ch [0] + n_pixels / 2) / n_pixels;
+    col_out->ch [1] = (ch [1] + n_pixels / 2) / n_pixels;
+    col_out->ch [2] = (ch [2] + n_pixels / 2) / n_pixels;
+}
+
+static void
+median_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_out)
+{
+    guint8 *p = pixels + (first_ofs + n_pixels / 2) * sizeof (guint32);
+    col_out->ch [0] = p [0];
+    col_out->ch [1] = p [1];
+    col_out->ch [2] = p [2];
+}
+
+static void
+average_pixels_weighted_by_deviation (guint8 *pixels, gint first_ofs, gint n_pixels,
+                                      ChafaColor *col_out)
+{
+    guint8 *p = pixels + first_ofs * sizeof (guint32);
+    guint8 *pixels_end;
+    gint ch [3] = { 0 };
+    ChafaColor median;
+    guint sum = 0;
+
+    median_pixels (pixels, first_ofs, n_pixels, &median);
+
+    pixels_end = p + n_pixels * sizeof (guint32);
+
+    for ( ; p < pixels_end; p += 4)
+    {
+        ChafaColor t;
+        guint diff;
+
+        t.ch [0] = p [0];
+        t.ch [1] = p [1];
+        t.ch [2] = p [2];
+
+        diff = chafa_color_diff_fast (&median, &t);
+        diff /= 256;
+        diff += 1;
+
+        ch [0] += p [0] * diff;
+        ch [1] += p [1] * diff;
+        ch [2] += p [2] * diff;
+
+        sum += diff;
+    }
+
+    col_out->ch [0] = (ch [0] + sum / 2) / sum;
+    col_out->ch [1] = (ch [1] + sum / 2) / sum;
+    col_out->ch [2] = (ch [2] + sum / 2) / sum;
+}
+
+static void
+pick_box_color (gpointer pixels, gint first_ofs, gint n_pixels, ChafaColor *color_out)
+{
+    average_pixels_weighted_by_deviation (pixels, first_ofs, n_pixels, color_out);
+}
+
+static void
 median_cut (ChafaPalette *pal, gpointer pixels,
             gint first_ofs, gint n_pixels,
             gint first_col, gint n_cols)
@@ -684,10 +759,8 @@ median_cut (ChafaPalette *pal, gpointer pixels,
 
     if (n_cols == 1)
     {
-        guint8 *pix = p + first_ofs * sizeof (guint32);
-        pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB].ch [0] = pix [0];
-        pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB].ch [1] = pix [1];
-        pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB].ch [2] = pix [2];
+        pick_box_color (pixels, first_ofs, n_pixels, &pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB]);
+        g_printerr ("mofs=%d+%d  ", first_ofs, n_pixels);
         return;
     }
 
