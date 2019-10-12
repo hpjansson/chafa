@@ -1113,12 +1113,12 @@ clean_up (ChafaPalette *palette_out)
 
     g_printerr ("Colors before: %d\n", palette_out->n_colors);
 
-    for (i = 1, j = 0; i < palette_out->n_colors; i++)
+    for (i = 1, j = 1; i < palette_out->n_colors; i++)
     {
         ChafaColor *a, *b;
         gint diff, t;
 
-        a = &palette_out->colors [j].col [CHAFA_COLOR_SPACE_RGB];
+        a = &palette_out->colors [j - 1].col [CHAFA_COLOR_SPACE_RGB];
         b = &palette_out->colors [i].col [CHAFA_COLOR_SPACE_RGB];
 
         /* Dividing by 256 is strictly not correct, but it's close enough for
@@ -1132,23 +1132,23 @@ clean_up (ChafaPalette *palette_out)
 
         if (diff == 0)
         {
-            g_printerr ("%d and %d are the same\n", j, i);
+            g_printerr ("%d and %d are the same\n", j - 1, i);
             continue;
         }
         else if (diff < best_diff)
         {
-            best_pair = j;
+            best_pair = j - 1;
             best_diff = diff;
         }
 
-        palette_out->colors [++j] = palette_out->colors [i];
+        palette_out->colors [j++] = palette_out->colors [i];
     }
 
     palette_out->n_colors = j;
 
     g_printerr ("Colors after: %d\n", palette_out->n_colors);
 
-    g_assert (palette_out->n_colors >= 0 && palette_out->n_colors < 256);
+    g_assert (palette_out->n_colors >= 0 && palette_out->n_colors <= 256);
 
     if (palette_out->n_colors < 256)
     {
