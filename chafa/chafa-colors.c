@@ -560,7 +560,7 @@ find_dominant_channel (gconstpointer pixels, gint n_pixels)
     const guint8 *p = pixels;
     guint8 min [4] = { G_MAXUINT8, G_MAXUINT8, G_MAXUINT8, G_MAXUINT8 };
     guint8 max [4] = { 0, 0, 0, 0 };
-    guint8 diff [4];
+    guint16 diff [4];
     gint best;
     gint i;
 
@@ -580,9 +580,16 @@ find_dominant_channel (gconstpointer pixels, gint n_pixels)
         p += 2;
     }
 
-    diff [0] = max [0] - min [0];
-    diff [1] = max [1] - min [1];
-    diff [2] = max [2] - min [2];
+#if 1
+    /* Multipliers for luminance */
+    diff [0] = (max [0] - min [0]) * 30;
+    diff [1] = (max [1] - min [1]) * 59;
+    diff [2] = (max [2] - min [2]) * 11;
+#else
+    diff [0] = (max [0] - min [0]);
+    diff [1] = (max [1] - min [1]);
+    diff [2] = (max [2] - min [2]);
+#endif
 
     /* If there are ties, prioritize thusly: G, R, B */
 
