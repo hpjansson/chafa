@@ -383,25 +383,31 @@ chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelTy
 static void
 fetch_sixel_row (SixelData *srow, const guint8 *pixels, gint width)
 {
-    const guint8 *p;
+    const guint8 *pixels_end, *p;
     gint i, j;
 
-    for (i = 0; i < width; i++)
+    /* The ordering of output bytes is 351240; this is the inverse of
+     * 140325. see sixel_data_do_schar(). */
+
+    for (pixels_end = pixels + width; pixels < pixels_end; pixels++)
     {
         guint64 d;
 
-        p = pixels + i;
-        d = *p;
+        p = pixels;
+
+        d = (guint64) *p;
         p += width;
+        d |= (guint64) *p << (3 * 8);
+        p += width;
+        d |= (guint64) *p << (2 * 8);
+        p += width;
+        d |= (guint64) *p << (5 * 8);
+        p += width;
+        d |= (guint64) *p << (1 * 8);
+        p += width;
+        d |= (guint64) *p << (4 * 8);
 
-        for (j = 1; j < SIXEL_CELL_HEIGHT; j++)
-        {
-            d <<= 8;
-            d |= *p;
-            p += width;
-        }
-
-        srow [i].d = d;
+        (srow++)->d = d;
     }
 } 
 
@@ -410,27 +416,26 @@ sixel_data_to_schar (const SixelData *sdata, guint64 expanded_pen)
 {
     guint64 a;
     gchar c;
-    gint i = 0;
 
-    a = sdata->d ^ expanded_pen;
-    c = !((guint8) a);
+    a = ~(sdata->d ^ expanded_pen);
 
-    do
-    {
-        c <<= 1;
-        a >>= 8;
-        c |= !((guint8) a);
-    }
-    while (++i < (SIXEL_CELL_HEIGHT - 1));
+    /* Matching bytes will now contain 0xff. Any other value is a mismatch. */
 
-#if 0
-    /* FIXME: This _might_ be faster. */
-    a |= (a & 0x0000f0f0f0f0f0f0) >> 4;
-    a |= (a & 0x00000c0c0c0c0c0c) >> 2;
-    a |= (a & 0x0000020202020202) >> 1;
-    a &= 0x0000010101010101;
-    /* ... and pack the bits */
-#endif
+    a &= (a & 0x0000f0f0f0f0f0f0) >> 4;
+    a &= (a & 0x00000c0c0c0c0c0c) >> 2;
+    a &= (a & 0x0000020202020202) >> 1;
+
+    /* Matching bytes will now contain 0x01. Misses contain 0x00. */
+
+    a |= a >> (24 - 1);
+    a |= a >> (16 - 2);
+    a |= a >> (8 - 4);
+
+    /* Set bits are now packed in the lower 6 bits, reordered like this:
+     *
+     * 012345 -> 03/14/25 -> 14/0325 -> 140325 */
+
+    c = a & 0x3f;
 
     return '?' + c;
 }
