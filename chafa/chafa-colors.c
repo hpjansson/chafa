@@ -600,12 +600,10 @@ compare_rgba_0 (gconstpointer a, gconstpointer b)
 {
     const guint8 *ab = a;
     const guint8 *bb = b;
+    gint ai = ab [0];
+    gint bi = bb [0];
 
-    if (ab [0] < bb [0])
-        return -1;
-    if (ab [0] > bb [0])
-        return 1;
-    return 0;
+    return ai - bi;
 }
 
 static int
@@ -613,12 +611,10 @@ compare_rgba_1 (gconstpointer a, gconstpointer b)
 {
     const guint8 *ab = a;
     const guint8 *bb = b;
+    gint ai = ab [1];
+    gint bi = bb [1];
 
-    if (ab [1] < bb [1])
-        return -1;
-    if (ab [1] > bb [1])
-        return 1;
-    return 0;
+    return ai - bi;
 }
 
 static int
@@ -626,12 +622,10 @@ compare_rgba_2 (gconstpointer a, gconstpointer b)
 {
     const guint8 *ab = a;
     const guint8 *bb = b;
+    gint ai = ab [2];
+    gint bi = bb [2];
 
-    if (ab [2] < bb [2])
-        return -1;
-    if (ab [2] > bb [2])
-        return 1;
-    return 0;
+    return ai - bi;
 }
 
 static int
@@ -639,12 +633,10 @@ compare_rgba_3 (gconstpointer a, gconstpointer b)
 {
     const guint8 *ab = a;
     const guint8 *bb = b;
+    gint ai = ab [3];
+    gint bi = bb [3];
 
-    if (ab [3] < bb [3])
-        return -1;
-    if (ab [3] > bb [3])
-        return 1;
-    return 0;
+    return ai - bi;
 }
 
 static void
