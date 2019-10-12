@@ -744,6 +744,22 @@ pick_box_color (gpointer pixels, gint first_ofs, gint n_pixels, ChafaColor *colo
 }
 
 static void
+median_cut_once (gpointer pixels,
+                 gint first_ofs, gint n_pixels,
+                 ChafaColor *color_out)
+{
+    guint8 *p = pixels;
+    gint dominant_ch;
+
+    g_assert (n_pixels > 0);
+
+    dominant_ch = find_dominant_channel (p + first_ofs * sizeof (guint32), n_pixels);
+    sort_by_channel (p + first_ofs * sizeof (guint32), n_pixels, dominant_ch);
+
+    pick_box_color (pixels, first_ofs, n_pixels, color_out);
+}
+
+static void
 median_cut (ChafaPalette *pal, gpointer pixels,
             gint first_ofs, gint n_pixels,
             gint first_col, gint n_cols)
@@ -775,6 +791,65 @@ median_cut (ChafaPalette *pal, gpointer pixels,
                 n_pixels - (n_pixels / 2),
                 first_col + (n_cols / 2),
                 n_cols - (n_cols / 2));
+}
+
+static gint
+dominant_diff (guint8 *p1, guint8 *p2)
+{
+    gint diff [3];
+
+    diff [0] = abs (p2 [0] - (gint) p1 [0]);
+    diff [1] = abs (p2 [1] - (gint) p1 [1]);
+    diff [2] = abs (p2 [2] - (gint) p1 [2]);
+
+    return MAX (diff [0], MAX (diff [1], diff [2]));
+}
+
+static void
+diversity_pass (ChafaPalette *pal, gpointer pixels,
+                gint n_pixels,
+                gint first_col, gint n_cols)
+{
+    guint8 *p = pixels;
+    gint step = n_pixels / 128;
+    gint i, n, c;
+    guint8 done [128] = { 0 };
+
+    for (c = 0; c < n_cols; c++)
+    {
+        gint best_box = 0;
+        gint best_diff = 0;
+
+        for (i = 0, n = 0; i < 128; i++)
+        {
+            gint diff = dominant_diff (p + 4 * n, p + 4 * (n + step - 1));
+
+#if 1
+            g_printerr ("ofs=%d,%d  ", n, diff);
+#endif
+            if (diff > best_diff && !done [i])
+            {
+                best_diff = diff;
+                best_box = i;
+            }
+
+            n += step;
+        }
+#if 1
+        median_cut_once (pixels, best_box * step, step / 2,
+                         &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
+        c++;
+        if (c >= n_cols)
+            break;
+        median_cut_once (pixels, best_box * step + step / 2, step / 2,
+                         &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
+#else
+        median_cut_once (pixels, best_box * step, step,
+                         &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
+#endif
+
+        done [best_box] = 1;
+    }
 }
 
 static void
@@ -1221,11 +1296,18 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
         return;
     }
 
-    median_cut (palette_out, pixels_copy, 0, copy_n_pixels, 0, 256);
+    median_cut (palette_out, pixels_copy, 0, copy_n_pixels, 0, 128);
+    palette_out->n_colors = 128;
+    clean_up (palette_out);
+
+#if 1
+    diversity_pass (palette_out, pixels_copy, copy_n_pixels, palette_out->n_colors, 256 - palette_out->n_colors);
     palette_out->n_colors = 256;
+    clean_up (palette_out);
+#endif
+
     g_free (pixels_copy);
 
-    clean_up (palette_out);
     gen_oct_tree (palette_out, CHAFA_COLOR_SPACE_RGB);
 
     if (color_space == CHAFA_COLOR_SPACE_DIN99D)
