@@ -1462,7 +1462,7 @@ gint
 chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                               const ChafaColor *color)
 {
-#if 1
+#if 0
     return linear_nearest_color (palette, color_space, color);
 #else
     return oct_tree_lookup_nearest_color (palette, color_space, color);
