@@ -67,6 +67,7 @@ SmolStorageType;
 
 typedef enum
 {
+    SMOL_FILTER_COPY,
     SMOL_FILTER_ONE,
     SMOL_FILTER_BILINEAR_0H,
     SMOL_FILTER_BILINEAR_1H,
