@@ -2051,6 +2051,8 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
 
     canvas->refs = 1;
 
+    /* TEMP */
+    canvas->config.pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
 
     if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
