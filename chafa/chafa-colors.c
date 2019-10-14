@@ -1474,6 +1474,9 @@ gint
 chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                               const ChafaColor *color)
 {
+    /* Transparency */
+    if (color->ch [3] < 0x7f)
+        return 0;
 #if 0
     return linear_nearest_color (palette, color_space, color);
 #else
