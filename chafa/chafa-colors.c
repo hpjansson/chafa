@@ -1297,6 +1297,8 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     guint32 *pixels_copy;
     gint copy_n_pixels;
 
+    palette_out->alpha_threshold = alpha_threshold;
+
     pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
     copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, N_SAMPLES, alpha_threshold);
 
@@ -1476,7 +1478,7 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
                               const ChafaColor *color)
 {
     /* Transparency */
-    if (color->ch [3] < 0x7f)
+    if (color->ch [3] < palette->alpha_threshold)
         return 0;
 #if 0
     return linear_nearest_color (palette, color_space, color);

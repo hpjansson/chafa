@@ -117,6 +117,7 @@ typedef struct
 {
     ChafaPaletteColor colors [256];
     gint n_colors;
+    gint alpha_threshold;
     gint16 oct_tree_root [CHAFA_COLOR_SPACE_MAX];
     gint16 oct_tree_first_free [CHAFA_COLOR_SPACE_MAX];
     ChafaPaletteOctNode oct_tree [CHAFA_COLOR_SPACE_MAX] [256];
