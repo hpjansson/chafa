@@ -2059,9 +2059,14 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     }
     else
     {
-        /* Sixels or other accurate pixel mode */
+        /* Sixels */
         canvas->width_pixels = canvas->config.width * canvas->config.cell_width;
         canvas->height_pixels = canvas->config.height * canvas->config.cell_height;
+
+        /* Ensure height is the biggest multiple of 6 that will fit
+         * in our cells. We don't want a fringe going outside our
+         * bottom cell. */
+        canvas->height_pixels -= canvas->height_pixels % 6;
     }
 
     canvas->pixels = NULL;
