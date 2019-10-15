@@ -615,7 +615,9 @@ build_sixel_row_worker (BatchInfo *batch, const BuildSixelsCtx *ctx)
                          ctx->sixel_canvas->image->pixels
                          + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
                          ctx->sixel_canvas->image->width);
-        p = build_sixel_row_ansi (srow, ctx->sixel_canvas->width, p, i == 0 ? TRUE : FALSE);
+        p = build_sixel_row_ansi (srow, ctx->sixel_canvas->width, p,
+                                  (i == 0) || (i == n_sixel_rows - 1)
+                                  ? TRUE : FALSE);
     }
 
     batch->ret_p = sixel_ansi;
