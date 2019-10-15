@@ -334,6 +334,13 @@ typedef struct
 }
 SixelData;
 
+typedef struct
+{
+    SixelData *data;
+    ChafaBitfield filter_bits;
+}
+SixelRow;
+
 static gint
 round_up_to_multiple_of (gint value, gint m)
 {
@@ -386,34 +393,61 @@ chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelTy
                                      sixel_canvas->alpha_threshold);
 }
 
+#define FILTER_BANK_WIDTH 64
+
 static void
-fetch_sixel_row (SixelData *srow, const guint8 *pixels, gint width)
+filter_set (SixelRow *srow, guint8 pen, gint bank)
+{
+    chafa_bitfield_set_bit (&srow->filter_bits, bank * 256 + (gint) pen, TRUE);
+}
+
+static gboolean
+filter_get (const SixelRow *srow, guint8 pen, gint bank)
+{
+    return chafa_bitfield_get_bit (&srow->filter_bits, bank * 256 + (gint) pen);
+}
+
+static void
+fetch_sixel_row (SixelRow *srow, const guint8 *pixels, gint width)
 {
     const guint8 *pixels_end, *p;
-    gint i, j;
+    SixelData *sdata = srow->data;
+    gint x;
 
     /* The ordering of output bytes is 351240; this is the inverse of
      * 140325. see sixel_data_do_schar(). */
 
-    for (pixels_end = pixels + width; pixels < pixels_end; pixels++)
+    for (pixels_end = pixels + width, x = 0; pixels < pixels_end; pixels++, x++)
     {
         guint64 d;
+        gint bank = x / FILTER_BANK_WIDTH;
 
         p = pixels;
 
+        filter_set (srow, *p, bank);
         d = (guint64) *p;
         p += width;
+
+        filter_set (srow, *p, bank);
         d |= (guint64) *p << (3 * 8);
         p += width;
+
+        filter_set (srow, *p, bank);
         d |= (guint64) *p << (2 * 8);
         p += width;
+
+        filter_set (srow, *p, bank);
         d |= (guint64) *p << (5 * 8);
         p += width;
+
+        filter_set (srow, *p, bank);
         d |= (guint64) *p << (1 * 8);
         p += width;
+
+        filter_set (srow, *p, bank);
         d |= (guint64) *p << (4 * 8);
 
-        (srow++)->d = d;
+        (sdata++)->d = d;
     }
 } 
 
@@ -523,11 +557,12 @@ format_pen (guint8 pen, gchar *p)
  * otherwise the first row with non-transparent pixels will have
  * garbage rendered in it */
 static gchar *
-build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p, gboolean force_full_width)
+build_sixel_row_ansi (const SixelRow *srow, gint width, gchar *p, gboolean force_full_width)
 {
     guint8 pen = 1;
     gboolean need_cr = FALSE;
     gboolean need_cr_next = FALSE;
+    const SixelData *sdata = srow->data;
 
     do
     {
@@ -543,35 +578,76 @@ build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p, gboolean forc
         expanded_pen |= expanded_pen << 16;
         expanded_pen |= expanded_pen << 16;
 
-        rep_schar = sixel_data_to_schar (&srow [0], expanded_pen);
-        n_reps = 1;
+        rep_schar = 0;
+        n_reps = 0;
 
-        for (i = 1; i < width; i++)
+        for (i = 0; i < width; )
         {
-            gchar schar = sixel_data_to_schar (&srow [i], expanded_pen);
+            gint step = MIN (FILTER_BANK_WIDTH, width - i);
+            gchar schar;
 
-            if (schar == rep_schar)
+            /* Skip over FILTER_BANK_WIDTH sixels at once if possible */
+
+            if (!filter_get (srow, pen, i / FILTER_BANK_WIDTH))
             {
-                n_reps++;
+                if (rep_schar != '?' && rep_schar != 0)
+                {
+                    if (need_cr)
+                    {
+                        *(p++) = '$';
+                        need_cr = FALSE;
+                    }
+                    if (need_pen)
+                    {
+                        p = format_pen (pen, p);
+                        need_pen = FALSE;
+                    }
+
+                    p = format_schar_reps (rep_schar, n_reps, p);
+                    need_cr_next = TRUE;
+                    n_reps = 0;
+                }
+
+                rep_schar = '?';
+                n_reps += step;
+                i += step;
+                continue;
             }
-            else
+
+            /* The pen appears in this bank; iterate over sixels */
+
+            for ( ; step > 0; step--, i++)
             {
-                if (need_cr)
-                {
-                    *(p++) = '$';
-                    need_cr = FALSE;
-                }
-                if (need_pen)
-                {
-                    p = format_pen (pen, p);
-                    need_pen = FALSE;
-                }
+                schar = sixel_data_to_schar (&sdata [i], expanded_pen);
 
-                p = format_schar_reps (rep_schar, n_reps, p);
-                need_cr_next = TRUE;
+                if (schar == rep_schar)
+                {
+                    n_reps++;
+                }
+                else if (rep_schar == 0)
+                {
+                    rep_schar = schar;
+                    n_reps = 1;
+                }
+                else
+                {
+                    if (need_cr)
+                    {
+                        *(p++) = '$';
+                        need_cr = FALSE;
+                    }
+                    if (need_pen)
+                    {
+                        p = format_pen (pen, p);
+                        need_pen = FALSE;
+                    }
 
-                rep_schar = schar;
-                n_reps = 1;
+                    p = format_schar_reps (rep_schar, n_reps, p);
+                    need_cr_next = TRUE;
+
+                    rep_schar = schar;
+                    n_reps = 1;
+                }
             }
         }
 
@@ -606,28 +682,33 @@ build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p, gboolean forc
 static void
 build_sixel_row_worker (BatchInfo *batch, const BuildSixelsCtx *ctx)
 {
-    SixelData *srow;
+    SixelRow srow;
     gchar *sixel_ansi, *p;
     gint n_sixel_rows;
     gint i;
 
     n_sixel_rows = (batch->n_rows + SIXEL_CELL_HEIGHT - 1) / SIXEL_CELL_HEIGHT;
-    srow = g_alloca (sizeof (SixelData) * ctx->sixel_canvas->width);
+    srow.data = g_alloca (sizeof (SixelData) * ctx->sixel_canvas->width);
+    chafa_bitfield_init (&srow.filter_bits, ((ctx->sixel_canvas->width + FILTER_BANK_WIDTH - 1) / FILTER_BANK_WIDTH) * 256);
+
     sixel_ansi = p = g_malloc (256 * (ctx->sixel_canvas->width + 5) * n_sixel_rows);
 
     for (i = 0; i < n_sixel_rows; i++)
     {
-        fetch_sixel_row (srow,
+        fetch_sixel_row (&srow,
                          ctx->sixel_canvas->image->pixels
                          + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
                          ctx->sixel_canvas->image->width);
-        p = build_sixel_row_ansi (srow, ctx->sixel_canvas->width, p,
+        p = build_sixel_row_ansi (&srow, ctx->sixel_canvas->width, p,
                                   (i == 0) || (i == n_sixel_rows - 1)
                                   ? TRUE : FALSE);
+        chafa_bitfield_clear (&srow.filter_bits);
     }
 
     batch->ret_p = sixel_ansi;
     batch->ret_n = p - sixel_ansi;
+
+    chafa_bitfield_deinit (&srow.filter_bits);
 }
 
 static void
