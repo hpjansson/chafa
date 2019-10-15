@@ -54,6 +54,7 @@ typedef struct
     ChafaColorExtractor color_extractor;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
+    ChafaPixelMode pixel_mode;
     gint dither_grain_width;
     gint dither_grain_height;
     gdouble dither_intensity;
@@ -69,6 +70,7 @@ typedef struct
     gboolean zoom;
     gboolean watch;
     gint width, height;
+    gint cell_width, cell_height;
     gdouble font_ratio;
     gint work_factor;
     guint32 fg_color;
@@ -230,6 +232,7 @@ print_summary (void)
     "                     Defaults to none. See below for full usage.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
+    "  -f, --format=FORMAT  Set output format; one of [symbols, sixels].\n"
     "      --glyph-file=FILE  Load glyph information from FILE, which can be any\n"
     "                     font file supported by FreeType (TTF, PCF, etc).\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
@@ -419,6 +422,35 @@ static gboolean
 parse_fill_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     return chafa_symbol_map_apply_selectors (options.fill_symbol_map, value, error);
+}
+
+static gboolean
+parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+    ChafaPixelMode pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+
+    if (!strcasecmp (value, "symbol") || !strcasecmp (value, "symbols")
+        || !strcasecmp (value, "ansi"))
+    {
+        pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+    }
+    else if (!strcasecmp (value, "sixel") || !strcasecmp (value, "sixels"))
+    {
+        pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
+    }
+    else
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Output format given as '%s'. Must be one of [symbols, sixels].",
+                     value);
+        result = FALSE;
+    }
+
+    if (result)
+        options.pixel_mode = pixel_mode;
+
+    return result;
 }
 
 static gboolean
@@ -640,10 +672,18 @@ get_tty_size (void)
     if (w.ws_row > 2)
         options.height = w.ws_row - 1;
 
-    /* If .ws_xpixel and .ws_ypixel were filled out, we could in theory
-     * calculate aspect information for the font used. Unfortunately,
-     * I have yet to find an environment where these fields get set to
-     * anything other than zero. */
+    /* If .ws_xpixel and .ws_ypixel are filled out, we can calculate
+     * aspect information for the font used. Sixel-capable terminals
+     * like mlterm set these fields, but most others do not. */
+
+    if (w.ws_xpixel > 0 && w.ws_ypixel > 0)
+    {
+        options.cell_width = w.ws_xpixel / w.ws_col;
+        options.cell_height = w.ws_ypixel / w.ws_row;
+
+        if (options.cell_width > 0 && options.cell_height > 0)
+            options.font_ratio = (gfloat) options.cell_width / (gfloat) options.cell_height;
+    }
 }
 
 static struct termios saved_termios;
@@ -677,14 +717,15 @@ tty_options_deinit (void)
  *
  * If you're getting poor results, I'd love to hear about it so it can
  * be improved. */
-static ChafaCanvasMode
-detect_canvas_mode (void)
+static void
+detect_terminal_modes (ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out)
 {
     const gchar *term;
     const gchar *colorterm;
     const gchar *vte_version;
     const gchar *tmux;
     ChafaCanvasMode mode = CHAFA_CANVAS_MODE_INDEXED_240;
+    ChafaPixelMode pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
 
     term = g_getenv ("TERM");
     if (!term) term = "";
@@ -721,7 +762,10 @@ detect_canvas_mode (void)
     /* mlterm's truecolor support seems to be broken; it looks like a color
      * allocation issue. */
     if (!strcmp (term, "mlterm"))
+    {
         mode = CHAFA_CANVAS_MODE_INDEXED_240;
+        pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
+    }
 
     /* rxvt 256-color really is 256 colors only */
     if (!strcmp (term, "rxvt-unicode-256color"))
@@ -758,7 +802,8 @@ detect_canvas_mode (void)
     if (!strcmp (term, "linux"))
         mode = CHAFA_CANVAS_MODE_INDEXED_16;
 
-    return mode;
+    *mode_out = mode;
+    *pixel_mode_out = pixel_mode;
 }
 
 static gboolean
@@ -785,6 +830,7 @@ parse_options (int *argc, char **argv [])
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
+        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (ansi or sixels)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
@@ -820,7 +866,7 @@ parse_options (int *argc, char **argv [])
     options.fill_symbol_map = chafa_symbol_map_new ();
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
-    options.mode = detect_canvas_mode ();
+    detect_terminal_modes (&options.mode, &options.pixel_mode);
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
     options.dither_grain_width = 4;
     options.dither_grain_height = 4;
@@ -964,6 +1010,7 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
 
     chafa_canvas_config_set_geometry (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
+    chafa_canvas_config_set_pixel_mode (config, options.pixel_mode);
     chafa_canvas_config_set_dither_mode (config, options.dither_mode);
     chafa_canvas_config_set_dither_grain_size (config, options.dither_grain_width, options.dither_grain_height);
     chafa_canvas_config_set_dither_intensity (config, options.dither_intensity);
@@ -974,6 +1021,8 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
+    if (options.cell_width > 0 && options.cell_height > 0)
+        chafa_canvas_config_set_cell_geometry (config, options.cell_width, options.cell_height);
 
     chafa_canvas_config_set_symbol_map (config, options.symbol_map);
     chafa_canvas_config_set_fill_symbol_map (config, options.fill_symbol_map);
@@ -1317,7 +1366,11 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
                 fputc ('\n', stdout);
 
             fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
-            fputc ('\n', stdout);
+
+            /* No linefeed after frame in sixel mode */
+            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+                fputc ('\n', stdout);
+
             fflush (stdout);
 
             if (is_animation)
@@ -1453,7 +1506,11 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
                 fputc ('\n', stdout);
 
             fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
-            fputc ('\n', stdout);
+
+            /* No linefeed after frame in sixel mode */
+            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+                fputc ('\n', stdout);
+
             fflush (stdout);
 
             if (is_animation)
