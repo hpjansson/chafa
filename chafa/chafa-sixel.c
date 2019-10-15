@@ -512,8 +512,12 @@ format_pen (guint8 pen, gchar *p)
     return format_3digit_dec (pen, p);
 }
 
+/* force_full_width is a workaround for a bug in mlterm; we need to
+ * draw the entire first row even if the rightmost pixels are transparent,
+ * otherwise the first row with non-transparent pixels will have
+ * garbage rendered in it */
 static gchar *
-build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p)
+build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p, gboolean force_full_width)
 {
     guint8 pen = 1;
     gboolean need_cr = FALSE;
@@ -565,7 +569,7 @@ build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p)
             }
         }
 
-        if (rep_schar != '?')
+        if (rep_schar != '?' || force_full_width)
         {
             if (need_cr)
             {
@@ -580,6 +584,9 @@ build_sixel_row_ansi (const SixelData *srow, gint width, gchar *p)
 
             p = format_schar_reps (rep_schar, n_reps, p);
             need_cr_next = TRUE;
+
+            /* Only need to do this for a single pen */
+            force_full_width = FALSE;
         }
 
         need_cr = need_cr_next;
@@ -608,7 +615,7 @@ build_sixel_row_worker (BatchInfo *batch, const BuildSixelsCtx *ctx)
                          ctx->sixel_canvas->image->pixels
                          + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
                          ctx->sixel_canvas->image->width);
-        p = build_sixel_row_ansi (srow, ctx->sixel_canvas->width, p);
+        p = build_sixel_row_ansi (srow, ctx->sixel_canvas->width, p, i == 0 ? TRUE : FALSE);
     }
 
     batch->ret_p = sixel_ansi;
