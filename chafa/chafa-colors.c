@@ -1305,7 +1305,7 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     if (copy_n_pixels < 1)
     {
         palette_out->n_colors = 0;
-        return;
+        goto out;
     }
 
     median_cut (palette_out, pixels_copy, 0, copy_n_pixels, 0, 128);
@@ -1318,8 +1318,6 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     clean_up (palette_out);
 #endif
 
-    g_free (pixels_copy);
-
     gen_oct_tree (palette_out, CHAFA_COLOR_SPACE_RGB);
 
     if (color_space == CHAFA_COLOR_SPACE_DIN99D)
@@ -1327,6 +1325,9 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
         gen_din99d_color_space (palette_out);
         gen_oct_tree (palette_out, CHAFA_COLOR_SPACE_DIN99D);
     }
+
+out:
+    g_free (pixels_copy);
 }
 
 static void
