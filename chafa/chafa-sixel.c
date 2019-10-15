@@ -29,7 +29,7 @@ static void
 chafa_bitfield_init (ChafaBitfield *bitfield, guint n_bits)
 {
     bitfield->n_bits = n_bits;
-    bitfield->bits = g_malloc0 ((n_bits + 31) / 32);
+    bitfield->bits = g_malloc0 ((n_bits + 31) / 8);
 }
 
 static void
@@ -40,8 +40,14 @@ chafa_bitfield_deinit (ChafaBitfield *bitfield)
     bitfield->bits = NULL;
 }
 
+static void
+chafa_bitfield_clear (ChafaBitfield *bitfield)
+{
+    memset (bitfield->bits, 0, (bitfield->n_bits + 31) / 8);
+}
+
 static gboolean
-chafa_bitfield_get_bit (ChafaBitfield *bitfield, guint nth)
+chafa_bitfield_get_bit (const ChafaBitfield *bitfield, guint nth)
 {
     gint index;
     gint shift;
