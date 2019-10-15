@@ -160,6 +160,15 @@ fraction. Defaults to 1/2.
 </varlistentry>
 
 <varlistentry>
+<term><option>-f, --format <replaceable>format</replaceable></option></term>
+<listitem><para>
+Set output format; one of [sixels, symbols]. The default is sixels if there
+is a sixel-capable terminal connected, otherwise symbols will be used. Sixels
+yield much better quality, but support for it is fairly rare.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-h, --help</option></term>
 <listitem><para>
 Show a brief help text.
