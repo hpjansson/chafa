@@ -20,8 +20,8 @@
 #include "config.h"
 
 #include <mmintrin.h>
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 void
 calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)

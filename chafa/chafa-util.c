@@ -19,8 +19,8 @@
 
 #include "config.h"
 
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 /**
  * SECTION:chafa-util

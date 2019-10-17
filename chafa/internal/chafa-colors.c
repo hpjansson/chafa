@@ -21,8 +21,8 @@
 
 #include <stdlib.h>  /* abs */
 #include <math.h>  /* pow, cbrt, log, sqrt, atan2, cos, sin */
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 #define DEBUG(x)
 

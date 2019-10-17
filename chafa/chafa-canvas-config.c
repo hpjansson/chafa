@@ -20,8 +20,8 @@
 #include "config.h"
 
 #include <string.h>  /* memset, memcpy */
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 /**
  * SECTION:chafa-canvas-config

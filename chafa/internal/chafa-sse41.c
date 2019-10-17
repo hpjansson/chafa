@@ -20,8 +20,8 @@
 #include "config.h"
 
 #include <smmintrin.h>
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 gint
 calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)

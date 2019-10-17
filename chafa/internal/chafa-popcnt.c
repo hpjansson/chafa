@@ -20,8 +20,8 @@
 #include "config.h"
 
 #include <nmmintrin.h>
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 gint
 chafa_pop_count_u64_builtin (guint64 v)

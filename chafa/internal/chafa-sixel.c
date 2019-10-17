@@ -20,8 +20,8 @@
 #include "config.h"
 
 #include "smolscale/smolscale.h"
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
 
 #define SIXEL_CELL_HEIGHT 6
 

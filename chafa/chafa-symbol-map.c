@@ -21,9 +21,9 @@
 
 #include <string.h>  /* memset, memcpy */
 #include <stdlib.h>  /* qsort */
-#include "chafa/chafa.h"
-#include "chafa/chafa-private.h"
-#include "chafa/smolscale/smolscale.h"
+#include "chafa.h"
+#include "internal/chafa-private.h"
+#include "internal/smolscale/smolscale.h"
 
 #define DEBUG(x)
 

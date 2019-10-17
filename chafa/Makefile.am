@@ -1,4 +1,4 @@
-SUBDIRS = smolscale
+SUBDIRS = internal
 
 ## --- Library ---
 
@@ -7,18 +7,13 @@ noinst_LTLIBRARIES =
 
 libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS)
 libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 1:1:1
-libchafa_la_LIBADD = $(GLIB_LIBS) smolscale/libsmolscale.la -lm
+libchafa_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal.la -lm
 
 libchafa_la_SOURCES = \
 	chafa-canvas.c \
 	chafa-canvas-config.c \
-	chafa-colors.c \
 	chafa-features.c \
-	chafa-private.h \
-	chafa-sixel.c \
 	chafa-symbol-map.c \
-	chafa-symbols.c \
-	chafa-symbols-ascii.h \
 	chafa-util.c
 
 chafaincludedir=$(includedir)/chafa
@@ -30,30 +25,6 @@ chafainclude_HEADERS = \
 	chafa-symbol-map.h \
 	chafa-util.h \
 	chafa-version-macros.h
-
-if HAVE_MMX_INTRINSICS
-noinst_LTLIBRARIES += libchafa-mmx.la
-libchafa_la_LIBADD += libchafa-mmx.la
-libchafa_mmx_la_SOURCES = chafa-mmx.c
-libchafa_mmx_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mmmx
-libchafa_mmx_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
-endif
-
-if HAVE_SSE41_INTRINSICS
-noinst_LTLIBRARIES += libchafa-sse41.la
-libchafa_la_LIBADD += libchafa-sse41.la
-libchafa_sse41_la_SOURCES = chafa-sse41.c
-libchafa_sse41_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -msse4.1
-libchafa_sse41_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
-endif
-
-if HAVE_POPCNT_INTRINSICS
-noinst_LTLIBRARIES += libchafa-popcnt.la
-libchafa_la_LIBADD += libchafa-popcnt.la
-libchafa_popcnt_la_SOURCES = chafa-popcnt.c
-libchafa_popcnt_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mpopcnt
-libchafa_popcnt_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
-endif
 
 ## -- General ---
 
