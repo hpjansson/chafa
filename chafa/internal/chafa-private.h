@@ -21,6 +21,7 @@
 #define __CHAFA_PRIVATE_H__
 
 #include <glib.h>
+#include "internal/chafa-color-hash.h"
 
 G_BEGIN_DECLS
 

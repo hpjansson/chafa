@@ -228,6 +228,9 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     const guint8 *src_p;
     guint8 *dest_p, *dest_end_p;
+    ChafaColorHash chash;
+
+    chafa_color_hash_init (&chash);
 
     src_p = (const guint8 *) ctx->scaled_data + (4 * ctx->dest_width * batch->first_row);
     dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
@@ -236,21 +239,34 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
     for ( ; dest_p < dest_end_p; src_p += 4, dest_p++)
     {
         ChafaColor col;
+        guint32 col32;
         gint index;
 
-        col.ch [0] = src_p [0];
-        col.ch [1] = src_p [1];
-        col.ch [2] = src_p [2];
-        col.ch [3] = src_p [3];
+        /* Sixel color resolution is only slightly less than 7 bits per channel,
+         * so eliminate the low-order bits to get better hash performance. */
+        col32 = *((guint32 *) src_p) & 0x00fefefe;
+        index = chafa_color_hash_lookup (&chash, col32);
 
-        if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
-            chafa_color_rgb_to_din99d (&col, &col);
+        if (index == 0)
+        {
+            col.ch [0] = src_p [0];
+            col.ch [1] = src_p [1];
+            col.ch [2] = src_p [2];
+            col.ch [3] = src_p [3];
 
-        index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
-                                              ctx->color_space,
-                                              &col);
+            if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
+                chafa_color_rgb_to_din99d (&col, &col);
+
+            index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
+                                                  ctx->color_space,
+                                                  &col);
+            chafa_color_hash_replace (&chash, col32, index);
+        }
+
         *dest_p = index;
     }
+
+    chafa_color_hash_deinit (&chash);
 }
 
 static void
