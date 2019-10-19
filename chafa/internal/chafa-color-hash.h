@@ -28,5 +28,31 @@ ChafaColorHash;
 void   chafa_color_hash_init    (ChafaColorHash *color_hash);
 void   chafa_color_hash_deinit  (ChafaColorHash *color_hash);
 
-void   chafa_color_hash_replace (ChafaColorHash *color_hash, guint32 color, guint8 pen);
-guint8 chafa_color_hash_lookup  (const ChafaColorHash *color_hash, guint32 color);
+static inline guint
+_chafa_color_hash_calc_hash (guint32 color)
+{
+    color &= 0x00ffffff;
+
+    return (color ^ (color >> 7) ^ (color >> 14)) % CHAFA_COLOR_HASH_N_ENTRIES;
+}
+
+static inline void
+chafa_color_hash_replace (ChafaColorHash *color_hash, guint32 color, guint8 pen)
+{
+    guint index = _chafa_color_hash_calc_hash (color);
+    guint32 entry = (color << 8) | pen;
+
+    color_hash->map [index] = entry;
+}
+
+static inline guint8
+chafa_color_hash_lookup (const ChafaColorHash *color_hash, guint32 color)
+{
+    guint index = _chafa_color_hash_calc_hash (color);
+    guint32 entry = color_hash->map [index];
+
+    if ((entry & 0xffffff00) == (color << 8))
+        return entry & 0xff;
+
+    return 0;
+}
