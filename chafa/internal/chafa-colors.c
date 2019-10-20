@@ -1152,7 +1152,7 @@ gen_oct_tree (ChafaPalette *palette, ChafaColorSpace color_space)
                        palette->oct_tree [color_space] [palette->oct_tree_root [color_space] - 256].branch_bit));
 }
 
-#define N_SAMPLES 65536
+#define N_SAMPLES 32768
 
 static gint
 extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint n_samples,
