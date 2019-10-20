@@ -17,6 +17,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef __CHAFA_COLOR_HASH_H__
+#define __CHAFA_COLOR_HASH_H__
+
+G_BEGIN_DECLS
+
 #define CHAFA_COLOR_HASH_N_ENTRIES 16384
 
 typedef struct
@@ -56,3 +61,7 @@ chafa_color_hash_lookup (const ChafaColorHash *color_hash, guint32 color)
 
     return 0;
 }
+
+G_END_DECLS
+
+#endif /* __CHAFA_COLOR_HASH_H__ */
