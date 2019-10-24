@@ -26,8 +26,8 @@
 gint
 calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
 {
-    __m64 *m64p0 = (__m64 *) pixels;
-    __m64 *m64p1 = (__m64 *) cols;
+    const guint32 *u32p0 = (const guint32 *) pixels;
+    const guint32 *u32p1 = (const guint32 *) cols;
     __m128i err4 = { 0 };
     const gint32 *e = (gint32 *) &err4;
     gint i;
@@ -36,8 +36,8 @@ calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8
     {
         __m128i t0, t1, t;
 
-        t0 = _mm_cvtepi16_epi32 (_mm_loadl_epi64 ((__m128i *) &m64p0 [i]));
-        t1 = _mm_cvtepi16_epi32 (_mm_loadl_epi64 ((__m128i *) &m64p1 [cov [i]]));
+        t0 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (u32p0 [i]));
+        t1 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (u32p1 [cov [i]]));
 
         t = t0 - t1;
         t = _mm_mullo_epi32 (t, t);

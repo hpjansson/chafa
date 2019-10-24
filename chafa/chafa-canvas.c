@@ -149,6 +149,24 @@ typedef struct
 }
 SymbolEval;
 
+static void
+color_to_accum (const ChafaColor *color, ChafaColorAccum *accum)
+{
+    gint i;
+
+    for (i = 0; i < 4; i++)
+        accum->ch [i] = color->ch [i];
+}
+
+static void
+accum_to_color (const ChafaColorAccum *accum, ChafaColor *color)
+{
+    gint i;
+
+    for (i = 0; i < 4; i++)
+        color->ch [i] = accum->ch [i];
+}
+
 /* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
 static void
 fetch_canvas_pixel_block (ChafaCanvas *canvas, ChafaPixel *pixels_out, gint cx, gint cy)
@@ -182,17 +200,17 @@ threshold_alpha (ChafaCanvas *canvas, ChafaColor *color)
 static void
 calc_mean_color (const ChafaPixel *block, ChafaColor *color_out)
 {
-    ChafaColor accum = { 0 };
+    ChafaColorAccum accum = { 0 };
     gint i;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        chafa_color_add (&accum, &block->col);
+        chafa_color_accum_add (&accum, &block->col);
         block++;
     }
 
-    chafa_color_div_scalar (&accum, CHAFA_SYMBOL_N_PIXELS);
-    *color_out = accum;
+    chafa_color_accum_div_scalar (&accum, CHAFA_SYMBOL_N_PIXELS);
+    accum_to_color (&accum, color_out);
 }
 
 static void
@@ -478,19 +496,19 @@ work_cell_get_median_pixels_for_symbol (WorkCell *wcell, const ChafaSymbol *sym,
 }
 
 static void
-calc_colors_plain (const ChafaPixel *block, ChafaColor *cols, const guint8 *cov)
+calc_colors_plain (const ChafaPixel *block, ChafaColorAccum *accums, const guint8 *cov)
 {
-    const gint16 *in_s16 = (const gint16 *) block;
+    const guint8 *in_u8 = (const guint8 *) block;
     gint i;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        gint16 *out_s16 = (gint16 *) (cols + *cov++);
+        gint16 *out_s16 = (gint16 *) (accums + *cov++);
 
-        *out_s16++ += *in_s16++;
-        *out_s16++ += *in_s16++;
-        *out_s16++ += *in_s16++;
-        *out_s16++ += *in_s16++;
+        *out_s16++ += *in_u8++;
+        *out_s16++ += *in_u8++;
+        *out_s16++ += *in_u8++;
+        *out_s16++ += *in_u8++;
     }
 }
 
@@ -498,23 +516,23 @@ static void
 eval_symbol_colors_mean (WorkCell *wcell, const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
-    ChafaColor cols [2] = { 0 };
+    ChafaColorAccum accums [2] = { 0 };
 
 #ifdef HAVE_MMX_INTRINSICS
     if (chafa_have_mmx ())
-        calc_colors_mmx (wcell->pixels, cols, covp);
+        calc_colors_mmx (wcell->pixels, accums, covp);
     else
 #endif
-        calc_colors_plain (wcell->pixels, cols, covp);
-
-    eval->fg.col = cols [1];
-    eval->bg.col = cols [0];
+        calc_colors_plain (wcell->pixels, accums, covp);
 
     if (sym->fg_weight > 1)
-        chafa_color_div_scalar (&eval->fg.col, sym->fg_weight);
+        chafa_color_accum_div_scalar (&accums [1], sym->fg_weight);
 
     if (sym->bg_weight > 1)
-        chafa_color_div_scalar (&eval->bg.col, sym->bg_weight);
+        chafa_color_accum_div_scalar (&accums [0], sym->bg_weight);
+
+    accum_to_color (&accums [1], &eval->fg.col);
+    accum_to_color (&accums [0], &eval->bg.col);
 }
 
 static void
@@ -1077,17 +1095,15 @@ histogram_calc_bounds (ChafaCanvas *canvas, Histogram *hist, gint crop_pct)
 }
 
 static gint16
-normalize_ch (gint16 v, gint min, gint factor)
+normalize_ch (guint8 v, gint min, gint factor)
 {
     gint vt = v;
 
     vt -= min;
-    if (vt < 0)
-        vt = 0;
     vt *= factor;
     vt /= FIXED_MULT;
-    if (vt > 255)
-        vt = 255;
+
+    vt = CLAMP (vt, 0, 255);
     return vt;
 }
 
@@ -1131,6 +1147,8 @@ normalize_rgb (ChafaCanvas *canvas, const Histogram *hist, gint dest_y, gint n_r
 static void
 boost_saturation_rgb (ChafaColor *col)
 {
+    gint ch [3];
+
 #define Pr .299
 #define Pg .587
 #define Pb .144
@@ -1138,17 +1156,13 @@ boost_saturation_rgb (ChafaColor *col)
                       + (col->ch [1]) * (gdouble) (col->ch [1]) * Pg
                       + (col->ch [2]) * (gdouble) (col->ch [2]) * Pb);
 
-    col->ch [0] = (P + ((gdouble) col->ch [0] - P) * 2);
-    col->ch [1] = (P + ((gdouble) col->ch [1] - P) * 2);
-    col->ch [2] = (P + ((gdouble) col->ch [2] - P) * 2);
-}
+    ch [0] = P + ((gdouble) col->ch [0] - P) * 2;
+    ch [1] = P + ((gdouble) col->ch [1] - P) * 2;
+    ch [2] = P + ((gdouble) col->ch [2] - P) * 2;
 
-static void
-clamp_color_rgb (ChafaColor *col)
-{
-    col->ch [0] = CLAMP (col->ch [0], 0, 255);
-    col->ch [1] = CLAMP (col->ch [1], 0, 255);
-    col->ch [2] = CLAMP (col->ch [2], 0, 255);
+    col->ch [0] = CLAMP (ch [0], 0, 255);
+    col->ch [1] = CLAMP (ch [1], 0, 255);
+    col->ch [2] = CLAMP (ch [2], 0, 255);
 }
 
 static void
@@ -1180,31 +1194,32 @@ bayer_dither_pixel (ChafaCanvas *canvas, ChafaPixel *pixel, gint *matrix, gint x
 {
     gint bayer_index = (((y >> canvas->dither_grain_height_shift) & size_mask) << size_shift)
         + ((x >> canvas->dither_grain_width_shift) & size_mask);
-    gint bayer_mod = matrix [bayer_index];
+    gint16 bayer_mod = matrix [bayer_index];
     gint i;
 
     for (i = 0; i < 4; i++)
     {
-        pixel->col.ch [i] += bayer_mod;
-        if (pixel->col.ch [i] < 0)
-            pixel->col.ch [i] = 0;
-        if (pixel->col.ch [i] > 255)
-            pixel->col.ch [i] = 255;
+        gint16 c;
+
+        c = (gint16) pixel->col.ch [i] + bayer_mod;
+        c = CLAMP (c, 0, 255);
+        pixel->col.ch [i] = c;
     }
 }
 
 /* pixel must point to top-left pixel of the grain to be dithered */
 static void
-fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error_in,
-                 ChafaPixel *error_out_0, ChafaPixel *error_out_1,
-                 ChafaPixel *error_out_2, ChafaPixel *error_out_3)
+fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaColorAccum *error_in,
+                 ChafaColorAccum *error_out_0, ChafaColorAccum *error_out_1,
+                 ChafaColorAccum *error_out_2, ChafaColorAccum *error_out_3)
 {
     gint grain_shift = canvas->dither_grain_width_shift + canvas->dither_grain_height_shift;
-    ChafaPixel next_error = { 0 };
-    ChafaPixel accum = { 0 };
+    ChafaColorAccum next_error = { 0 };
+    ChafaColorAccum accum = { 0 };
     ChafaColorCandidates cand = { 0 };
     ChafaPixel *p;
-    const ChafaColor *c;
+    ChafaColor acol;
+    const ChafaColor *col;
     gint x, y, i;
 
     p = pixel;
@@ -1215,23 +1230,22 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
         {
             for (i = 0; i < 3; i++)
             {
-                p->col.ch [i] += error_in->col.ch [i];
+                gint16 ch = p->col.ch [i];
+                ch += error_in->ch [i];
 
-                if (canvas->config.color_space == CHAFA_COLOR_SPACE_RGB)
+                if (ch < 0)
                 {
-                    if (p->col.ch [i] < 0)
-                    {
-                        next_error.col.ch [i] += p->col.ch [i];
-                        p->col.ch [i] = 0;
-                    }
-                    else if (p->col.ch [i] > 255)
-                    {
-                        next_error.col.ch [i] += p->col.ch [i] - 255;
-                        p->col.ch [i] = 255;
-                    }
+                    next_error.ch [i] += ch;
+                    ch = 0;
+                }
+                else if (ch > 255)
+                {
+                    next_error.ch [i] += ch - 255;
+                    ch = 255;
                 }
 
-                accum.col.ch [i] += p->col.ch [i];
+                p->col.ch [i] = ch;
+                accum.ch [i] += ch;
             }
         }
 
@@ -1239,33 +1253,36 @@ fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaPixel *error
     }
 
     for (i = 0; i < 3; i++)
-        accum.col.ch [i] >>= grain_shift;
+    {
+        accum.ch [i] >>= grain_shift;
+        acol.ch [i] = accum.ch [i];
+    }
 
     /* Don't try to dither alpha */
-    accum.col.ch [3] = 0xff;
+    acol.ch [3] = 0xff;
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
-        chafa_pick_color_256 (&accum.col, canvas->config.color_space, &cand);
+        chafa_pick_color_256 (&acol, canvas->config.color_space, &cand);
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240)
-        chafa_pick_color_240 (&accum.col, canvas->config.color_space, &cand);
+        chafa_pick_color_240 (&acol, canvas->config.color_space, &cand);
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
-        chafa_pick_color_16 (&accum.col, canvas->config.color_space, &cand);
+        chafa_pick_color_16 (&acol, canvas->config.color_space, &cand);
     else
-        chafa_pick_color_fgbg (&accum.col, canvas->config.color_space,
+        chafa_pick_color_fgbg (&acol, canvas->config.color_space,
                                &canvas->fg_color, &canvas->bg_color, &cand);
 
-    c = chafa_get_palette_color_256 (cand.index [0], canvas->config.color_space);
+    col = chafa_get_palette_color_256 (cand.index [0], canvas->config.color_space);
 
     for (i = 0; i < 3; i++)
     {
         /* FIXME: Floating point op is slow. Factor this out and make
          * dither_intensity == 1.0 the fast path. */
-        next_error.col.ch [i] = ((next_error.col.ch [i] >> grain_shift) + (accum.col.ch [i] - c->ch [i]) * canvas->config.dither_intensity);
+        next_error.ch [i] = ((next_error.ch [i] >> grain_shift) + (accum.ch [i] - (gint16) col->ch [i]) * canvas->config.dither_intensity);
 
-        error_out_0->col.ch [i] += next_error.col.ch [i] * 7 / 16;
-        error_out_1->col.ch [i] += next_error.col.ch [i] * 1 / 16;
-        error_out_2->col.ch [i] += next_error.col.ch [i] * 5 / 16;
-        error_out_3->col.ch [i] += next_error.col.ch [i] * 3 / 16;
+        error_out_0->ch [i] += next_error.ch [i] * 7 / 16;
+        error_out_1->ch [i] += next_error.ch [i] * 1 / 16;
+        error_out_2->ch [i] += next_error.ch [i] * 5 / 16;
+        error_out_3->ch [i] += next_error.ch [i] * 3 / 16;
     }
 }
 
@@ -1306,9 +1323,9 @@ static void
 fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel;
-    ChafaPixel *error_rows;
-    ChafaPixel *error_row [2];
-    ChafaPixel *pp;
+    ChafaColorAccum *error_rows;
+    ChafaColorAccum *error_row [2];
+    ChafaColorAccum *pp;
     gint width_grains = canvas->width_pixels >> canvas->dither_grain_width_shift;
     gint x, y;
 
@@ -1319,15 +1336,15 @@ fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     dest_y >>= canvas->dither_grain_height_shift;
     n_rows >>= canvas->dither_grain_height_shift;
 
-    error_rows = alloca (width_grains * 2 * sizeof (ChafaPixel));
+    error_rows = alloca (width_grains * 2 * sizeof (ChafaColorAccum));
     error_row [0] = error_rows;
     error_row [1] = error_rows + width_grains;
 
-    memset (error_row [0], 0, width_grains * sizeof (ChafaPixel));
+    memset (error_row [0], 0, width_grains * sizeof (ChafaColorAccum));
 
     for (y = dest_y; y < dest_y + n_rows; y++)
     {
-        memset (error_row [1], 0, width_grains * sizeof (ChafaPixel));
+        memset (error_row [1], 0, width_grains * sizeof (ChafaColorAccum));
 
         if (!(y & 1))
         {
@@ -1478,7 +1495,6 @@ prepare_pixels_1_inner (PreparePixelsBatch1 *work,
         && prep_ctx->canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
     {
         boost_saturation_rgb (col);
-        clamp_color_rgb (col);
     }
 
     /* Build histogram */

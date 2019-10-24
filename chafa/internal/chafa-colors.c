@@ -151,12 +151,12 @@ chafa_unpack_color (guint32 packed, ChafaColor *color_out)
 }
 
 void
-chafa_color_div_scalar (ChafaColor *color, gint scalar)
+chafa_color_accum_div_scalar (ChafaColorAccum *accum, gint scalar)
 {
-    color->ch [0] /= scalar;
-    color->ch [1] /= scalar;
-    color->ch [2] /= scalar;
-    color->ch [3] /= scalar;
+    accum->ch [0] /= scalar;
+    accum->ch [1] /= scalar;
+    accum->ch [2] /= scalar;
+    accum->ch [3] /= scalar;
 }
 
 typedef struct
@@ -270,15 +270,15 @@ color_diff_rgb (const ChafaColor *col_a, const ChafaColor *col_b)
     gint error = 0;
     gint d [3];
 
-    d [0] = col_b->ch [0] - col_a->ch [0];
+    d [0] = (gint) col_b->ch [0] - (gint) col_a->ch [0];
     d [0] = d [0] * d [0];
-    d [1] = col_b->ch [1] - col_a->ch [1];
+    d [1] = (gint) col_b->ch [1] - (gint) col_a->ch [1];
     d [1] = d [1] * d [1];
-    d [2] = col_b->ch [2] - col_a->ch [2];
+    d [2] = (gint) col_b->ch [2] - (gint) col_a->ch [2];
     d [2] = d [2] * d [2];
 
     error = 2 * d [0] + 4 * d [1] + 3 * d [2]
-        + (((col_a->ch [0] + col_b->ch [0]) / 2)
+    + (((col_a->ch [0] + (gint) col_b->ch [0]) / 2)
         * abs (d [0] - d [2])) / 256;
 
     return error;
@@ -290,11 +290,11 @@ color_diff_euclidean (const ChafaColor *col_a, const ChafaColor *col_b)
     gint error = 0;
     gint d [3];
 
-    d [0] = col_b->ch [0] - col_a->ch [0];
+    d [0] = (gint) col_b->ch [0] - (gint) col_a->ch [0];
     d [0] = d [0] * d [0];
-    d [1] = col_b->ch [1] - col_a->ch [1];
+    d [1] = (gint) col_b->ch [1] - (gint) col_a->ch [1];
     d [1] = d [1] * d [1];
-    d [2] = col_b->ch [2] - col_a->ch [2];
+    d [2] = (gint) col_b->ch [2] - (gint) col_a->ch [2];
     d [2] = d [2] * d [2];
 
     error = d [0] + d [1] + d [2];
@@ -308,7 +308,7 @@ color_diff_alpha (const ChafaColor *col_a, const ChafaColor *col_b, gint error)
     gint a;
 
     /* Alpha */
-    a = col_b->ch [3] - col_a->ch [3];
+    a = (gint) col_b->ch [3] - (gint) col_a->ch [3];
     a = a * a;
     max_opacity = MAX (col_a->ch [3], col_b->ch [3]);
     error *= max_opacity;

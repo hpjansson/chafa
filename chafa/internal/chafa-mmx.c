@@ -24,19 +24,28 @@
 #include "internal/chafa-private.h"
 
 void
-calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov)
+calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov)
 {
-    __m64 *m64p0 = (__m64 *) pixels;
-    __m64 *cols_m64 = (__m64 *) cols;
+    __m64 accum [2] = { 0 };
+    const guint32 *u32p0 = (const guint32 *) pixels;
+    __m64 m64b;
     gint i;
+
+    m64b = _mm_setzero_si64 ();
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         __m64 *m64p1;
+        __m64 m64a;
 
-        m64p1 = cols_m64 + cov [i];
-        *m64p1 = _mm_adds_pi16 (*m64p1, m64p0 [i]);
+        m64p1 = &accum [cov [i]];
+        m64a = _mm_cvtsi32_si64 (u32p0 [i]);
+        m64a = _mm_unpacklo_pi8 (m64a, m64b);
+        *m64p1 = _mm_adds_pi16 (*m64p1, m64a);
     }
+
+    ((guint64 *) accums_out) [0] = _mm_cvtm64_si64 (accum [0]);
+    ((guint64 *) accums_out) [1] = _mm_cvtm64_si64 (accum [1]);
 
 #if 0
     /* Called after outer loop is done */

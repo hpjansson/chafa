@@ -34,9 +34,15 @@ G_BEGIN_DECLS
 /* Color space agnostic, using fixed point */
 typedef struct
 {
-    gint16 ch [4];
+    guint8 ch [4];
 }
 ChafaColor;
+
+typedef struct
+{
+    gint16 ch [4];
+}
+ChafaColorAccum;
 
 typedef struct
 {
@@ -249,20 +255,20 @@ const ChafaColor *chafa_palette_get_color (const ChafaPalette *palette, ChafaCol
 guint32 chafa_pack_color (const ChafaColor *color) G_GNUC_PURE;
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);
 
-#define chafa_color_add(d, s) \
+#define chafa_color_accum_add(d, s) \
 G_STMT_START { \
   (d)->ch [0] += (s)->ch [0]; (d)->ch [1] += (s)->ch [1]; (d)->ch [2] += (s)->ch [2]; (d)->ch [3] += (s)->ch [3]; \
 } G_STMT_END
 
 #define chafa_color_diff_fast(col_a, col_b) \
-(((col_b)->ch [0] - (col_a)->ch [0]) * (gint) ((col_b)->ch [0] - (col_a)->ch [0]) \
-  + ((col_b)->ch [1] - (col_a)->ch [1]) * (gint) ((col_b)->ch [1] - (col_a)->ch [1]) \
-  + ((col_b)->ch [2] - (col_a)->ch [2]) * (gint) ((col_b)->ch [2] - (col_a)->ch [2]))
+    (((gint) (col_b)->ch [0] - (gint) (col_a)->ch [0]) * ((gint) (col_b)->ch [0] - (gint) (col_a)->ch [0]) \
+  + ((gint) (col_b)->ch [1] - (gint) (col_a)->ch [1]) * ((gint) (col_b)->ch [1] - (gint) (col_a)->ch [1]) \
+  + ((gint) (col_b)->ch [2] - (gint) (col_a)->ch [2]) * ((gint) (col_b)->ch [2] - (gint) (col_a)->ch [2]))
 
 /* Required to get alpha right */
 gint chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space) G_GNUC_PURE;
 
-void chafa_color_div_scalar (ChafaColor *color, gint scalar);
+void chafa_color_accum_div_scalar (ChafaColorAccum *color, gint scalar);
 
 void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
 
@@ -286,7 +292,7 @@ void chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space
 const ChafaColor *chafa_get_palette_color_256 (guint index, ChafaColorSpace color_space) G_GNUC_CONST;
 
 #ifdef HAVE_MMX_INTRINSICS
-void calc_colors_mmx (const ChafaPixel *pixels, ChafaColor *cols, const guint8 *cov);
+void calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov);
 void leave_mmx (void);
 #endif
 
