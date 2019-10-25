@@ -22,33 +22,9 @@
 
 #include <glib.h>
 #include "internal/chafa-color-hash.h"
+#include "internal/chafa-palette.h"
 
 G_BEGIN_DECLS
-
-/* Colors and color spaces */
-
-#define CHAFA_PALETTE_INDEX_TRANSPARENT 256
-#define CHAFA_PALETTE_INDEX_FG 257
-#define CHAFA_PALETTE_INDEX_BG 258
-
-/* Color space agnostic, using fixed point */
-typedef struct
-{
-    guint8 ch [4];
-}
-ChafaColor;
-
-typedef struct
-{
-    gint16 ch [4];
-}
-ChafaColorAccum;
-
-typedef struct
-{
-    ChafaColor col;
-}
-ChafaPixel;
 
 /* Character symbols and symbol classes */
 
@@ -91,45 +67,6 @@ typedef struct
     guint8 is_inverted;
 }
 ChafaCandidate;
-
-/* Color selection candidate pair */
-
-typedef struct
-{
-    gint16 index [2];
-    gint error [2];
-}
-ChafaColorCandidates;
-
-/* Palette */
-
-typedef struct
-{
-    ChafaColor col [CHAFA_COLOR_SPACE_MAX];
-}
-ChafaPaletteColor;
-
-#define CHAFA_OCT_TREE_INDEX_NULL -1
-
-typedef struct
-{
-    gint8 branch_bit;
-    gint8 n_children;
-    guint16 prefix [3];
-    gint16 child_index [8];
-}
-ChafaPaletteOctNode;
-
-typedef struct
-{
-    ChafaPaletteColor colors [256];
-    gint n_colors;
-    gint alpha_threshold;
-    gint16 oct_tree_root [CHAFA_COLOR_SPACE_MAX];
-    gint16 oct_tree_first_free [CHAFA_COLOR_SPACE_MAX];
-    ChafaPaletteOctNode oct_tree [CHAFA_COLOR_SPACE_MAX] [256];
-}
-ChafaPalette;
 
 /* Indexed-color image */
 
@@ -243,53 +180,7 @@ void chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPi
                                          gconstpointer src_pixels,
                                          gint src_width, gint src_height, gint src_rowstride);
 
-/* Colors */
-
-void chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
-                             ChafaColorSpace color_space, gint alpha_threshold);
-gint chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
-                                   const ChafaColor *color);
-const ChafaColor *chafa_palette_get_color (const ChafaPalette *palette, ChafaColorSpace color_space,
-                                           gint index);
-
-guint32 chafa_pack_color (const ChafaColor *color) G_GNUC_PURE;
-void chafa_unpack_color (guint32 packed, ChafaColor *color_out);
-
-#define chafa_color_accum_add(d, s) \
-G_STMT_START { \
-  (d)->ch [0] += (s)->ch [0]; (d)->ch [1] += (s)->ch [1]; (d)->ch [2] += (s)->ch [2]; (d)->ch [3] += (s)->ch [3]; \
-} G_STMT_END
-
-#define chafa_color_diff_fast(col_a, col_b) \
-    (((gint) (col_b)->ch [0] - (gint) (col_a)->ch [0]) * ((gint) (col_b)->ch [0] - (gint) (col_a)->ch [0]) \
-  + ((gint) (col_b)->ch [1] - (gint) (col_a)->ch [1]) * ((gint) (col_b)->ch [1] - (gint) (col_a)->ch [1]) \
-  + ((gint) (col_b)->ch [2] - (gint) (col_a)->ch [2]) * ((gint) (col_b)->ch [2] - (gint) (col_a)->ch [2]))
-
-/* Required to get alpha right */
-gint chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space) G_GNUC_PURE;
-
-void chafa_color_accum_div_scalar (ChafaColorAccum *color, gint scalar);
-
-void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
-
-/* Ratio is in the range 0-1000 */
-void chafa_color_mix (ChafaColor *out, const ChafaColor *a, const ChafaColor *b, gint ratio);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 0-255 */
-void chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 16-255 */
-void chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 0-15 */
-void chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns CHAFA_PALETTE_INDEX_FG or CHAFA_PALETTE_INDEX_BG */
-void chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
-                            const ChafaColor *fg_color, const ChafaColor *bg_color,
-                            ChafaColorCandidates *candidates);
-
-const ChafaColor *chafa_get_palette_color_256 (guint index, ChafaColorSpace color_space) G_GNUC_CONST;
+/* Math stuff */
 
 #ifdef HAVE_MMX_INTRINSICS
 void calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov);
