@@ -259,7 +259,8 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
 
             index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
                                                   ctx->color_space,
-                                                  &col);
+                                                  &col,
+                                                  NULL);
             chafa_color_hash_replace (&chash, col32, index);
         }
 

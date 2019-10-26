@@ -763,6 +763,21 @@ dump_octree (const ChafaPalette *palette,
     g_printerr ("<- ");
 }
 
+void
+chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
+{
+    gint i;
+
+    chafa_init_palette ();
+    palette_out->type = type;
+
+    for (i = 0; i < CHAFA_PALETTE_INDEX_MAX; i++)
+    {
+        palette_out->colors [i].col [CHAFA_COLOR_SPACE_RGB] = *chafa_get_palette_color_256 (i, CHAFA_COLOR_SPACE_RGB);
+        palette_out->colors [i].col [CHAFA_COLOR_SPACE_DIN99D] = *chafa_get_palette_color_256 (i, CHAFA_COLOR_SPACE_DIN99D);
+    }
+}
+
 /* pixels must point to RGBA8888 data to sample */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
@@ -771,6 +786,7 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     guint32 *pixels_copy;
     gint copy_n_pixels;
 
+    palette_out->type = CHAFA_PALETTE_TYPE_DYNAMIC_256;
     palette_out->alpha_threshold = alpha_threshold;
 
     pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
@@ -962,16 +978,68 @@ find_deep_node (const ChafaPalette *palette, ChafaColorSpace color_space)
 
 gint
 chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
-                              const ChafaColor *color)
+                              const ChafaColor *color, ChafaColorCandidates *candidates)
 {
-    /* Transparency */
-    if (color->ch [3] < palette->alpha_threshold)
-        return 0;
+    if (palette->type == CHAFA_PALETTE_TYPE_DYNAMIC_256)
+    {
+        gint result;
+
+        /* Transparency */
+        if (color->ch [3] < palette->alpha_threshold)
+            return 0;
+
 #if 0
-    return linear_nearest_color (palette, color_space, color);
+        result = linear_nearest_color (palette, color_space, color);
 #else
-    return oct_tree_lookup_nearest_color (palette, color_space, color);
+        result = oct_tree_lookup_nearest_color (palette, color_space, color);
 #endif
+
+        if (candidates)
+        {
+            /* The only consumer of multiple candidates is the cell canvas, and that
+             * supports fixed palettes only. Therefore, in practice we'll never end up here.
+             * Let's not leave a loose end, though... */
+
+            candidates->index [0] = result;
+            candidates->index [1] = result;
+            candidates->error [0] = 0;
+            candidates->error [1] = 0;
+        }
+
+        return result;
+    }
+    else
+    {
+        ChafaColorCandidates candidates_temp;
+
+        if (!candidates)
+            candidates = &candidates_temp;
+
+#if 0
+        /* Transparency */
+
+        /* NOTE: Disabled because chafa_pick_color_*() deal
+         * with transparency */
+        if (color->ch [3] < palette->alpha_threshold)
+            return CHAFA_PALETTE_INDEX_TRANSPARENT;
+#endif
+
+        if (palette->type == CHAFA_PALETTE_TYPE_FIXED_256)
+            chafa_pick_color_256 (color, color_space, candidates);
+        else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_240)
+            chafa_pick_color_240 (color, color_space, candidates);
+        else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_16)
+            chafa_pick_color_16 (color, color_space, candidates);
+        else /* CHAFA_PALETTE_TYPE_FIXED_FGBG */
+            chafa_pick_color_fgbg (color, color_space,
+                                   &palette->colors [CHAFA_PALETTE_INDEX_FG].col [color_space],
+                                   &palette->colors [CHAFA_PALETTE_INDEX_BG].col [color_space],
+                                   candidates);
+
+        return candidates->index [0];
+    }
+
+    g_assert_not_reached ();
 }
 
 const ChafaColor *
@@ -979,4 +1047,12 @@ chafa_palette_get_color (const ChafaPalette *palette, ChafaColorSpace color_spac
                          gint index)
 {
     return &palette->colors [index].col [color_space];
+}
+
+void
+chafa_palette_set_color (ChafaPalette *palette, gint index, const ChafaColor *color)
+{
+    palette->colors [index].col [CHAFA_COLOR_SPACE_RGB] = *color;
+    chafa_color_rgb_to_din99d (&palette->colors [index].col [CHAFA_COLOR_SPACE_RGB],
+                               &palette->colors [index].col [CHAFA_COLOR_SPACE_DIN99D]);
 }

@@ -29,6 +29,8 @@ G_BEGIN_DECLS
 #define CHAFA_PALETTE_INDEX_FG 257
 #define CHAFA_PALETTE_INDEX_BG 258
 
+#define CHAFA_PALETTE_INDEX_MAX 259
+
 /* Color space agnostic */
 typedef struct
 {

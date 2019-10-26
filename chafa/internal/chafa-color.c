@@ -26,10 +26,8 @@
 
 #define DEBUG(x)
 
-#define N_TERM_COLORS 259
-
 /* 256-color values */
-static guint32 term_colors_256 [N_TERM_COLORS] =
+static guint32 term_colors_256 [CHAFA_PALETTE_INDEX_MAX] =
 {
     0x000000, 0x800000, 0x007000, 0x707000, 0x000070, 0x700070, 0x007070, 0xc0c0c0,
     /* 0x808080 -> */ 0x404040, 0xff0000, 0x00ff00, 0xffff00, 0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
@@ -84,7 +82,7 @@ static guint32 term_colors_256 [N_TERM_COLORS] =
     0x000000,  /* Background */
 };
 
-static ChafaPaletteColor palette_256 [N_TERM_COLORS];
+static ChafaPaletteColor palette_256 [CHAFA_PALETTE_INDEX_MAX];
 static guchar color_cube_216_channel_index [256];
 static gboolean palette_initialized;
 
@@ -96,7 +94,7 @@ chafa_init_palette (void)
     if (palette_initialized)
         return;
 
-    for (i = 0; i < N_TERM_COLORS; i++)
+    for (i = 0; i < CHAFA_PALETTE_INDEX_MAX; i++)
     {
         chafa_unpack_color (term_colors_256 [i], &palette_256 [i].col [0]);
         chafa_color_rgb_to_din99d (&palette_256 [i].col [0], &palette_256 [i].col [1]);
