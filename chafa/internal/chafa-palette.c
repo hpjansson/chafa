@@ -615,8 +615,11 @@ gen_oct_tree (ChafaPalette *palette, ChafaColorSpace color_space)
     node->prefix [1] = 0;
     node->prefix [2] = 0;
 
-    for (i = 1; i < palette->n_colors; i++)
+    for (i = 0; i < palette->n_colors; i++)
     {
+        if (i == palette->transparent_index)
+            continue;
+
         n_colors += oct_tree_insert_color (palette, color_space, i, CHAFA_OCT_TREE_INDEX_NULL,
                                            palette->oct_tree_root [color_space]);
     }
@@ -707,21 +710,24 @@ clean_up (ChafaPalette *palette_out)
 
     g_assert (palette_out->n_colors >= 0 && palette_out->n_colors <= 256);
 
-    if (palette_out->n_colors < 256)
+    if (palette_out->transparent_index < 256)
     {
+        if (palette_out->n_colors < 256)
+        {
 #if 0
-        g_printerr ("Color 0 moved to end (%d)\n", palette_out->n_colors);
+            g_printerr ("Color 0 moved to end (%d)\n", palette_out->n_colors);
 #endif
-        palette_out->colors [palette_out->n_colors] = palette_out->colors [0];
-        palette_out->n_colors++;
-    }
-    else
-    {
-        /* Delete one color to make room for transparency */
-        palette_out->colors [best_pair] = palette_out->colors [0];
+            palette_out->colors [palette_out->n_colors] = palette_out->colors [palette_out->transparent_index];
+            palette_out->n_colors++;
+        }
+        else
+        {
+            /* Delete one color to make room for transparency */
+            palette_out->colors [best_pair] = palette_out->colors [palette_out->transparent_index];
 #if 0
-        g_printerr ("Color 0 replaced %d\n", best_pair);
+            g_printerr ("Color 0 replaced %d\n", best_pair);
 #endif
+        }
     }
 }
 
@@ -776,21 +782,58 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         palette_out->colors [i].col [CHAFA_COLOR_SPACE_RGB] = *chafa_get_palette_color_256 (i, CHAFA_COLOR_SPACE_RGB);
         palette_out->colors [i].col [CHAFA_COLOR_SPACE_DIN99D] = *chafa_get_palette_color_256 (i, CHAFA_COLOR_SPACE_DIN99D);
     }
+
+    palette_out->transparent_index = CHAFA_PALETTE_INDEX_TRANSPARENT;
+
+    palette_out->first_color = 0;
+    palette_out->n_colors = 256;
+
+    if (type == CHAFA_PALETTE_TYPE_FIXED_240)
+    {
+        palette_out->first_color = 16;
+        palette_out->n_colors = 240;
+    }
+    else if (type == CHAFA_PALETTE_TYPE_FIXED_16)
+    {
+        palette_out->n_colors = 16;
+    }
+    else if (type == CHAFA_PALETTE_TYPE_FIXED_FGBG)
+    {
+        palette_out->first_color = CHAFA_PALETTE_INDEX_FG;
+        palette_out->n_colors = 2;
+    }
+}
+
+gint
+chafa_palette_get_first_color (const ChafaPalette *palette)
+{
+    return palette->first_color;
+}
+
+gint
+chafa_palette_get_n_colors (const ChafaPalette *palette)
+{
+    return palette->n_colors;
+}
+
+void
+chafa_palette_copy (const ChafaPalette *src, ChafaPalette *dest)
+{
+    memcpy (dest, src, sizeof (*dest));
 }
 
 /* pixels must point to RGBA8888 data to sample */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
-                        ChafaColorSpace color_space, gint alpha_threshold)
+                        ChafaColorSpace color_space)
 {
     guint32 *pixels_copy;
     gint copy_n_pixels;
 
     palette_out->type = CHAFA_PALETTE_TYPE_DYNAMIC_256;
-    palette_out->alpha_threshold = alpha_threshold;
 
     pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
-    copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, N_SAMPLES, alpha_threshold);
+    copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, N_SAMPLES, palette_out->alpha_threshold);
 
     DEBUG (g_printerr ("Extracted %d samples.\n", copy_n_pixels));
 
@@ -986,7 +1029,7 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
 
         /* Transparency */
         if (color->ch [3] < palette->alpha_threshold)
-            return 0;
+            return palette->transparent_index;
 
 #if 0
         result = linear_nearest_color (palette, color_space, color);
@@ -1021,7 +1064,7 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
         /* NOTE: Disabled because chafa_pick_color_*() deal
          * with transparency */
         if (color->ch [3] < palette->alpha_threshold)
-            return CHAFA_PALETTE_INDEX_TRANSPARENT;
+            return palette->transparent_index;
 #endif
 
         if (palette->type == CHAFA_PALETTE_TYPE_FIXED_256)
@@ -1036,10 +1079,32 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
                                    &palette->colors [CHAFA_PALETTE_INDEX_BG].col [color_space],
                                    candidates);
 
+        if (palette->transparent_index < 256)
+        {
+            if (candidates->index [0] == palette->transparent_index)
+            {
+                candidates->index [0] = candidates->index [1];
+                candidates->error [0] = candidates->error [1];
+            }
+            else
+            {
+                if (candidates->index [0] == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                    candidates->index [0] = palette->transparent_index;
+                if (candidates->index [1] == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                    candidates->index [1] = palette->transparent_index;
+            }
+        }
+
         return candidates->index [0];
     }
 
     g_assert_not_reached ();
+}
+
+ChafaPaletteType
+chafa_palette_get_type (const ChafaPalette *palette)
+{
+    return palette->type;
 }
 
 const ChafaColor *
@@ -1056,3 +1121,28 @@ chafa_palette_set_color (ChafaPalette *palette, gint index, const ChafaColor *co
     chafa_color_rgb_to_din99d (&palette->colors [index].col [CHAFA_COLOR_SPACE_RGB],
                                &palette->colors [index].col [CHAFA_COLOR_SPACE_DIN99D]);
 }
+
+gint
+chafa_palette_get_alpha_threshold (const ChafaPalette *palette)
+{
+    return palette->alpha_threshold;
+}
+
+void
+chafa_palette_set_alpha_threshold (ChafaPalette *palette, gint alpha_threshold)
+{
+    palette->alpha_threshold = alpha_threshold;
+}
+
+gint
+chafa_palette_get_transparent_index (const ChafaPalette *palette)
+{
+    return palette->transparent_index;
+}
+
+void
+chafa_palette_set_transparent_index (ChafaPalette *palette, gint index)
+{
+    palette->transparent_index = index;
+}
+

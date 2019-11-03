@@ -1748,6 +1748,14 @@ prepare_pixel_data (ChafaCanvas *canvas)
                                          canvas->width_pixels * sizeof (guint32));
 
     prepare_pixels_pass_1 (&prep_ctx);
+
+    if (chafa_palette_get_type (&canvas->palette) == CHAFA_PALETTE_TYPE_DYNAMIC_256)
+    {
+        chafa_palette_generate (&canvas->palette, canvas->pixels,
+                                canvas->width_pixels * canvas->height_pixels,
+                                canvas->config.color_space);
+    }
+
     prepare_pixels_pass_2 (&prep_ctx);
 
     smol_scale_destroy (prep_ctx.scale_ctx);
@@ -2027,6 +2035,9 @@ setup_palette (ChafaCanvas *canvas)
 
     chafa_palette_set_color (&canvas->palette, CHAFA_PALETTE_INDEX_FG, &canvas->fg_color);
     chafa_palette_set_color (&canvas->palette, CHAFA_PALETTE_INDEX_BG, &canvas->bg_color);
+
+    chafa_palette_set_alpha_threshold (&canvas->palette, canvas->config.alpha_threshold);
+    chafa_palette_set_transparent_index (&canvas->palette, CHAFA_PALETTE_INDEX_TRANSPARENT);
 }
 
 /**
@@ -2300,10 +2311,11 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
     {
         /* Sixel mode */
 
+        canvas->palette.alpha_threshold = canvas->config.alpha_threshold;
         canvas->sixel_canvas = chafa_sixel_canvas_new (canvas->width_pixels,
                                                        canvas->height_pixels,
                                                        canvas->config.color_space,
-                                                       canvas->config.alpha_threshold);
+                                                       &canvas->palette);
         chafa_sixel_canvas_draw_all_pixels (canvas->sixel_canvas,
                                             src_pixel_type,
                                             src_pixels,

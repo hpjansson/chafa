@@ -79,7 +79,7 @@ chafa_bitfield_set_bit (ChafaBitfield *bitfield, guint nth, gboolean value)
 /* --- */
 
 ChafaIndexedImage *
-chafa_indexed_image_new (gint width, gint height)
+chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette)
 {
     ChafaIndexedImage *indexed_image;
 
@@ -88,6 +88,9 @@ chafa_indexed_image_new (gint width, gint height)
     indexed_image->height = height;
     indexed_image->pixels = g_malloc (width * height);
     chafa_bitfield_init (&indexed_image->opacity_bits, width * height);
+
+    chafa_palette_copy (palette, &indexed_image->palette);
+    chafa_palette_set_transparent_index (&indexed_image->palette, 255);
 
     return indexed_image;
 }
@@ -108,7 +111,6 @@ typedef struct
     gconstpointer src_pixels;
     gint src_width, src_height, src_rowstride;
     gint dest_width, dest_height;
-    gint alpha_threshold;
 
     SmolScaleCtx *scale_ctx;
     guint32 *scaled_data;
@@ -242,12 +244,21 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
         guint32 col32;
         gint index;
 
+        col32 = *((guint32 *) src_p);
+
+        if ((gint) (col32 >> 24) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
+        {
+            *dest_p = chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
+            continue;
+        }
+
         /* Sixel color resolution is only slightly less than 7 bits per channel,
          * so eliminate the low-order bits to get better hash performance. */
-        col32 = *((guint32 *) src_p) & 0x00fefefe;
+        col32 &= 0x00fefefe;
+
         index = chafa_color_hash_lookup (&chash, col32);
 
-        if (index == 0)
+        if (index < 0)
         {
             col.ch [0] = src_p [0];
             col.ch [1] = src_p [1];
@@ -260,8 +271,12 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
             index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
                                                   ctx->color_space,
                                                   &col,
-                                                  NULL);
-            chafa_color_hash_replace (&chash, col32, index);
+                                                  NULL)
+                - chafa_palette_get_first_color (&ctx->indexed_image->palette);
+
+            /* Don't insert transparent pixels, since color hash does not store transparency */
+            if (index != chafa_palette_get_transparent_index (&ctx->indexed_image->palette))
+                chafa_color_hash_replace (&chash, col32, index);
         }
 
         *dest_p = index;
@@ -280,9 +295,10 @@ draw_pixels (DrawPixelsCtx *ctx)
                 g_get_num_processors (),
                 1);
 
-    chafa_palette_generate (&ctx->indexed_image->palette,
-                            ctx->scaled_data, ctx->dest_width * ctx->dest_height,
-                            ctx->color_space, ctx->alpha_threshold);
+    if (chafa_palette_get_type (&ctx->indexed_image->palette) == CHAFA_PALETTE_TYPE_DYNAMIC_256)
+        chafa_palette_generate (&ctx->indexed_image->palette,
+                                ctx->scaled_data, ctx->dest_width * ctx->dest_height,
+                                ctx->color_space);
 
     do_batches (ctx,
                 (GFunc) draw_pixels_pass_2_worker,
@@ -298,8 +314,7 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                  ChafaPixelType src_pixel_type,
                                  gconstpointer src_pixels,
                                  gint src_width, gint src_height, gint src_rowstride,
-                                 gint dest_width, gint dest_height,
-                                 gint alpha_threshold)
+                                 gint dest_width, gint dest_height)
 {
     DrawPixelsCtx ctx;
 
@@ -318,7 +333,6 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
     ctx.src_rowstride = src_rowstride;
     ctx.dest_width = dest_width;
     ctx.dest_height = dest_height;
-    ctx.alpha_threshold = alpha_threshold;
 
     ctx.scaled_data = g_new (guint32, dest_width * dest_height);
     ctx.scale_ctx = smol_scale_new ((SmolPixelType) src_pixel_type,
@@ -366,7 +380,7 @@ round_up_to_multiple_of (gint value, gint m)
 }
 
 ChafaSixelCanvas *
-chafa_sixel_canvas_new (gint width, gint height, ChafaColorSpace color_space, gint alpha_threshold)
+chafa_sixel_canvas_new (gint width, gint height, ChafaColorSpace color_space, const ChafaPalette *palette)
 {
     ChafaSixelCanvas *sixel_canvas;
 
@@ -374,8 +388,8 @@ chafa_sixel_canvas_new (gint width, gint height, ChafaColorSpace color_space, gi
     sixel_canvas->width = width;
     sixel_canvas->height = height;
     sixel_canvas->color_space = color_space;
-    sixel_canvas->alpha_threshold = alpha_threshold;
-    sixel_canvas->image = chafa_indexed_image_new (width, round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT));
+    sixel_canvas->image = chafa_indexed_image_new (width, round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
+                                                   palette);
 
     return sixel_canvas;
 }
@@ -406,8 +420,7 @@ chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelTy
                                      src_pixel_type,
                                      src_pixels,
                                      src_width, src_height, src_rowstride,
-                                     sixel_canvas->width, sixel_canvas->height,
-                                     sixel_canvas->alpha_threshold);
+                                     sixel_canvas->width, sixel_canvas->height);
 }
 
 #define FILTER_BANK_WIDTH 64
@@ -574,12 +587,13 @@ format_pen (guint8 pen, gchar *p)
  * otherwise the first row with non-transparent pixels will have
  * garbage rendered in it */
 static gchar *
-build_sixel_row_ansi (const SixelRow *srow, gint width, gchar *p, gboolean force_full_width)
+build_sixel_row_ansi (const ChafaSixelCanvas *scanvas, const SixelRow *srow, gchar *p, gboolean force_full_width)
 {
-    guint8 pen = 1;
+    gint pen = 0;
     gboolean need_cr = FALSE;
     gboolean need_cr_next = FALSE;
     const SixelData *sdata = srow->data;
+    gint width = scanvas->width;
 
     do
     {
@@ -588,6 +602,9 @@ build_sixel_row_ansi (const SixelRow *srow, gint width, gchar *p, gboolean force
         gchar rep_schar;
         gint n_reps;
         gint i;
+
+        if (pen == chafa_palette_get_transparent_index (&scanvas->image->palette))
+            continue;
 
         /* Assign pen value to each of lower six bytes */
         expanded_pen = pen;
@@ -690,7 +707,7 @@ build_sixel_row_ansi (const SixelRow *srow, gint width, gchar *p, gboolean force
 
         need_cr = need_cr_next;
     }
-    while (pen++ != 255);
+    while (++pen < chafa_palette_get_n_colors (&scanvas->image->palette));
 
     *(p++) = '-';
     return p;
@@ -716,7 +733,7 @@ build_sixel_row_worker (BatchInfo *batch, const BuildSixelsCtx *ctx)
                          ctx->sixel_canvas->image->pixels
                          + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
                          ctx->sixel_canvas->image->width);
-        p = build_sixel_row_ansi (&srow, ctx->sixel_canvas->width, p,
+        p = build_sixel_row_ansi (ctx->sixel_canvas, &srow, p,
                                   (i == 0) || (i == n_sixel_rows - 1)
                                   ? TRUE : FALSE);
         chafa_bitfield_clear (&srow.filter_bits);
@@ -740,13 +757,20 @@ build_sixel_palette (ChafaSixelCanvas *sixel_canvas, GString *out_str)
 {
     gchar str [256 * 20 + 1];
     gchar *p = str;
+    gint first_color;
     gint pen;
 
-    for (pen = 1; pen < sixel_canvas->image->palette.n_colors; pen++)
+    first_color = chafa_palette_get_first_color (&sixel_canvas->image->palette);
+
+    for (pen = 0; pen < chafa_palette_get_n_colors (&sixel_canvas->image->palette); pen++)
     {
         const ChafaColor *col;
 
-        col = chafa_palette_get_color (&sixel_canvas->image->palette, CHAFA_COLOR_SPACE_RGB, pen);
+        if (pen == chafa_palette_get_transparent_index (&sixel_canvas->image->palette))
+            continue;
+
+        col = chafa_palette_get_color (&sixel_canvas->image->palette, CHAFA_COLOR_SPACE_RGB,
+                                       first_color + pen);
         *(p++) = '#';
         p = format_3digit_dec (pen, p);
         *(p++) = ';';

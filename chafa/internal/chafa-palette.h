@@ -50,8 +50,10 @@ typedef struct
 {
     ChafaPaletteType type;
     ChafaPaletteColor colors [CHAFA_PALETTE_INDEX_MAX];
+    gint first_color;
     gint n_colors;
     gint alpha_threshold;
+    gint transparent_index;
     gint16 oct_tree_root [CHAFA_COLOR_SPACE_MAX];
     gint16 oct_tree_first_free [CHAFA_COLOR_SPACE_MAX];
     ChafaPaletteOctNode oct_tree [CHAFA_COLOR_SPACE_MAX] [256];
@@ -59,8 +61,14 @@ typedef struct
 ChafaPalette;
 
 void chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type);
+void chafa_palette_copy (const ChafaPalette *src, ChafaPalette *dest);
 void chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
-                             ChafaColorSpace color_space, gint alpha_threshold);
+                             ChafaColorSpace color_space);
+
+ChafaPaletteType chafa_palette_get_type (const ChafaPalette *palette);
+
+gint chafa_palette_get_first_color (const ChafaPalette *palette);
+gint chafa_palette_get_n_colors (const ChafaPalette *palette);
 
 gint chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                                    const ChafaColor *color, ChafaColorCandidates *candidates);
@@ -68,6 +76,12 @@ gint chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace 
 const ChafaColor *chafa_palette_get_color (const ChafaPalette *palette, ChafaColorSpace color_space,
                                            gint index);
 void chafa_palette_set_color (ChafaPalette *palette, gint index, const ChafaColor *color);
+
+gint chafa_palette_get_alpha_threshold (const ChafaPalette *palette);
+void chafa_palette_set_alpha_threshold (ChafaPalette *palette, gint alpha_threshold);
+
+gint chafa_palette_get_transparent_index (const ChafaPalette *palette);
+void chafa_palette_set_transparent_index (ChafaPalette *palette, gint index);
 
 G_END_DECLS
 
