@@ -50,7 +50,7 @@ chafa_color_hash_replace (ChafaColorHash *color_hash, guint32 color, guint8 pen)
     color_hash->map [index] = entry;
 }
 
-static inline guint8
+static inline gint
 chafa_color_hash_lookup (const ChafaColorHash *color_hash, guint32 color)
 {
     guint index = _chafa_color_hash_calc_hash (color);
@@ -59,7 +59,7 @@ chafa_color_hash_lookup (const ChafaColorHash *color_hash, guint32 color)
     if ((entry & 0xffffff00) == (color << 8))
         return entry & 0xff;
 
-    return 0;
+    return -1;
 }
 
 G_END_DECLS
