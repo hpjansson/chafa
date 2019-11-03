@@ -25,7 +25,21 @@
 void
 chafa_color_hash_init (ChafaColorHash *color_hash)
 {
-    memset (color_hash->map, 0, sizeof (color_hash->map));
+    guint i;
+    guint32 j;
+
+    /* Initialize with invalid entries */
+
+    for (i = 0, j = 0; i < CHAFA_COLOR_HASH_N_ENTRIES; i++)
+    {
+        while (_chafa_color_hash_calc_hash (j) == i)
+        {
+            j++;
+            j %= 0x01000000;
+        }
+
+        color_hash->map [i] = j << 8;
+    }
 }
 
 void
