@@ -25,59 +25,6 @@
 
 #define SIXEL_CELL_HEIGHT 6
 
-static void
-chafa_bitfield_init (ChafaBitfield *bitfield, guint n_bits)
-{
-    bitfield->n_bits = n_bits;
-    bitfield->bits = g_malloc0 ((n_bits + 31) / 8);
-}
-
-static void
-chafa_bitfield_deinit (ChafaBitfield *bitfield)
-{
-    g_free (bitfield->bits);
-    bitfield->n_bits = 0;
-    bitfield->bits = NULL;
-}
-
-static void
-chafa_bitfield_clear (ChafaBitfield *bitfield)
-{
-    memset (bitfield->bits, 0, (bitfield->n_bits + 31) / 8);
-}
-
-static gboolean
-chafa_bitfield_get_bit (const ChafaBitfield *bitfield, guint nth)
-{
-    gint index;
-    gint shift;
-
-    g_return_val_if_fail (nth < bitfield->n_bits, FALSE);
-
-    index = (nth / 32);
-    shift = (nth % 32);
-
-    return (bitfield->bits [index] >> shift) & 1U;
-}
-
-static void
-chafa_bitfield_set_bit (ChafaBitfield *bitfield, guint nth, gboolean value)
-{
-    gint index;
-    gint shift;
-    guint32 v32;
-
-    g_return_if_fail (nth < bitfield->n_bits);
-
-    index = (nth / 32);
-    shift = (nth % 32);
-    v32 = (guint32) !!value;
-
-    bitfield->bits [index] = (bitfield->bits [index] & ~(1UL << shift)) | (v32 << shift);
-}
-
-/* --- */
-
 ChafaIndexedImage *
 chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette)
 {

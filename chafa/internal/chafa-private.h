@@ -21,6 +21,7 @@
 #define __CHAFA_PRIVATE_H__
 
 #include <glib.h>
+#include "internal/chafa-bitfield.h"
 #include "internal/chafa-color-hash.h"
 #include "internal/chafa-palette.h"
 
@@ -69,13 +70,6 @@ typedef struct
 ChafaCandidate;
 
 /* Indexed-color image */
-
-typedef struct
-{
-    guint32 *bits;
-    guint n_bits;
-}
-ChafaBitfield;
 
 typedef struct
 {

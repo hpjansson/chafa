@@ -9,6 +9,7 @@ libchafa_internal_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 1:1:1
 libchafa_internal_la_LIBADD = $(GLIB_LIBS) smolscale/libsmolscale.la -lm
 
 libchafa_internal_la_SOURCES = \
+	chafa-bitfield.h \
 	chafa-color.c \
 	chafa-color.h \
 	chafa-color-hash.c \
