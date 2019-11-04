@@ -23,6 +23,7 @@
 #include <glib.h>
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-color-hash.h"
+#include "internal/chafa-indexed-image.h"
 #include "internal/chafa-palette.h"
 
 G_BEGIN_DECLS
@@ -68,16 +69,6 @@ typedef struct
     guint8 is_inverted;
 }
 ChafaCandidate;
-
-/* Indexed-color image */
-
-typedef struct
-{
-    gint width, height;
-    ChafaPalette palette;
-    guint8 *pixels;
-}
-ChafaIndexedImage;
 
 /* Sixel subcanvas */
 
@@ -151,17 +142,6 @@ void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasConfig *src);
 
 gint *chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude);
-
-/* Indexed images */
-
-ChafaIndexedImage *chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette);
-void chafa_indexed_image_destroy (ChafaIndexedImage *indexed_image);
-void chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
-                                      ChafaColorSpace color_space,
-                                      ChafaPixelType src_pixel_type,
-                                      gconstpointer src_pixels,
-                                      gint src_width, gint src_height, gint src_rowstride,
-                                      gint dest_width, gint dest_height);
 
 /* Sixel subcanvas */
 
