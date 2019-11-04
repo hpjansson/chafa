@@ -21,6 +21,7 @@
 
 #include "smolscale/smolscale.h"
 #include "chafa.h"
+#include "internal/chafa-batch.h"
 #include "internal/chafa-private.h"
 
 #define SIXEL_CELL_HEIGHT 6
@@ -69,100 +70,8 @@ typedef struct
 }
 BuildSixelsCtx;
 
-typedef struct
-{
-    gint first_row;
-    gint n_rows;
-
-    gpointer ret_p;
-    gint ret_n;
-}
-BatchInfo;
-
 static void
-do_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_rows, gint n_batches, gint batch_unit)
-{
-    GThreadPool *thread_pool;
-    BatchInfo *batches;
-    gint n_units;
-    gfloat units_per_batch;
-    gfloat ofs [2] = { .0, .0 };
-    gint i;
-
-    g_assert (n_batches >= 1);
-    g_assert (batch_unit >= 1);
-
-    if (n_rows < 1)
-        return;
-
-    n_units = (n_rows + batch_unit - 1) / batch_unit;
-    units_per_batch = (gfloat) n_units / (gfloat) n_batches;
-
-    batches = g_new0 (BatchInfo, n_batches);
-    thread_pool = g_thread_pool_new (batch_func,
-                                     (gpointer) ctx,
-                                     g_get_num_processors (),
-                                     FALSE,
-                                     NULL);
-
-    /* Divide work up into batches that are multiples of batch_unit, except
-     * for the last one (if n_rows is not itself a multiple) */
-
-    for (i = 0; i < n_batches; )
-    {
-        BatchInfo *batch;
-        gint row_ofs [2];
-
-        row_ofs [0] = ofs [0];
-
-        do
-        {
-            ofs [1] += units_per_batch;
-            row_ofs [1] = ofs [1];
-        }
-        while (row_ofs [0] == row_ofs [1]);
-
-        row_ofs [0] *= batch_unit;
-        row_ofs [1] *= batch_unit;
-
-        if (row_ofs [1] > n_rows)
-        {
-            ofs [1] = n_rows + 0.5;
-            row_ofs [1] = n_rows;
-        }
-
-        if (row_ofs [0] >= row_ofs [1])
-            break;
-
-        batch = &batches [i++];
-        batch->first_row = row_ofs [0];
-        batch->n_rows = row_ofs [1] - row_ofs [0];
-
-#if 0
-        g_printerr ("Batch %d: %04d rows\n", i, batch->n_rows);
-#endif
-
-        g_thread_pool_push (thread_pool, batch, NULL);
-
-        ofs [0] = ofs [1];
-    }
-
-    /* Wait for threads to finish */
-    g_thread_pool_free (thread_pool, FALSE, TRUE);
-
-    if (post_func)
-    {
-        for (i = 0; i < n_batches; i++)
-        {
-            ((void (*)(BatchInfo *, gpointer)) post_func) (&batches [i], ctx);
-        }
-    }
-
-    g_free (batches);
-}
-
-static void
-draw_pixels_pass_1_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
+draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     smol_scale_batch_full (ctx->scale_ctx,
                            ctx->scaled_data + (ctx->dest_width * batch->first_row),
@@ -171,7 +80,7 @@ draw_pixels_pass_1_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
 }
 
 static void
-draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
+draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     const guint8 *src_p;
     guint8 *dest_p, *dest_end_p;
@@ -233,24 +142,24 @@ draw_pixels_pass_2_worker (BatchInfo *batch, const DrawPixelsCtx *ctx)
 static void
 draw_pixels (DrawPixelsCtx *ctx)
 {
-    do_batches (ctx,
-                (GFunc) draw_pixels_pass_1_worker,
-                NULL,
-                ctx->dest_height,
-                g_get_num_processors (),
-                1);
+    chafa_process_batches (ctx,
+                           (GFunc) draw_pixels_pass_1_worker,
+                           NULL,
+                           ctx->dest_height,
+                           g_get_num_processors (),
+                           1);
 
     if (chafa_palette_get_type (&ctx->indexed_image->palette) == CHAFA_PALETTE_TYPE_DYNAMIC_256)
         chafa_palette_generate (&ctx->indexed_image->palette,
                                 ctx->scaled_data, ctx->dest_width * ctx->dest_height,
                                 ctx->color_space);
 
-    do_batches (ctx,
-                (GFunc) draw_pixels_pass_2_worker,
-                NULL,
-                ctx->dest_height,
-                g_get_num_processors (),
-                1);
+    chafa_process_batches (ctx,
+                           (GFunc) draw_pixels_pass_2_worker,
+                           NULL,
+                           ctx->dest_height,
+                           g_get_num_processors (),
+                           1);
 }
 
 void
@@ -659,7 +568,7 @@ build_sixel_row_ansi (const ChafaSixelCanvas *scanvas, const SixelRow *srow, gch
 }
 
 static void
-build_sixel_row_worker (BatchInfo *batch, const BuildSixelsCtx *ctx)
+build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
 {
     SixelRow srow;
     gchar *sixel_ansi, *p;
@@ -691,7 +600,7 @@ build_sixel_row_worker (BatchInfo *batch, const BuildSixelsCtx *ctx)
 }
 
 static void
-build_sixel_row_post (BatchInfo *batch, BuildSixelsCtx *ctx)
+build_sixel_row_post (ChafaBatchInfo *batch, BuildSixelsCtx *ctx)
 {
     g_string_append_len (ctx->out_str, batch->ret_p, batch->ret_n);
     g_free (batch->ret_p);
@@ -746,10 +655,10 @@ chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, GString *out_str)
 
     build_sixel_palette (sixel_canvas, out_str);
 
-    do_batches (&ctx,
-                (GFunc) build_sixel_row_worker,
-                (GFunc) build_sixel_row_post,
-                sixel_canvas->image->height,
-                g_get_num_processors (),
-                SIXEL_CELL_HEIGHT);
+    chafa_process_batches (&ctx,
+                           (GFunc) build_sixel_row_worker,
+                           (GFunc) build_sixel_row_post,
+                           sixel_canvas->image->height,
+                           g_get_num_processors (),
+                           SIXEL_CELL_HEIGHT);
 }
