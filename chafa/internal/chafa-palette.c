@@ -340,293 +340,25 @@ gen_din99d_color_space (ChafaPalette *palette)
     }
 }
 
-/* bit_index is in the range [0..15]. MSB is 15. */
-static guint8
-get_color_branch (const ChafaColor *col, gint8 bit_index)
-{
-    return ((col->ch [0] >> bit_index) & 1)
-        | (((col->ch [1] >> bit_index) & 1) << 1)
-        | (((col->ch [2] >> bit_index) & 1) << 2);
-}
-
-/* bit_index is in the range [0..15]. MSB is 15. */
-static guint8
-get_prefix_branch (const ChafaPaletteOctNode *node, gint8 bit_index)
-{
-    return ((node->prefix [0] >> bit_index) & 1)
-        | (((node->prefix [1] >> bit_index) & 1) << 1)
-        | (((node->prefix [2] >> bit_index) & 1) << 2);
-}
-
-static guint16
-branch_bit_to_prefix_mask (gint8 branch_bit)
-{
-    return 0xffffU << (branch_bit + 1);
-}
-
-static gboolean
-prefix_match (const ChafaPaletteOctNode *node, const ChafaColor *col)
-{
-    guint16 mask;
-
-    /* FIXME: Use bitwise ops to reduce branching */
-
-    mask = branch_bit_to_prefix_mask (node->branch_bit);
-    return (node->prefix [0] & mask) == (col->ch [0] & mask)
-        && (node->prefix [1] & mask) == (col->ch [1] & mask)
-        && (node->prefix [2] & mask) == (col->ch [2] & mask);
-}
-
-static gint16
-find_colors_branch_bit (const ChafaColor *col_a, const ChafaColor *col_b)
-{
-    gint i, j;
-
-    for (i = 15; i >= 0; i--)
-    {
-        for (j = 0; j < 3; j++)
-        {
-            if (((col_a->ch [j] ^ col_b->ch [j]) >> i) & 1)
-                goto found;
-        }
-    }
-
-found:
-    return i;
-}
-
-static gint16
-find_prefix_color_branch_bit (ChafaPaletteOctNode *node, const ChafaColor *col, guint16 mask)
-{
-    guint col_prefix [3];
-    gint i, j;
-
-    for (i = 0; i < 3; i++)
-        col_prefix [i] = col->ch [i] & mask;
-
-    for (i = 15; i >= 0; i--)
-    {
-        for (j = 0; j < 3; j++)
-        {
-            if (((node->prefix [j] ^ col_prefix [j]) >> i) & 1)
-                goto found;
-        }
-    }
-
-found:
-    return i;
-}
-
 static void
-oct_tree_clear_node (ChafaPaletteOctNode *node)
+gen_table (ChafaPalette *palette, ChafaColorSpace color_space)
 {
     gint i;
-
-    node->branch_bit = 15;
-    node->n_children = 0;
-
-    for (i = 0; i < 8; i++)
-        node->child_index [i] = CHAFA_OCT_TREE_INDEX_NULL;
-}
-
-static gint
-oct_tree_insert_color (ChafaPalette *palette, ChafaColorSpace color_space, gint16 color_index,
-                       gint16 parent_index, gint16 node_index)
-{
-    ChafaColor *col;
-    ChafaPaletteOctNode *node;
-    guint16 prefix_mask;
-
-    DEBUG (g_printerr ("%d, %d\n", parent_index, node_index));
-
-    g_assert (color_index >= 0 && color_index < 256);
-    g_assert (parent_index == CHAFA_OCT_TREE_INDEX_NULL || (parent_index >= 256 && parent_index < 512));
-    g_assert (node_index >= 256 && node_index < 512);
-    g_assert (parent_index != node_index);
-
-    col = &palette->colors [color_index].col [color_space];
-    node = &palette->oct_tree [color_space] [node_index - 256];
-    prefix_mask = branch_bit_to_prefix_mask (node->branch_bit);
-
-    /* FIXME: Use bitwise ops to reduce branching */
-    if (((col->ch [0] & prefix_mask) != node->prefix [0])
-        || ((col->ch [1] & prefix_mask) != node->prefix [1])
-        || ((col->ch [2] & prefix_mask) != node->prefix [2]))
-    {
-        gint16 new_index;
-        ChafaPaletteOctNode *new_node;
-        guint16 new_mask;
-
-        /* Insert a new node between parent and this one */
-
-        DEBUG (g_printerr ("1\n"));
-
-        new_index = palette->oct_tree_first_free [color_space]++;
-        new_node = &palette->oct_tree [color_space] [new_index - 256];
-        oct_tree_clear_node (new_node);
-
-        new_node->branch_bit = find_prefix_color_branch_bit (node, col, prefix_mask);
-        g_assert (new_node->branch_bit >= 0);
-        g_assert (new_node->branch_bit < 16);
-        g_assert (new_node->branch_bit > node->branch_bit);
-
-        new_mask = branch_bit_to_prefix_mask (new_node->branch_bit);
-        new_node->prefix [0] = col->ch [0] & new_mask;
-        new_node->prefix [1] = col->ch [1] & new_mask;
-        new_node->prefix [2] = col->ch [2] & new_mask;
-
-        new_node->child_index [get_prefix_branch (node, new_node->branch_bit)] = node_index;
-        new_node->child_index [get_color_branch (col, new_node->branch_bit)] = color_index;
-
-        new_node->n_children = 2;
-
-        if (parent_index == CHAFA_OCT_TREE_INDEX_NULL)
-        {
-            DEBUG (g_printerr ("2\n"));
-            palette->oct_tree_root [color_space] = new_index;
-        }
-        else
-        {
-            ChafaPaletteOctNode *parent_node = &palette->oct_tree [color_space] [parent_index - 256];
-            gint i;
-
-            DEBUG (g_printerr ("3\n"));
-
-            /* FIXME: Could use direct index here */
-            for (i = 0; i < 8; i++)
-            {
-                if (parent_node->child_index [i] == node_index)
-                    break;
-            }
-
-            /* Make sure we found the index to replace */
-            g_assert (i < 8);
-
-            parent_node->child_index [i] = new_index;
-        }
-    }
-    else
-    {
-        gint16 child_index;
-        guint8 branch;
-
-        /* Matching prefix */
-
-        DEBUG (g_printerr ("4\n"));
-
-        branch = get_color_branch (col, node->branch_bit);
-        child_index = node->child_index [branch];
-
-        if (child_index == CHAFA_OCT_TREE_INDEX_NULL)
-        {
-            DEBUG (g_printerr ("5\n"));
-            node->child_index [branch] = color_index;
-            node->n_children++;
-        }
-        else if (child_index < 256)
-        {
-            gint16 new_index;
-            ChafaPaletteOctNode *new_node;
-            guint16 new_mask;
-            const ChafaColor *old_col;
-            gint8 old_branch_bit = node->branch_bit;
-
-            DEBUG (g_printerr ("6\n"));
-
-            old_col = &palette->colors [child_index].col [color_space];
-
-            /* Does the color already exist? */
-
-            if (col->ch [0] == old_col->ch [0]
-                && col->ch [1] == old_col->ch [1]
-                && col->ch [2] == old_col->ch [2])
-            {
-                DEBUG (g_printerr ("7\n"));
-                return 0;
-            }
-
-            if (node->n_children == 1)
-            {
-                /* Root node went from one to two children */
-
-                DEBUG (g_printerr ("8\n"));
-                new_index = node_index;
-                new_node = node;
-
-                /* Branch bit may change; reinsert both children */
-                node->child_index [branch] = CHAFA_OCT_TREE_INDEX_NULL;
-            }
-            else
-            {
-                /* Create a new leaf node */
-
-                DEBUG (g_printerr ("9\n"));
-                new_index = palette->oct_tree_first_free [color_space]++;
-                new_node = &palette->oct_tree [color_space] [new_index - 256];
-                oct_tree_clear_node (new_node);
-
-                node->child_index [branch] = new_index;
-            }
-
-            new_node->branch_bit = find_colors_branch_bit (old_col, col);
-            g_assert (get_color_branch (old_col, new_node->branch_bit) != get_color_branch (col, new_node->branch_bit));
-            g_assert (new_node->branch_bit >= 0);
-            g_assert (new_node->branch_bit < 16);
-            g_assert (new_node->n_children < 2 || new_node->branch_bit < old_branch_bit);
-
-            new_mask = branch_bit_to_prefix_mask (new_node->branch_bit);
-            new_node->prefix [0] = col->ch [0] & new_mask;
-            new_node->prefix [1] = col->ch [1] & new_mask;
-            new_node->prefix [2] = col->ch [2] & new_mask;
-
-            new_node->child_index [get_color_branch (old_col, new_node->branch_bit)] = child_index;
-            new_node->child_index [get_color_branch (col, new_node->branch_bit)] = color_index;
-
-            new_node->n_children = 2;
-        }
-        else
-        {
-            DEBUG (g_printerr ("10\n"));
-            /* Recurse into existing subtree */
-            return oct_tree_insert_color (palette, color_space, color_index,
-                                          node_index, child_index);
-        }
-    }
-
-    return 1;
-}
-
-static void
-gen_oct_tree (ChafaPalette *palette, ChafaColorSpace color_space)
-{
-    ChafaPaletteOctNode *node;
-    gint n_colors = 0;
-    gint i;
-
-    g_assert (palette->n_colors > 0);
-
-    palette->oct_tree_root [color_space] = 256;
-    palette->oct_tree_first_free [color_space] = 257;
-
-    node = &palette->oct_tree [color_space] [0];
-
-    oct_tree_clear_node (node);
-    node->prefix [0] = 0;
-    node->prefix [1] = 0;
-    node->prefix [2] = 0;
 
     for (i = 0; i < palette->n_colors; i++)
     {
+        const ChafaColor *col;
+
         if (i == palette->transparent_index)
             continue;
 
-        n_colors += oct_tree_insert_color (palette, color_space, i, CHAFA_OCT_TREE_INDEX_NULL,
-                                           palette->oct_tree_root [color_space]);
+        col = &palette->colors [i].col [color_space];
+
+        chafa_color_table_set_pen_color (&palette->table [color_space], i,
+                                         col->ch [0] | (col->ch [1] << 8) | (col->ch [2] << 16));
     }
 
-    DEBUG (g_printerr ("Indexed %d colors. Root branch bit = %d.\n",
-                       n_colors,
-                       palette->oct_tree [color_space] [palette->oct_tree_root [color_space] - 256].branch_bit));
+    chafa_color_table_sort (&palette->table [color_space]);
 }
 
 #define N_SAMPLES 32768
@@ -731,44 +463,6 @@ clean_up (ChafaPalette *palette_out)
     }
 }
 
-static void
-dump_octree (const ChafaPalette *palette,
-             const ChafaPaletteOctNode *node, ChafaColorSpace color_space)
-{
-    gint i;
-
-    g_printerr ("{ ");
-
-    for (i = 0; i < 8; i++)
-    {
-        g_printerr ("%d ", node->child_index [i]);
-    }
-
-    g_printerr ("}\n");
-
-    for (i = 0; i < 8; i++)
-    {
-        gint16 index;
-
-        index = node->child_index [i];
-        if (index == CHAFA_OCT_TREE_INDEX_NULL)
-            continue;
-
-        if (index < 256)
-        {
-        }
-        else
-        {
-            const ChafaPaletteOctNode *child_node = &palette->oct_tree [color_space] [index - 256];
-
-            g_printerr ("-> (%d) ", index);
-            dump_octree (palette, child_node, color_space);
-        }
-    }
-
-    g_printerr ("<- ");
-}
-
 void
 chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
 {
@@ -802,6 +496,9 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         palette_out->first_color = CHAFA_PALETTE_INDEX_FG;
         palette_out->n_colors = 2;
     }
+
+    for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
+        chafa_color_table_init (&palette_out->table [i]);
 }
 
 gint
@@ -853,76 +550,32 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     clean_up (palette_out);
 #endif
 
-    gen_oct_tree (palette_out, CHAFA_COLOR_SPACE_RGB);
+    gen_table (palette_out, CHAFA_COLOR_SPACE_RGB);
 
     if (color_space == CHAFA_COLOR_SPACE_DIN99D)
     {
         gen_din99d_color_space (palette_out);
-        gen_oct_tree (palette_out, CHAFA_COLOR_SPACE_DIN99D);
+        gen_table (palette_out, CHAFA_COLOR_SPACE_DIN99D);
     }
 
 out:
     g_free (pixels_copy);
 }
 
-static void
-linear_subtree_nearest_color (const ChafaPalette *palette,
-                              const ChafaPaletteOctNode *node, ChafaColorSpace color_space,
-                              const ChafaColor *color, gint16 *best_index, gint *best_error)
-{
-    gint i;
-
-    for (i = 0; i < 8; i++)
-    {
-        gint16 index;
-
-        index = node->child_index [i];
-        if (index == CHAFA_OCT_TREE_INDEX_NULL)
-            continue;
-
-        if (index < 256)
-        {
-            const ChafaColor *try_color = &palette->colors [index].col [color_space];
-            gint error = chafa_color_diff_fast (color, try_color);
-
-            if (error < *best_error)
-            {
-                *best_index = index;
-                *best_error = error;
-            }
-        }
-    }
-
-    for (i = 0; i < 8; i++)
-    {
-        gint16 index;
-
-        if (*best_error < 3 * (10 * 10))
-            break;
-
-        index = node->child_index [i];
-        if (index == CHAFA_OCT_TREE_INDEX_NULL)
-            continue;
-
-        if (index >= 256)
-        {
-            const ChafaPaletteOctNode *child_node = &palette->oct_tree [color_space] [index - 256];
-            linear_subtree_nearest_color (palette, child_node, color_space, color, best_index, best_error);
-        }
-    }
-}
-
 static gint16
 linear_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space, const ChafaColor *color)
 {
     gint i;
-    gint16 best_index = 1;
+    gint16 best_index = 0;
     gint best_error = G_MAXINT;
 
-    for (i = 1; i < palette->n_colors; i++)
+    for (i = 0; i < palette->n_colors; i++)
     {
         const ChafaColor *try_color = &palette->colors [i].col [color_space];
         gint error = chafa_color_diff_fast (color, try_color);
+
+        if (i == palette->transparent_index)
+            continue;
 
         if (error < best_error)
         {
@@ -932,91 +585,6 @@ linear_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space, 
     }
 
     return best_index;
-}
-
-static gint16
-oct_tree_lookup_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space,
-                               const ChafaColor *color)
-{
-    const ChafaPaletteOctNode *node = NULL, *parent_node;
-    gint16 best_index = CHAFA_OCT_TREE_INDEX_NULL;
-    gint best_error = G_MAXINT;
-    gint16 index;
-
-    index = palette->oct_tree_root [color_space];
-#if 0
-    g_printerr ("Root: %d\n", index);
-#endif
-
-    for (;;)
-    {
-        parent_node = node;
-        node = &palette->oct_tree [color_space] [index - 256];
-#if 0
-        g_printerr ("Branch: %d  Bit: %d  Index: %d\n",
-                    get_color_branch (color, node->branch_bit),
-                    node->branch_bit,
-                    index);
-#endif
-
-        index = node->child_index [get_color_branch (color, node->branch_bit)];
-
-        if (index == CHAFA_OCT_TREE_INDEX_NULL || index < 256 || !prefix_match (node, color))
-            break;
-    }
-
-    linear_subtree_nearest_color (palette, /* parent_node ? parent_node : */ node,
-                                  color_space, color, &best_index, &best_error);
-    return best_index;
-}
-
-typedef struct
-{
-    ChafaPalette *palette;
-    ChafaColorSpace color_space;
-    ChafaPaletteOctNode *found_node;
-    gint16 found_index;
-}
-OctTreeSearchCtx;
-
-static void
-find_deep_node_r (OctTreeSearchCtx *ctx, gint16 index)
-{
-    ChafaPaletteOctNode *node;
-    gint i;
-
-    node = &ctx->palette->oct_tree [ctx->color_space] [index - 256];
-
-    if (!ctx->found_node || node->branch_bit < ctx->found_node->branch_bit)
-    {
-        ctx->found_node = node;
-        ctx->found_index = index;
-    }
-
-    for (i = 0; i < 8; i++)
-    {
-        gint16 child_index = node->child_index [i];
-
-        if (ctx->found_node->branch_bit == 0)
-            return;
-
-        if (child_index != CHAFA_OCT_TREE_INDEX_NULL && child_index >= 256)
-        {
-            find_deep_node_r (ctx, child_index);
-        }
-    }
-}
-
-static gint16
-find_deep_node (const ChafaPalette *palette, ChafaColorSpace color_space)
-{
-    OctTreeSearchCtx ctx = { NULL };
-
-    ctx.palette = (ChafaPalette *) palette;
-    ctx.color_space = color_space;
-
-    find_deep_node_r (&ctx, palette->oct_tree_root [color_space]);
-    return ctx.found_index;
 }
 
 gint
@@ -1034,7 +602,10 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
 #if 0
         result = linear_nearest_color (palette, color_space, color);
 #else
-        result = oct_tree_lookup_nearest_color (palette, color_space, color);
+        result = chafa_color_table_find_nearest_pen (&palette->table [color_space],
+                                                     color->ch [0]
+                                                     | (color->ch [1] << 8)
+                                                     | (color->ch [2] << 16));
 #endif
 
         if (candidates)

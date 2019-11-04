@@ -22,6 +22,7 @@
 
 #include <glib.h>
 #include "internal/chafa-color.h"
+#include "internal/chafa-color-table.h"
 
 G_BEGIN_DECLS
 
@@ -35,28 +36,15 @@ typedef enum
 }
 ChafaPaletteType;
 
-#define CHAFA_OCT_TREE_INDEX_NULL -1
-
-typedef struct
-{
-    gint8 branch_bit;
-    gint8 n_children;
-    guint16 prefix [3];
-    gint16 child_index [8];
-}
-ChafaPaletteOctNode;
-
 typedef struct
 {
     ChafaPaletteType type;
     ChafaPaletteColor colors [CHAFA_PALETTE_INDEX_MAX];
+    ChafaColorTable table [CHAFA_COLOR_SPACE_MAX];
     gint first_color;
     gint n_colors;
     gint alpha_threshold;
     gint transparent_index;
-    gint16 oct_tree_root [CHAFA_COLOR_SPACE_MAX];
-    gint16 oct_tree_first_free [CHAFA_COLOR_SPACE_MAX];
-    ChafaPaletteOctNode oct_tree [CHAFA_COLOR_SPACE_MAX] [256];
 }
 ChafaPalette;
 
