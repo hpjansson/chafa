@@ -82,7 +82,6 @@ typedef struct
     gint width, height;
     ChafaPalette palette;
     guint8 *pixels;
-    ChafaBitfield opacity_bits;
 }
 ChafaIndexedImage;
 

@@ -87,7 +87,6 @@ chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette)
     indexed_image->width = width;
     indexed_image->height = height;
     indexed_image->pixels = g_malloc (width * height);
-    chafa_bitfield_init (&indexed_image->opacity_bits, width * height);
 
     chafa_palette_copy (palette, &indexed_image->palette);
     chafa_palette_set_transparent_index (&indexed_image->palette, 255);
@@ -98,7 +97,6 @@ chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette)
 void
 chafa_indexed_image_destroy (ChafaIndexedImage *indexed_image)
 {
-    chafa_bitfield_deinit (&indexed_image->opacity_bits);
     g_free (indexed_image->pixels);
     g_free (indexed_image);
 }
