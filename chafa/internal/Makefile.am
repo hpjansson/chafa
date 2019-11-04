@@ -13,6 +13,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-color.h \
 	chafa-color-hash.c \
 	chafa-color-hash.h \
+	chafa-color-table.c \
+	chafa-color-table.h \
 	chafa-palette.c \
 	chafa-palette.h \
 	chafa-private.h \
