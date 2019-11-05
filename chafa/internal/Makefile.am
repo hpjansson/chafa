@@ -24,6 +24,7 @@ libchafa_internal_la_SOURCES = \
 	chafa-palette.h \
 	chafa-private.h \
 	chafa-sixel-canvas.c \
+	chafa-sixel-canvas.h \
 	chafa-symbols.c \
 	chafa-symbols-ascii.h
 

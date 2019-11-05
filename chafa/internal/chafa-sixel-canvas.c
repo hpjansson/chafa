@@ -19,10 +19,12 @@
 
 #include "config.h"
 
-#include "smolscale/smolscale.h"
 #include "chafa.h"
+#include "smolscale/smolscale.h"
 #include "internal/chafa-batch.h"
-#include "internal/chafa-private.h"
+#include "internal/chafa-bitfield.h"
+#include "internal/chafa-indexed-image.h"
+#include "internal/chafa-sixel-canvas.h"
 
 #define SIXEL_CELL_HEIGHT 6
 
