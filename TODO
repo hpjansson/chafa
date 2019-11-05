@@ -28,7 +28,6 @@ Minor Features/UX
   - PuTTY on Windows 8, 10?
     - Windows 7 fonts support half, solid, some borders.
   - Come up with some kind of support matrix.
-- Support Uxxxx symbol specification in symbol map and UI.
 - Optional double-width symbol support.
   - Many geometric shapes/math symbols need this.
   - Process two cells at a time and compare summed error to corresponding
@@ -54,8 +53,6 @@ Major features
 - Drawing context with clip rect/region, etc.
   - Potentially a context stack.
   - Getting into NCurses territory...
-- Sixel support? Could be handled purely in ImageMagick, but maybe we could do
-  better.
 - Video playback.
 - Interactive UI (may need to be in separate tool).
 
@@ -77,7 +74,6 @@ Cleanup
 The Fine Material
 -----------------
 
-- Gallery of examples.
 - Tips.
   - For scrolling, use e.g. chafa input.jpg -s 200 | less -S
   - Rate-controlled playback with e.g. cat input.txt | pv -qL 100k
@@ -91,6 +87,3 @@ The Fine Material
     - Run as different user.
   - Using (unreleased) ffmpeg driver:
     - ./ffmpeg -i movie.mkv -pix_fmt rgba -f chafa -color 16 -symbols vhalf,space -fill ascii -
-
-- Better stylesheets for man page, library reference manual.
-  - Maybe just redo the web site with Jekyll or something.
