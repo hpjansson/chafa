@@ -42,6 +42,8 @@
 #include "named-colors.h"
 #include "xwd-loader.h"
 
+#define ANIM_FPS_MAX 100000.0
+
 typedef struct
 {
     gchar *executable_name;
@@ -79,6 +81,13 @@ typedef struct
     gboolean bg_color_set;
     gdouble transparency_threshold;
     gdouble file_duration_s;
+
+    /* If > 0.0, override the framerate specified by the input file. */
+    gdouble anim_fps;
+
+    /* Applied after FPS is determined. If final value >= ANIM_FPS_MAX,
+     * eliminate interframe delay altogether. */
+    gdouble anim_speed_multiplier;
 }
 GlobalOptions;
 
@@ -209,6 +218,9 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
+    "      --anim-speed=SPEED  Set the speed animations will play at. This can be\n"
+    "                     either a unitless multiplier, or a real number followed\n"
+    "                     by \"fps\" to apply a specific framerate.\n"
     "      --bg=COLOR     Background color of display (color name or hex).\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 16, 240, 256,\n"
@@ -618,6 +630,51 @@ parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
 }
 
 static gboolean
+parse_anim_speed_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = FALSE;
+    gdouble d;
+
+    if (!g_ascii_strcasecmp (value, "max")
+        || !g_ascii_strcasecmp (value, "maximum"))
+    {
+        options.anim_fps = G_MAXDOUBLE;
+        result = TRUE;
+    }
+    else
+    {
+        gchar *endptr;
+
+        d = g_strtod (value, &endptr);
+        if (endptr == value || d <= 0.0)
+            goto out;
+
+        while (g_ascii_isspace (*endptr))
+            endptr++;
+
+        if (!g_ascii_strcasecmp (endptr, "fps"))
+        {
+            options.anim_fps = d;
+            result = TRUE;
+        }
+        else if (*endptr == '\0')
+        {
+            options.anim_speed_multiplier = d;
+            result = TRUE;
+        }
+
+        /* If there's unknown junk at the end, fail. */
+    }
+
+out:
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Animation speed must be either \"max\", a real multiplier, or a real framerate followed by \"fps\". It must be greater than zero.");
+
+    return result;
+}
+
+static gboolean
 parse_color_str (const gchar *value, guint32 *col_out, const gchar *error_message, GError **error)
 {
     const NamedColor *named_color;
@@ -820,6 +877,7 @@ parse_options (int *argc, char **argv [])
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
+        { "anim-speed",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_anim_speed_arg,  "Animation speed", NULL },
         { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
@@ -883,6 +941,8 @@ parse_options (int *argc, char **argv [])
     options.bg_color = 0x000000;
     options.transparency_threshold = -1.0;
     options.file_duration_s = G_MAXDOUBLE;
+    options.anim_fps = -1.0;
+    options.anim_speed_multiplier = 1.0;
     get_tty_size ();
 
     if (!g_option_context_parse (context, argc, argv, &error))
@@ -1284,7 +1344,7 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
              l = g_list_next (l))
         {
             GroupFrame *frame = l->data;
-            gint elapsed_ms, remain_ms;
+            gdouble elapsed_ms, remain_ms;
 
             if (wand)
                 MagickNextImage (wand);
@@ -1378,9 +1438,16 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
             {
                 /* Account for time spent converting and printing frame */
                 elapsed_ms = g_timer_elapsed (timer, NULL) * 1000.0;
-                remain_ms = frame->delay_ms - elapsed_ms;
-                remain_ms = MAX (remain_ms, 0);
-                interruptible_usleep (remain_ms * 1000);
+
+                if (options.anim_fps > 0.0)
+                    remain_ms = 1000.0 / options.anim_fps;
+                else
+                    remain_ms = frame->delay_ms;
+                remain_ms /= options.anim_speed_multiplier;
+                remain_ms = MAX (remain_ms - elapsed_ms, 0);
+
+                if (remain_ms > 0.0001 && 1000.0 / (gdouble) remain_ms < ANIM_FPS_MAX)
+                    interruptible_usleep (remain_ms * 1000);
 
                 anim_elapsed_s += MAX (elapsed_ms, frame->delay_ms) / 1000.0;
             }
@@ -1451,7 +1518,7 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
              l = g_list_next (l))
         {
             GroupFrame *frame = l->data;
-            gint elapsed_ms, remain_ms;
+            gdouble elapsed_ms, remain_ms;
 
             g_timer_start (timer);
 
@@ -1518,9 +1585,16 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
             {
                 /* Account for time spent converting and printing frame */
                 elapsed_ms = g_timer_elapsed (timer, NULL) * 1000.0;
-                remain_ms = frame->delay_ms - elapsed_ms;
-                remain_ms = MAX (remain_ms, 0);
-                interruptible_usleep (remain_ms * 1000);
+
+                if (options.anim_fps > 0.0)
+                    remain_ms = 1000.0 / options.anim_fps;
+                else
+                    remain_ms = frame->delay_ms;
+                remain_ms /= options.anim_speed_multiplier;
+                remain_ms = MAX (remain_ms - elapsed_ms, 0);
+
+                if (remain_ms > 0.0001 && 1000.0 / (gdouble) remain_ms < ANIM_FPS_MAX)
+                    interruptible_usleep (remain_ms * 1000);
 
                 anim_elapsed_s += MAX (elapsed_ms, frame->delay_ms) / 1000.0;
             }
