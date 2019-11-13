@@ -29,14 +29,14 @@ typedef struct
 }
 ChafaBitfield;
 
-static void
+static inline void
 chafa_bitfield_init (ChafaBitfield *bitfield, guint n_bits)
 {
     bitfield->n_bits = n_bits;
     bitfield->bits = g_malloc0 ((n_bits + 31) / 8);
 }
 
-static void
+static inline void
 chafa_bitfield_deinit (ChafaBitfield *bitfield)
 {
     g_free (bitfield->bits);
@@ -44,7 +44,7 @@ chafa_bitfield_deinit (ChafaBitfield *bitfield)
     bitfield->bits = NULL;
 }
 
-static void
+static inline void
 chafa_bitfield_clear (ChafaBitfield *bitfield)
 {
     memset (bitfield->bits, 0, (bitfield->n_bits + 31) / 8);
