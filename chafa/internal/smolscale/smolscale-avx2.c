@@ -7,9 +7,8 @@
  * compiled with -O3 -mavx2. */
 
 #include <assert.h> /* assert */
-#include <stdlib.h> /* malloc, free */
+#include <stdlib.h> /* malloc, free, alloca */
 #include <string.h> /* memset */
-#include <alloca.h> /* alloca */
 #include <limits.h>
 #include "smolscale-private.h"
 
