@@ -324,8 +324,8 @@ chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode 
 ChafaColorExtractor
 chafa_canvas_config_get_color_extractor (const ChafaCanvasConfig *config)
 {
-    g_return_val_if_fail (config != NULL, CHAFA_COLOR_SPACE_RGB);
-    g_return_val_if_fail (config->refs > 0, CHAFA_COLOR_SPACE_RGB);
+    g_return_val_if_fail (config != NULL, CHAFA_COLOR_EXTRACTOR_MEDIAN);
+    g_return_val_if_fail (config->refs > 0, CHAFA_COLOR_EXTRACTOR_MEDIAN);
 
     return config->color_extractor;
 }
