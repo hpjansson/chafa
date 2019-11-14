@@ -35,8 +35,8 @@ MISSING_TOOLS=
 
 if test "$DIE" -eq 1; then
         echo
-        echo "Missing mandatory tools: $MISSING_TOOLS"
-        echo
+        echo -e "Missing mandatory tools:\e[1;31m $MISSING_TOOLS"
+        echo -e "\e[0m"
         echo "These are required for building Chafa from its git repository."
         echo "You should be able to install them using your operating system's"
         echo "package manager (apt-get, yum, zypper or similar). Alternately"
@@ -50,8 +50,8 @@ fi
 GTKDOCIZE=$(which gtkdocize 2>/dev/null)
 
 if test -z $GTKDOCIZE; then
-        echo "Missing optional tool: gtk-doc"
-        echo
+        echo -e "Missing optional tool:\e[1;33m gtk-doc"
+        echo -e "\e[0m"
         echo "Without this, no developer documentation will be generated."
         echo
         rm -f gtk-doc.make
