@@ -13,18 +13,6 @@ DIE=0
 
 MISSING_TOOLS=
 
-GTKDOCIZE=$(which gtkdocize 2>/dev/null)
-if test -z $GTKDOCIZE; then
-        echo "You don't have gtk-doc installed, and thus won't be able to generate the documentation."
-        rm -f gtk-doc.make
-        cat > gtk-doc.make <<EOF
-EXTRA_DIST =
-CLEANFILES =
-EOF
-else
-        gtkdocize || exit $?
-fi
-
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
         MISSING_TOOLS="${MISSING_TOOLS}autoconf "
         DIE=1
@@ -40,21 +28,48 @@ fi
         DIE=1
 }
 
+(pkg-config --version) < /dev/null > /dev/null 2>&1 || {
+        MISSING_TOOLS="${MISSING_TOOLS}pkg-config "
+        DIE=1
+}
+
 if test "$DIE" -eq 1; then
         echo
-        echo "The following tools were not found: $MISSING_TOOLS"
+        echo "Missing mandatory tools: $MISSING_TOOLS"
         echo
         echo "These are required for building Chafa from its git repository."
         echo "You should be able to install them using your operating system's"
         echo "package manager (apt-get, yum, zypper or similar). Alternately"
         echo "they can be obtained directly from GNU: http://ftp.gnu.org/gnu/"
         echo
+        echo "If you can't provide these tools, you may still be able to"
+        echo "build Chafa from a tarball release: http://hpjansson.org/chafa/releases/"
+        echo
+fi
+
+GTKDOCIZE=$(which gtkdocize 2>/dev/null)
+
+if test -z $GTKDOCIZE; then
+        echo "Missing optional tool: gtk-doc"
+        echo
+        echo "Without this, no developer documentation will be generated."
+        echo
+        rm -f gtk-doc.make
+        cat > gtk-doc.make <<EOF
+EXTRA_DIST =
+CLEANFILES =
+EOF
+else
+        gtkdocize || exit $?
+fi
+
+if test "$DIE" -eq 1; then
         exit 1
 fi
 
 test $TEST_TYPE $FILE || {
         echo
-        echo "You must run this script in the top-level $PROJECT directory"
+        echo "You must run this script in the top-level $PROJECT directory."
         echo
         exit 1
 }
