@@ -40,10 +40,10 @@ if test "$DIE" -eq 1; then
         echo "These are required for building Chafa from its git repository."
         echo "You should be able to install them using your operating system's"
         echo "package manager (apt-get, yum, zypper or similar). Alternately"
-        echo "they can be obtained directly from GNU: http://ftp.gnu.org/gnu/"
+        echo "they can be obtained directly from GNU: https://ftp.gnu.org/gnu/"
         echo
         echo "If you can't provide these tools, you may still be able to"
-        echo "build Chafa from a tarball release: http://hpjansson.org/chafa/releases/"
+        echo "build Chafa from a tarball release: https://hpjansson.org/chafa/releases/"
         echo
 fi
 
