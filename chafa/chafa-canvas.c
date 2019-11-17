@@ -2212,6 +2212,13 @@ chafa_canvas_unref (ChafaCanvas *canvas)
     if (g_atomic_int_dec_and_test (&canvas->refs))
     {
         chafa_canvas_config_deinit (&canvas->config);
+
+        if (canvas->sixel_canvas)
+        {
+            chafa_sixel_canvas_destroy (canvas->sixel_canvas);
+            canvas->sixel_canvas = NULL;
+        }
+
         g_free (canvas->pixels);
         g_free (canvas->cells);
         g_free (canvas->bayer_matrix);
