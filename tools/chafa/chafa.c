@@ -818,9 +818,11 @@ detect_terminal_modes (ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out
         mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
     /* mlterm's truecolor support seems to be broken; it looks like a color
-     * allocation issue. */
+     * allocation issue. This affects characters cells, but not sixels. */
     if (!strcmp (term, "mlterm"))
     {
+        /* The default canvas mode is truecolor for sixels. 240 colors is
+         * the default for symbols. */
         mode = CHAFA_CANVAS_MODE_INDEXED_240;
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
     }
@@ -903,6 +905,8 @@ parse_options (int *argc, char **argv [])
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
         { NULL }
     };
+    ChafaCanvasMode canvas_mode;
+    ChafaPixelMode pixel_mode;
 
     memset (&options, 0, sizeof (options));
 
@@ -925,17 +929,19 @@ parse_options (int *argc, char **argv [])
     options.fill_symbol_map = chafa_symbol_map_new ();
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
-    detect_terminal_modes (&options.mode, &options.pixel_mode);
+    detect_terminal_modes (&canvas_mode, &pixel_mode);
+    options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
+    options.pixel_mode = pixel_mode;
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
-    options.dither_grain_width = 4;
-    options.dither_grain_height = 4;
+    options.dither_grain_width = -1;  /* Unset */
+    options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
     options.preprocess = TRUE;
     options.color_extractor = CHAFA_COLOR_EXTRACTOR_MEDIAN;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
     options.height = 25;
-    options.font_ratio = 1.0 / 2.0;
+    options.font_ratio = -1.0;  /* Unset */
     options.work_factor = 5;
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
@@ -949,6 +955,35 @@ parse_options (int *argc, char **argv [])
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
         return FALSE;
+    }
+
+    /* Now we've established the pixel mode, apply dependent defaults */
+
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        /* Character cell defaults */
+
+        if (options.mode == CHAFA_CANVAS_MODE_MAX)
+            options.mode = canvas_mode;
+        if (options.dither_grain_width < 0)
+            options.dither_grain_width = 4;
+        if (options.dither_grain_height < 0)
+            options.dither_grain_height = 4;
+        if (options.font_ratio < 0.0)
+            options.font_ratio = 1.0 / 2.0;
+    }
+    else
+    {
+        /* Sixel defaults */
+
+        if (options.mode == CHAFA_CANVAS_MODE_MAX)
+            options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
+        if (options.dither_grain_width < 0)
+            options.dither_grain_width = 1;
+        if (options.dither_grain_height < 0)
+            options.dither_grain_height = 1;
+        if (options.font_ratio < 0.0)
+            options.font_ratio = 1.0;
     }
 
     if (options.work_factor < 1 || options.work_factor > 9)
