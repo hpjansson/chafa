@@ -218,9 +218,6 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
-    "      --anim-speed=SPEED  Set the speed animations will play at. This can be\n"
-    "                     either a unitless multiplier, or a real number followed\n"
-    "                     by \"fps\" to apply a specific framerate.\n"
     "      --bg=COLOR     Background color of display (color name or hex).\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 16, 240, 256,\n"
@@ -255,6 +252,9 @@ print_summary (void)
     "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
     "                     default this will be the size of your terminal, or 80x25\n"
     "                     if size detection fails.\n"
+    "      --speed=SPEED  Set the speed animations will play at. This can be\n"
+    "                     either a unitless multiplier, or a real number followed\n"
+    "                     by \"fps\" to apply a specific framerate.\n"
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
     "                     Implies --zoom.\n"
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
@@ -877,7 +877,6 @@ parse_options (int *argc, char **argv [])
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
-        { "anim-speed",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_anim_speed_arg,  "Animation speed", NULL },
         { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
@@ -896,6 +895,7 @@ parse_options (int *argc, char **argv [])
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
+        { "speed",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_anim_speed_arg,  "Animation speed", NULL },
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
