@@ -57,42 +57,39 @@ draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 static void
 draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
-    const guint8 *src_p;
+    const guint32 *src_p;
     guint8 *dest_p, *dest_end_p;
     ChafaColorHash chash;
 
     chafa_color_hash_init (&chash);
 
-    src_p = (const guint8 *) ctx->scaled_data + (4 * ctx->dest_width * batch->first_row);
+    src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
     dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
     dest_end_p = dest_p + (ctx->dest_width * batch->n_rows);
 
-    for ( ; dest_p < dest_end_p; src_p += 4, dest_p++)
+    for ( ; dest_p < dest_end_p; src_p++, dest_p++)
     {
         ChafaColor col;
-        guint32 col32;
         gint index;
 
-        col32 = *((guint32 *) src_p);
+        col = chafa_color8_fetch_from_rgba8 (src_p);
 
-        if ((gint) (col32 >> 24) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
+        if ((gint) (col.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
         {
             *dest_p = chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
             continue;
         }
 
         /* Sixel color resolution is only slightly less than 7 bits per channel,
-         * so eliminate the low-order bits to get better hash performance. */
-        col32 &= 0x00fefefe;
+         * so eliminate the low-order bits to get better hash performance. Also
+         * mask out the alpha channel. */
+        CHAFA_COLOR8_U32 (col) &= GUINT32_FROM_BE (0xfefefe00);
 
-        index = chafa_color_hash_lookup (&chash, col32);
+        index = chafa_color_hash_lookup (&chash, CHAFA_COLOR8_U32 (col));
 
         if (index < 0)
         {
-            col.ch [0] = src_p [0];
-            col.ch [1] = src_p [1];
-            col.ch [2] = src_p [2];
-            col.ch [3] = src_p [3];
+            col = chafa_color8_fetch_from_rgba8 (src_p);
 
             if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
                 chafa_color_rgb_to_din99d (&col, &col);
@@ -105,7 +102,7 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 
             /* Don't insert transparent pixels, since color hash does not store transparency */
             if (index != chafa_palette_get_transparent_index (&ctx->indexed_image->palette))
-                chafa_color_hash_replace (&chash, col32, index);
+                chafa_color_hash_replace (&chash, CHAFA_COLOR8_U32 (col), index);
         }
 
         *dest_p = index;
