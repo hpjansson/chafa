@@ -31,12 +31,42 @@ G_BEGIN_DECLS
 
 #define CHAFA_PALETTE_INDEX_MAX 259
 
+#define CHAFA_COLOR8_U32(col) (*((guint32 *) (col).ch))
+
 /* Color space agnostic */
 typedef struct
 {
     guint8 ch [4];
 }
 ChafaColor;
+
+typedef struct
+{
+    union
+    {
+        guint32 u32;
+        ChafaColor col;
+    } u;
+}
+ChafaColorConv;
+
+static inline ChafaColor
+chafa_color8_fetch_from_rgba8 (gconstpointer p)
+{
+    const guint32 *p32 = (const guint32 *) p;
+    ChafaColorConv cc;
+    cc.u.u32 = *p32;
+    return cc.u.col;
+}
+
+static inline void
+chafa_color8_store_to_rgba8 (ChafaColor col, gpointer p)
+{
+    guint32 *p32 = (guint32 *) p;
+    ChafaColorConv cc;
+    cc.u.col = col;
+    *p32 = cc.u.u32;
+}
 
 typedef struct
 {
