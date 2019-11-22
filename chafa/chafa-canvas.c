@@ -151,15 +151,6 @@ typedef struct
 SymbolEval;
 
 static void
-color_to_accum (const ChafaColor *color, ChafaColorAccum *accum)
-{
-    gint i;
-
-    for (i = 0; i < 4; i++)
-        accum->ch [i] = color->ch [i];
-}
-
-static void
 accum_to_color (const ChafaColorAccum *accum, ChafaColor *color)
 {
     gint i;
