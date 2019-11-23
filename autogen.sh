@@ -13,6 +13,9 @@ DIE=0
 
 MISSING_TOOLS=
 
+MY_ECHO=$(which echo)
+[ x$MY_ECHO = x ] && MY_ECHO=echo
+
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
         MISSING_TOOLS="${MISSING_TOOLS}autoconf "
         DIE=1
@@ -34,26 +37,26 @@ MISSING_TOOLS=
 }
 
 if test "$DIE" -eq 1; then
-        echo
-        echo -e "Missing mandatory tools:\e[1;31m $MISSING_TOOLS"
-        echo -e "\e[0m"
-        echo "These are required for building Chafa from its git repository."
-        echo "You should be able to install them using your operating system's"
-        echo "package manager (apt-get, yum, zypper or similar). Alternately"
-        echo "they can be obtained directly from GNU: https://ftp.gnu.org/gnu/"
-        echo
-        echo "If you can't provide these tools, you may still be able to"
-        echo "build Chafa from a tarball release: https://hpjansson.org/chafa/releases/"
-        echo
+        ${MY_ECHO}
+        ${MY_ECHO} -e "Missing mandatory tools:\e[1;31m $MISSING_TOOLS"
+        ${MY_ECHO} -e "\e[0m"
+        ${MY_ECHO} "These are required for building Chafa from its git repository."
+        ${MY_ECHO} "You should be able to install them using your operating system's"
+        ${MY_ECHO} "package manager (apt-get, yum, zypper or similar). Alternately"
+        ${MY_ECHO} "they can be obtained directly from GNU: https://ftp.gnu.org/gnu/"
+        ${MY_ECHO}
+        ${MY_ECHO} "If you can't provide these tools, you may still be able to"
+        ${MY_ECHO} "build Chafa from a tarball release: https://hpjansson.org/chafa/releases/"
+        ${MY_ECHO}
 fi
 
 GTKDOCIZE=$(which gtkdocize 2>/dev/null)
 
 if test -z $GTKDOCIZE; then
-        echo -e "Missing optional tool:\e[1;33m gtk-doc"
-        echo -e "\e[0m"
-        echo "Without this, no developer documentation will be generated."
-        echo
+        ${MY_ECHO} -e "Missing optional tool:\e[1;33m gtk-doc"
+        ${MY_ECHO} -e "\e[0m"
+        ${MY_ECHO} "Without this, no developer documentation will be generated."
+        ${MY_ECHO}
         rm -f gtk-doc.make
         cat > gtk-doc.make <<EOF
 EXTRA_DIST =
@@ -68,34 +71,34 @@ if test "$DIE" -eq 1; then
 fi
 
 test $TEST_TYPE $FILE || {
-        echo
-        echo "You must run this script in the top-level $PROJECT directory."
-        echo
+        ${MY_ECHO}
+        ${MY_ECHO} "You must run this script in the top-level $PROJECT directory."
+        ${MY_ECHO}
         exit 1
 }
 
 if test -z "$*"; then
-        echo
-        echo "I am going to run ./configure with no arguments - if you wish "
-        echo "to pass any to it, please specify them on the $0 command line."
-        echo
+        ${MY_ECHO}
+        ${MY_ECHO} "I am going to run ./configure with no arguments - if you wish "
+        ${MY_ECHO} "to pass any to it, please specify them on the $0 command line."
+        ${MY_ECHO}
 fi
 
 am_opt="--include-deps --add-missing"
 
-echo "Running libtoolize..."
+${MY_ECHO} "Running libtoolize..."
 libtoolize --force --copy
 
-echo "Running aclocal..."
+${MY_ECHO} "Running aclocal..."
 aclocal $ACLOCAL_FLAGS
 
 # optionally feature autoheader
 (autoheader --version)  < /dev/null > /dev/null 2>&1 && autoheader
 
-echo "Running automake..."
+${MY_ECHO} "Running automake..."
 automake -a $am_opt
 
-echo "Running autoconf..."
+${MY_ECHO} "Running autoconf..."
 autoconf
 
 cd $ORIGDIR
