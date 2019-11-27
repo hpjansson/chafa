@@ -23,6 +23,7 @@
 #include <glib.h>
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-color-hash.h"
+#include "internal/chafa-dither.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-palette.h"
 #include "internal/chafa-sixel-canvas.h"
