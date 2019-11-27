@@ -77,9 +77,6 @@
 #define DITHER_BASE_INTENSITY_FGBG 1.0
 #define DITHER_BASE_INTENSITY_16C  0.25
 #define DITHER_BASE_INTENSITY_256C 0.1
-#define BAYER_MATRIX_DIM_SHIFT 4
-#define BAYER_MATRIX_DIM (1 << (BAYER_MATRIX_DIM_SHIFT))
-#define BAYER_MATRIX_SIZE ((BAYER_MATRIX_DIM) * (BAYER_MATRIX_DIM))
 
 typedef struct
 {
@@ -120,11 +117,7 @@ struct ChafaCanvas
     ChafaPixelType src_pixel_type;
     gint src_width, src_height, src_rowstride;
     gint have_alpha_int;
-    gint dither_grain_width_shift, dither_grain_height_shift;
-
-    /* Set if we're doing bayer dithering */
-    gint *bayer_matrix;
-    gint bayer_size_shift;
+    ChafaDither dither;
 
     /* Set if we're in sixel mode */
     ChafaSixelCanvas *sixel_canvas;
@@ -1143,31 +1136,13 @@ update_display_colors (ChafaCanvas *canvas)
     canvas->bg_color.ch [3] = 0x00;
 }
 
-static void
-bayer_dither_pixel (ChafaCanvas *canvas, ChafaPixel *pixel, gint *matrix, gint x, gint y, guint size_shift, guint size_mask)
-{
-    gint bayer_index = (((y >> canvas->dither_grain_height_shift) & size_mask) << size_shift)
-        + ((x >> canvas->dither_grain_width_shift) & size_mask);
-    gint16 bayer_mod = matrix [bayer_index];
-    gint i;
-
-    for (i = 0; i < 4; i++)
-    {
-        gint16 c;
-
-        c = (gint16) pixel->col.ch [i] + bayer_mod;
-        c = CLAMP (c, 0, 255);
-        pixel->col.ch [i] = c;
-    }
-}
-
 /* pixel must point to top-left pixel of the grain to be dithered */
 static void
 fs_dither_grain (ChafaCanvas *canvas, ChafaPixel *pixel, const ChafaColorAccum *error_in,
                  ChafaColorAccum *error_out_0, ChafaColorAccum *error_out_1,
                  ChafaColorAccum *error_out_2, ChafaColorAccum *error_out_3)
 {
-    gint grain_shift = canvas->dither_grain_width_shift + canvas->dither_grain_height_shift;
+    gint grain_shift = canvas->dither.grain_width_shift + canvas->dither.grain_height_shift;
     ChafaColorAccum next_error = { 0 };
     ChafaColorAccum accum = { 0 };
     ChafaColorCandidates cand = { 0 };
@@ -1250,15 +1225,13 @@ bayer_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
-    guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
     gint x, y;
 
     for (y = dest_y; pixel < pixel_max; y++)
     {
         for (x = 0; x < canvas->width_pixels; x++)
         {
-            bayer_dither_pixel (canvas, pixel, canvas->bayer_matrix, x, y,
-                                canvas->bayer_size_shift, bayer_size_mask);
+            pixel->col = chafa_dither_color_ordered (&canvas->dither, pixel->col, x, y);
             pixel++;
         }
     }
@@ -1271,15 +1244,15 @@ fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
     ChafaColorAccum *error_rows;
     ChafaColorAccum *error_row [2];
     ChafaColorAccum *pp;
-    gint width_grains = canvas->width_pixels >> canvas->dither_grain_width_shift;
+    gint width_grains = canvas->width_pixels >> canvas->dither.grain_width_shift;
     gint x, y;
 
     g_assert (canvas->width_pixels % canvas->config.dither_grain_width == 0);
     g_assert (dest_y % canvas->config.dither_grain_height == 0);
     g_assert (n_rows % canvas->config.dither_grain_height == 0);
 
-    dest_y >>= canvas->dither_grain_height_shift;
-    n_rows >>= canvas->dither_grain_height_shift;
+    dest_y >>= canvas->dither.grain_height_shift;
+    n_rows >>= canvas->dither.grain_height_shift;
 
     error_rows = alloca (width_grains * 2 * sizeof (ChafaColorAccum));
     error_row [0] = error_rows;
@@ -1294,7 +1267,7 @@ fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
         if (!(y & 1))
         {
             /* Forwards pass */
-            pixel = canvas->pixels + (y << canvas->dither_grain_height_shift) * canvas->width_pixels;
+            pixel = canvas->pixels + (y << canvas->dither.grain_height_shift) * canvas->width_pixels;
 
             fs_dither_grain (canvas, pixel, error_row [0],
                              error_row [0] + 1,
@@ -1303,7 +1276,7 @@ fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
                              error_row [1] + 1);
             pixel += canvas->config.dither_grain_width;
 
-            for (x = 1; ((x + 1) << canvas->dither_grain_width_shift) < canvas->width_pixels; x++)
+            for (x = 1; ((x + 1) << canvas->dither.grain_width_shift) < canvas->width_pixels; x++)
             {
                 fs_dither_grain (canvas, pixel, error_row [0] + x,
                                  error_row [0] + x + 1,
@@ -1322,7 +1295,7 @@ fs_dither (ChafaCanvas *canvas, gint dest_y, gint n_rows)
         else
         {
             /* Backwards pass */
-            pixel = canvas->pixels + (y << canvas->dither_grain_height_shift) * canvas->width_pixels + canvas->width_pixels - canvas->config.dither_grain_width;
+            pixel = canvas->pixels + (y << canvas->dither.grain_height_shift) * canvas->width_pixels + canvas->width_pixels - canvas->config.dither_grain_width;
 
             fs_dither_grain (canvas, pixel, error_row [0] + width_grains - 1,
                              error_row [0] + width_grains - 2,
@@ -1360,15 +1333,13 @@ bayer_and_convert_rgb_to_din99d (ChafaCanvas *canvas, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = canvas->pixels + dest_y * canvas->width_pixels;
     ChafaPixel *pixel_max = pixel + n_rows * canvas->width_pixels;
-    guint bayer_size_mask = (1 << canvas->bayer_size_shift) - 1;
     gint x, y;
 
     for (y = dest_y; pixel < pixel_max; y++)
     {
         for (x = 0; x < canvas->width_pixels; x++)
         {
-            bayer_dither_pixel (canvas, pixel, canvas->bayer_matrix, x, y,
-                                canvas->bayer_size_shift, bayer_size_mask);
+            pixel->col = chafa_dither_color_ordered (&canvas->dither, pixel->col, x, y);
             chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
             pixel++;
         }
@@ -1968,26 +1939,6 @@ build_ansi_gstring (ChafaCanvas *canvas)
     return gs;
 }
 
-static gint
-calc_dither_grain_shift (gint size)
-{
-    switch (size)
-    {
-        case 1:
-            return 0;
-        case 2:
-            return 1;
-        case 4:
-            return 2;
-        case 8:
-            return 3;
-        default:
-            g_assert_not_reached ();
-    }
-
-    return 0;
-}
-
 static void
 setup_palette (ChafaCanvas *canvas)
 {
@@ -2043,6 +1994,7 @@ ChafaCanvas *
 chafa_canvas_new (const ChafaCanvasConfig *config)
 {
     ChafaCanvas *canvas;
+    gdouble dither_intensity = 1.0;
 
     if (config)
     {
@@ -2100,13 +2052,8 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
         canvas->config.dither_mode = CHAFA_DITHER_MODE_NONE;
     }
 
-    canvas->dither_grain_width_shift = calc_dither_grain_shift (canvas->config.dither_grain_width);
-    canvas->dither_grain_height_shift = calc_dither_grain_shift (canvas->config.dither_grain_height);
-
     if (canvas->config.dither_mode == CHAFA_DITHER_MODE_ORDERED)
     {
-        gdouble dither_intensity;
-
         switch (canvas->config.canvas_mode)
         {
             case CHAFA_CANVAS_MODE_INDEXED_256:
@@ -2124,10 +2071,12 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
                 g_assert_not_reached ();
                 break;
         }
-
-        canvas->bayer_size_shift = BAYER_MATRIX_DIM_SHIFT;
-        canvas->bayer_matrix = chafa_gen_bayer_matrix (BAYER_MATRIX_DIM, dither_intensity * canvas->config.dither_intensity);
     }
+
+    chafa_dither_init (&canvas->dither, canvas->config.dither_mode,
+                       dither_intensity * canvas->config.dither_intensity,
+                       canvas->config.dither_grain_width,
+                       canvas->config.dither_grain_height);
 
     update_display_colors (canvas);
     setup_palette (canvas);
@@ -2159,7 +2108,8 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
     canvas->pixels = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->needs_clear = TRUE;
-    canvas->bayer_matrix = g_memdup (orig->bayer_matrix, BAYER_MATRIX_SIZE * sizeof (gint));
+
+    chafa_dither_copy (&orig->dither, &canvas->dither);
 
     return canvas;
 }
@@ -2208,9 +2158,9 @@ chafa_canvas_unref (ChafaCanvas *canvas)
             canvas->sixel_canvas = NULL;
         }
 
+        chafa_dither_deinit (&canvas->dither);
         g_free (canvas->pixels);
         g_free (canvas->cells);
-        g_free (canvas->bayer_matrix);
         g_free (canvas);
     }
 }
