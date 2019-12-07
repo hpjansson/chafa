@@ -2045,8 +2045,10 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
      * the code for that has yet to be written. In palette modes we just use
      * the palette mappings.
      *
-     * There is also no reason to dither in truecolor mode. */
-    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
+     * There is also no reason to dither in truecolor mode, _unless_ we're
+     * producing sixels, which quantize to a dynamic palette. */
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR
+        && canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
         canvas->config.color_space = CHAFA_COLOR_SPACE_RGB;
         canvas->config.dither_mode = CHAFA_DITHER_MODE_NONE;
@@ -2056,6 +2058,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     {
         switch (canvas->config.canvas_mode)
         {
+            case CHAFA_CANVAS_MODE_TRUECOLOR:
             case CHAFA_CANVAS_MODE_INDEXED_256:
             case CHAFA_CANVAS_MODE_INDEXED_240:
                 dither_intensity = DITHER_BASE_INTENSITY_256C;
