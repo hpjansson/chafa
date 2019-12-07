@@ -2261,7 +2261,8 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
         canvas->sixel_canvas = chafa_sixel_canvas_new (canvas->width_pixels,
                                                        canvas->height_pixels,
                                                        canvas->config.color_space,
-                                                       &canvas->palette);
+                                                       &canvas->palette,
+                                                       &canvas->dither);
         chafa_sixel_canvas_draw_all_pixels (canvas->sixel_canvas,
                                             src_pixel_type,
                                             src_pixels,

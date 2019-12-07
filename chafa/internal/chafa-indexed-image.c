@@ -90,13 +90,11 @@ quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor
 }
 
 static void
-draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
+draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
+                             ChafaColorHash *chash)
 {
     const guint32 *src_p;
     guint8 *dest_p, *dest_end_p;
-    ChafaColorHash chash;
-
-    chafa_color_hash_init (&chash);
 
     src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
     dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
@@ -108,8 +106,68 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
         gint index;
 
         col = chafa_color8_fetch_from_rgba8 (src_p);
-        index = quantize_pixel (ctx, &chash, col);
+        index = quantize_pixel (ctx, chash, col);
         *dest_p = index;
+    }
+}
+
+static void
+draw_pixels_pass_2_bayer (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
+                          ChafaColorHash *chash)
+{
+    const guint32 *src_p;
+    guint8 *dest_p, *dest_end_p;
+    gint x, y;
+
+    src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
+    dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
+    dest_end_p = dest_p + (ctx->dest_width * batch->n_rows);
+
+    x = 0;
+    y = batch->first_row;
+
+    for ( ; dest_p < dest_end_p; src_p++, dest_p++)
+    {
+        ChafaColor col;
+        gint index;
+
+        col = chafa_color8_fetch_from_rgba8 (src_p);
+        col = chafa_dither_color_ordered (&ctx->indexed_image->dither, col, x, y);
+        index = quantize_pixel (ctx, chash, col);
+        *dest_p = index;
+
+        if (++x >= ctx->dest_width)
+        {
+            x = 0;
+            y++;
+        }
+    }
+}
+
+static void
+draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
+{
+    ChafaColorHash chash;
+
+    chafa_color_hash_init (&chash);
+
+    switch (ctx->indexed_image->dither.mode)
+    {
+        case CHAFA_DITHER_MODE_NONE:
+            draw_pixels_pass_2_nodither (batch, ctx, &chash);
+            break;
+
+        case CHAFA_DITHER_MODE_ORDERED:
+            draw_pixels_pass_2_bayer (batch, ctx, &chash);
+            break;
+
+        case CHAFA_DITHER_MODE_DIFFUSION:
+            /* TODO */
+            break;
+
+        case CHAFA_DITHER_MODE_MAX:
+            g_assert_not_reached ();
+            break;
     }
 
     chafa_color_hash_deinit (&chash);
@@ -139,7 +197,9 @@ draw_pixels (DrawPixelsCtx *ctx)
 }
 
 ChafaIndexedImage *
-chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette)
+chafa_indexed_image_new (gint width, gint height,
+                         const ChafaPalette *palette,
+                         const ChafaDither *dither)
 {
     ChafaIndexedImage *indexed_image;
 
@@ -151,12 +211,15 @@ chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette)
     chafa_palette_copy (palette, &indexed_image->palette);
     chafa_palette_set_transparent_index (&indexed_image->palette, 255);
 
+    chafa_dither_copy (dither, &indexed_image->dither);
+
     return indexed_image;
 }
 
 void
 chafa_indexed_image_destroy (ChafaIndexedImage *indexed_image)
 {
+    chafa_dither_deinit (&indexed_image->dither);
     g_free (indexed_image->pixels);
     g_free (indexed_image);
 }

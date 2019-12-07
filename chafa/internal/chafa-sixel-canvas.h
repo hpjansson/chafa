@@ -33,7 +33,9 @@ typedef struct
 ChafaSixelCanvas;
 
 ChafaSixelCanvas *chafa_sixel_canvas_new (gint width, gint height,
-                                          ChafaColorSpace color_space, const ChafaPalette *palette);
+                                          ChafaColorSpace color_space,
+                                          const ChafaPalette *palette,
+                                          const ChafaDither *dither);
 void chafa_sixel_canvas_destroy (ChafaSixelCanvas *sixel_canvas);
 
 void chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelType src_pixel_type,

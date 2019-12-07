@@ -57,7 +57,10 @@ round_up_to_multiple_of (gint value, gint m)
 }
 
 ChafaSixelCanvas *
-chafa_sixel_canvas_new (gint width, gint height, ChafaColorSpace color_space, const ChafaPalette *palette)
+chafa_sixel_canvas_new (gint width, gint height,
+                        ChafaColorSpace color_space,
+                        const ChafaPalette *palette,
+                        const ChafaDither *dither)
 {
     ChafaSixelCanvas *sixel_canvas;
 
@@ -66,7 +69,7 @@ chafa_sixel_canvas_new (gint width, gint height, ChafaColorSpace color_space, co
     sixel_canvas->height = height;
     sixel_canvas->color_space = color_space;
     sixel_canvas->image = chafa_indexed_image_new (width, round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
-                                                   palette);
+                                                   palette, dither);
 
     return sixel_canvas;
 }

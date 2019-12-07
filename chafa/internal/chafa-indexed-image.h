@@ -21,6 +21,7 @@
 #define __CHAFA_INDEXED_IMAGE_H__
 
 #include "internal/chafa-palette.h"
+#include "internal/chafa-dither.h"
 
 G_BEGIN_DECLS
 
@@ -28,11 +29,14 @@ typedef struct
 {
     gint width, height;
     ChafaPalette palette;
+    ChafaDither dither;
     guint8 *pixels;
 }
 ChafaIndexedImage;
 
-ChafaIndexedImage *chafa_indexed_image_new (gint width, gint height, const ChafaPalette *palette);
+ChafaIndexedImage *chafa_indexed_image_new (gint width, gint height,
+                                            const ChafaPalette *palette,
+                                            const ChafaDither *dither);
 void chafa_indexed_image_destroy (ChafaIndexedImage *indexed_image);
 void chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                       ChafaColorSpace color_space,
