@@ -54,6 +54,41 @@ draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
                            batch->n_rows);
 }
 
+static gint
+quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor color)
+{
+    ChafaColor cached_color;
+    gint index;
+
+    if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
+        return chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
+
+    /* Sixel color resolution is only slightly less than 7 bits per channel,
+     * so eliminate the low-order bits to get better hash performance. Also
+     * mask out the alpha channel. */
+    CHAFA_COLOR8_U32 (cached_color) = CHAFA_COLOR8_U32 (color) & GUINT32_FROM_BE (0xfefefe00);
+
+    index = chafa_color_hash_lookup (color_hash, CHAFA_COLOR8_U32 (cached_color));
+
+    if (index < 0)
+    {
+        if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
+            chafa_color_rgb_to_din99d (&color, &color);
+
+        index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
+                                              ctx->color_space,
+                                              &color,
+                                              NULL)
+          - chafa_palette_get_first_color (&ctx->indexed_image->palette);
+
+        /* Don't insert transparent pixels, since color hash does not store transparency */
+        if (index != chafa_palette_get_transparent_index (&ctx->indexed_image->palette))
+            chafa_color_hash_replace (color_hash, CHAFA_COLOR8_U32 (cached_color), index);
+    }
+
+    return index;
+}
+
 static void
 draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
@@ -73,38 +108,7 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
         gint index;
 
         col = chafa_color8_fetch_from_rgba8 (src_p);
-
-        if ((gint) (col.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
-        {
-            *dest_p = chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
-            continue;
-        }
-
-        /* Sixel color resolution is only slightly less than 7 bits per channel,
-         * so eliminate the low-order bits to get better hash performance. Also
-         * mask out the alpha channel. */
-        CHAFA_COLOR8_U32 (col) &= GUINT32_FROM_BE (0xfefefe00);
-
-        index = chafa_color_hash_lookup (&chash, CHAFA_COLOR8_U32 (col));
-
-        if (index < 0)
-        {
-            col = chafa_color8_fetch_from_rgba8 (src_p);
-
-            if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
-                chafa_color_rgb_to_din99d (&col, &col);
-
-            index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
-                                                  ctx->color_space,
-                                                  &col,
-                                                  NULL)
-                - chafa_palette_get_first_color (&ctx->indexed_image->palette);
-
-            /* Don't insert transparent pixels, since color hash does not store transparency */
-            if (index != chafa_palette_get_transparent_index (&ctx->indexed_image->palette))
-                chafa_color_hash_replace (&chash, CHAFA_COLOR8_U32 (col), index);
-        }
-
+        index = quantize_pixel (ctx, &chash, col);
         *dest_p = index;
     }
 
