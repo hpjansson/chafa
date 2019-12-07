@@ -38,13 +38,6 @@ typedef struct
 }
 DrawPixelsCtx;
 
-typedef struct
-{
-    ChafaSixelCanvas *sixel_canvas;
-    GString *out_str;
-}
-BuildSixelsCtx;
-
 static void
 draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
