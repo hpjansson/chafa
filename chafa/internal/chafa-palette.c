@@ -672,6 +672,45 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
     g_assert_not_reached ();
 }
 
+gint
+chafa_palette_lookup_with_error (const ChafaPalette *palette, ChafaColorSpace color_space,
+                                 ChafaColor color, ChafaColorAccum *error_inout)
+{
+    ChafaColorAccum compensated_color;
+    gint index;
+
+    if (error_inout)
+    {
+        compensated_color.ch [0] = ((gint16) color.ch [0]) + ((error_inout->ch [0] * 0.9) / 16);
+        compensated_color.ch [1] = ((gint16) color.ch [1]) + ((error_inout->ch [1] * 0.9) / 16);
+        compensated_color.ch [2] = ((gint16) color.ch [2]) + ((error_inout->ch [2] * 0.9) / 16);
+
+        color.ch [0] = CLAMP (compensated_color.ch [0], 0, 255);
+        color.ch [1] = CLAMP (compensated_color.ch [1], 0, 255);
+        color.ch [2] = CLAMP (compensated_color.ch [2], 0, 255);
+    }
+
+    index = chafa_palette_lookup_nearest (palette, color_space, &color, NULL);
+
+    if (error_inout)
+    {
+        if (index == palette->transparent_index)
+        {
+            memset (error_inout, 0, sizeof (*error_inout));
+        }
+        else
+        {
+            ChafaColor found_color = palette->colors [index].col [color_space];
+
+            error_inout->ch [0] = ((gint16) compensated_color.ch [0]) - ((gint16) found_color.ch [0]);
+            error_inout->ch [1] = ((gint16) compensated_color.ch [1]) - ((gint16) found_color.ch [1]);
+            error_inout->ch [2] = ((gint16) compensated_color.ch [2]) - ((gint16) found_color.ch [2]);
+        }
+    }
+
+    return index;
+}
+
 ChafaPaletteType
 chafa_palette_get_type (const ChafaPalette *palette)
 {

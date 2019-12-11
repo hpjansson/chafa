@@ -61,6 +61,9 @@ gint chafa_palette_get_n_colors (const ChafaPalette *palette);
 gint chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                                    const ChafaColor *color, ChafaColorCandidates *candidates);
 
+gint chafa_palette_lookup_with_error (const ChafaPalette *palette, ChafaColorSpace color_space,
+                                      ChafaColor color, ChafaColorAccum *error_inout);
+
 const ChafaColor *chafa_palette_get_color (const ChafaPalette *palette, ChafaColorSpace color_space,
                                            gint index);
 void chafa_palette_set_color (ChafaPalette *palette, gint index, const ChafaColor *color);

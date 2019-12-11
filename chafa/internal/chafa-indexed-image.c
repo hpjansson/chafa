@@ -82,6 +82,27 @@ quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor
     return index;
 }
 
+static gint
+quantize_pixel_with_error (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor color,
+                           ChafaColorAccum *error_inout)
+{
+    gint index;
+
+    if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
+        return chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
+
+    if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
+        chafa_color_rgb_to_din99d (&color, &color);
+
+    index = chafa_palette_lookup_with_error (&ctx->indexed_image->palette,
+                                             ctx->color_space,
+                                             color,
+                                             error_inout)
+      - chafa_palette_get_first_color (&ctx->indexed_image->palette);
+
+    return index;
+}
+
 static void
 draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
                              ChafaColorHash *chash)
@@ -138,6 +159,136 @@ draw_pixels_pass_2_bayer (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 }
 
 static void
+distribute_error (ChafaColorAccum error_in, ChafaColorAccum *error_out_0,
+                  ChafaColorAccum *error_out_1, ChafaColorAccum *error_out_2,
+                  ChafaColorAccum *error_out_3, gdouble intensity)
+{
+    gint i;
+
+    for (i = 0; i < 3; i++)
+    {
+        gint16 ch = error_in.ch [i];
+
+        error_out_0->ch [i] += (ch * 7);
+        error_out_1->ch [i] += (ch * 1);
+        error_out_2->ch [i] += (ch * 5);
+        error_out_3->ch [i] += (ch * 3);
+    }
+}
+
+static guint8
+fs_dither_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *inpixel_p,
+                 ChafaColorAccum error_in,
+                 ChafaColorAccum *error_out_0, ChafaColorAccum *error_out_1,
+                 ChafaColorAccum *error_out_2, ChafaColorAccum *error_out_3)
+{
+    ChafaColor col = chafa_color8_fetch_from_rgba8 (inpixel_p);
+    guint8 index;
+
+    index = quantize_pixel_with_error (ctx, chash, col, &error_in);
+    distribute_error (error_in,
+                      error_out_0, error_out_1, error_out_2, error_out_3,
+                      ctx->indexed_image->dither.intensity);
+    return index;
+}
+
+static void
+fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *inrow_p,
+               guint8 *outrow_p, ChafaColorAccum *error_row, ChafaColorAccum *next_error_row,
+               gint width, gint y)
+{
+    gint x;
+
+    if (y & 1)
+    {
+        /* Forwards pass */
+
+        outrow_p [0] = fs_dither_pixel (ctx, chash, &inrow_p [0], error_row [0],
+                                        &error_row [1],
+                                        &next_error_row [1],
+                                        &next_error_row [0],
+                                        &next_error_row [1]);
+
+        for (x = 1; x < width - 1; x++)
+        {
+            outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+                                            &error_row [x + 1],
+                                            &next_error_row [x + 1],
+                                            &next_error_row [x],
+                                            &next_error_row [x - 1]);
+        }
+
+        outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+                                        &next_error_row [x],
+                                        &next_error_row [x],
+                                        &next_error_row [x - 1],
+                                        &next_error_row [x - 1]);
+    }
+    else
+    {
+        /* Backwards pass */
+
+        x = width - 1;
+
+        outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+                                        &error_row [x - 1],
+                                        &next_error_row [x - 1],
+                                        &next_error_row [x],
+                                        &next_error_row [x - 1]);
+
+        for (x--; x >= 1; x--)
+        {
+            outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+                                            &error_row [x - 1],
+                                            &next_error_row [x - 1],
+                                            &next_error_row [x],
+                                            &next_error_row [x + 1]);
+        }
+
+        outrow_p [0] = fs_dither_pixel (ctx, chash, &inrow_p [0], error_row [0],
+                                        &next_error_row [0],
+                                        &next_error_row [0],
+                                        &next_error_row [1],
+                                        &next_error_row [1]);
+    }
+}
+
+static void
+draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
+                       ChafaColorHash *chash)
+{
+    ChafaColorAccum *error_row [2];
+    const guint32 *src_p;
+    guint8 *dest_end_p, *dest_p;
+    gint y;
+
+    error_row [0] = alloca (ctx->dest_width * sizeof (ChafaColorAccum));
+    error_row [1] = alloca (ctx->dest_width * sizeof (ChafaColorAccum));
+
+    src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
+    dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
+    dest_end_p = dest_p + (ctx->dest_width * batch->n_rows);
+
+    y = batch->first_row;
+
+    memset (error_row [0], 0, ctx->dest_width * sizeof (ChafaColorAccum));
+
+    for ( ; dest_p < dest_end_p; src_p += ctx->dest_width, dest_p += ctx->dest_width, y++)
+    {
+        ChafaColorAccum *error_row_temp;
+
+        memset (error_row [1], 0, ctx->dest_width * sizeof (ChafaColorAccum));
+
+        fs_dither_row (ctx, chash, src_p, dest_p, error_row [0], error_row [1],
+                       ctx->dest_width, y);
+
+        error_row_temp = error_row [0];
+        error_row [0] = error_row [1];
+        error_row [1] = error_row_temp;
+    }
+}
+
+static void
 draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     ChafaColorHash chash;
@@ -155,7 +306,7 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
             break;
 
         case CHAFA_DITHER_MODE_DIFFUSION:
-            /* TODO */
+            draw_pixels_pass_2_fs (batch, ctx, &chash);
             break;
 
         case CHAFA_DITHER_MODE_MAX:
@@ -181,11 +332,13 @@ draw_pixels (DrawPixelsCtx *ctx)
                                 ctx->scaled_data, ctx->dest_width * ctx->dest_height,
                                 ctx->color_space);
 
+    /* Single thread only for diffusion; it's a fully serial operation */
     chafa_process_batches (ctx,
                            (GFunc) draw_pixels_pass_2_worker,
                            NULL,
                            ctx->dest_height,
-                           g_get_num_processors (),
+                           ctx->indexed_image->dither.mode == CHAFA_DITHER_MODE_DIFFUSION
+                             ? 1 : g_get_num_processors (),
                            1);
 }
 
