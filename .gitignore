@@ -1,8 +1,10 @@
-*/*.la
-*/*.lo
-*/*.o
-*/.deps
-*/.libs
+*~
+\#*\#
+*.la
+*.lo
+*.o
+.deps
+.libs
 Makefile
 Makefile.in
 aclocal.m4
