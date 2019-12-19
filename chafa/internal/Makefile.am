@@ -24,6 +24,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-indexed-image.h \
 	chafa-palette.c \
 	chafa-palette.h \
+	chafa-pca.c \
+	chafa-pca.h \
 	chafa-private.h \
 	chafa-sixel-canvas.c \
 	chafa-sixel-canvas.h \
