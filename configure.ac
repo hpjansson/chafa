@@ -36,6 +36,8 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 
 dnl --- Standard setup ---
 
+BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes"
+
 AM_SANITY_CHECK
 AM_MAINTAINER_MODE
 
@@ -308,6 +310,15 @@ case "$host" in
     ;;
 esac
 
+dnl
+dnl We're not picky about floating point behavior, and this makes e.g.
+dnl lrintf() a lot faster.
+dnl
+AX_CHECK_COMPILE_FLAG([-ffast-math],
+    [BASE_CFLAGS="$BASE_CFLAGS -ffast-math"],
+    ,
+    [-Werror])
+
 dnl --- ImageMagick checks ---
 
 dnl ImageMagick 6 needs #include <wand/MagickWand.h>
@@ -374,8 +385,6 @@ CFLAGS=$SAVED_CFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 
 dnl --- Set compiler flags ---
-
-BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes"
 
 LIBCHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_VISIBILITY_CFLAGS"
 LIBCHAFA_LDFLAGS="$CHAFA_BDYNAMIC_FLAGS"
