@@ -24,14 +24,14 @@
 
 G_BEGIN_DECLS
 
-#define CHAFA_VEC3_INIT(x, y, z) { { (x), (y), (z) } }
-#define CHAFA_VEC3_INIT_ZERO CHAFA_VEC3_INIT (0.0, 0.0, 0.0)
+#define CHAFA_VEC3F32_INIT(x, y, z) { { (x), (y), (z) } }
+#define CHAFA_VEC3F32_INIT_ZERO CHAFA_VEC3F32_INIT (0.0, 0.0, 0.0)
 
 typedef struct
 {
     gfloat v [3];
 }
-ChafaVec3;
+ChafaVec3f32;
 
 typedef struct
 {
@@ -39,11 +39,11 @@ typedef struct
 }
 ChafaVec3i32;
 
-void chafa_vec3_array_compute_pca (const ChafaVec3 *vecs_in, gint n_vecs,
-                                   gint n_components,
-                                   ChafaVec3 *eigenvectors_out,
-                                   gfloat *eigenvalues_out,
-                                   ChafaVec3 *average_out);
+void chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
+                                      gint n_components,
+                                      ChafaVec3f32 *eigenvectors_out,
+                                      gfloat *eigenvalues_out,
+                                      ChafaVec3f32 *average_out);
 
 G_END_DECLS
 

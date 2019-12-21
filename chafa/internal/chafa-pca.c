@@ -31,7 +31,7 @@ chafa_vec3i32_set (ChafaVec3i32 *out, gint32 x, gint32 y, gint32 z)
 }
 
 static void
-chafa_vec3i32_from_vec3 (ChafaVec3i32 *out, const ChafaVec3 *in)
+chafa_vec3i32_from_vec3 (ChafaVec3i32 *out, const ChafaVec3f32 *in)
 {
     /* lrintf() rounding can be extremely slow, so use this function
      * sparingly. We use tricks to make GCC emit cvtss2si instructions
@@ -59,13 +59,13 @@ chafa_vec3i32_dot_64 (const ChafaVec3i32 *v, const ChafaVec3i32 *u)
 }
 
 static void
-chafa_vec3_copy (ChafaVec3 *dest, const ChafaVec3 *src)
+chafa_vec3f32_copy (ChafaVec3f32 *dest, const ChafaVec3f32 *src)
 {
     *dest = *src;
 }
 
 static void
-chafa_vec3_add (ChafaVec3 *out, const ChafaVec3 *a, const ChafaVec3 *b)
+chafa_vec3f32_add (ChafaVec3f32 *out, const ChafaVec3f32 *a, const ChafaVec3f32 *b)
 {
     out->v [0] = a->v [0] + b->v [0];
     out->v [1] = a->v [1] + b->v [1];
@@ -73,29 +73,29 @@ chafa_vec3_add (ChafaVec3 *out, const ChafaVec3 *a, const ChafaVec3 *b)
 }
 
 static void
-chafa_vec3_add_from_array (ChafaVec3 *accum, const ChafaVec3 *v, gint n)
+chafa_vec3f32_add_from_array (ChafaVec3f32 *accum, const ChafaVec3f32 *v, gint n)
 {
     gint i;
 
     for (i = 0; i < n; i++)
     {
-        chafa_vec3_add (accum, accum, &v [i]);
+        chafa_vec3f32_add (accum, accum, &v [i]);
     }
 }
 
 static void
-chafa_vec3_add_to_array (ChafaVec3 *v, const ChafaVec3 *in, gint n)
+chafa_vec3f32_add_to_array (ChafaVec3f32 *v, const ChafaVec3f32 *in, gint n)
 {
     gint i;
 
     for (i = 0; i < n; i++)
     {
-        chafa_vec3_add (&v [i], &v [i], in);
+        chafa_vec3f32_add (&v [i], &v [i], in);
     }
 }
 
 static void
-chafa_vec3_sub (ChafaVec3 *out, const ChafaVec3 *a, const ChafaVec3 *b)
+chafa_vec3f32_sub (ChafaVec3f32 *out, const ChafaVec3f32 *a, const ChafaVec3f32 *b)
 {
     out->v [0] = a->v [0] - b->v [0];
     out->v [1] = a->v [1] - b->v [1];
@@ -103,7 +103,7 @@ chafa_vec3_sub (ChafaVec3 *out, const ChafaVec3 *a, const ChafaVec3 *b)
 }
 
 static void
-chafa_vec3_mul_scalar (ChafaVec3 *out, const ChafaVec3 *in, gfloat s)
+chafa_vec3f32_mul_scalar (ChafaVec3f32 *out, const ChafaVec3f32 *in, gfloat s)
 {
     out->v [0] = in->v [0] * s;
     out->v [1] = in->v [1] * s;
@@ -111,13 +111,13 @@ chafa_vec3_mul_scalar (ChafaVec3 *out, const ChafaVec3 *in, gfloat s)
 }
 
 static gfloat
-chafa_vec3_dot (const ChafaVec3 *v, const ChafaVec3 *u)
+chafa_vec3f32_dot (const ChafaVec3f32 *v, const ChafaVec3f32 *u)
 {
     return v->v [0] * u->v [0] + v->v [1] * u->v [1] + v->v [2] * u->v [2];
 }
 
 static void
-chafa_vec3_set (ChafaVec3 *v, gfloat x, gfloat y, gfloat z)
+chafa_vec3f32_set (ChafaVec3f32 *v, gfloat x, gfloat y, gfloat z)
 {
     v->v [0] = x;
     v->v [1] = y;
@@ -125,44 +125,44 @@ chafa_vec3_set (ChafaVec3 *v, gfloat x, gfloat y, gfloat z)
 }
 
 static void
-chafa_vec3_set_zero (ChafaVec3 *v)
+chafa_vec3f32_set_zero (ChafaVec3f32 *v)
 {
-    chafa_vec3_set (v, 0.0, 0.0, 0.0);
+    chafa_vec3f32_set (v, 0.0, 0.0, 0.0);
 }
 
 static gfloat
-chafa_vec3_get_magnitude (const ChafaVec3 *v)
+chafa_vec3f32_get_magnitude (const ChafaVec3f32 *v)
 {
     return sqrtf (v->v [0] * v->v [0] + v->v [1] * v->v [1] + v->v [2] * v->v [2]);
 }
 
 static void
-chafa_vec3_normalize (ChafaVec3 *out, const ChafaVec3 *in)
+chafa_vec3f32_normalize (ChafaVec3f32 *out, const ChafaVec3f32 *in)
 {
     gfloat m;
 
-    m = 1.0 / chafa_vec3_get_magnitude (in);
+    m = 1.0 / chafa_vec3f32_get_magnitude (in);
     out->v [0] = in->v [0] * m;
     out->v [1] = in->v [1] * m;
     out->v [2] = in->v [2] * m;
 }
 
 static void
-chafa_vec3_average_array (ChafaVec3 *out, const ChafaVec3 *v, gint n)
+chafa_vec3f32_average_array (ChafaVec3f32 *out, const ChafaVec3f32 *v, gint n)
 {
-    chafa_vec3_set_zero (out);
-    chafa_vec3_add_from_array (out, v, n);
-    chafa_vec3_mul_scalar (out, out, 1.0 / n);
+    chafa_vec3f32_set_zero (out);
+    chafa_vec3f32_add_from_array (out, v, n);
+    chafa_vec3f32_mul_scalar (out, out, 1.0 / n);
 }
 
 #define PCA_POWER_MAX_ITERATIONS 1000
 #define PCA_POWER_MIN_ERROR 0.0001
 
 static gfloat
-pca_converge (const ChafaVec3 *vecs_in, gint n_vecs,
-              ChafaVec3 *eigenvector_out)
+pca_converge (const ChafaVec3f32 *vecs_in, gint n_vecs,
+              ChafaVec3f32 *eigenvector_out)
 {
-    ChafaVec3 r = CHAFA_VEC3_INIT (.11, .23, .51);
+    ChafaVec3f32 r = CHAFA_VEC3F32_INIT (.11, .23, .51);
     gfloat eigenvalue;
     gint i, j;
 
@@ -171,42 +171,42 @@ pca_converge (const ChafaVec3 *vecs_in, gint n_vecs,
     /* FIXME: r should probably be random, and we should try again
      * if we pick a bad one */
 
-    chafa_vec3_normalize (&r, &r);
+    chafa_vec3f32_normalize (&r, &r);
 
     for (j = 0; j < PCA_POWER_MAX_ITERATIONS; j++)
     {
-        ChafaVec3 s = CHAFA_VEC3_INIT_ZERO;
-        ChafaVec3 t;
+        ChafaVec3f32 s = CHAFA_VEC3F32_INIT_ZERO;
+        ChafaVec3f32 t;
         gfloat err;
 
         for (i = 0; i < n_vecs; i++)
         {
             gfloat u;
 
-            u = chafa_vec3_dot (&vecs_in [i], &r);
-            chafa_vec3_mul_scalar (&t, &vecs_in [i], u);
-            chafa_vec3_add (&s, &s, &t);
+            u = chafa_vec3f32_dot (&vecs_in [i], &r);
+            chafa_vec3f32_mul_scalar (&t, &vecs_in [i], u);
+            chafa_vec3f32_add (&s, &s, &t);
         }
 
-        eigenvalue = chafa_vec3_dot (&r, &s);
+        eigenvalue = chafa_vec3f32_dot (&r, &s);
 
-        chafa_vec3_mul_scalar (&t, &r, eigenvalue);
-        chafa_vec3_sub (&t, &t, &s);
-        err = chafa_vec3_get_magnitude (&t);
+        chafa_vec3f32_mul_scalar (&t, &r, eigenvalue);
+        chafa_vec3f32_sub (&t, &t, &s);
+        err = chafa_vec3f32_get_magnitude (&t);
 
-        chafa_vec3_copy (&r, &s);
-        chafa_vec3_normalize (&r, &r);
+        chafa_vec3f32_copy (&r, &s);
+        chafa_vec3f32_normalize (&r, &r);
 
         if (err < PCA_POWER_MIN_ERROR)
             break;
     }
 
-    chafa_vec3_copy (eigenvector_out, &r);
+    chafa_vec3f32_copy (eigenvector_out, &r);
     return eigenvalue;
 }
 
 static void
-pca_deflate (ChafaVec3 *vecs, gint n_vecs, const ChafaVec3 *eigenvector)
+pca_deflate (ChafaVec3f32 *vecs, gint n_vecs, const ChafaVec3f32 *eigenvector)
 {
     gint i;
 
@@ -216,17 +216,17 @@ pca_deflate (ChafaVec3 *vecs, gint n_vecs, const ChafaVec3 *eigenvector)
 
     for (i = 0; i < n_vecs; i++)
     {
-        ChafaVec3 t;
+        ChafaVec3f32 t;
         gfloat score;
 
-        score = chafa_vec3_dot (&vecs [i], eigenvector);
-        chafa_vec3_mul_scalar (&t, eigenvector, score);
-        chafa_vec3_sub (&vecs [i], &vecs [i], &t);
+        score = chafa_vec3f32_dot (&vecs [i], eigenvector);
+        chafa_vec3f32_mul_scalar (&t, eigenvector, score);
+        chafa_vec3f32_sub (&vecs [i], &vecs [i], &t);
     }
 }
 
 /**
- * chafa_vec3_array_compute_pca:
+ * chafa_vec3f32_array_compute_pca:
  * @vecs_in: Input vector array
  * @n_vecs: Number of vectors in array
  * @n_components: Number of components to compute (1 or 2)
@@ -239,30 +239,30 @@ pca_deflate (ChafaVec3 *vecs, gint n_vecs, const ChafaVec3 *eigenvector)
  * be good enough for our purposes.
  **/
 void
-chafa_vec3_array_compute_pca (const ChafaVec3 *vecs_in, gint n_vecs,
-                              gint n_components,
-                              ChafaVec3 *eigenvectors_out,
-                              gfloat *eigenvalues_out,
-                              ChafaVec3 *average_out)
+chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
+                                 gint n_components,
+                                 ChafaVec3f32 *eigenvectors_out,
+                                 gfloat *eigenvalues_out,
+                                 ChafaVec3f32 *average_out)
 {
-    ChafaVec3 *v;
-    ChafaVec3 average;
-    ChafaVec3 t;
+    ChafaVec3f32 *v;
+    ChafaVec3f32 average;
+    ChafaVec3f32 t;
     gfloat eigenvalue;
     gint i;
 
-    v = alloca (n_vecs * sizeof (ChafaVec3));
-    memcpy (v, vecs_in, n_vecs * sizeof (ChafaVec3));
+    v = alloca (n_vecs * sizeof (ChafaVec3f32));
+    memcpy (v, vecs_in, n_vecs * sizeof (ChafaVec3f32));
 
     /* Calculate average */
 
-    chafa_vec3_average_array (&average, v, n_vecs);
+    chafa_vec3f32_average_array (&average, v, n_vecs);
 
     /* Recenter around average */
 
-    chafa_vec3_set_zero (&t);
-    chafa_vec3_sub (&t, &t, &average);
-    chafa_vec3_add_to_array (v, &t, n_vecs);
+    chafa_vec3f32_set_zero (&t);
+    chafa_vec3f32_sub (&t, &t, &average);
+    chafa_vec3f32_add_to_array (v, &t, n_vecs);
 
     /* Compute principal components */
 
@@ -272,7 +272,7 @@ chafa_vec3_array_compute_pca (const ChafaVec3 *vecs_in, gint n_vecs,
 
         if (eigenvectors_out)
         {
-            chafa_vec3_copy (eigenvectors_out, &t);
+            chafa_vec3f32_copy (eigenvectors_out, &t);
             eigenvectors_out++;
         }
 
@@ -289,5 +289,5 @@ chafa_vec3_array_compute_pca (const ChafaVec3 *vecs_in, gint n_vecs,
     }
 
     if (average_out)
-        chafa_vec3_copy (average_out, &average);
+        chafa_vec3f32_copy (average_out, &average);
 }
