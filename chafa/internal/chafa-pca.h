@@ -33,6 +33,12 @@ typedef struct
 }
 ChafaVec3;
 
+typedef struct
+{
+    gint32 v [3];
+}
+ChafaVec3i32;
+
 void chafa_vec3_array_compute_pca (const ChafaVec3 *vecs_in, gint n_vecs,
                                    gint n_components,
                                    ChafaVec3 *eigenvectors_out,

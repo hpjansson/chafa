@@ -23,6 +23,42 @@
 #include <math.h>
 
 static void
+chafa_vec3i32_set (ChafaVec3i32 *out, gint32 x, gint32 y, gint32 z)
+{
+    out->v [0] = x;
+    out->v [1] = y;
+    out->v [2] = z;
+}
+
+static void
+chafa_vec3i32_from_vec3 (ChafaVec3i32 *out, const ChafaVec3 *in)
+{
+    /* lrintf() rounding can be extremely slow, so use this function
+     * sparingly. We use tricks to make GCC emit cvtss2si instructions
+     * ("-fno-math-errno -fno-trapping-math", or simply "-ffast-math"),
+     * but Clang apparently cannot be likewise persuaded.
+     *
+     * Clang _does_ like rounding with SSE 4.1, but that's not something
+     * we can enable by default. */
+
+    out->v [0] = lrintf (in->v [0]);
+    out->v [1] = lrintf (in->v [1]);
+    out->v [2] = lrintf (in->v [2]);
+}
+
+static gint32
+chafa_vec3i32_dot_32 (const ChafaVec3i32 *v, const ChafaVec3i32 *u)
+{
+    return v->v [0] * u->v [0] + v->v [1] * u->v [1] + v->v [2] * u->v [2];
+}
+
+static gint64
+chafa_vec3i32_dot_64 (const ChafaVec3i32 *v, const ChafaVec3i32 *u)
+{
+    return v->v [0] * u->v [0] + v->v [1] * u->v [1] + v->v [2] * u->v [2];
+}
+
+static void
 chafa_vec3_copy (ChafaVec3 *dest, const ChafaVec3 *src)
 {
     *dest = *src;
