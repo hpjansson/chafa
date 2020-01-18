@@ -176,7 +176,7 @@ if test "x${enable_Bsymbolic}" = "xyes"; then
 fi
 
 dnl
-dnl Check for gcc x86 instruction set check builtins
+dnl Check for runtime gcc x86 instruction set detection. Used in 'chafa-features.c'.
 dnl
 
 AC_CACHE_CHECK([for gcc __builtin_cpu_init function],
