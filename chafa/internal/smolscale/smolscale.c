@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright © 2019 Hans Petter Jansson. See COPYING for details. */
+/* Copyright © 2019-2020 Hans Petter Jansson. See COPYING for details. */
 
 #include <assert.h> /* assert */
 #include <stdlib.h> /* malloc, free, alloca */
@@ -632,7 +632,7 @@ pack_row_a234_p_to_432_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 static SMOL_INLINE uint32_t
 pack_pixel_123a_i_to_1234_u_128bpp (const uint64_t * SMOL_RESTRICT in)
 {
-    uint8_t alpha = in [1] & 0xff;
+    uint8_t alpha = (in [1] >> 8) & 0xff;
     uint64_t t [2];
 
     unpremul_i_to_u_128bpp (in, t, alpha);
@@ -664,7 +664,7 @@ pack_row_123a_i_to_123_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
                                  uint8_t * SMOL_RESTRICT row_out,
                                  uint32_t n_pixels)
 {
-    uint8_t *row_out_max = row_out + n_pixels;
+    uint8_t *row_out_max = row_out + n_pixels * 3;
 
     SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
 
@@ -683,7 +683,7 @@ pack_row_123a_i_to_321_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
                                  uint8_t * SMOL_RESTRICT row_out,
                                  uint32_t n_pixels)
 {
-    uint8_t *row_out_max = row_out + n_pixels;
+    uint8_t *row_out_max = row_out + n_pixels * 3;
 
     SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
 
@@ -701,7 +701,7 @@ pack_row_123a_i_to_321_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 static SMOL_INLINE uint32_t                                             \
 pack_pixel_123a_i_to_##a##b##c##d##_u_128bpp (const uint64_t * SMOL_RESTRICT in) \
 {                                                                       \
-    uint8_t alpha = in [1] & 0xff;                                      \
+    uint8_t alpha = (in [1] >> 8) & 0xff;                      \
     uint64_t t [2];                                                     \
     unpremul_i_to_u_128bpp (in, t, alpha);                              \
     t [1] = (t [1] & 0xffffffff00000000ULL) | alpha;                    \
@@ -889,7 +889,7 @@ unpack_pixel_a234_u_to_234a_i_128bpp (uint32_t p,
     uint64_t alpha = p >> 24;
 
     out [0] = (((((p64 & 0x00ff0000) << 16) | ((p64 & 0x0000ff00) >> 8)) * alpha));
-    out [1] = (((((p64 & 0x000000ff) << 32) * alpha))) | alpha;
+    out [1] = (((((p64 & 0x000000ff) << 32) * alpha))) | (alpha << 8) | 0x80;
 }
 
 static void
@@ -972,7 +972,7 @@ unpack_pixel_123a_u_to_123a_i_128bpp (uint32_t p,
     uint64_t alpha = p & 0xff;
 
     out [0] = (((((p64 & 0xff000000) << 8) | ((p64 & 0x00ff0000) >> 16)) * alpha));
-    out [1] = (((((p64 & 0x0000ff00) << 24) * alpha))) | alpha;
+    out [1] = (((((p64 & 0x0000ff00) << 24) * alpha))) | (alpha << 8) | 0x80;
 }
 
 static void
