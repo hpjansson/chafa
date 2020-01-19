@@ -19,6 +19,14 @@ extern "C" {
 # pragma GCC diagnostic error "-Wswitch"
 #endif
 
+/* Compensate for GCC missing intrinsics */
+#ifdef __GNUC__
+# if __GNUC__ < 8
+#  define _mm256_set_m128i(h, l) \
+    _mm256_insertf128_si256 (_mm256_castsi128_si256 (l), (h), 1)
+# endif
+#endif
+
 #ifndef FALSE
 # define FALSE (0)
 #endif
