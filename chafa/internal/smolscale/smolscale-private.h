@@ -49,28 +49,25 @@ typedef unsigned int SmolBool;
     (((a) << 7) | ((b) << 6) | ((c) << 5) | ((d) << 4)                  \
      | ((e) << 3) | ((f) << 2) | ((g) << 1) | ((h) << 0))
 
-#define SMOL_TEMP_ALIGNMENT 64
-#define SMOL_ASSUME_ALIGNED(x, t, a) (x) = (t) __builtin_assume_aligned ((x), (a))
-#define SMOL_ASSUME_TEMP_ALIGNED(x, t) (x) = (t) __builtin_assume_aligned ((x), SMOL_TEMP_ALIGNMENT)
-
 #define SMOL_UNUSED(x) (void) ((x)=(x))
 #define SMOL_RESTRICT __restrict
 #define SMOL_INLINE __attribute__((always_inline)) inline
 #define SMOL_CONST __attribute__((const))
 #define SMOL_PURE __attribute__((pure))
-#define SMOL_ALIGNED_4 __attribute__((aligned(4)))
-#define SMOL_ALIGNED_8 __attribute__((aligned(8)))
-#define SMOL_ALIGNED_16 __attribute__((aligned(16)))
-#define SMOL_ALIGNED_32 __attribute__((aligned(32)))
-#define SMOL_ALIGNED_64 __attribute__((aligned(64)))
 
-#define SMALL_MUL 256U
-#define BIG_MUL 65536U
-#define BOXES_MULTIPLIER ((uint64_t) BIG_MUL * SMALL_MUL)
-#define BILIN_MULTIPLIER ((uint64_t) BIG_MUL * BIG_MUL)
+#define SMOL_SMALL_MUL 256U
+#define SMOL_BIG_MUL 65536U
+#define SMOL_BOXES_MULTIPLIER ((uint64_t) SMOL_BIG_MUL * SMOL_SMALL_MUL)
+#define SMOL_BILIN_MULTIPLIER ((uint64_t) SMOL_BIG_MUL * SMOL_BIG_MUL)
 
-#define aligned_alloca(s, a) \
+#define SMOL_ALIGNMENT 64
+
+#define SMOL_ASSUME_ALIGNED_TO(x, t, n) (x) = (t) __builtin_assume_aligned ((x), (n))
+#define SMOL_ASSUME_ALIGNED(x, t) SMOL_ASSUME_ALIGNED_TO ((x), t, SMOL_ALIGNMENT)
+
+#define smol_alloca_aligned_to(s, a) \
   ({ void *p = alloca ((s) + (a)); p = (void *) (((uintptr_t) (p) + (a)) & ~((a) - 1)); (p); })
+#define smol_alloca_aligned(s) smol_alloca_aligned_to (s, SMOL_ALIGNMENT)
 
 typedef enum
 {

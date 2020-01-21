@@ -186,7 +186,7 @@ pack_row_1324_p_to_1234_p_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint32_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -201,7 +201,7 @@ pack_row_132a_p_to_123_p_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -220,7 +220,7 @@ pack_row_132a_p_to_321_p_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -245,7 +245,7 @@ pack_row_1324_p_to_##a##b##c##d##_p_64bpp (const uint64_t * SMOL_RESTRICT row_in
                                            uint32_t n_pixels)           \
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     while (row_out != row_out_max)                                      \
         *(row_out++) = pack_pixel_1324_p_to_##a##b##c##d##_p_64bpp (*(row_in++)); \
 }
@@ -273,7 +273,7 @@ pack_row_1234_p_to_1234_p_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint32_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -295,7 +295,7 @@ pack_row_1234_p_to_##a##b##c##d##_p_128bpp (const uint64_t * SMOL_RESTRICT row_i
                                             uint32_t n_pixels)          \
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     while (row_out != row_out_max)                                      \
     {                                                                   \
         *(row_out++) = pack_pixel_1234_p_to_##a##b##c##d##_p_128bpp (row_in); \
@@ -316,7 +316,7 @@ pack_row_123a_p_to_123_p_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -333,7 +333,7 @@ pack_row_123a_p_to_321_p_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -361,7 +361,7 @@ pack_row_132a_p_to_1234_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint32_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -376,7 +376,7 @@ pack_row_132a_p_to_123_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -394,7 +394,7 @@ pack_row_132a_p_to_321_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -420,7 +420,7 @@ pack_row_132a_p_to_##a##b##c##d##_u_64bpp (const uint64_t * SMOL_RESTRICT row_in
                                            uint32_t n_pixels)           \
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     while (row_out != row_out_max)                                      \
         *(row_out++) = pack_pixel_132a_p_to_##a##b##c##d##_u_64bpp (*(row_in++)); \
 }
@@ -446,7 +446,7 @@ pack_row_123a_p_to_##a##b##c##d##_u_128bpp (const uint64_t * SMOL_RESTRICT row_i
                                             uint32_t n_pixels)          \
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     while (row_out != row_out_max)                                      \
     {                                                                   \
         *(row_out++) = pack_pixel_123a_p_to_##a##b##c##d##_u_128bpp (row_in); \
@@ -466,7 +466,7 @@ pack_row_123a_p_to_123_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -485,7 +485,7 @@ pack_row_123a_p_to_321_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -514,7 +514,7 @@ pack_row_a324_p_to_1234_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint32_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -529,7 +529,7 @@ pack_row_a324_p_to_234_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -547,7 +547,7 @@ pack_row_a324_p_to_432_u_64bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -573,7 +573,7 @@ pack_row_a324_p_to_##a##b##c##d##_u_64bpp (const uint64_t * SMOL_RESTRICT row_in
                                            uint32_t n_pixels)           \
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     while (row_out != row_out_max)                                      \
         *(row_out++) = pack_pixel_a324_p_to_##a##b##c##d##_u_64bpp (*(row_in++)); \
 }
@@ -599,7 +599,7 @@ pack_row_a234_p_to_##a##b##c##d##_u_128bpp (const uint64_t * SMOL_RESTRICT row_i
                                             uint32_t n_pixels)          \
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     while (row_out != row_out_max)                                      \
     {                                                                   \
         *(row_out++) = pack_pixel_a234_p_to_##a##b##c##d##_u_128bpp (row_in); \
@@ -619,7 +619,7 @@ pack_row_a234_p_to_234_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -638,7 +638,7 @@ pack_row_a234_p_to_432_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -688,7 +688,7 @@ pack_8x_123a_i_to_xxxx_u_128bpp (const uint64_t * SMOL_RESTRICT *in,
     const __m256i * SMOL_RESTRICT my_in = (const __m256i * SMOL_RESTRICT) *in;
     __m256i * SMOL_RESTRICT my_out = (__m256i * SMOL_RESTRICT) *out;
 
-    SMOL_ASSUME_TEMP_ALIGNED (my_in, __m256i * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (my_in, __m256i * SMOL_RESTRICT);
 
     while ((ptrdiff_t) (my_out + 1) <= (ptrdiff_t) out_max)
     {
@@ -800,7 +800,7 @@ pack_row_123a_i_to_1234_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
     uint32_t *row_out_max = row_out + n_pixels;
     const __m256i channel_shuf = PACK_SHUF_MM256_EPI8 (1, 2, 3, 4);
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t * SMOL_RESTRICT);
 
     pack_8x_123a_i_to_xxxx_u_128bpp (&row_in, &row_out, row_out_max,
                                      channel_shuf);
@@ -819,7 +819,7 @@ pack_row_123a_i_to_123_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -838,7 +838,7 @@ pack_row_123a_i_to_321_u_128bpp (const uint64_t * SMOL_RESTRICT row_in,
 {
     uint8_t *row_out_max = row_out + n_pixels * 3;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -868,7 +868,7 @@ pack_row_123a_i_to_##a##b##c##d##_u_128bpp (const uint64_t * SMOL_RESTRICT row_i
 {                                                                       \
     uint32_t *row_out_max = row_out + n_pixels;                         \
     const __m256i channel_shuf = PACK_SHUF_MM256_EPI8 ((a), (b), (c), (d)); \
-    SMOL_ASSUME_TEMP_ALIGNED (row_in, const uint64_t *);                \
+    SMOL_ASSUME_ALIGNED (row_in, const uint64_t *);                     \
     pack_8x_123a_i_to_xxxx_u_128bpp (&row_in, &row_out, row_out_max,    \
                                      channel_shuf);                     \
     while (row_out != row_out_max)                                      \
@@ -900,7 +900,7 @@ unpack_row_1234_p_to_1324_p_64bpp (const uint32_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -922,7 +922,7 @@ unpack_row_123_p_to_132a_p_64bpp (const uint8_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -947,7 +947,7 @@ unpack_row_1234_p_to_1234_p_128bpp (const uint32_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels * 2;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -971,7 +971,7 @@ unpack_row_123_p_to_123a_p_128bpp (const uint8_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels * 2;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -999,7 +999,7 @@ unpack_row_a234_u_to_a324_p_64bpp (const uint32_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -1026,7 +1026,7 @@ unpack_row_a234_u_to_a234_p_128bpp (const uint32_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels * 2;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -1058,7 +1058,7 @@ unpack_8x_xxxx_u_to_123a_i_128bpp (const uint32_t * SMOL_RESTRICT *in,
     const __m256i * SMOL_RESTRICT my_in = (const __m256i * SMOL_RESTRICT) *in;
     __m256i * SMOL_RESTRICT my_out = (__m256i * SMOL_RESTRICT) *out;
 
-    SMOL_ASSUME_TEMP_ALIGNED (my_out, __m256i * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (my_out, __m256i * SMOL_RESTRICT);
 
     while ((ptrdiff_t) (my_out + 4) <= (ptrdiff_t) out_max)
     {
@@ -1128,7 +1128,7 @@ unpack_row_a234_u_to_234a_i_128bpp (const uint32_t * SMOL_RESTRICT row_in,
         12,15,14,13, 8,11,10,9, 4,7,6,5, 0,3,2,1,
         12,15,14,13, 8,11,10,9, 4,7,6,5, 0,3,2,1);
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t * SMOL_RESTRICT);
 
     unpack_8x_xxxx_u_to_123a_i_128bpp (&row_in, &row_out, row_out_max,
                                        channel_shuf);
@@ -1158,7 +1158,7 @@ unpack_row_123a_u_to_132a_p_64bpp (const uint32_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -1185,7 +1185,7 @@ unpack_row_123a_u_to_123a_p_128bpp (const uint32_t * SMOL_RESTRICT row_in,
 {
     uint64_t *row_out_max = row_out + n_pixels * 2;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t *);
 
     while (row_out != row_out_max)
     {
@@ -1217,7 +1217,7 @@ unpack_row_123a_u_to_123a_i_128bpp (const uint32_t * SMOL_RESTRICT row_in,
         13,12,15,14, 9,8,11,10, 5,4,7,6, 1,0,3,2,
         13,12,15,14, 9,8,11,10, 5,4,7,6, 1,0,3,2);
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_out, uint64_t * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (row_out, uint64_t * SMOL_RESTRICT);
 
     unpack_8x_xxxx_u_to_123a_i_128bpp (&row_in, &row_out, row_out_max,
                                        channel_shuf);
@@ -1270,7 +1270,7 @@ sum_parts_64bpp (const uint64_t ** SMOL_RESTRICT parts_in,
     const uint64_t *pp_end;
     const uint64_t * SMOL_RESTRICT pp = *parts_in;
 
-    SMOL_ASSUME_ALIGNED (pp, const uint64_t *, sizeof (uint64_t));
+    SMOL_ASSUME_ALIGNED_TO (pp, const uint64_t *, sizeof (uint64_t));
 
     for (pp_end = pp + n; pp < pp_end; pp++)
     {
@@ -1288,7 +1288,7 @@ sum_parts_128bpp (const uint64_t ** SMOL_RESTRICT parts_in,
     const uint64_t *pp_end;
     const uint64_t * SMOL_RESTRICT pp = *parts_in;
 
-    SMOL_ASSUME_ALIGNED (pp, const uint64_t *, sizeof (uint64_t) * 2);
+    SMOL_ASSUME_ALIGNED_TO (pp, const uint64_t *, sizeof (uint64_t) * 2);
 
     for (pp_end = pp + n * 2; pp < pp_end; )
     {
@@ -1307,9 +1307,9 @@ scale_64bpp (uint64_t accum,
 
     /* Average the inputs */
     a = ((accum & 0x0000ffff0000ffffULL) * multiplier
-         + (BOXES_MULTIPLIER / 2) + ((BOXES_MULTIPLIER / 2) << 32)) / BOXES_MULTIPLIER;
+         + (SMOL_BOXES_MULTIPLIER / 2) + ((SMOL_BOXES_MULTIPLIER / 2) << 32)) / SMOL_BOXES_MULTIPLIER;
     b = (((accum & 0xffff0000ffff0000ULL) >> 16) * multiplier
-         + (BOXES_MULTIPLIER / 2) + ((BOXES_MULTIPLIER / 2) << 32)) / BOXES_MULTIPLIER;
+         + (SMOL_BOXES_MULTIPLIER / 2) + ((SMOL_BOXES_MULTIPLIER / 2) << 32)) / SMOL_BOXES_MULTIPLIER;
 
     /* Return pixel */
     return (a & 0x000000ff000000ffULL) | ((b & 0x000000ff000000ffULL) << 16);
@@ -1322,10 +1322,10 @@ scale_128bpp_half (uint64_t accum,
     uint64_t a, b;
 
     a = accum & 0x00000000ffffffffULL;
-    a = (a * multiplier + BOXES_MULTIPLIER / 2) / BOXES_MULTIPLIER;
+    a = (a * multiplier + SMOL_BOXES_MULTIPLIER / 2) / SMOL_BOXES_MULTIPLIER;
 
     b = (accum & 0xffffffff00000000ULL) >> 32;
-    b = (b * multiplier + BOXES_MULTIPLIER / 2) / BOXES_MULTIPLIER;
+    b = (b * multiplier + SMOL_BOXES_MULTIPLIER / 2) / SMOL_BOXES_MULTIPLIER;
 
     return (a & 0x000000000000ffffULL)
            | ((b & 0x000000000000ffffULL) << 32);
@@ -1347,8 +1347,8 @@ add_parts (const uint64_t * SMOL_RESTRICT parts_in,
 {
     const uint64_t *parts_in_max = parts_in + n;
 
-    SMOL_ASSUME_TEMP_ALIGNED (parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (parts_acc_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (parts_acc_out, uint64_t *);
 
     while (parts_in + 4 <= parts_in_max)
     {
@@ -1381,8 +1381,8 @@ interp_horizontal_bilinear_##n_halvings##h_64bpp (const SmolScaleCtx *scale_ctx,
     uint64_t *row_parts_out_max = row_parts_out + scale_ctx->width_out; \
     int i;                                                              \
                                                                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);          \
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);               \
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);               \
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);                    \
                                                                         \
     do                                                                  \
     {                                                                   \
@@ -1415,8 +1415,8 @@ interp_horizontal_bilinear_##n_halvings##h_128bpp (const SmolScaleCtx *scale_ctx
     const __m256i zero256 = _mm256_setzero_si256 ();                    \
     int i;                                                              \
                                                                         \
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);          \
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);               \
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);               \
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);                    \
                                                                         \
     while (row_parts_out != row_parts_out_max)                          \
     {                                                                   \
@@ -1467,8 +1467,8 @@ interp_horizontal_bilinear_0h_64bpp (const SmolScaleCtx *scale_ctx,
     uint64_t F;
     uint64_t * SMOL_RESTRICT row_parts_out_max = row_parts_out + scale_ctx->width_out;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     do
     {
@@ -1497,8 +1497,8 @@ interp_horizontal_bilinear_0h_128bpp (const SmolScaleCtx *scale_ctx,
         0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff);
     const __m256i zero = _mm256_setzero_si256 ();
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     while (row_parts_out + 4 <= row_parts_out_max)
     {
@@ -1566,8 +1566,8 @@ interp_horizontal_boxes_64bpp (const SmolScaleCtx *scale_ctx,
     uint32_t n;
     uint64_t F;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     pp = row_parts_in;
     p = weight_pixel_64bpp (*(pp++), 256);
@@ -1620,8 +1620,8 @@ interp_horizontal_boxes_128bpp (const SmolScaleCtx *scale_ctx,
     uint32_t n;
     uint64_t F;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     pp = row_parts_in;
 
@@ -1692,8 +1692,8 @@ interp_horizontal_one_64bpp (const SmolScaleCtx *scale_ctx,
     uint64_t *row_parts_out_max = row_parts_out + scale_ctx->width_out;
     uint64_t part;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     part = *row_parts_in;
     while (row_parts_out != row_parts_out_max)
@@ -1707,8 +1707,8 @@ interp_horizontal_one_128bpp (const SmolScaleCtx *scale_ctx,
 {
     uint64_t *row_parts_out_max = row_parts_out + scale_ctx->width_out * 2;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     while (row_parts_out != row_parts_out_max)
     {
@@ -1722,8 +1722,8 @@ interp_horizontal_copy_64bpp (const SmolScaleCtx *scale_ctx,
                               const uint64_t * SMOL_RESTRICT row_parts_in,
                               uint64_t * SMOL_RESTRICT row_parts_out)
 {
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     memcpy (row_parts_out, row_parts_in, scale_ctx->width_out * sizeof (uint64_t));
 }
@@ -1733,8 +1733,8 @@ interp_horizontal_copy_128bpp (const SmolScaleCtx *scale_ctx,
                                const uint64_t * SMOL_RESTRICT row_parts_in,
                                uint64_t * SMOL_RESTRICT row_parts_out)
 {
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (row_parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
     memcpy (row_parts_out, row_parts_in, scale_ctx->width_out * 2 * sizeof (uint64_t));
 }
@@ -1747,7 +1747,7 @@ scale_horizontal (const SmolScaleCtx *scale_ctx,
     uint64_t * SMOL_RESTRICT unpacked_in;
 
     /* FIXME: Allocate less for 64bpp */
-    unpacked_in = aligned_alloca (scale_ctx->width_in * sizeof (uint64_t) * 2, SMOL_TEMP_ALIGNMENT);
+    unpacked_in = smol_alloca_aligned (scale_ctx->width_in * sizeof (uint64_t) * 2);
 
     scale_ctx->unpack_row_func (row_in,
                                 unpacked_in,
@@ -1801,9 +1801,9 @@ interp_vertical_bilinear_store_64bpp (uint64_t F,
 {
     uint64_t *parts_out_last = parts_out + width;
 
-    SMOL_ASSUME_TEMP_ALIGNED (top_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (bottom_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (top_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (bottom_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (parts_out, uint64_t *);
 
     do
     {
@@ -1826,9 +1826,9 @@ interp_vertical_bilinear_add_64bpp (uint64_t F,
 {
     uint64_t *accum_out_last = accum_out + width;
 
-    SMOL_ASSUME_TEMP_ALIGNED (top_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (bottom_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (accum_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (top_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (bottom_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (accum_out, uint64_t *);
 
     do
     {
@@ -1844,9 +1844,9 @@ interp_vertical_bilinear_add_64bpp (uint64_t F,
 
 static void
 interp_vertical_bilinear_store_128bpp (uint64_t F,
-                                       const uint64_t * SMOL_RESTRICT SMOL_ALIGNED_64 top_row_parts_in,
-                                       const uint64_t * SMOL_RESTRICT SMOL_ALIGNED_64 bottom_row_parts_in,
-                                       uint64_t * SMOL_RESTRICT SMOL_ALIGNED_64 parts_out,
+                                       const uint64_t * SMOL_RESTRICT top_row_parts_in,
+                                       const uint64_t * SMOL_RESTRICT bottom_row_parts_in,
+                                       uint64_t * SMOL_RESTRICT parts_out,
                                        uint32_t width)
 {
     uint64_t *parts_out_last = parts_out + width;
@@ -1855,9 +1855,9 @@ interp_vertical_bilinear_store_128bpp (uint64_t F,
         0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff);
     __m256i F256;
 
-    SMOL_ASSUME_TEMP_ALIGNED (top_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (bottom_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (top_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (bottom_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (parts_out, uint64_t *);
 
     F256 = _mm256_set1_epi32 ((uint32_t) F);
 
@@ -1915,9 +1915,9 @@ interp_vertical_bilinear_add_128bpp (uint64_t F,
         0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff);
     __m256i F256;
 
-    SMOL_ASSUME_TEMP_ALIGNED (top_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (bottom_row_parts_in, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (accum_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (top_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (bottom_row_parts_in, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (accum_out, uint64_t *);
 
     F256 = _mm256_set1_epi32 ((uint32_t) F);
 
@@ -1976,9 +1976,9 @@ interp_vertical_bilinear_final_##n_halvings##h_64bpp (uint64_t F,               
 {                                                                       \
     uint64_t *accum_inout_last = accum_inout + width;                   \
                                                                         \
-    SMOL_ASSUME_TEMP_ALIGNED (top_row_parts_in, const uint64_t *);      \
-    SMOL_ASSUME_TEMP_ALIGNED (bottom_row_parts_in, const uint64_t *);   \
-    SMOL_ASSUME_TEMP_ALIGNED (accum_inout, uint64_t *);                 \
+    SMOL_ASSUME_ALIGNED (top_row_parts_in, const uint64_t *);           \
+    SMOL_ASSUME_ALIGNED (bottom_row_parts_in, const uint64_t *);        \
+    SMOL_ASSUME_ALIGNED (accum_inout, uint64_t *);                      \
                                                                         \
     do                                                                  \
     {                                                                   \
@@ -2004,9 +2004,9 @@ interp_vertical_bilinear_final_##n_halvings##h_128bpp (uint64_t F,      \
 {                                                                       \
     uint64_t *accum_inout_last = accum_inout + width;                   \
                                                                         \
-    SMOL_ASSUME_TEMP_ALIGNED (top_row_parts_in, const uint64_t *);      \
-    SMOL_ASSUME_TEMP_ALIGNED (bottom_row_parts_in, const uint64_t *);   \
-    SMOL_ASSUME_TEMP_ALIGNED (accum_inout, uint64_t *);                 \
+    SMOL_ASSUME_ALIGNED (top_row_parts_in, const uint64_t *);           \
+    SMOL_ASSUME_ALIGNED (bottom_row_parts_in, const uint64_t *);        \
+    SMOL_ASSUME_ALIGNED (accum_inout, uint64_t *);                      \
                                                                         \
     do                                                                  \
     {                                                                   \
@@ -2199,8 +2199,8 @@ finalize_vertical_64bpp (const uint64_t * SMOL_RESTRICT accums,
 {
     uint64_t *parts_out_max = parts_out + n;
 
-    SMOL_ASSUME_TEMP_ALIGNED (accums, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (accums, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (parts_out, uint64_t *);
 
     while (parts_out != parts_out_max)
     {
@@ -2215,7 +2215,7 @@ weight_edge_row_64bpp (uint64_t *row,
 {
     uint64_t *row_max = row + n;
 
-    SMOL_ASSUME_TEMP_ALIGNED (row, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row, uint64_t *);
 
     while (row != row_max)
     {
@@ -2233,9 +2233,9 @@ scale_and_weight_edge_rows_box_64bpp (const uint64_t * SMOL_RESTRICT first_row,
 {
     const uint64_t *first_row_max = first_row + n;
 
-    SMOL_ASSUME_TEMP_ALIGNED (first_row, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (last_row, uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (accum, uint64_t *);
+    SMOL_ASSUME_ALIGNED (first_row, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (last_row, uint64_t *);
+    SMOL_ASSUME_ALIGNED (accum, uint64_t *);
 
     while (first_row != first_row_max)
     {
@@ -2350,8 +2350,8 @@ finalize_vertical_128bpp (const uint64_t * SMOL_RESTRICT accums,
 {
     uint64_t *parts_out_max = parts_out + n * 2;
 
-    SMOL_ASSUME_TEMP_ALIGNED (accums, const uint64_t *);
-    SMOL_ASSUME_TEMP_ALIGNED (parts_out, uint64_t *);
+    SMOL_ASSUME_ALIGNED (accums, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (parts_out, uint64_t *);
 
     while (parts_out != parts_out_max)
     {
@@ -2367,7 +2367,7 @@ weight_row_128bpp (uint64_t *row,
 {
     uint64_t *row_max = row + (n * 2);
 
-    SMOL_ASSUME_TEMP_ALIGNED (row, uint64_t *);
+    SMOL_ASSUME_ALIGNED (row, uint64_t *);
 
     while (row != row_max)
     {
