@@ -20,31 +20,42 @@
 #ifndef __CHAFA_COLOR_TABLE_H__
 #define __CHAFA_COLOR_TABLE_H__
 
+#include "internal/chafa-pca.h"
+
 G_BEGIN_DECLS
 
 #define CHAFA_COLOR_TABLE_MAX_ENTRIES 256
 
 typedef struct
 {
-    /* Each entry is 8 bits pen + 24 bits sort index */
-    guint32 entries [CHAFA_COLOR_TABLE_MAX_ENTRIES];
+    gint v [2];
+    gint pen;
+}
+ChafaColorTableEntry;
+
+typedef struct
+{
+    ChafaColorTableEntry entries [CHAFA_COLOR_TABLE_MAX_ENTRIES];
 
     /* Each pen is 24 bits (B8G8R8) of color information */
     guint32 pens [CHAFA_COLOR_TABLE_MAX_ENTRIES];
 
     gint n_entries;
     guint is_sorted : 1;
+
+    ChafaVec3i32 eigenvectors [2];
+    ChafaVec3i32 average;
 }
 ChafaColorTable;
 
-void    chafa_color_table_init             (ChafaColorTable *color_table);
-void    chafa_color_table_deinit           (ChafaColorTable *color_table);
+void       chafa_color_table_init             (ChafaColorTable *color_table);
+void       chafa_color_table_deinit           (ChafaColorTable *color_table);
 
-guint32 chafa_color_table_get_pen_color    (const ChafaColorTable *color_table, gint pen);
-void    chafa_color_table_set_pen_color    (ChafaColorTable *color_table, gint pen, guint32 color);
+guint32    chafa_color_table_get_pen_color    (const ChafaColorTable *color_table, gint pen);
+void       chafa_color_table_set_pen_color    (ChafaColorTable *color_table, gint pen, guint32 color);
 
-void    chafa_color_table_sort             (ChafaColorTable *color_table);
-gint    chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 color);
+void       chafa_color_table_sort             (ChafaColorTable *color_table);
+gint       chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 color);
 
 G_END_DECLS
 

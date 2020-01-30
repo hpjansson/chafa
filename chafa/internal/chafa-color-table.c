@@ -21,84 +21,20 @@
 
 #include "chafa.h"
 #include "internal/chafa-color-table.h"
+#include "internal/chafa-pca.h"
 
-/* Interleave with one zero:
- *
- * 1 2 3 4 5 6 7 8 
- *   ^ (self << 4) =>
- * 1^5 2^6 3^7 4^8 5 6 7 8 
- *   & 0x0f0f =>
- * x x x x 5 6 7 8 
- *   ^ (self << 2) =>
- * x x 5 6 5^7 6^8 7 8 
- *   & 0x3333 =>
- * x x 5 6 x x 7 8 
- *   ^ (self << 1) =>
- * x 5 5^6 6 x 7 7^8 8 
- *   & 0x5555 =>
- * x 5 x 6 x 7 x 8 
- *
- * Interleave with two zeros: 
- *
- * 1 2 3 4 5 6 7 8 
- *   ^ (self << 8) =>
- * 1 2 3 4 5 6 7 8 
- *   & 0xf00f =>
- * x x x x 5 6 7 8 
- *   ^ (self << 4) =>
- * 5 6 7 8 5 6 7 8 
- *   & 0x30c3 =>
- * 5 6 x x x x 7 8 
- *   ^ (self << 2) =>
- * 5 6 x x 7 8 7 8 
- *   & 0x9249 =>
- * x 6 x x 7 x x 8
- */
+#define POW2(x) ((x) * (x))
 
-#if 0
-static uint64_t
-interleave_u32_with_0 (uint32_t input)
-{
-    uint64_t word = input;
-    word = (word ^ (word << 16)) & 0x0000ffff0000ffff;
-    word = (word ^ (word << 8 )) & 0x00ff00ff00ff00ff;
-    word = (word ^ (word << 4 )) & 0x0f0f0f0f0f0f0f0f;
-    word = (word ^ (word << 2 )) & 0x3333333333333333;
-    word = (word ^ (word << 1 )) & 0x5555555555555555;
-    return word;
-}
-#endif
-
-static guint32
-interleave_u8_with_00 (guint8 input)
-{
-    guint32 word = input;
-    word = (word ^ (word << 8)) & 0xf00f;
-    word = (word ^ (word << 4)) & 0xc30c3;
-    word = (word ^ (word << 2)) & 0x249249;
-    return word;
-}
-
-/* Channels are presumed to be in ABGR order */
-static guint32
-interleave_3_channels (guint32 color)
-{
-    /* Interleaving produces the following bit order:
-     * xxxxxxxxGRBGRBGRBGRBGRBGRBGRBGRB (lower 24 bits) */
-    return interleave_u8_with_00 (color >> 16)
-        | (interleave_u8_with_00 (color) << 1)
-        | (interleave_u8_with_00 (color >> 8) << 2);
-}
+#define FIXED_MUL 1
+#define FIXED_MUL_F ((gfloat) FIXED_MUL)
 
 static gint
 compare_entries (gconstpointer a, gconstpointer b)
 {
-    const guint32 *ab = a;
-    const guint32 *bb = b;
-    gint ai = *ab >> 8;
-    gint bi = *bb >> 8;
+    const ChafaColorTableEntry *ab = a;
+    const ChafaColorTableEntry *bb = b;
 
-    return ai - bi;
+    return ab->v [0] - bb->v [0];
 }
 
 static gint
@@ -115,6 +51,103 @@ color_diff (guint32 a, guint32 b)
     diff += n * n;
 
     return diff;
+}
+
+static void
+project_color (const ChafaColorTable *color_table, guint32 color, gint *v_out)
+{
+    ChafaVec3i32 v;
+
+    /* FIXME: We may avoid the * FIXED_MUL both here and in average, but only
+     * if that leaves a precise enough average. */
+
+    v.v [0] = (color & 0xff) * FIXED_MUL;
+    v.v [1] = ((color >> 8) & 0xff) * FIXED_MUL;
+    v.v [2] = ((color >> 16) & 0xff) * FIXED_MUL;
+
+    chafa_vec3i32_sub (&v, &v, &color_table->average);
+
+    v_out [0] = chafa_vec3i32_dot_32 (&v, &color_table->eigenvectors [0]);
+    v_out [1] = chafa_vec3i32_dot_32 (&v, &color_table->eigenvectors [1]);
+}
+
+static void
+vec3i32_fixed_point_from_vec3f32 (ChafaVec3i32 *out, const ChafaVec3f32 *in)
+{
+    ChafaVec3f32 t;
+
+    chafa_vec3f32_mul_scalar (&t, in, FIXED_MUL_F);
+    chafa_vec3i32_from_vec3f32 (out, &t);
+}
+
+static void
+do_pca (ChafaColorTable *color_table)
+{
+    ChafaVec3f32 v [256];
+    ChafaVec3f32 eigenvectors [2];
+    ChafaVec3f32 average;
+    gint i, j;
+
+    for (i = 0, j = 0; i < 256; i++)
+    {
+        guint32 col = color_table->pens [i];
+
+        if ((col & 0xff000000) == 0xff000000)
+            continue;
+
+        v [j].v [0] = col & 0xff;
+        v [j].v [1] = (col >> 8) & 0xff;
+        v [j].v [2] = (col >> 16) & 0xff;
+        j++;
+    }
+
+    chafa_vec3f32_array_compute_pca (v, j,
+                                     2,
+                                     eigenvectors,
+                                     NULL,
+                                     &average);
+
+    vec3i32_fixed_point_from_vec3f32 (&color_table->eigenvectors [0], &eigenvectors [0]);
+    vec3i32_fixed_point_from_vec3f32 (&color_table->eigenvectors [1], &eigenvectors [1]);
+    vec3i32_fixed_point_from_vec3f32 (&color_table->average, &average);
+
+    for (i = 0; i < color_table->n_entries; i++)
+    {
+        ChafaColorTableEntry *entry = &color_table->entries [i];
+        project_color (color_table, color_table->pens [entry->pen], entry->v);
+    }
+}
+
+static inline gboolean
+refine_pen_choice (const ChafaColorTableEntry *entries, const gint *v, gint j,
+                   gint *best_pen, gint *best_diff)
+{
+    const ChafaColorTableEntry *pj = &entries [j];
+    gint a, b, d;
+
+    a = POW2 (pj->v [0] - v [0]);
+
+    if (a <= *best_diff)
+    {
+        b = POW2 (pj->v [1] - v [1]);
+
+        if (b <= *best_diff)
+        {
+            d = a + b;
+
+            if (d < *best_diff)
+            {
+                *best_pen = j;
+                *best_diff = d;
+            }
+        }
+    }
+    else
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 void
@@ -160,32 +193,37 @@ chafa_color_table_sort (ChafaColorTable *color_table)
 
     for (i = 0, j = 0; i < CHAFA_COLOR_TABLE_MAX_ENTRIES; i++)
     {
+        ChafaColorTableEntry *entry;
+
         if (color_table->pens [i] == 0xffffffff)
             continue;
 
-        color_table->entries [j++] = (interleave_3_channels (color_table->pens [i]) << 8) | i;
+        entry = &color_table->entries [j++];
+        entry->pen = i;
     }
 
     color_table->n_entries = j;
 
-    qsort (color_table->entries, color_table->n_entries, sizeof (guint32), compare_entries);
+    do_pca (color_table);
+
+    qsort (color_table->entries, color_table->n_entries, sizeof (ChafaColorTableEntry), compare_entries);
     color_table->is_sorted = TRUE;
 }
-
-#define N_COMPARES 4
 
 gint
 chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 color)
 {
-    guint32 index;
     gint best_diff = G_MAXINT;
     gint best_pen = 0;
-    gint i, j;
+    gint v [2];
+    gint i, j, m;
 
     g_assert (color_table->n_entries > 0);
     g_assert (color_table->is_sorted);
 
-    index = interleave_3_channels (color);
+    project_color (color_table, color, v);
+
+    /* Binary search for first vector component */
 
     i = 0;
     j = color_table->n_entries;
@@ -193,31 +231,30 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
     while (i != j)
     {
         gint n = i + (j - i) / 2;
-        guint32 tindex = color_table->entries [n] >> 8;
 
-        if (index > tindex)
+        if (v [0] > color_table->entries [n].v [0])
             i = n + 1;
         else
             j = n;
     }
 
-    i = i - N_COMPARES / 2;
-    i = MAX (i, 0);
+    m = j;
 
-    j = i + N_COMPARES + 1;
-    j = MIN (j, color_table->n_entries);
+    /* Left scan for closer match */
 
-    while (i < j)
+    for (j = m; j >= 0; j--)
     {
-        gint diff = color_diff (color, color_table->pens [color_table->entries [i] & 0xff]);
-        if (diff < best_diff)
-        {
-            best_diff = diff;
-            best_pen = i;
-        }
-
-        i++;
+        if (!refine_pen_choice (color_table->entries, v, j, &best_pen, &best_diff))
+            break;
     }
 
-    return color_table->entries [best_pen] & 0xff;
+    /* Right scan for closer match */
+
+    for (j = m + 1; j < color_table->n_entries; j++)
+    {
+        if (!refine_pen_choice (color_table->entries, v, j, &best_pen, &best_diff))
+            break;
+    }
+
+    return color_table->entries [best_pen].pen;
 }
