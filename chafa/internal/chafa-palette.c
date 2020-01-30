@@ -599,13 +599,25 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
         if (color->ch [3] < palette->alpha_threshold)
             return palette->transparent_index;
 
-#if 0
-        result = linear_nearest_color (palette, color_space, color);
-#else
         result = chafa_color_table_find_nearest_pen (&palette->table [color_space],
                                                      color->ch [0]
                                                      | (color->ch [1] << 8)
                                                      | (color->ch [2] << 16));
+
+#if 0
+        /* FIXME: This test code is here to compare fast pen selection with an
+         * exhaustive search. It should be removed when we're done tuning. */
+        gint result2 = linear_nearest_color (palette, color_space, color);
+        if (result != result2)
+        {
+            const ChafaColor *pc = &palette->colors [result2].col [color_space];
+            g_printerr ("Pen mismatch: %06x vs. %06x for %06x\n",
+                        chafa_color_table_get_pen_color (&palette->table [color_space], result),
+
+                        (pc->ch [0]) | (pc->ch [1] << 8) | (pc->ch [2] << 16),
+                        (color->ch [0]) | (color->ch [1] << 8) | (color->ch [2] << 16));
+        }
+        result = result2;
 #endif
 
         if (candidates)
