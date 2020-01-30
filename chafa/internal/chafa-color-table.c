@@ -28,6 +28,15 @@
 #define FIXED_MUL 1
 #define FIXED_MUL_F ((gfloat) FIXED_MUL)
 
+/* Number of colors to compare against outside the strict 2D range defined
+ * by the PC vectors. This partly makes up for suboptimal choices resulting
+ * from dimensionality reduction and imprecision.
+ *
+ * The final number of extra probes is twice this value -- once above and
+ * once below the initial range. */
+
+#define N_BLIND_PROBES 2
+
 static gint
 compare_entries (gconstpointer a, gconstpointer b)
 {
@@ -119,10 +128,10 @@ do_pca (ChafaColorTable *color_table)
 }
 
 static inline gboolean
-refine_pen_choice (const ChafaColorTableEntry *entries, const gint *v, gint j,
+refine_pen_choice (const ChafaColorTable *color_table, guint want_color, const gint *v, gint j,
                    gint *best_pen, gint *best_diff)
 {
-    const ChafaColorTableEntry *pj = &entries [j];
+    const ChafaColorTableEntry *pj = &color_table->entries [j];
     gint a, b, d;
 
     a = POW2 (pj->v [0] - v [0]);
@@ -135,10 +144,14 @@ refine_pen_choice (const ChafaColorTableEntry *entries, const gint *v, gint j,
         {
             d = a + b;
 
-            if (d < *best_diff)
+            if (d <= *best_diff)
             {
-                *best_pen = j;
-                *best_diff = d;
+                if (color_diff (color_table->pens [pj->pen], want_color) <
+                    color_diff (color_table->pens [color_table->entries [*best_pen].pen], want_color))
+                {
+                    *best_pen = j;
+                    *best_diff = d;
+                }
             }
         }
     }
@@ -211,7 +224,7 @@ chafa_color_table_sort (ChafaColorTable *color_table)
 }
 
 gint
-chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 color)
+chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 want_color)
 {
     gint best_diff = G_MAXINT;
     gint best_pen = 0;
@@ -221,7 +234,7 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
     g_assert (color_table->n_entries > 0);
     g_assert (color_table->is_sorted);
 
-    project_color (color_table, color, v);
+    project_color (color_table, want_color, v);
 
     /* Binary search for first vector component */
 
@@ -244,16 +257,42 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
 
     for (j = m; j >= 0; j--)
     {
-        if (!refine_pen_choice (color_table->entries, v, j, &best_pen, &best_diff))
+        if (!refine_pen_choice (color_table, want_color, v, j, &best_pen, &best_diff))
             break;
+    }
+
+    for (i = 0; i < N_BLIND_PROBES && j > 0; i++)
+    {
+        j--;
+        if (color_diff (color_table->pens [color_table->entries [j].pen], want_color) <
+            color_diff (color_table->pens [color_table->entries [best_pen].pen], want_color))
+        {
+            const ChafaColorTableEntry *pj = &color_table->entries [j];
+
+            best_pen = j;
+            best_diff = POW2 (pj->v [0] - v [0]) + POW2 (pj->v [1] - v [1]);
+        }
     }
 
     /* Right scan for closer match */
 
     for (j = m + 1; j < color_table->n_entries; j++)
     {
-        if (!refine_pen_choice (color_table->entries, v, j, &best_pen, &best_diff))
+        if (!refine_pen_choice (color_table, want_color, v, j, &best_pen, &best_diff))
             break;
+    }
+
+    for (i = 0; i < N_BLIND_PROBES && j < color_table->n_entries - 1; i++)
+    {
+        j++;
+        if (color_diff (color_table->pens [color_table->entries [j].pen], want_color) <
+            color_diff (color_table->pens [color_table->entries [best_pen].pen], want_color))
+        {
+            const ChafaColorTableEntry *pj = &color_table->entries [j];
+
+            best_pen = j;
+            best_diff = POW2 (pj->v [0] - v [0]) + POW2 (pj->v [1] - v [1]);
+        }
     }
 
     return color_table->entries [best_pen].pen;
