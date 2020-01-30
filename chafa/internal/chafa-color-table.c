@@ -104,9 +104,9 @@ do_pca (ChafaColorTable *color_table)
         if ((col & 0xff000000) == 0xff000000)
             continue;
 
-        v [j].v [0] = col & 0xff;
-        v [j].v [1] = (col >> 8) & 0xff;
-        v [j].v [2] = (col >> 16) & 0xff;
+        v [j].v [0] = (col & 0xff) * FIXED_MUL_F;
+        v [j].v [1] = ((col >> 8) & 0xff) * FIXED_MUL_F;
+        v [j].v [2] = ((col >> 16) & 0xff) * FIXED_MUL_F;
         j++;
     }
 
@@ -116,9 +116,9 @@ do_pca (ChafaColorTable *color_table)
                                      NULL,
                                      &average);
 
-    vec3i32_fixed_point_from_vec3f32 (&color_table->eigenvectors [0], &eigenvectors [0]);
-    vec3i32_fixed_point_from_vec3f32 (&color_table->eigenvectors [1], &eigenvectors [1]);
-    vec3i32_fixed_point_from_vec3f32 (&color_table->average, &average);
+    chafa_vec3i32_from_vec3f32 (&color_table->eigenvectors [0], &eigenvectors [0]);
+    chafa_vec3i32_from_vec3f32 (&color_table->eigenvectors [1], &eigenvectors [1]);
+    chafa_vec3i32_from_vec3f32 (&color_table->average, &average);
 
     for (i = 0; i < color_table->n_entries; i++)
     {
