@@ -1,7 +1,7 @@
 Chafa releases
 ==============
 
-1.2.2 (2020-03-20)
+1.2.2 (2020-03-02)
 ------------------
 
 This minor release fixes a bug causing builds linking with libchafa to
