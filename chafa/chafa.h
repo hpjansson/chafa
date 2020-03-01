@@ -22,7 +22,6 @@
 #define __CHAFA_H_INSIDE__
 
 #include <glib.h>
-#include <chafaconfig.h>
 
 G_BEGIN_DECLS
 
