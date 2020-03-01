@@ -1,6 +1,15 @@
 Chafa releases
 ==============
 
+1.2.2 (2020-03-20)
+------------------
+
+This minor release fixes a bug causing builds linking with libchafa to
+fail.
+
+* Bug fixes:
+  github#34  Cannot compile example (found by Petr Bílek).
+
 1.2.1 (2019-08-15)
 ------------------
 
