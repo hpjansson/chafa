@@ -7,7 +7,9 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
-chafa/chafa
+chafa.pc
+chafa/chafaconfig.h
+chafa/chafaconfig-stamp
 compile
 config.guess
 config.h
@@ -24,3 +26,4 @@ m4
 missing
 stamp-h1
 test
+tools/chafa/chafa
