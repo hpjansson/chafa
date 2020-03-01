@@ -65,6 +65,13 @@ G_BEGIN_DECLS
  *
  * Since: 1.2
  */
+
+/* Make sure all exportable symbols are made visible, even
+ * deprecated ones. */
+#ifdef CHAFA_COMPILATION
+# define CHAFA_VERSION_MIN_REQUIRED      (CHAFA_VERSION_1_0)
+#endif
+
 /* If the package sets CHAFA_VERSION_MIN_REQUIRED to some future
  * CHAFA_VERSION_X_Y value that we don't know about, it will compare as
  * 0 in preprocessor tests. */

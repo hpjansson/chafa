@@ -8,4 +8,4 @@ Description: Image to character art facsimile
 Requires: glib-2.0
 Version: @VERSION@
 Libs: -L${libdir} -lchafa -lm
-Cflags: -I${includedir}/chafa
+Cflags: -I${includedir}/chafa -I${libdir}/chafa/include
