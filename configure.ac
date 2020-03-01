@@ -402,6 +402,7 @@ dnl --- Output ---
 
 AC_OUTPUT(Makefile
           chafa/Makefile
+          chafa/chafaconfig.h
           chafa/internal/Makefile
           chafa/internal/smolscale/Makefile
           libnsgif/Makefile

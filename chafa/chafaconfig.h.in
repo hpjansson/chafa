@@ -1,0 +1,16 @@
+/* chafaconfig.h
+ *
+ * This is a generated file.  Please modify 'chafaconfig.h.in'. */
+
+#ifndef __CHAFACONFIG_H__
+#define __CHAFACONFIG_H__
+
+G_BEGIN_DECLS
+
+#define CHAFA_MAJOR_VERSION @CHAFA_MAJOR_VERSION@
+#define CHAFA_MINOR_VERSION @CHAFA_MINOR_VERSION@
+#define CHAFA_MICRO_VERSION @CHAFA_MICRO_VERSION@
+
+G_END_DECLS
+
+#endif /* __CHAFACONFIG_H__ */
