@@ -24,6 +24,9 @@
 # error "Only <chafa.h> can be included directly."
 #endif
 
+/* Our current version is defined here */
+#include <chafaconfig.h>
+
 G_BEGIN_DECLS
 
 /* Exported symbol versioning/visibility. Similar to the versioning macros

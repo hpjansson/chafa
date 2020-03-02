@@ -28,6 +28,9 @@ endif
 
 ## -- General ---
 
+## Include $(top_builddir)/chafa to get generated chafaconfig.h.
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/chafa \
+	-I$(top_builddir)/chafa \
 	-I$(top_srcdir)/libnsgif
