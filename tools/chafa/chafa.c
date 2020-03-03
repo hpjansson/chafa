@@ -43,6 +43,7 @@
 #include "xwd-loader.h"
 
 #define ANIM_FPS_MAX 100000.0
+#define FILE_DURATION_DEFAULT 0.0
 
 typedef struct
 {
@@ -1033,7 +1034,7 @@ parse_options (int *argc, char **argv [])
     if (options.file_duration_s == G_MAXDOUBLE && options.args && options.args->next)
     {
         /* The default duration when we have multiple files */
-        options.file_duration_s = 3.0;
+        options.file_duration_s = FILE_DURATION_DEFAULT;
     }
 
     /* Since FGBG mode can't use escape sequences to invert, it really
