@@ -27,6 +27,10 @@ Minor Features/UX
   - Other OSX terminals?
   - PuTTY on Windows 8, 10?
     - Windows 7 fonts support half, solid, some borders.
+  - Terminology.
+    - Emulate tycat.
+  - Emacs ansi-term.
+  - Emacs shell (TERM=dumb).
   - Come up with some kind of support matrix.
 - Optional double-width symbol support.
   - Many geometric shapes/math symbols need this.
