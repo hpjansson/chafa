@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ev
+set -evx
 
-cc $(pkg-config --libs --cflags chafa) example.c -o example
+cc example.c $(pkg-config --libs --cflags chafa) -o example
 ./example
