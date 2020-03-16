@@ -133,16 +133,12 @@ refine_pen_choice (const ChafaColorTable *color_table, guint want_color, const g
 
         if (b <= *best_diff)
         {
-            d = a + b;
+            d = color_diff (color_table->pens [pj->pen], want_color);
 
             if (d <= *best_diff)
             {
-                if (color_diff (color_table->pens [pj->pen], want_color) <
-                    color_diff (color_table->pens [color_table->entries [*best_pen].pen], want_color))
-                {
-                    *best_pen = j;
-                    *best_diff = d;
-                }
+                *best_pen = j;
+                *best_diff = d;
             }
         }
     }
