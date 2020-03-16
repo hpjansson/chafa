@@ -153,7 +153,7 @@ chafa_vec3f32_set (ChafaVec3f32 *v, gfloat x, gfloat y, gfloat z)
 static inline void
 chafa_vec3f32_set_zero (ChafaVec3f32 *v)
 {
-    chafa_vec3f32_set (v, 0.0, 0.0, 0.0);
+    chafa_vec3f32_set (v, 0.0f, 0.0f, 0.0f);
 }
 
 static inline gfloat
@@ -167,7 +167,7 @@ chafa_vec3f32_normalize (ChafaVec3f32 *out, const ChafaVec3f32 *in)
 {
     gfloat m;
 
-    m = 1.0 / chafa_vec3f32_get_magnitude (in);
+    m = 1.0f / chafa_vec3f32_get_magnitude (in);
     out->v [0] = in->v [0] * m;
     out->v [1] = in->v [1] * m;
     out->v [2] = in->v [2] * m;
@@ -178,7 +178,7 @@ chafa_vec3f32_average_array (ChafaVec3f32 *out, const ChafaVec3f32 *v, gint n)
 {
     chafa_vec3f32_set_zero (out);
     chafa_vec3f32_add_from_array (out, v, n);
-    chafa_vec3f32_mul_scalar (out, out, 1.0 / n);
+    chafa_vec3f32_mul_scalar (out, out, 1.0f / (gfloat) n);
 }
 
 void chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
