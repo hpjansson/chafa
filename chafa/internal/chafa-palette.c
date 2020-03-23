@@ -571,31 +571,6 @@ out:
     g_free (pixels_copy);
 }
 
-static gint16
-linear_nearest_color (const ChafaPalette *palette, ChafaColorSpace color_space, const ChafaColor *color)
-{
-    gint i;
-    gint16 best_index = 0;
-    gint best_error = G_MAXINT;
-
-    for (i = 0; i < palette->n_colors; i++)
-    {
-        const ChafaColor *try_color = &palette->colors [i].col [color_space];
-        gint error = chafa_color_diff_fast (color, try_color);
-
-        if (i == palette->transparent_index)
-            continue;
-
-        if (error < best_error)
-        {
-            best_index = i;
-            best_error = error;
-        }
-    }
-
-    return best_index;
-}
-
 gint
 chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color_space,
                               const ChafaColor *color, ChafaColorCandidates *candidates)
@@ -612,22 +587,6 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
                                                      color->ch [0]
                                                      | (color->ch [1] << 8)
                                                      | (color->ch [2] << 16));
-
-#if 0
-        /* FIXME: This test code is here to compare fast pen selection with an
-         * exhaustive search. It should be removed when we're done tuning. */
-        gint result2 = linear_nearest_color (palette, color_space, color);
-        if (result != result2)
-        {
-            const ChafaColor *pc = &palette->colors [result2].col [color_space];
-            g_printerr ("Pen mismatch: %06x vs. %06x for %06x\n",
-                        chafa_color_table_get_pen_color (&palette->table [color_space], result),
-
-                        (pc->ch [0]) | (pc->ch [1] << 8) | (pc->ch [2] << 16),
-                        (color->ch [0]) | (color->ch [1] << 8) | (color->ch [2] << 16));
-        }
-        result = result2;
-#endif
 
         if (candidates)
         {
