@@ -501,6 +501,15 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         chafa_color_table_init (&palette_out->table [i]);
 }
 
+void
+chafa_palette_deinit (ChafaPalette *palette)
+{
+    gint i;
+
+    for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
+        chafa_color_table_deinit (&palette->table [i]);
+}
+
 gint
 chafa_palette_get_first_color (const ChafaPalette *palette)
 {
