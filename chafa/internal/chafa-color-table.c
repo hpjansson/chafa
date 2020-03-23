@@ -23,7 +23,8 @@
 #include "internal/chafa-color-table.h"
 #include "internal/chafa-pca.h"
 
-#define CHAFA_COLOR_TABLE_ENABLE_PROFILING 1
+#define CHAFA_COLOR_TABLE_ENABLE_PROFILING 0
+#define DEBUG_PEN_CHOICE(x)
 
 #define POW2(x) ((x) * (x))
 
@@ -191,33 +192,38 @@ refine_pen_choice (const ChafaColorTable *color_table, guint want_color, const g
     const ChafaColorTableEntry *pj = &color_table->entries [j];
     gint a, b, d;
 
-    profile_counter_inc (n_a);
-
     a = POW2 (pj->v [0] - v [0]);
+
+    profile_counter_inc (n_a);
+    DEBUG_PEN_CHOICE (g_printerr ("a=%d\n", a));
 
     if (a <= *best_diff)
     {
-        profile_counter_inc (n_b);
-
         b = POW2 (pj->v [1] - v [1]);
+
+        profile_counter_inc (n_b);
+        DEBUG_PEN_CHOICE (g_printerr ("b=%d\n", b));
 
         if (b <= *best_diff)
         {
-            profile_counter_inc (n_c);
-
             d = color_diff (color_table->pens [pj->pen], want_color);
+
+            profile_counter_inc (n_c);
+            DEBUG_PEN_CHOICE (g_printerr ("d=%d\n", d));
 
             if (d <= *best_diff)
             {
-                profile_counter_inc (n_d);
-
                 *best_pen = j;
                 *best_diff = d;
+
+                profile_counter_inc (n_d);
+                DEBUG_PEN_CHOICE (g_printerr ("a=%d, b=%d, d=%d\n", a, b, d));
             }
         }
     }
     else
     {
+        DEBUG_PEN_CHOICE (g_printerr ("\n"));
         return FALSE;
     }
 
@@ -345,9 +351,8 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
         if (!refine_pen_choice (color_table, want_color, v, j, &best_pen, &best_diff))
             break;
     }
-#if CHAFA_COLOR_TABLE_ENABLE_PROFILING
-    /* */
 
+#if CHAFA_COLOR_TABLE_ENABLE_PROFILING
     gint best_pen_2 = -1;
     gint best_diff_2 = G_MAXINT;
 
@@ -367,8 +372,8 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
     {
         profile_counter_inc (n_misses);
 
-        dump_entry (color_table, best_pen, want_color);
-        dump_entry (color_table, best_pen_2, want_color);
+        g_printerr ("Bad lookup: "); dump_entry (color_table, best_pen, want_color);
+        g_printerr ("\nShould be:  "); dump_entry (color_table, best_pen_2, want_color);
         g_printerr ("\n");
     }
 #endif
