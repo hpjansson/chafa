@@ -27,8 +27,11 @@
 
 #define POW2(x) ((x) * (x))
 
-#define FIXED_MUL 1
-#define FIXED_MUL_F ((gfloat) FIXED_MUL)
+#define FIXED_MUL_BIG_SHIFT 14
+#define FIXED_MUL_BIG (1 << (FIXED_MUL_BIG_SHIFT))
+
+#define FIXED_MUL 32
+#define FIXED_MUL_F ((gfloat) (FIXED_MUL))
 
 #if CHAFA_COLOR_TABLE_ENABLE_PROFILING
 
@@ -75,16 +78,31 @@ compare_entries (gconstpointer a, gconstpointer b)
 }
 
 static gint
+scalar_project_vec3i32 (const ChafaVec3i32 *a, const ChafaVec3i32 *b, guint32 b_mul)
+{
+    guint64 d = chafa_vec3i32_dot_64 (a, b);
+
+    /* I replaced the following (a division, three multiplications and
+     * two additions) with a multiplication and a right shift:
+     * 
+     * d / (POW2 (b->v [0]) + POW2 (b->v [1]) + POW2 (b->v [2]))
+     *
+     * The result is multiplied by FIXED_MUL for increased precision. */
+
+    return (d * b_mul) / (FIXED_MUL_BIG / FIXED_MUL);
+}
+
+static gint
 color_diff (guint32 a, guint32 b)
 {
     gint diff;
     gint n;
 
-    n = (gint) (a & 0xff) - (gint) (b & 0xff);
+    n = (gint) ((b & 0xff) - (gint) (a & 0xff)) * FIXED_MUL;
     diff = n * n;
-    n = (gint) ((a >> 8) & 0xff) - (gint) ((b >> 8) & 0xff);
+    n = (gint) (((b >> 8) & 0xff) - (gint) ((a >> 8) & 0xff)) * FIXED_MUL;
     diff += n * n;
-    n = (gint) ((a >> 16) & 0xff) - (gint) ((b >> 16) & 0xff);
+    n = (gint) (((b >> 16) & 0xff) - (gint) ((a >> 16) & 0xff)) * FIXED_MUL;
     diff += n * n;
 
     return diff;
@@ -95,17 +113,14 @@ project_color (const ChafaColorTable *color_table, guint32 color, gint *v_out)
 {
     ChafaVec3i32 v;
 
-    /* FIXME: We may avoid the * FIXED_MUL both here and in average, but only
-     * if that leaves a precise enough average. */
-
     v.v [0] = (color & 0xff) * FIXED_MUL;
     v.v [1] = ((color >> 8) & 0xff) * FIXED_MUL;
     v.v [2] = ((color >> 16) & 0xff) * FIXED_MUL;
 
     chafa_vec3i32_sub (&v, &v, &color_table->average);
 
-    v_out [0] = chafa_vec3i32_dot_32 (&v, &color_table->eigenvectors [0]);
-    v_out [1] = chafa_vec3i32_dot_32 (&v, &color_table->eigenvectors [1]);
+    v_out [0] = scalar_project_vec3i32 (&v, &color_table->eigenvectors [0], color_table->eigen_mul [0]);
+    v_out [1] = scalar_project_vec3i32 (&v, &color_table->eigenvectors [1], color_table->eigen_mul [1]);
 }
 
 static void
@@ -144,9 +159,23 @@ do_pca (ChafaColorTable *color_table)
                                      NULL,
                                      &average);
 
-    chafa_vec3i32_from_vec3f32 (&color_table->eigenvectors [0], &eigenvectors [0]);
-    chafa_vec3i32_from_vec3f32 (&color_table->eigenvectors [1], &eigenvectors [1]);
-    chafa_vec3i32_from_vec3f32 (&color_table->average, &average);
+    vec3i32_fixed_point_from_vec3f32 (&color_table->eigenvectors [0], &eigenvectors [0]);
+    vec3i32_fixed_point_from_vec3f32 (&color_table->eigenvectors [1], &eigenvectors [1]);
+    vec3i32_fixed_point_from_vec3f32 (&color_table->average, &average);
+
+    color_table->eigen_mul [0] =
+        POW2 (color_table->eigenvectors [0].v [0])
+        + POW2 (color_table->eigenvectors [0].v [1])
+        + POW2 (color_table->eigenvectors [0].v [2]);
+    color_table->eigen_mul [0] = MAX (color_table->eigen_mul [0], 1);
+    color_table->eigen_mul [0] = FIXED_MUL_BIG / color_table->eigen_mul [0];
+
+    color_table->eigen_mul [1] =
+        POW2 (color_table->eigenvectors [1].v [0])
+        + POW2 (color_table->eigenvectors [1].v [1])
+        + POW2 (color_table->eigenvectors [1].v [2]);
+    color_table->eigen_mul [1] = MAX (color_table->eigen_mul [1], 1);
+    color_table->eigen_mul [1] = FIXED_MUL_BIG / color_table->eigen_mul [1];
 
     for (i = 0; i < color_table->n_entries; i++)
     {
