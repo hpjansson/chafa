@@ -23,10 +23,47 @@
 #include "internal/chafa-color-table.h"
 #include "internal/chafa-pca.h"
 
+#define CHAFA_COLOR_TABLE_ENABLE_PROFILING 1
+
 #define POW2(x) ((x) * (x))
 
 #define FIXED_MUL 1
 #define FIXED_MUL_F ((gfloat) FIXED_MUL)
+
+#if CHAFA_COLOR_TABLE_ENABLE_PROFILING
+
+# define profile_counter_inc(x) g_atomic_int_inc ((gint *) &(x))
+
+static gint n_lookups;
+static gint n_misses;
+static gint n_a;
+static gint n_b;
+static gint n_c;
+static gint n_d;
+
+static void
+dump_entry (const ChafaColorTable *color_table, gint entry, gint want_color)
+{
+    const ChafaColorTableEntry *e = &color_table->entries [entry];
+    guint32 c = color_table->pens [e->pen];
+    gint err;
+
+    err = POW2 (((gint) (c & 0xff) - (want_color & 0xff)))
+        + POW2 (((gint) (c >> 8) & 0xff) - ((want_color >> 8) & 0xff))
+        + POW2 (((gint) (c >> 16) & 0xff) - ((want_color >> 16) & 0xff));
+
+    g_printerr ("{ %3d, %3d, %3d }  { %7d, %7d }  n = %3d  err = %6d\n",
+                c & 0xff,
+                (c >> 8) & 0xff,
+                (c >> 16) & 0xff,
+                e->v [0], e->v [1],
+                entry,
+                err);
+}
+
+#else
+# define profile_counter_inc(x)
+#endif
 
 static gint
 compare_entries (gconstpointer a, gconstpointer b)
@@ -125,18 +162,26 @@ refine_pen_choice (const ChafaColorTable *color_table, guint want_color, const g
     const ChafaColorTableEntry *pj = &color_table->entries [j];
     gint a, b, d;
 
+    profile_counter_inc (n_a);
+
     a = POW2 (pj->v [0] - v [0]);
 
     if (a <= *best_diff)
     {
+        profile_counter_inc (n_b);
+
         b = POW2 (pj->v [1] - v [1]);
 
         if (b <= *best_diff)
         {
+            profile_counter_inc (n_c);
+
             d = color_diff (color_table->pens [pj->pen], want_color);
 
             if (d <= *best_diff)
             {
+                profile_counter_inc (n_d);
+
                 *best_pen = j;
                 *best_diff = d;
             }
@@ -162,6 +207,20 @@ chafa_color_table_init (ChafaColorTable *color_table)
 void
 chafa_color_table_deinit (G_GNUC_UNUSED ChafaColorTable *color_table)
 {
+#if CHAFA_COLOR_TABLE_ENABLE_PROFILING
+    g_printerr ("l=%7d m=%7d a=%7d b=%7d c=%7d d=%7d\n"
+                "per probe: a=%6.1lf b=%6.1lf c=%6.1lf d=%6.1lf\n",
+                n_lookups,
+                n_misses,
+                n_a,
+                n_b,
+                n_c,
+                n_d,
+                n_a / (gdouble) n_lookups,
+                n_b / (gdouble) n_lookups,
+                n_c / (gdouble) n_lookups,
+                n_d / (gdouble) n_lookups);
+#endif
 }
 
 guint32
@@ -221,6 +280,8 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
     g_assert (color_table->n_entries > 0);
     g_assert (color_table->is_sorted);
 
+    profile_counter_inc (n_lookups);
+
     project_color (color_table, want_color, v);
 
     /* Binary search for first vector component */
@@ -255,6 +316,33 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
         if (!refine_pen_choice (color_table, want_color, v, j, &best_pen, &best_diff))
             break;
     }
+#if CHAFA_COLOR_TABLE_ENABLE_PROFILING
+    /* */
+
+    gint best_pen_2 = -1;
+    gint best_diff_2 = G_MAXINT;
+
+    for (i = 0; i < color_table->n_entries; i++)
+    {
+        const ChafaColorTableEntry *pi = &color_table->entries [i];
+        gint d = color_diff (color_table->pens [pi->pen], want_color);
+
+        if (d < best_diff_2)
+        {
+            best_pen_2 = i;
+            best_diff_2 = d;
+        }
+    }
+
+    if (best_diff_2 < best_diff)
+    {
+        profile_counter_inc (n_misses);
+
+        dump_entry (color_table, best_pen, want_color);
+        dump_entry (color_table, best_pen_2, want_color);
+        g_printerr ("\n");
+    }
+#endif
 
     return color_table->entries [best_pen].pen;
 }
