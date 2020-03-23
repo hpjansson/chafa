@@ -2162,6 +2162,7 @@ chafa_canvas_unref (ChafaCanvas *canvas)
         }
 
         chafa_dither_deinit (&canvas->dither);
+        chafa_palette_deinit (&canvas->palette);
         g_free (canvas->pixels);
         g_free (canvas->cells);
         g_free (canvas);
