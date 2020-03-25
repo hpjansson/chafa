@@ -247,7 +247,7 @@ median_cut (ChafaPalette *pal, gpointer pixels,
     dominant_ch = find_dominant_channel (p + first_ofs * sizeof (guint32), n_pixels);
     sort_by_channel (p + first_ofs * sizeof (guint32), n_pixels, dominant_ch);
 
-    if (n_cols == 1)
+    if (n_cols == 1 || n_pixels < 2)
     {
         pick_box_color (pixels, first_ofs, n_pixels, &pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB]);
 #if 0
@@ -291,12 +291,14 @@ diversity_pass (ChafaPalette *pal, gpointer pixels,
     gint i, n, c;
     guint8 done [128] = { 0 };
 
+    step = MAX (step, 1);
+
     for (c = 0; c < n_cols; c++)
     {
         gint best_box = 0;
         gint best_diff = 0;
 
-        for (i = 0, n = 0; i < 128; i++)
+        for (i = 0, n = 0; i < 128 && i < n_pixels; i++)
         {
             gint diff = dominant_diff (p + 4 * n, p + 4 * (n + step - 1));
 
@@ -312,12 +314,12 @@ diversity_pass (ChafaPalette *pal, gpointer pixels,
             n += step;
         }
 #if 1
-        median_cut_once (pixels, best_box * step, step / 2,
+        median_cut_once (pixels, best_box * step, MAX (step / 2, 1),
                          &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
         c++;
         if (c >= n_cols)
             break;
-        median_cut_once (pixels, best_box * step + step / 2, step / 2,
+        median_cut_once (pixels, best_box * step + step / 2, MAX (step / 2, 1),
                          &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
 #else
         median_cut_once (pixels, best_box * step, step,
