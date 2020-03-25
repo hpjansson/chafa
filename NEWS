@@ -1,6 +1,43 @@
 Chafa releases
 ==============
 
+1.4.0 (TBA)
+-----------
+
+This release adds major features to both libchafa and the chafa
+command-line tool.
+
+* Added sixel graphics support. Chafa will automatically produce sixels
+  if the connected terminal supports it. It can also be forced using the
+  new -f or --format flag. This is a new implementation written from the
+  ground up to maximize throughput.
+
+* Added the --glyph-file option, which loads glyph-symbol mappings from
+  any file format supported by FreeType (TTF, PCF, etc). This allows for
+  custom font support and improved symbol selection.
+
+* Added the --speed option specifying animation speed. It accepts a
+  unitless multiplier, a specific number of frames per second, or "max"
+  for maximum throughput.
+
+* There are now two ways to assign colors to symbol cells. Formerly,
+  this was done based on the average color of the covered area. The new
+  default is to use the median color, which is faster and produces
+  sharper edges, but is slightly more prone to high-frequency noise.
+  The new option --color-extractor selects the method to employ.
+
+* When displaying multiple files, the default delay between files has
+  been changed from three seconds to zero. Animations will still play
+  through once. This can be overridden on the chafa command line with -d
+  or --duration.
+
+* Minor tweaks to built-in symbols.
+
+* Performance improvements:
+  - Halved pixel storage requirements from 64 bits to 32 bits, resulting
+    in significant memory savings.
+  - Now builds with -ffast-math, yielding a big speedup for DIN99d.
+
 1.2.2 (2020-03-02)
 ------------------
 
