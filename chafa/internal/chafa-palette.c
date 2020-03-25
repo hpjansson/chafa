@@ -250,9 +250,6 @@ median_cut (ChafaPalette *pal, gpointer pixels,
     if (n_cols == 1 || n_pixels < 2)
     {
         pick_box_color (pixels, first_ofs, n_pixels, &pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB]);
-#if 0
-        g_printerr ("mofs=%d+%d  ", first_ofs, n_pixels);
-#endif
         return;
     }
 
@@ -302,9 +299,6 @@ diversity_pass (ChafaPalette *pal, gpointer pixels,
         {
             gint diff = dominant_diff (p + 4 * n, p + 4 * (n + step - 1));
 
-#if 0
-            g_printerr ("ofs=%d,%d  ", n, diff);
-#endif
             if (diff > best_diff && !done [i])
             {
                 best_diff = diff;
@@ -313,18 +307,15 @@ diversity_pass (ChafaPalette *pal, gpointer pixels,
 
             n += step;
         }
-#if 1
+
         median_cut_once (pixels, best_box * step, MAX (step / 2, 1),
                          &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
         c++;
         if (c >= n_cols)
             break;
+
         median_cut_once (pixels, best_box * step + step / 2, MAX (step / 2, 1),
                          &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
-#else
-        median_cut_once (pixels, best_box * step, step,
-                         &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
-#endif
 
         done [best_box] = 1;
     }
@@ -399,9 +390,7 @@ clean_up (ChafaPalette *palette_out)
      * Eliminate duplicates and colors that would be the same in
      * sixel representation (0..100). */
 
-#if 0
-    g_printerr ("Colors before: %d\n", palette_out->n_colors);
-#endif
+    DEBUG (g_printerr ("Colors before: %d\n", palette_out->n_colors));
 
     for (i = 1, j = 1; i < palette_out->n_colors; i++)
     {
@@ -422,9 +411,7 @@ clean_up (ChafaPalette *palette_out)
 
         if (diff == 0)
         {
-#if 0
-            g_printerr ("%d and %d are the same\n", j - 1, i);
-#endif
+            DEBUG (g_printerr ("%d and %d are the same\n", j - 1, i));
             continue;
         }
         else if (diff < best_diff)
@@ -438,9 +425,7 @@ clean_up (ChafaPalette *palette_out)
 
     palette_out->n_colors = j;
 
-#if 0
-    g_printerr ("Colors after: %d\n", palette_out->n_colors);
-#endif
+    DEBUG (g_printerr ("Colors after: %d\n", palette_out->n_colors));
 
     g_assert (palette_out->n_colors >= 0 && palette_out->n_colors <= 256);
 
@@ -448,9 +433,7 @@ clean_up (ChafaPalette *palette_out)
     {
         if (palette_out->n_colors < 256)
         {
-#if 0
-            g_printerr ("Color 0 moved to end (%d)\n", palette_out->n_colors);
-#endif
+            DEBUG (g_printerr ("Color 0 moved to end (%d)\n", palette_out->n_colors));
             palette_out->colors [palette_out->n_colors] = palette_out->colors [palette_out->transparent_index];
             palette_out->n_colors++;
         }
@@ -458,9 +441,7 @@ clean_up (ChafaPalette *palette_out)
         {
             /* Delete one color to make room for transparency */
             palette_out->colors [best_pair] = palette_out->colors [palette_out->transparent_index];
-#if 0
-            g_printerr ("Color 0 replaced %d\n", best_pair);
-#endif
+            DEBUG (g_printerr ("Color 0 replaced %d\n", best_pair));
         }
     }
 }
@@ -555,11 +536,9 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     palette_out->n_colors = 128;
     clean_up (palette_out);
 
-#if 1
     diversity_pass (palette_out, pixels_copy, copy_n_pixels, palette_out->n_colors, 256 - palette_out->n_colors);
     palette_out->n_colors = 256;
     clean_up (palette_out);
-#endif
 
     gen_table (palette_out, CHAFA_COLOR_SPACE_RGB);
 
