@@ -61,7 +61,13 @@ chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
     dither->bayer_size_mask = BAYER_MATRIX_DIM - 1;
 
     if (mode == CHAFA_DITHER_MODE_ORDERED)
+    {
         dither->bayer_matrix = chafa_gen_bayer_matrix (BAYER_MATRIX_DIM, intensity);
+    }
+    else if (mode == CHAFA_DITHER_MODE_DIFFUSION)
+    {
+        dither->intensity = MIN (dither->intensity, 1.0);
+    }
 }
 
 void
