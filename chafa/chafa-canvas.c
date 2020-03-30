@@ -1708,9 +1708,15 @@ prepare_pixel_data (ChafaCanvas *canvas)
                                          canvas->width_pixels * sizeof (guint32));
 
     prepare_pixels_pass_1 (&prep_ctx);
-    chafa_palette_generate (&canvas->palette, canvas->pixels,
-                            canvas->width_pixels * canvas->height_pixels,
-                            canvas->config.color_space);
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR
+        && canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+    {
+        chafa_palette_generate (&canvas->palette, canvas->pixels,
+                                canvas->width_pixels * canvas->height_pixels,
+                                canvas->config.color_space);
+    }
+
     prepare_pixels_pass_2 (&prep_ctx);
 
     smol_scale_destroy (prep_ctx.scale_ctx);
