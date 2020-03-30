@@ -89,7 +89,15 @@ quantize_pixel_with_error (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash,
     gint index;
 
     if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
+    {
+        gint i;
+
+        /* Don't propagate error across transparency */
+        for (i = 0; i < 4; i++)
+            error_inout->ch [i] = 0;
+
         return chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
+    }
 
     if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
         chafa_color_rgb_to_din99d (&color, &color);
