@@ -142,6 +142,8 @@ sort_by_channel (gpointer pixels, gint n_pixels, gint ch)
     }
 }
 
+#if 0
+
 static void
 average_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_out)
 {
@@ -162,6 +164,8 @@ average_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_o
     col_out->ch [1] = (ch [1] + n_pixels / 2) / n_pixels;
     col_out->ch [2] = (ch [2] + n_pixels / 2) / n_pixels;
 }
+
+#endif
 
 static void
 median_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_out)
