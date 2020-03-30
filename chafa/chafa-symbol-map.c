@@ -221,7 +221,7 @@ coverage_to_bitmap (const guint8 *cov)
     return bitmap;
 }
 
-static void
+G_GNUC_UNUSED static void
 dump_coverage (const guint8 *cov)
 {
     gint i;
