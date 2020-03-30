@@ -1944,6 +1944,14 @@ static void
 setup_palette (ChafaCanvas *canvas)
 {
     ChafaPaletteType pal_type = CHAFA_PALETTE_TYPE_DYNAMIC_256;
+    ChafaColor fg_col;
+    ChafaColor bg_col;
+
+    chafa_unpack_color (canvas->config.fg_color_packed_rgb, &fg_col);
+    chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_col);
+
+    fg_col.ch [3] = 0xff;
+    bg_col.ch [3] = 0x00;
 
     switch (chafa_canvas_config_get_canvas_mode (&canvas->config))
     {
@@ -1974,8 +1982,8 @@ setup_palette (ChafaCanvas *canvas)
 
     chafa_palette_init (&canvas->palette, pal_type);
 
-    chafa_palette_set_color (&canvas->palette, CHAFA_PALETTE_INDEX_FG, &canvas->fg_color);
-    chafa_palette_set_color (&canvas->palette, CHAFA_PALETTE_INDEX_BG, &canvas->bg_color);
+    chafa_palette_set_color (&canvas->palette, CHAFA_PALETTE_INDEX_FG, &fg_col);
+    chafa_palette_set_color (&canvas->palette, CHAFA_PALETTE_INDEX_BG, &bg_col);
 
     chafa_palette_set_alpha_threshold (&canvas->palette, canvas->config.alpha_threshold);
     chafa_palette_set_transparent_index (&canvas->palette, CHAFA_PALETTE_INDEX_TRANSPARENT);
