@@ -480,8 +480,11 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         palette_out->n_colors = 2;
     }
 
-    for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
-        chafa_color_table_init (&palette_out->table [i]);
+    if (palette_out->type == CHAFA_PALETTE_TYPE_DYNAMIC_256)
+    {
+        for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
+            chafa_color_table_init (&palette_out->table [i]);
+    }
 }
 
 void
@@ -489,8 +492,11 @@ chafa_palette_deinit (ChafaPalette *palette)
 {
     gint i;
 
-    for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
-        chafa_color_table_deinit (&palette->table [i]);
+    if (palette->type == CHAFA_PALETTE_TYPE_DYNAMIC_256)
+    {
+        for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
+            chafa_color_table_deinit (&palette->table [i]);
+    }
 }
 
 gint
