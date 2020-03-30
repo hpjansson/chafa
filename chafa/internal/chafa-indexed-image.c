@@ -177,10 +177,10 @@ distribute_error (ChafaColorAccum error_in, ChafaColorAccum *error_out_0,
     {
         gint16 ch = error_in.ch [i];
 
-        error_out_0->ch [i] += (ch * 7);
-        error_out_1->ch [i] += (ch * 1);
-        error_out_2->ch [i] += (ch * 5);
-        error_out_3->ch [i] += (ch * 3);
+        error_out_0->ch [i] += (ch * 7) * intensity;
+        error_out_1->ch [i] += (ch * 1) * intensity;
+        error_out_2->ch [i] += (ch * 5) * intensity;
+        error_out_3->ch [i] += (ch * 3) * intensity;
     }
 }
 
