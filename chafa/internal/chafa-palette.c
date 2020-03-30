@@ -519,7 +519,8 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
     guint32 *pixels_copy;
     gint copy_n_pixels;
 
-    palette_out->type = CHAFA_PALETTE_TYPE_DYNAMIC_256;
+    if (palette_out->type != CHAFA_PALETTE_TYPE_DYNAMIC_256)
+        return;
 
     pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
     copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, N_SAMPLES, palette_out->alpha_threshold);

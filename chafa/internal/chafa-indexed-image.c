@@ -335,10 +335,9 @@ draw_pixels (DrawPixelsCtx *ctx)
                            g_get_num_processors (),
                            1);
 
-    if (chafa_palette_get_type (&ctx->indexed_image->palette) == CHAFA_PALETTE_TYPE_DYNAMIC_256)
-        chafa_palette_generate (&ctx->indexed_image->palette,
-                                ctx->scaled_data, ctx->dest_width * ctx->dest_height,
-                                ctx->color_space);
+    chafa_palette_generate (&ctx->indexed_image->palette,
+                            ctx->scaled_data, ctx->dest_width * ctx->dest_height,
+                            ctx->color_space);
 
     /* Single thread only for diffusion; it's a fully serial operation */
     chafa_process_batches (ctx,
