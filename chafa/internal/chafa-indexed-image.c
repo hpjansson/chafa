@@ -83,8 +83,7 @@ quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor
 }
 
 static gint
-quantize_pixel_with_error (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor color,
-                           ChafaColorAccum *error_inout)
+quantize_pixel_with_error (const DrawPixelsCtx *ctx, ChafaColor color, ChafaColorAccum *error_inout)
 {
     gint index;
 
@@ -185,7 +184,8 @@ distribute_error (ChafaColorAccum error_in, ChafaColorAccum *error_out_0,
 }
 
 static guint8
-fs_dither_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *inpixel_p,
+fs_dither_pixel (const DrawPixelsCtx *ctx, G_GNUC_UNUSED ChafaColorHash *chash,
+                 const guint32 *inpixel_p,
                  ChafaColorAccum error_in,
                  ChafaColorAccum *error_out_0, ChafaColorAccum *error_out_1,
                  ChafaColorAccum *error_out_2, ChafaColorAccum *error_out_3)
@@ -193,7 +193,7 @@ fs_dither_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 
     ChafaColor col = chafa_color8_fetch_from_rgba8 (inpixel_p);
     guint8 index;
 
-    index = quantize_pixel_with_error (ctx, chash, col, &error_in);
+    index = quantize_pixel_with_error (ctx, col, &error_in);
     distribute_error (error_in,
                       error_out_0, error_out_1, error_out_2, error_out_3,
                       ctx->indexed_image->dither.intensity);
