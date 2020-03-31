@@ -2303,6 +2303,9 @@ scale_outrow (const SmolScaleCtx *scale_ctx,
                              vertical_ctx,
                              outrow_index,
                              row_out);
+
+    if (scale_ctx->post_row_func)
+        scale_ctx->post_row_func (row_out, scale_ctx->width_out, scale_ctx->user_data);
 }
 
 static void
@@ -2865,7 +2868,9 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
                  uint32_t *pixels_out,
                  uint32_t width_out,
                  uint32_t height_out,
-                 uint32_t rowstride_out)
+                 uint32_t rowstride_out,
+                 SmolPostRowFunc post_row_func,
+                 void *user_data)
 {
     SmolStorageType storage_type [2];
 
@@ -2879,6 +2884,9 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     scale_ctx->width_out = width_out;
     scale_ctx->height_out = height_out;
     scale_ctx->rowstride_out = rowstride_out / sizeof (uint32_t);
+
+    scale_ctx->post_row_func = post_row_func;
+    scale_ctx->user_data = user_data;
 
     pick_filter_params (width_in, width_out,
                         &scale_ctx->width_halvings,
@@ -2961,7 +2969,42 @@ smol_scale_new (SmolPixelType pixel_type_in,
                      pixels_out,
                      width_out,
                      height_out,
-                     rowstride_out);
+                     rowstride_out,
+                     NULL,
+                     NULL);
+    return scale_ctx;
+}
+
+SmolScaleCtx *
+smol_scale_new_full (SmolPixelType pixel_type_in,
+                     const uint32_t *pixels_in,
+                     uint32_t width_in,
+                     uint32_t height_in,
+                     uint32_t rowstride_in,
+                     SmolPixelType pixel_type_out,
+                     uint32_t *pixels_out,
+                     uint32_t width_out,
+                     uint32_t height_out,
+                     uint32_t rowstride_out,
+                     SmolPostRowFunc post_row_func,
+                     void *user_data)
+{
+    SmolScaleCtx *scale_ctx;
+
+    scale_ctx = calloc (sizeof (SmolScaleCtx), 1);
+    smol_scale_init (scale_ctx,
+                     pixel_type_in,
+                     pixels_in,
+                     width_in,
+                     height_in,
+                     rowstride_in,
+                     pixel_type_out,
+                     pixels_out,
+                     width_out,
+                     height_out,
+                     rowstride_out,
+                     post_row_func,
+                     user_data);
     return scale_ctx;
 }
 
@@ -2990,7 +3033,8 @@ smol_scale_simple (SmolPixelType pixel_type_in,
                      pixel_type_in, pixels_in,
                      width_in, height_in, rowstride_in,
                      pixel_type_out, pixels_out,
-                     width_out, height_out, rowstride_out);
+                     width_out, height_out, rowstride_out,
+                     NULL, NULL);
     do_rows (&scale_ctx,
              outrow_ofs_to_pointer (&scale_ctx, 0),
              0,

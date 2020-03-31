@@ -34,6 +34,10 @@ typedef enum
 }
 SmolPixelType;
 
+typedef void (SmolPostRowFunc) (uint32_t *row_inout,
+                                int width,
+                                void *user_data);
+
 typedef struct SmolScaleCtx SmolScaleCtx;
 
 /* Simple API: Scales an entire image in one shot. You must provide pointers to
@@ -51,6 +55,12 @@ SmolScaleCtx *smol_scale_new (SmolPixelType pixel_type_in, const uint32_t *pixel
                               uint32_t width_in, uint32_t height_in, uint32_t rowstride_in,
                               SmolPixelType pixel_type_out, uint32_t *pixels_out,
                               uint32_t width_out, uint32_t height_out, uint32_t rowstride_out);
+
+SmolScaleCtx *smol_scale_new_full (SmolPixelType pixel_type_in, const uint32_t *pixels_in,
+                                   uint32_t width_in, uint32_t height_in, uint32_t rowstride_in,
+                                   SmolPixelType pixel_type_out, uint32_t *pixels_out,
+                                   uint32_t width_out, uint32_t height_out, uint32_t rowstride_out,
+                                   SmolPostRowFunc post_row_func, void *user_data);
 
 void smol_scale_destroy (SmolScaleCtx *scale_ctx);
 

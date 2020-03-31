@@ -164,6 +164,10 @@ struct SmolScaleCtx
     SmolHFilterFunc *hfilter_func;
     SmolVFilterFunc *vfilter_func;
 
+    /* User specified, can be NULL */
+    SmolPostRowFunc *post_row_func;
+    void *user_data;
+
     /* Each offset is split in two uint16s: { pixel index, fraction }. These
      * are relative to the image after halvings have taken place. */
     uint16_t *offsets_x, *offsets_y;
