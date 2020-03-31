@@ -51,6 +51,12 @@
  **/
 
 /**
+ * ChafaColorExtractor:
+ * @CHAFA_COLOR_EXTRACTOR_AVERAGE: Use the average colors of each symbol's coverage area.
+ * @CHAFA_COLOR_EXTRACTOR_MEDIAN: Use the median colors of each symbol's coverage area.
+ **/
+
+/**
  * ChafaColorSpace:
  * @CHAFA_COLOR_SPACE_RGB: RGB color space. Fast but imprecise.
  * @CHAFA_COLOR_SPACE_DIN99D: DIN99d color space. Slower, but good perceptual color precision.
@@ -321,6 +327,16 @@ chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode 
     config->canvas_mode = mode;
 }
 
+/**
+ * chafa_canvas_config_get_color_extractor:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's #ChafaColorExtractor.
+ *
+ * Returns: The #ChafaColorExtractor.
+ *
+ * Since: 1.4
+ **/
 ChafaColorExtractor
 chafa_canvas_config_get_color_extractor (const ChafaCanvasConfig *config)
 {
@@ -330,6 +346,15 @@ chafa_canvas_config_get_color_extractor (const ChafaCanvasConfig *config)
     return config->color_extractor;
 }
 
+/**
+ * chafa_canvas_config_get_color_extractor:
+ * @config: A #ChafaCanvasConfig
+ * @color_extractor: A #ChafaColorExtractor
+ *
+ * Sets @config's stored #ChafaColorExtractor to @color_extractor.
+ *
+ * Since: 1.4
+ **/
 void
 chafa_canvas_config_set_color_extractor (ChafaCanvasConfig *config, ChafaColorExtractor color_extractor)
 {
