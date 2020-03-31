@@ -1054,7 +1054,7 @@ auto_orient_image (MagickWand *image)
 #ifdef HAVE_MAGICK_AUTO_ORIENT_IMAGE
     MagickAutoOrientImage (image);
 #else
-    PixelWand *pwand = 0;
+    PixelWand *pwand = NULL;
 
     switch (MagickGetImageOrientation (image))
     {
