@@ -1,7 +1,6 @@
 <SECTION>
 <FILE>chafa-canvas</FILE>
 ChafaCanvas
-ChafaPixelType
 chafa_canvas_new
 chafa_canvas_new_similar
 chafa_canvas_ref
@@ -77,5 +76,6 @@ chafa_symbol_map_apply_selectors
 
 <SECTION>
 <FILE>chafa-util</FILE>
+ChafaPixelType
 chafa_calc_canvas_geometry
 </SECTION>

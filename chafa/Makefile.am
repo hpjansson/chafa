@@ -23,6 +23,7 @@ chafainclude_HEADERS = \
 	chafa.h \
 	chafa-canvas.h \
 	chafa-canvas-config.h \
+	chafa-common.h \
 	chafa-features.h \
 	chafa-symbol-map.h \
 	chafa-util.h \

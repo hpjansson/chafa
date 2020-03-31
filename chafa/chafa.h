@@ -25,32 +25,10 @@
 
 G_BEGIN_DECLS
 
-typedef enum
-{
-    /* 32 bits per pixel */
-
-    CHAFA_PIXEL_RGBA8_PREMULTIPLIED,
-    CHAFA_PIXEL_BGRA8_PREMULTIPLIED,
-    CHAFA_PIXEL_ARGB8_PREMULTIPLIED,
-    CHAFA_PIXEL_ABGR8_PREMULTIPLIED,
-
-    CHAFA_PIXEL_RGBA8_UNASSOCIATED,
-    CHAFA_PIXEL_BGRA8_UNASSOCIATED,
-    CHAFA_PIXEL_ARGB8_UNASSOCIATED,
-    CHAFA_PIXEL_ABGR8_UNASSOCIATED,
-
-    /* 24 bits per pixel */
-
-    CHAFA_PIXEL_RGB8,
-    CHAFA_PIXEL_BGR8,
-
-    CHAFA_PIXEL_MAX
-}
-ChafaPixelType;
-
 /* Version macros go before everything else */
 #include <chafa-version-macros.h>
 
+#include <chafa-common.h>
 #include <chafa-features.h>
 #include <chafa-canvas-config.h>
 #include <chafa-canvas.h>
