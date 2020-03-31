@@ -1185,7 +1185,7 @@ chafa_symbol_map_apply_selectors (ChafaSymbolMap *symbol_map, const gchar *selec
 /* --- Glyphs --- */
 
 /**
- * chafa_symbol_map_get_use_builitin_glyphs:
+ * chafa_symbol_map_get_allow_builtin_glyphs:
  * @symbol_map: A symbol map
  *
  * Queries whether a symbol map is allowed to use built-in glyphs for
@@ -1207,7 +1207,7 @@ chafa_symbol_map_get_allow_builtin_glyphs (ChafaSymbolMap *symbol_map)
 }
 
 /**
- * chafa_symbol_map_set_use_builitin_glyphs:
+ * chafa_symbol_map_set_allow_builtin_glyphs:
  * @symbol_map: A symbol map
  * @use_builtin_glyphs: A boolean indicating whether to use built-in glyphs
  *
