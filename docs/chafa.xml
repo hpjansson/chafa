@@ -76,6 +76,12 @@ lower 16 colors are unreliable and tend to differ between terminals. 16-color
 mode will use aixterm extensions to produce 16 foreground and background
 colors. 2-color mode will only emit the ANSI codes for reverse color and
 attribute reset, while "none" will emit no ANSI color codes whatsoever.
+</para>
+<para>
+In sixel mode, "full" will dynamically generate a 256-color palette for each
+image or animation frame. The other modes refer to built-in palettes. "none"
+and "2" are interchangeable and will use the specified foreground/background
+colors (see --fg and --bg).
 </para></listitem>
 </varlistentry>
 
@@ -83,8 +89,8 @@ attribute reset, while "none" will emit no ANSI color codes whatsoever.
 <term><option>--color-extractor <replaceable>extractor</replaceable></option></term>
 <listitem><para>
 Method for extracting color from an area; one of [average, median]. Median
-normally produces crisper output, while average is slightly faster and may
-perform better on noisy images. Defaults to median.
+normally produces crisper output, while average may perform better on noisy images.
+Defaults to median.
 </para></listitem>
 </varlistentry>
 
@@ -110,7 +116,8 @@ a synonym for "diffusion".
 <listitem><para>
 Dimensions of grain used when dithering. Specified as width x height, where
 each can be one of [1, 2, 4, 8] pixels. One character cell is by definition 8
-pixels across in both dimensions. Defaults to 4x4.
+pixels across in both dimensions. Defaults to 4x4 in symbol mode and 1x1
+in sixel mode.
 </para></listitem>
 </varlistentry>
 
@@ -127,9 +134,10 @@ useful results.
 <varlistentry>
 <term><option>-d, --duration <replaceable>seconds</replaceable></option></term>
 <listitem><para>
-Time to show each file. If showing a single file, defaults to zero for a still
-image and infinite for an animation. For multiple files, defaults to
-3.0. Animations will always be played through at least once.
+Time to show each file, in seconds. Defaults to zero for still images and for
+animations when multiple files are specified. If a single animation is
+specified, defaults to infinite. Animations will always be played through at
+least once, even if duration is e.g. zero.
 </para></listitem>
 </varlistentry>
 
@@ -169,6 +177,18 @@ yield much better quality, but support for it is fairly rare.
 </varlistentry>
 
 <varlistentry>
+<term><option>--glyph-file <replaceable>file</replaceable></option></term>
+<listitem><para>
+Load glyph information from file, which can be any font file supported by
+FreeType (TTF, PCF, etc). The glyph outlines will replace any existing
+outlines, including builtins. Useful in symbol mode for custom font
+support or for improving quality with a specific font. Note that this only
+makes sense if the output terminal is using a matching font. Can be
+specified multiple times.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-h, --help</option></term>
 <listitem><para>
 Show a brief help text.
@@ -197,6 +217,15 @@ useful in low-color modes.
 <listitem><para>
 Set maximum output dimensions in columns and rows. By default this will be the
 size of your terminal, or 80x25 if size detection fails.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--speed <replaceable>speed</replaceable></option></term>
+<listitem><para>
+Set the speed animations will play at. This can be either a unitless
+multiplier (fractions are allowed), or a real number followed by "fps"
+to apply a specific framerate.
 </para></listitem>
 </varlistentry>
 
