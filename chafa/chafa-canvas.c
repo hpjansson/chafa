@@ -1683,7 +1683,7 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
 }
 
 static void
-prepare_pixel_data (ChafaCanvas *canvas)
+prepare_pixel_data_for_symbols (ChafaCanvas *canvas)
 {
     PrepareContext prep_ctx = { 0 };
     guint n_cpus;
@@ -1708,15 +1708,6 @@ prepare_pixel_data (ChafaCanvas *canvas)
                                          canvas->width_pixels * sizeof (guint32));
 
     prepare_pixels_pass_1 (&prep_ctx);
-
-    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR
-        && canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
-    {
-        chafa_palette_generate (&canvas->palette, canvas->pixels,
-                                canvas->width_pixels * canvas->height_pixels,
-                                canvas->config.color_space);
-    }
-
     prepare_pixels_pass_2 (&prep_ctx);
 
     smol_scale_destroy (prep_ctx.scale_ctx);
@@ -2252,7 +2243,7 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
         canvas->src_rowstride = src_rowstride;
         canvas->have_alpha_int = 0;
 
-        prepare_pixel_data (canvas);
+        prepare_pixel_data_for_symbols (canvas);
 
         if (canvas->config.alpha_threshold == 0)
             canvas->have_alpha = FALSE;
