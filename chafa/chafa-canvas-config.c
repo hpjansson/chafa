@@ -301,7 +301,8 @@ chafa_canvas_config_set_cell_geometry (ChafaCanvasConfig *config, gint cell_widt
  * chafa_canvas_config_get_canvas_mode:
  * @config: A #ChafaCanvasConfig
  *
- * Returns @config's #ChafaCanvasMode.
+ * Returns @config's #ChafaCanvasMode. This determines how colors (and
+ * color control codes) are used in the output.
  *
  * Returns: The #ChafaCanvasMode.
  **/
@@ -319,7 +320,8 @@ chafa_canvas_config_get_canvas_mode (const ChafaCanvasConfig *config)
  * @config: A #ChafaCanvasConfig
  * @mode: A #ChafaCanvasMode
  *
- * Sets @config's stored #ChafaCanvasMode to @mode.
+ * Sets @config's stored #ChafaCanvasMode to @mode. This determines how
+ * colors (and color control codes) are used in the output.
  **/
 void
 chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode mode)
@@ -335,7 +337,8 @@ chafa_canvas_config_set_canvas_mode (ChafaCanvasConfig *config, ChafaCanvasMode 
  * chafa_canvas_config_get_color_extractor:
  * @config: A #ChafaCanvasConfig
  *
- * Returns @config's #ChafaColorExtractor.
+ * Returns @config's #ChafaColorExtractor. This determines how colors are
+ * approximated in character symbol output.
  *
  * Returns: The #ChafaColorExtractor.
  *
@@ -351,11 +354,12 @@ chafa_canvas_config_get_color_extractor (const ChafaCanvasConfig *config)
 }
 
 /**
- * chafa_canvas_config_get_color_extractor:
+ * chafa_canvas_config_set_color_extractor:
  * @config: A #ChafaCanvasConfig
  * @color_extractor: A #ChafaColorExtractor
  *
- * Sets @config's stored #ChafaColorExtractor to @color_extractor.
+ * Sets @config's stored #ChafaColorExtractor to @color_extractor. This
+ * determines how colors are approximated in character symbol output.
  *
  * Since: 1.4
  **/
@@ -793,7 +797,8 @@ chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat inte
  *
  * Returns @config's #ChafaPixelMode.
  *
- * Returns: The #ChafaPixelMode.
+ * Returns: The #ChafaPixelMode. This determines how pixel graphics are
+ * rendered in the output.
  *
  * Since: 1.4
  **/
@@ -811,7 +816,8 @@ chafa_canvas_config_get_pixel_mode (const ChafaCanvasConfig *config)
  * @config: A #ChafaCanvasConfig
  * @pixel_mode: A #ChafaPixelMode
  *
- * Sets @config's stored #ChafaPixelMode to @pixel_mode.
+ * Sets @config's stored #ChafaPixelMode to @pixel_mode. This determines
+ * how pixel graphics are rendered in the output.
  *
  * Since: 1.4
  **/
