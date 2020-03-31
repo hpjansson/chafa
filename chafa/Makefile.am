@@ -8,7 +8,7 @@ lib_LTLIBRARIES = libchafa.la
 noinst_LTLIBRARIES =
 
 libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
-libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 2:0:2
+libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 3:0:3
 libchafa_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal.la -lm
 
 libchafa_la_SOURCES = \
