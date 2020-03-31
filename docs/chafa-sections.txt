@@ -13,9 +13,11 @@ chafa_canvas_set_contents_rgba8
 
 <SECTION>
 <FILE>chafa-canvas-config</FILE>
+ChafaPixelMode
 ChafaColorSpace
 ChafaCanvasMode
 ChafaDitherMode
+ChafaColorExtractor
 ChafaCanvasConfig
 chafa_canvas_config_new
 chafa_canvas_config_copy
@@ -23,8 +25,14 @@ chafa_canvas_config_ref
 chafa_canvas_config_unref
 chafa_canvas_config_get_geometry
 chafa_canvas_config_set_geometry
+chafa_canvas_config_get_cell_geometry
+chafa_canvas_config_set_cell_geometry
+chafa_canvas_config_get_pixel_mode
+chafa_canvas_config_set_pixel_mode
 chafa_canvas_config_get_canvas_mode
 chafa_canvas_config_set_canvas_mode
+chafa_canvas_config_get_color_extractor
+chafa_canvas_config_set_color_extractor
 chafa_canvas_config_get_color_space
 chafa_canvas_config_set_color_space
 chafa_canvas_config_get_dither_mode
@@ -70,12 +78,22 @@ chafa_symbol_map_copy
 chafa_symbol_map_ref
 chafa_symbol_map_unref
 chafa_symbol_map_add_by_tags
+chafa_symbol_map_add_by_range
 chafa_symbol_map_remove_by_tags
+chafa_symbol_map_remove_by_range
 chafa_symbol_map_apply_selectors
+chafa_symbol_map_get_allow_builtin_glyphs
+chafa_symbol_map_set_allow_builtin_glyphs
+chafa_symbol_map_add_glyph
 </SECTION>
 
 <SECTION>
 <FILE>chafa-util</FILE>
+CHAFA_VERSION_MIN_REQUIRED
+CHAFA_VERSION_MAX_ALLOWED
+CHAFA_VERSION_1_0
+CHAFA_VERSION_1_2
+CHAFA_VERSION_1_4
 ChafaPixelType
 chafa_calc_canvas_geometry
 </SECTION>
