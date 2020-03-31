@@ -106,9 +106,9 @@ void chafa_canvas_config_get_geometry (const ChafaCanvasConfig *config, gint *wi
 CHAFA_AVAILABLE_IN_ALL
 void chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint height);
 
-CHAFA_AVAILABLE_IN_ALL
+CHAFA_AVAILABLE_IN_1_4
 void chafa_canvas_config_get_cell_geometry (const ChafaCanvasConfig *config, gint *cell_width_out, gint *cell_height_out);
-CHAFA_AVAILABLE_IN_ALL
+CHAFA_AVAILABLE_IN_1_4
 void chafa_canvas_config_set_cell_geometry (ChafaCanvasConfig *config, gint cell_width, gint cell_height);
 
 CHAFA_AVAILABLE_IN_ALL

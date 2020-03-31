@@ -260,6 +260,8 @@ chafa_canvas_config_set_geometry (ChafaCanvasConfig *config, gint width, gint he
  *
  * Returns @config's cell width and height in pixels in the
  * provided output locations.
+ *
+ * Since: 1.4
  **/
 void
 chafa_canvas_config_get_cell_geometry (const ChafaCanvasConfig *config, gint *cell_width_out, gint *cell_height_out)
@@ -280,6 +282,8 @@ chafa_canvas_config_get_cell_geometry (const ChafaCanvasConfig *config, gint *ce
  * @cell_height: Cell height in pixels
  *
  * Sets @config's cell width and height in pixels to @cell_width x @cell_height.
+ *
+ * Since: 1.4
  **/
 void
 chafa_canvas_config_set_cell_geometry (ChafaCanvasConfig *config, gint cell_width, gint cell_height)
