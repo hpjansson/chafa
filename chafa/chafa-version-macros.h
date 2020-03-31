@@ -101,9 +101,8 @@ G_BEGIN_DECLS
  * functions, then using functions added after version
  * %CHAFA_VERSION_MAX_ALLOWED will cause warnings.
  *
- * Unless you are using CHAFA_CHECK_VERSION() or the like to compile
- * different code depending on the Chafa version, then this should be
- * set to the same value as %CHAFA_VERSION_MIN_REQUIRED.
+ * This should normally be set to the same value as
+ * %CHAFA_VERSION_MIN_REQUIRED.
  *
  * Since: 1.2
  */
