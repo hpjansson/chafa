@@ -74,7 +74,6 @@ dnl AC_DEFINE([_POSIX_C_SOURCE], [200809L], [Minimum POSIX standard we need])
 dnl --- Dependency check ---
 
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.10)
-PKG_CHECK_MODULES(FREETYPE, freetype2 >= 2.0.0)
 
 AC_ARG_WITH(tools,
   [AS_HELP_STRING([--without-tools], [don't build command-line tools [default=on]])],
@@ -83,7 +82,9 @@ AC_ARG_WITH(tools,
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" = "yes"])
 AS_IF([test "$with_tools" != no], [
   PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
-    [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on debian) to build command-line tools, or pass --without-tools to build without.])])])
+    [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on debian) to build command-line tools, or pass --without-tools to build without.])])
+  PKG_CHECK_MODULES(FREETYPE, [freetype2 >= 2.0.0],,
+    [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on debian) to build command-line tools, or pass --without-tools to build without.])])])
 
 # Used by gtk-doc's fixxref.
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
