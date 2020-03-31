@@ -581,7 +581,6 @@ chafa_canvas_config_get_work_factor (const ChafaCanvasConfig *config)
  *
  * Sets the work/quality tradeoff factor. A higher value means more time
  * and memory will be spent towards a higher quality output.
- *
  **/
 void
 chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_factor)
