@@ -1068,6 +1068,7 @@ auto_orient_image (MagickWand *image)
         case BottomRightOrientation:
             pwand = NewPixelWand ();
             MagickRotateImage (image, pwand, 180.0);
+            break;
         case BottomLeftOrientation:
             MagickFlipImage (image);
             break;
