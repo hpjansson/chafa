@@ -22,9 +22,9 @@ command-line tool.
 
 * There are now two ways to assign colors to symbol cells. Formerly,
   this was done based on the average color of the covered area. The new
-  default is to use the median color, which is faster and produces
-  sharper edges, but is slightly more prone to high-frequency noise.
-  The new option --color-extractor selects the method to employ.
+  default is to use the median color, which is produces sharper edges,
+  but is slightly more prone to high-frequency noise. The new option
+  --color-extractor selects the method to employ.
 
 * When displaying multiple files, the default delay between files has
   been changed from three seconds to zero. Animations will still play
