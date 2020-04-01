@@ -37,9 +37,9 @@
  * specify any parameters, like the geometry, color space and so on, you
  * must create a #ChafaCanvasConfig first.
  *
- * You can draw an image to the canvas using chafa_canvas_set_contents ()
- * and create an ANSI text representation of the canvas' current contents
- * using chafa_canvas_build_ansi ().
+ * You can draw an image to the canvas using chafa_canvas_draw_all_pixels ()
+ * and create an ANSI text (or sixel) representation of the canvas' current
+ * contents using chafa_canvas_build_ansi ().
  **/
 
 /* Fixed point multiplier */
