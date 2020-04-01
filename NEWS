@@ -22,7 +22,7 @@ command-line tool.
 
 * There are now two ways to assign colors to symbol cells. Formerly,
   this was done based on the average color of the covered area. The new
-  default is to use the median color, which is produces sharper edges,
+  default is to use the median color, which produces sharper edges,
   but is slightly more prone to high-frequency noise. The new option
   --color-extractor selects the method to employ.
 
