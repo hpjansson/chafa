@@ -819,8 +819,13 @@ detect_terminal_modes (ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out
         mode = CHAFA_CANVAS_MODE_TRUECOLOR;
 
     /* mlterm's truecolor support seems to be broken; it looks like a color
-     * allocation issue. This affects characters cells, but not sixels. */
-    if (!strcmp (term, "mlterm"))
+     * allocation issue. This affects character cells, but not sixels.
+     *
+     * yaft supports sixels and truecolor escape codes, but it remaps cell
+     * colors to a 256-color palette. */
+    if (!strcmp (term, "mlterm")
+        || !strcmp (term, "yaft")
+        || !strcmp (term, "yaft-256color"))
     {
         /* The default canvas mode is truecolor for sixels. 240 colors is
          * the default for symbols. */
