@@ -1243,7 +1243,7 @@ chafa_symbol_map_set_allow_builtin_glyphs (ChafaSymbolMap *symbol_map,
  * @height: Height of glyph, in pixels
  * @rowstride: Offset from start of one row to the next, in bytes
  *
- * Assigns a rendered glyph t a Unicode code point. This tells Chafa what the
+ * Assigns a rendered glyph to a Unicode code point. This tells Chafa what the
  * glyph looks like so the corresponding symbol can be used appropriately in
  * output.
  *
