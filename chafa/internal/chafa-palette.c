@@ -361,15 +361,13 @@ gen_table (ChafaPalette *palette, ChafaColorSpace color_space)
 #define N_SAMPLES 32768
 
 static gint
-extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint n_samples,
+extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint step,
                  gint alpha_threshold)
 {
     const guint32 *p = pixels;
     guint32 *p_out = pixels_out;
-    gint step;
     gint i;
 
-    step = (n_pixels / n_samples) + 1;
     step = MAX (step, 1);
 
     for (i = 0; i < n_pixels; i += step)
@@ -381,6 +379,33 @@ extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint 
     }
 
     return ((ptrdiff_t) p_out - (ptrdiff_t) pixels_out) / 4;
+}
+
+static gint
+extract_samples_dense (gconstpointer pixels, gpointer pixels_out, gint n_pixels,
+                       gint n_samples_max, gint alpha_threshold)
+{
+    const guint32 *p = pixels;
+    guint32 *p_out = pixels_out;
+    gint n_samples = 0;
+    gint i;
+
+    g_assert (n_samples_max > 0);
+
+    for (i = 0; i < n_pixels; i++)
+    {
+        gint alpha = p [i] >> 24;
+        if (alpha < alpha_threshold)
+            continue;
+
+        *(p_out++) = p [i];
+
+        n_samples++;
+        if (n_samples == n_samples_max)
+            break;
+    }
+
+    return n_samples;
 }
 
 static void
@@ -527,13 +552,23 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
                         ChafaColorSpace color_space)
 {
     guint32 *pixels_copy;
+    gint step;
     gint copy_n_pixels;
 
     if (palette_out->type != CHAFA_PALETTE_TYPE_DYNAMIC_256)
         return;
 
     pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
-    copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, N_SAMPLES, palette_out->alpha_threshold);
+
+    step = (n_pixels / N_SAMPLES) + 1;
+    copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, step,
+                                     palette_out->alpha_threshold);
+
+    /* If we recovered very few (potentially zero) samples, it could be due to
+     * the image being mostly transparent. Resample at full density if so. */
+    if (copy_n_pixels < 256 && step != 1)
+        copy_n_pixels = extract_samples_dense (pixels, pixels_copy, n_pixels, N_SAMPLES,
+                                               palette_out->alpha_threshold);
 
     DEBUG (g_printerr ("Extracted %d samples.\n", copy_n_pixels));
 
