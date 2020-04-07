@@ -44,8 +44,8 @@ calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const gu
         *m64p1 = _mm_adds_pi16 (*m64p1, m64a);
     }
 
-    ((guint64 *) accums_out) [0] = _mm_cvtm64_si64 (accum [0]);
-    ((guint64 *) accums_out) [1] = _mm_cvtm64_si64 (accum [1]);
+    ((__m64 *) accums_out) [0] = accum [0];
+    ((__m64 *) accums_out) [1] = accum [1];
 
 #if 0
     /* Called after outer loop is done */
