@@ -93,8 +93,6 @@ AC_DEFUN([JH_CHECK_XML_CATALOG],
 #   and this notice are preserved.  This file is offered as-is, without any
 #   warranty.
 
-#serial 6
-
 AC_DEFUN([AX_CHECK_COMPILE_FLAG],
 [AC_PREREQ(2.64)dnl for _AC_LANG_PREFIX and AS_VAR_IF
 AS_VAR_PUSHDEF([CACHEVAR],[ax_cv_check_[]_AC_LANG_ABBREV[]flags_$4_$1])dnl
