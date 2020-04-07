@@ -182,7 +182,7 @@ dnl
 
 AC_CACHE_CHECK([for gcc __builtin_cpu_init function],
         [ax_cv_gcc_check_x86_cpu_init],
-        [AC_RUN_IFELSE(
+        [AC_LINK_IFELSE(
                 [AC_LANG_PROGRAM([#include <stdlib.h>],
                         [__builtin_cpu_init ();])],
                  [ax_cv_gcc_check_x86_cpu_init=yes],
@@ -190,7 +190,7 @@ AC_CACHE_CHECK([for gcc __builtin_cpu_init function],
 
 AC_CACHE_CHECK([for gcc __builtin_cpu_supports function],
         [ax_cv_gcc_check_x86_cpu_supports],
-        [AC_RUN_IFELSE(
+        [AC_LINK_IFELSE(
                 [AC_LANG_PROGRAM([#include <stdlib.h>],
                         [__builtin_cpu_supports ("mmx");])],
                  [ax_cv_gcc_check_x86_cpu_supports=yes],
@@ -205,7 +205,7 @@ dnl Check for working MMX intrinsics
 AC_MSG_CHECKING(for working MMX intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -mmmx"
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
                 [[#include <mmintrin.h>]],
                 [[_mm_empty ();]])],
@@ -220,7 +220,7 @@ dnl Check for working SSE intrinsics
 AC_MSG_CHECKING(for working SSE 4.1 intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -msse4.1"
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <smmintrin.h>]],
 		[[__m128i t = { 0 }; int r = _mm_test_all_ones (t);]])],
@@ -235,7 +235,7 @@ dnl Check for working AVX2 intrinsics
 AC_MSG_CHECKING(for working AVX2 intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -mavx2"
-AC_COMPILE_IFELSE(
+AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <immintrin.h>]],
 		[[__m256i t = { 0 }; __m256i r = _mm256_abs_epi32 (t);]])],
@@ -336,7 +336,7 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_WAND_MAGICKWAND_H
 # include <wand/MagickWand.h>
 #else
@@ -354,7 +354,7 @@ SAVED_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
 SAVED_LDFLAGS=$LDFLAGS
 LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_WAND_MAGICKWAND_H
 # include <wand/MagickWand.h>
 #else
