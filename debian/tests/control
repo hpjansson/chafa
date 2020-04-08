@@ -1,0 +1,3 @@
+# simply run the program to see if it fails
+Test-Command: chafa --version
+Restrictions: allow-stderr

@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS  = hardening=+all
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+%:
+	dh $@
+
+override_dh_autoreconf:
+	touch gtk-doc.make
+	echo "EXTRA_DIST =" >> gtk-doc.make
+	echo "CLEANFILES =" >> gtk-doc.make
+	gtkdocize
+	dh_autoreconf
+
+override_dh_missing:
+	dh_missing --list-missing

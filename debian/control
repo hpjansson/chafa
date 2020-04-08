@@ -1,0 +1,74 @@
+Source: chafa
+Section: graphics
+Homepage: https://hpjansson.org/chafa/
+# Upstream-Git: https://github.com/hpjansson/chafa
+Priority: optional
+Standards-Version: 4.5.0
+Vcs-Git: https://salsa.debian.org/debian/chafa.git
+Vcs-Browser: https://salsa.debian.org/debian/chafa
+Maintainer: Mo Zhou <lumin@debian.org>
+Build-Depends:
+ debhelper-compat (=12),
+ libmagickwand-dev,
+ gtk-doc-tools,
+ libxml2-utils,
+ docbook,
+Rules-Requires-Root: no
+
+Package: chafa
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends},
+         libchafa0 (= ${binary:Version}),
+Description: Image-to-text converter supporting a wide range of symbols, etc.
+ Chafa is a command-line utility that converts all kinds of images, including
+ animated image formats like GIFs, into ANSI/Unicode character output that can
+ be displayed in a terminal.
+ .
+ It is highly configurable, with support for alpha transparency and multiple
+ color modes and color spaces, combining a range of Unicode characters for
+ optimal output.
+ .
+ The core functionality is provided by a C library with a public,
+ well-documented API.
+ .
+ This package ships the command line tool.
+
+Package: libchafa0
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, ${shlibs:Depends},
+Description: library for image-to-text converter chafa
+ Chafa is a command-line utility that converts all kinds of images, including
+ animated image formats like GIFs, into ANSI/Unicode character output that can
+ be displayed in a terminal.
+ .
+ It is highly configurable, with support for alpha transparency and multiple
+ color modes and color spaces, combining a range of Unicode characters for
+ optimal output.
+ .
+ The core functionality is provided by a C library with a public,
+ well-documented API.
+ .
+ This package ships the shared object.
+
+Package: libchafa-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+         libchafa0 (= ${binary:Version}),
+Description: development files for image-to-text converter chafa
+ Chafa is a command-line utility that converts all kinds of images, including
+ animated image formats like GIFs, into ANSI/Unicode character output that can
+ be displayed in a terminal.
+ .
+ It is highly configurable, with support for alpha transparency and multiple
+ color modes and color spaces, combining a range of Unicode characters for
+ optimal output.
+ .
+ The core functionality is provided by a C library with a public,
+ well-documented API.
+ .
+ This package ships the development files.
