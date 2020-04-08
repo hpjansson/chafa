@@ -1,3 +1,9 @@
+chafa (1.4.0-0) unstable; urgency=medium
+
+  * New upstream version 1.4.0 (unofficial)
+
+ -- Hans Petter Jansson <hpj@cl.no>  Tue, 07 Apr 2020 12:00:00 +0100
+
 chafa (1.2.2-1) unstable; urgency=medium
 
   * New upstream version 1.2.2
