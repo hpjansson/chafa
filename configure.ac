@@ -399,6 +399,13 @@ AC_SUBST(LIBCHAFA_LDFLAGS)
 AC_SUBST(CHAFA_CFLAGS)
 AC_SUBST(CHAFA_LDFLAGS)
 
+AC_ARG_ENABLE(rpath,
+              [AS_HELP_STRING([--enable-rpath],
+                              [use rpath [default=yes]])],,
+              enable_rpath=yes)
+
+AM_CONDITIONAL(ENABLE_RPATH, test "$enable_rpath" == yes)
+
 dnl --- Output ---
 
 AC_OUTPUT(Makefile
