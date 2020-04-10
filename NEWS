@@ -1,6 +1,24 @@
 Chafa releases
 ==============
 
+1.4.1 (2020-04-10)
+------------------
+
+This is a bugfix release.
+
+* Added configure option --disable-rpath. This allows packagers to
+  prevent the hard-coded library search path from being embedded in
+  the chafa command-line tool (Mo Zhou, github#39).
+
+* Added defaults for the yaft terminal.
+
+* Bug fixes:
+  github#40  Fails to build on hurd-i386 + other i386 (reported by
+             Mo Zhou).
+  [unfiled]  Rare failed assert with mostly transparent sixel image
+             (reported by Reddit user spryfigure).
+  [unfiled]  Minor typo in function docstring.
+
 1.4.0 (2020-04-01)
 ------------------
 
