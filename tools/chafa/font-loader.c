@@ -56,6 +56,11 @@ struct FontLoader
     gint n_glyphs_read;
 };
 
+/* With 256 bins we get a histogram for integer values [-128 .. 127]. This
+ * is more than enough for the sizes we'll be getting, which should be in the
+ * 0..16 range, give or take a little. Values outside the histogram's range
+ * will be silently discarded. */
+
 #define SMALL_HISTOGRAM_N_BINS 256
 
 typedef struct
@@ -124,6 +129,10 @@ font_loader_new (void)
     return g_new0 (FontLoader, 1);
 }
 
+/* Get a bit from a rendered FreeType glyph bitmap. Going out of bounds is allowed
+ * and will return zero.
+ *
+ * Returns: 1 for inked bits or 0 for uninked. */
 static guint
 get_bitmap_bit (const FT_Bitmap *bm, const guint8 *a, gint x, gint y, gint rowstride)
 {
@@ -134,6 +143,9 @@ get_bitmap_bit (const FT_Bitmap *bm, const guint8 *a, gint x, gint y, gint rowst
     return (a [y * rowstride + (x / 8)] >> (7 - (x % 8))) & 1;
 }
 
+/* Get the 7th octile values for glyph width, height and baseline. This means 87.5% of
+ * the glyphs will have values equal to or lower than the returned value. Discarding
+ * the upper 12.5% prevents outliers from affecting the result. */
 static void
 measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *baseline_out)
 {
@@ -176,6 +188,14 @@ measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *bas
         *baseline_out = asc_max;
 }
 
+/* Find a pixel size that produces rendered symbols matching our ideal
+ * size as closely as possible. Due to variable-width fonts, precise
+ * font sizes being unavailable, etc. we do this by probing and
+ * simple statistical analysis.
+ *
+ * We start with an initial guess and change our request in increments
+ * until we either hit our desired size or exceed it. Then we back off
+ * once. This is done in both dimensions simultaneously. */
 static gboolean
 find_best_pixel_size_scalable (FontLoader *loader)
 {
@@ -204,6 +224,9 @@ find_best_pixel_size_scalable (FontLoader *loader)
         { req_height--; height_chg |= 2; }
     }
 
+    /* If we can't get the exact size we want, make sure we get something
+     * slightly bigger instead of slightly smaller. */
+
     while (height < CHAFA_SYMBOL_HEIGHT_PIXELS)
     {
         req_height++;
@@ -222,6 +245,8 @@ out:
     return success;
 }
 
+/* See the description of find_best_pixel_size_scalable() for the overall
+ * strategy used here. */
 static gboolean
 find_best_pixel_size_fixed (FontLoader *loader)
 {
@@ -377,6 +402,9 @@ generate_glyph (const FontLoader *loader, const FT_GlyphSlot slot,
     *height_out = loader->font_height;
 }
 
+/* Load a glyph to an RGBA8 output buffer of fixed size CHAFA_SYMBOL_WIDTH_PIXELS *
+ * CHAFA_SYMBOL_HEIGHT_PIXELS. Each pixel will be set to either 0xffffffff (inked)
+ * or 0x00000000 (uninked). */
 gboolean
 font_loader_get_next_glyph (FontLoader *loader, gunichar *char_out,
                             gpointer *glyph_out, gint *width_out, gint *height_out)
