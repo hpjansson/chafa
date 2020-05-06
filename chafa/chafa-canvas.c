@@ -882,6 +882,45 @@ done:
     cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
 }
 
+#define SYMBOL_ERROR_MAX (256 * 256 * 3 * CHAFA_SYMBOL_N_PIXELS)
+
+static gint
+update_cell (ChafaCanvas *canvas, WorkCell *work_cell, ChafaCanvasCell *cell_out)
+{
+    gunichar sym = 0;
+    ChafaColorCandidates ccand;
+    ChafaColor fg_col, bg_col;
+    gint sym_error;
+
+    if (canvas->config.symbol_map.n_symbols == 0)
+        return SYMBOL_ERROR_MAX;
+
+    if (canvas->work_factor_int >= 8)
+        pick_symbol_and_colors_slow (canvas, work_cell, &sym, &fg_col, &bg_col, &sym_error);
+    else
+        pick_symbol_and_colors_fast (canvas, work_cell, &sym, &fg_col, &bg_col, &sym_error);
+
+    cell_out->c = sym;
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+    {
+        chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &fg_col, &ccand);
+        cell_out->fg_color = ccand.index [0];
+        chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &bg_col, &ccand);
+        cell_out->bg_color = ccand.index [0];
+    }
+    else
+    {
+        cell_out->fg_color = chafa_pack_color (&fg_col);
+        cell_out->bg_color = chafa_pack_color (&bg_col);
+    }
+
+    return sym_error;
+}
+
 static void
 update_cells_row (ChafaCanvas *canvas, gint row)
 {
@@ -895,45 +934,19 @@ update_cells_row (ChafaCanvas *canvas, gint row)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
         WorkCell wcell;
-        gunichar sym = 0;
-        ChafaColorCandidates ccand;
-        ChafaColor fg_col, bg_col;
 
         memset (cell, 0, sizeof (*cell));
         cell->c = ' ';
 
         work_cell_init (&wcell, canvas, cx, cy);
+        update_cell (canvas, &wcell, cell);
 
-        if (canvas->config.symbol_map.n_symbols > 0)
-        {
-            if (canvas->work_factor_int >= 8)
-                pick_symbol_and_colors_slow (canvas, &wcell, &sym, &fg_col, &bg_col, NULL);
-            else
-                pick_symbol_and_colors_fast (canvas, &wcell, &sym, &fg_col, &bg_col, NULL);
-
-            cell->c = sym;
-
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
-                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
-            {
-                chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &fg_col, &ccand);
-                cell->fg_color = ccand.index [0];
-                chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &bg_col, &ccand);
-                cell->bg_color = ccand.index [0];
-            }
-            else
-            {
-                cell->fg_color = chafa_pack_color (&fg_col);
-                cell->bg_color = chafa_pack_color (&bg_col);
-            }
-        }
 #if 1
         /* If we produced a featureless cell, try fill */
 
         /* FIXME: Check popcount == 0 or == 64 instead of symbol char */
-        if (sym == 0 || sym == ' ' || sym == 0x2588 || cell->fg_color == cell->bg_color)
+        if (cell->c == 0 || cell->c == ' ' || cell->c == 0x2588
+            || cell->fg_color == cell->bg_color)
         {
             apply_fill (canvas, &wcell, cell);
         }
