@@ -57,6 +57,14 @@ typedef struct
 }
 Glyph;
 
+/* Double-width glyphs */
+typedef struct
+{
+    gunichar c;
+    guint64 bitmap [2];
+}
+Glyph2;
+
 /**
  * CHAFA_SYMBOL_WIDTH_PIXELS:
  *
@@ -92,6 +100,7 @@ Glyph;
  * @CHAFA_SYMBOL_TAG_TECHNICAL: Miscellaneous technical symbols.
  * @CHAFA_SYMBOL_TAG_GEOMETRIC: Geometric shapes.
  * @CHAFA_SYMBOL_TAG_ASCII: Printable ASCII characters.
+ * @CHAFA_SYMBOL_TAG_WIDE: Characters that occupy two cells of width.
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
  **/
@@ -151,24 +160,25 @@ bitmap_to_bytes (guint64 bitmap)
 /* Input format must always be RGBA8. old_format is just an indicator of how
  * the channel values are to be extracted. */
 static void
-pixels_to_coverage (const guint8 *pixels_in, ChafaPixelType old_format, guint8 *pixels_out)
+pixels_to_coverage (const guint8 *pixels_in, ChafaPixelType old_format, guint8 *pixels_out,
+                    gint n_pixels)
 {
     gint i;
 
     if (old_format == CHAFA_PIXEL_RGB8 || old_format == CHAFA_PIXEL_BGR8)
     {
-        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        for (i = 0; i < n_pixels; i++)
             pixels_out [i] = (pixels_in [i * 4] + pixels_in [i * 4 + 1] + pixels_in [i * 4 + 2]) / 3;
     }
     else
     {
-        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        for (i = 0; i < n_pixels; i++)
             pixels_out [i] = pixels_in [i * 4 + 3];
     }
 }
 
 static void
-sharpen_coverage (const guint8 *cov_in, guint8 *cov_out)
+sharpen_coverage (const guint8 *cov_in, guint8 *cov_out, gint width, gint height)
 {
     gint k [3] [3] =
     {
@@ -180,9 +190,9 @@ sharpen_coverage (const guint8 *cov_in, guint8 *cov_out)
     gint x, y;
     gint i, j;
 
-    for (y = 0; y < 8; y++)
+    for (y = 0; y < height; y++)
     {
-        for (x = 0; x < 8; x++)
+        for (x = 0; x < width; x++)
         {
             gint sum = 0;
 
@@ -193,40 +203,43 @@ sharpen_coverage (const guint8 *cov_in, guint8 *cov_out)
                     gint a = x + i - 1, b = y + j - 1;
 
                     /* At edges, just clone the border pixels outwards */
-                    a = CLAMP (a, 0, 7);
-                    b = CLAMP (b, 0, 7);
+                    a = CLAMP (a, 0, width - 1);
+                    b = CLAMP (b, 0, height - 1);
 
-                    sum += (gint) cov_in [a + b * 8] * k [i] [j];
+                    sum += (gint) cov_in [a + b * width] * k [i] [j];
                 }
             }
 
-            cov_out [x + y * 8] = CLAMP (sum, 0, 255);
+            cov_out [x + y * width] = CLAMP (sum, 0, 255);
         }
     }
 }
 
 static guint64
-coverage_to_bitmap (const guint8 *cov)
+coverage_to_bitmap (const guint8 *cov, gint rowstride)
 {
     guint64 bitmap = 0;
-    gint i;
+    gint x, y;
 
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS; y++)
     {
-        bitmap <<= 1;
-        if (cov [i] > 127)
-            bitmap |= 1;
+        for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
+        {
+            bitmap <<= 1;
+            if (cov [y * rowstride + x] > 127)
+                bitmap |= 1;
+        }
     }
 
     return bitmap;
 }
 
 G_GNUC_UNUSED static void
-dump_coverage (const guint8 *cov)
+dump_coverage (const guint8 *cov, gint width, gint height)
 {
     gint i;
 
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    for (i = 0; i < width * height; i++)
     {
         if (cov [i] > 127)
         {
@@ -237,7 +250,7 @@ dump_coverage (const guint8 *cov)
             DEBUG (g_printerr ("--"));
         }
 
-        if (!((i + 1) % 8))
+        if (!((i + 1) % width))
         {
             DEBUG (g_printerr ("\n"));
         }
@@ -267,13 +280,46 @@ glyph_to_bitmap (gint width, gint height,
 
     /* Generate coverage map */
 
-    pixels_to_coverage (scaled_pixels, pixel_format, cov);
-    sharpen_coverage (cov, sharpened_cov);
-    DEBUG (dump_coverage (cov));
-    DEBUG (dump_coverage (sharpened_cov));
-    bitmap = coverage_to_bitmap (sharpened_cov);
+    pixels_to_coverage (scaled_pixels, pixel_format, cov, CHAFA_SYMBOL_N_PIXELS);
+    sharpen_coverage (cov, sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS);
+    DEBUG (dump_coverage (cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS));
+    DEBUG (dump_coverage (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS));
+    bitmap = coverage_to_bitmap (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS);
 
     return bitmap;
+}
+
+static void
+glyph_to_bitmap_wide (gint width, gint height,
+                      gint rowstride,
+                      ChafaPixelType pixel_format,
+                      gpointer pixels,
+                      guint64 *left_bitmap_out,
+                      guint64 *right_bitmap_out)
+{
+    guint8 scaled_pixels [CHAFA_SYMBOL_N_PIXELS * 2 * 4];
+    guint8 cov [CHAFA_SYMBOL_N_PIXELS * 2];
+    guint8 sharpened_cov [CHAFA_SYMBOL_N_PIXELS * 2];
+
+    /* Scale to cell dimensions */
+
+    smol_scale_simple ((SmolPixelType) pixel_format, pixels, width, height, rowstride,
+                       SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+                       (gpointer) scaled_pixels,
+                       CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS,
+                       CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
+
+    /* Generate coverage map */
+
+    pixels_to_coverage (scaled_pixels, pixel_format, cov, CHAFA_SYMBOL_N_PIXELS * 2);
+    sharpen_coverage (cov, sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS);
+    DEBUG (dump_coverage (cov, CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS));
+    DEBUG (dump_coverage (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS));
+
+    *left_bitmap_out = coverage_to_bitmap (sharpened_cov,
+                                           CHAFA_SYMBOL_WIDTH_PIXELS * 2);
+    *right_bitmap_out = coverage_to_bitmap (sharpened_cov + CHAFA_SYMBOL_WIDTH_PIXELS,
+                                            CHAFA_SYMBOL_WIDTH_PIXELS * 2);
 }
 
 static gint
@@ -285,6 +331,21 @@ compare_symbols_popcount (const void *a, const void *b)
     if (a_sym->popcount < b_sym->popcount)
         return -1;
     if (a_sym->popcount > b_sym->popcount)
+        return 1;
+    return 0;
+}
+
+static gint
+compare_symbols2_popcount (const void *a, const void *b)
+{
+    const ChafaSymbol2 *a_sym = a;
+    const ChafaSymbol2 *b_sym = b;
+
+    if (a_sym->sym [0].popcount + a_sym->sym [1].popcount
+        < b_sym->sym [0].popcount + b_sym->sym [1].popcount)
+        return -1;
+    if (a_sym->sym [0].popcount + a_sym->sym [1].popcount
+        > b_sym->sym [0].popcount + b_sym->sym [1].popcount)
         return 1;
     return 0;
 }
@@ -330,6 +391,54 @@ compile_symbols (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
     symbol_map->need_rebuild = FALSE;
 }
 
+static void
+compile_symbols_wide (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
+{
+    GHashTableIter iter;
+    gpointer key, value;
+    gint i;
+
+    for (i = 0; i < symbol_map->n_symbols2; i++)
+    {
+        g_free (symbol_map->symbols2 [i].sym [0].coverage);
+        g_free (symbol_map->symbols2 [i].sym [1].coverage);
+    }
+
+    g_free (symbol_map->symbols2);
+
+    symbol_map->n_symbols2 = g_hash_table_size (desired_symbols);
+    symbol_map->symbols2 = g_new (ChafaSymbol2, symbol_map->n_symbols2 + 1);
+
+    g_hash_table_iter_init (&iter, desired_symbols);
+    i = 0;
+
+    while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+        ChafaSymbol2 *sym = value;
+        symbol_map->symbols2 [i] = *sym;
+        symbol_map->symbols2 [i].sym [0].coverage = g_memdup (symbol_map->symbols2 [i].sym [0].coverage,
+                                                              CHAFA_SYMBOL_N_PIXELS);
+        symbol_map->symbols2 [i].sym [1].coverage = g_memdup (symbol_map->symbols2 [i].sym [1].coverage,
+                                                              CHAFA_SYMBOL_N_PIXELS);
+        i++;
+    }
+
+    qsort (symbol_map->symbols2, symbol_map->n_symbols2, sizeof (ChafaSymbol2),
+           compare_symbols2_popcount);
+
+    /* Clear sentinel */
+    memset (&symbol_map->symbols2 [symbol_map->n_symbols2], 0, sizeof (ChafaSymbol2));
+
+    symbol_map->packed_bitmaps2 = g_new (guint64, symbol_map->n_symbols2 * 2);
+    for (i = 0; i < symbol_map->n_symbols2; i++)
+    {
+        symbol_map->packed_bitmaps2 [i * 2] = symbol_map->symbols2 [i].sym [0].bitmap;
+        symbol_map->packed_bitmaps2 [i * 2 + 1] = symbol_map->symbols2 [i].sym [1].bitmap;
+    }
+
+    symbol_map->need_rebuild = FALSE;
+}
+
 static gboolean
 char_is_selected (GArray *selectors, ChafaSymbolTags tags, gunichar c)
 {
@@ -338,7 +447,7 @@ char_is_selected (GArray *selectors, ChafaSymbolTags tags, gunichar c)
 
     /* Always exclude characters that would mangle the output */
     if (!g_unichar_isprint (c) || g_unichar_iszerowidth (c)
-        || g_unichar_iswide (c) || c == '\t')
+        || c == '\t')
         return FALSE;
 
     for (i = 0; i < (gint) selectors->len; i++)
@@ -372,14 +481,26 @@ free_symbol (gpointer sym_p)
 }
 
 static void
+free_symbol_wide (gpointer sym_p)
+{
+    ChafaSymbol2 *sym = sym_p;
+
+    g_free (sym->sym [0].coverage);
+    g_free (sym->sym [1].coverage);
+    g_free (sym);
+}
+
+static void
 rebuild_symbols (ChafaSymbolMap *symbol_map)
 {
     GHashTable *desired_syms;
+    GHashTable *desired_syms_wide;
     GHashTableIter iter;
     gpointer key, value;
     gint i;
 
     desired_syms = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, free_symbol);
+    desired_syms_wide = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, free_symbol_wide);
 
     /* Pick built-in symbols */
 
@@ -387,6 +508,8 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
     {
         for (i = 0; chafa_symbols [i].c != 0; i++)
         {
+            /* This assumes built-in symbols are always non-wide */
+
             if (char_is_selected (symbol_map->selectors,
                                   chafa_symbols [i].sc,
                                   chafa_symbols [i].c))
@@ -428,6 +551,41 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
 
     compile_symbols (symbol_map, desired_syms);
     g_hash_table_destroy (desired_syms);
+
+    /* Pick user glyph symbols (wide) */
+
+    g_hash_table_iter_init (&iter, symbol_map->glyphs2);
+    while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+        Glyph2 *glyph = value;
+        ChafaSymbolTags tags = chafa_get_tags_for_char (glyph->c);
+
+        if (char_is_selected (symbol_map->selectors, tags, glyph->c))
+        {
+            ChafaSymbol2 *sym = g_new0 (ChafaSymbol2, 1);
+
+            sym->sym [0].sc = tags;
+            sym->sym [0].c = glyph->c;
+            sym->sym [0].bitmap = glyph->bitmap [0];
+            sym->sym [0].coverage = (gchar *) bitmap_to_bytes (glyph->bitmap [0]);
+            sym->sym [0].popcount = chafa_population_count_u64 (glyph->bitmap [0]);
+            sym->sym [0].fg_weight = sym->sym [0].popcount;
+            sym->sym [0].bg_weight = 64 - sym->sym [0].popcount;
+
+            sym->sym [1].sc = tags;
+            sym->sym [1].c = glyph->c;
+            sym->sym [1].bitmap = glyph->bitmap [1];
+            sym->sym [1].coverage = (gchar *) bitmap_to_bytes (glyph->bitmap [1]);
+            sym->sym [1].popcount = chafa_population_count_u64 (glyph->bitmap [1]);
+            sym->sym [1].fg_weight = sym->sym [1].popcount;
+            sym->sym [1].bg_weight = 64 - sym->sym [1].popcount;
+
+            g_hash_table_replace (desired_syms_wide, GUINT_TO_POINTER (glyph->c), sym);
+        }
+    }
+
+    compile_symbols_wide (symbol_map, desired_syms_wide);
+    g_hash_table_destroy (desired_syms_wide);
 }
 
 static GHashTable *
@@ -443,6 +601,24 @@ copy_glyph_table (GHashTable *src)
     while (g_hash_table_iter_next (&iter, &key, &value))
     {
         g_hash_table_insert (dest, key, g_memdup (value, sizeof (Glyph)));
+    }
+
+    return dest;
+}
+
+static GHashTable *
+copy_glyph2_table (GHashTable *src)
+{
+    GHashTable *dest;
+    GHashTableIter iter;
+    gpointer key, value;
+
+    dest = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+
+    g_hash_table_iter_init (&iter, src);
+    while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+        g_hash_table_insert (dest, key, g_memdup (value, sizeof (Glyph2)));
     }
 
     return dest;
@@ -590,6 +766,7 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "technical", CHAFA_SYMBOL_TAG_TECHNICAL },
         { "geometric", CHAFA_SYMBOL_TAG_GEOMETRIC },
         { "ascii", CHAFA_SYMBOL_TAG_ASCII },
+        { "wide", CHAFA_SYMBOL_TAG_WIDE },
         { "extra", CHAFA_SYMBOL_TAG_EXTRA },
         { NULL, 0 }
     };
@@ -730,6 +907,7 @@ chafa_symbol_map_init (ChafaSymbolMap *symbol_map)
     symbol_map->refs = 1;
     symbol_map->use_builtin_glyphs = TRUE;
     symbol_map->glyphs = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+    symbol_map->glyphs2 = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
     symbol_map->selectors = g_array_new (FALSE, FALSE, sizeof (Selector));
 }
 
@@ -744,9 +922,12 @@ chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map)
         g_free (symbol_map->symbols [i].coverage);
 
     g_hash_table_destroy (symbol_map->glyphs);
+    g_hash_table_destroy (symbol_map->glyphs2);
     g_array_free (symbol_map->selectors, TRUE);
     g_free (symbol_map->symbols);
+    g_free (symbol_map->symbols2);
     g_free (symbol_map->packed_bitmaps);
+    g_free (symbol_map->packed_bitmaps2);
 }
 
 void
@@ -758,9 +939,12 @@ chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src)
     memcpy (dest, src, sizeof (*dest));
 
     dest->glyphs = copy_glyph_table (dest->glyphs);
+    dest->glyphs2 = copy_glyph2_table (dest->glyphs2);
     dest->selectors = copy_selector_array (dest->selectors);
     dest->symbols = NULL;
+    dest->symbols2 = NULL;
     dest->packed_bitmaps = NULL;
+    dest->packed_bitmaps2 = NULL;
     dest->need_rebuild = TRUE;
     dest->refs = 1;
 }
@@ -789,6 +973,16 @@ chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol)
         if (sym->c == symbol)
             return TRUE;
         if (sym->c > symbol)
+            break;
+    }
+
+    for (i = 0; i < symbol_map->n_symbols2; i++)
+    {
+        const ChafaSymbol2 *sym = &symbol_map->symbols2 [i];
+
+        if (sym->sym [0].c == symbol)
+            return TRUE;
+        if (sym->sym [0].c > symbol)
             break;
     }
 
@@ -896,6 +1090,83 @@ chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map, guint64 bitm
     memcpy (candidates_out, candidates, i * sizeof (ChafaCandidate));
 }
 
+void
+chafa_symbol_map_find_wide_candidates (const ChafaSymbolMap *symbol_map, const guint64 *bitmaps,
+                                       gboolean do_inverse, ChafaCandidate *candidates_out, gint *n_candidates_inout)
+{
+    ChafaCandidate candidates [N_CANDIDATES_MAX] =
+    {
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE }
+    };
+    gint *ham_dist;
+    gint i;
+
+    g_return_if_fail (symbol_map != NULL);
+
+    ham_dist = g_alloca (sizeof (gint) * (symbol_map->n_symbols2 + 1));
+
+    chafa_hamming_distance_2_vu64 (bitmaps, symbol_map->packed_bitmaps2, ham_dist, symbol_map->n_symbols2);
+
+    if (do_inverse)
+    {
+        for (i = 0; i < symbol_map->n_symbols2; i++)
+        {
+            ChafaCandidate cand;
+            gint hd = ham_dist [i];
+
+            if (hd < candidates [N_CANDIDATES_MAX - 1].hamming_distance)
+            {
+                cand.symbol_index = i;
+                cand.hamming_distance = hd;
+                cand.is_inverted = FALSE;
+                insert_candidate (candidates, &cand);
+            }
+
+            hd = 128 - hd;
+
+            if (hd < candidates [N_CANDIDATES_MAX - 1].hamming_distance)
+            {
+                cand.symbol_index = i;
+                cand.hamming_distance = hd;
+                cand.is_inverted = TRUE;
+                insert_candidate (candidates, &cand);
+            }
+        }
+    }
+    else
+    {
+        for (i = 0; i < symbol_map->n_symbols2; i++)
+        {
+            ChafaCandidate cand;
+            gint hd = ham_dist [i];
+
+            if (hd < candidates [N_CANDIDATES_MAX - 1].hamming_distance)
+            {
+                cand.symbol_index = i;
+                cand.hamming_distance = hd;
+                cand.is_inverted = FALSE;
+                insert_candidate (candidates, &cand);
+            }
+        }
+    }
+
+    for (i = 0; i < N_CANDIDATES_MAX; i++)
+    {
+         if (candidates [i].hamming_distance > 128)
+             break;
+    }
+
+    i = *n_candidates_inout = MIN (i, *n_candidates_inout);
+    memcpy (candidates_out, candidates, i * sizeof (ChafaCandidate));
+}
+
 /* Assumes symbols are sorted by ascending popcount */
 static gint
 find_closest_popcount (const ChafaSymbolMap *symbol_map, gint popcount)
@@ -983,6 +1254,106 @@ chafa_symbol_map_find_fill_candidates (const ChafaSymbolMap *symbol_map, gint po
     for (i = 0; i < N_CANDIDATES_MAX; i++)
     {
          if (candidates [i].hamming_distance > 64)
+             break;
+    }
+
+    i = *n_candidates_inout = MIN (i, *n_candidates_inout);
+    memcpy (candidates_out, candidates, i * sizeof (ChafaCandidate));
+}
+
+/* Assumes symbols are sorted by ascending popcount */
+static gint
+find_closest_popcount_wide (const ChafaSymbolMap *symbol_map, gint popcount)
+{
+    gint i, j;
+
+    g_assert (symbol_map->n_symbols2 > 0);
+
+    i = 0;
+    j = symbol_map->n_symbols2 - 1;
+
+    while (i < j)
+    {
+        gint k = (i + j + 1) / 2;
+
+        if (popcount < symbol_map->symbols2 [k].sym [0].popcount
+            + symbol_map->symbols2 [k].sym [1].popcount)
+            j = k - 1;
+        else if (popcount >= symbol_map->symbols2 [k].sym [0].popcount
+            + symbol_map->symbols2 [k].sym [1].popcount)
+            i = k;
+        else
+            i = j = k;
+    }
+
+    /* If we didn't find the exact popcount, the i+1'th element may be
+     * a closer match. */
+
+    if (i < symbol_map->n_symbols2 - 1
+        && (abs (popcount - (symbol_map->symbols2 [i + 1].sym [0].popcount
+                             + symbol_map->symbols2 [i + 1].sym [1].popcount))
+            < abs (popcount - (symbol_map->symbols2 [i].sym [0].popcount
+                               + symbol_map->symbols2 [i].sym [1].popcount))))
+    {
+        i++;
+    }
+
+    return i;
+}
+
+/* Always returns zero or one candidates. We may want to do more in the future */
+void
+chafa_symbol_map_find_wide_fill_candidates (const ChafaSymbolMap *symbol_map, gint popcount,
+                                            gboolean do_inverse, ChafaCandidate *candidates_out, gint *n_candidates_inout)
+{
+    ChafaCandidate candidates [N_CANDIDATES_MAX] =
+    {
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE },
+        { 0, 129, FALSE }
+    };
+    gint sym, distance;
+    gint i;
+
+    g_return_if_fail (symbol_map != NULL);
+
+    if (!*n_candidates_inout)
+        return;
+
+    if (symbol_map->n_symbols2 == 0)
+    {
+        *n_candidates_inout = 0;
+        return;
+    }
+
+    sym = find_closest_popcount_wide (symbol_map, popcount);
+    candidates [0].symbol_index = sym;
+    candidates [0].hamming_distance = abs (popcount - (symbol_map->symbols2 [sym].sym [0].popcount
+                                                       + symbol_map->symbols2 [sym].sym [1].popcount));
+    candidates [0].is_inverted = FALSE;
+
+    if (do_inverse && candidates [0].hamming_distance != 0)
+    {
+        sym = find_closest_popcount (symbol_map, 128 - popcount);
+        distance = abs (128 - popcount - (symbol_map->symbols2 [sym].sym [0].popcount
+                                          + symbol_map->symbols2 [sym].sym [1].popcount));
+
+        if (distance < candidates [0].hamming_distance)
+        {
+            candidates [0].symbol_index = sym;
+            candidates [0].hamming_distance = distance;
+            candidates [0].is_inverted = TRUE;
+        }
+    }
+
+    for (i = 0; i < N_CANDIDATES_MAX; i++)
+    {
+         if (candidates [i].hamming_distance > 128)
              break;
     }
 
@@ -1263,14 +1634,27 @@ chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
                             gint width, gint height,
                             gint rowstride)
 {
-    Glyph *glyph;
-
     g_return_if_fail (symbol_map != NULL);
 
-    glyph = g_new (Glyph, 1);
-    glyph->c = code_point;
-    glyph->bitmap = glyph_to_bitmap (width, height, rowstride, pixel_format, pixels);
+    if (g_unichar_iswide (code_point))
+    {
+        Glyph2 *glyph2;
 
-    g_hash_table_insert (symbol_map->glyphs, GUINT_TO_POINTER (code_point), glyph);
+        glyph2 = g_new (Glyph2, 1);
+        glyph2->c = code_point;
+        glyph_to_bitmap_wide (width, height, rowstride, pixel_format, pixels,
+                              &glyph2->bitmap [0], &glyph2->bitmap [1]);
+        g_hash_table_insert (symbol_map->glyphs2, GUINT_TO_POINTER (code_point), glyph2);
+    }
+    else
+    {
+        Glyph *glyph;
+
+        glyph = g_new (Glyph, 1);
+        glyph->c = code_point;
+        glyph->bitmap = glyph_to_bitmap (width, height, rowstride, pixel_format, pixels);
+        g_hash_table_insert (symbol_map->glyphs, GUINT_TO_POINTER (code_point), glyph);
+    }
+
     symbol_map->need_rebuild = TRUE;
 }

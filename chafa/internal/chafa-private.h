@@ -46,6 +46,13 @@ typedef struct
 }
 ChafaSymbol;
 
+/* Double-width symbol */
+typedef struct
+{
+    ChafaSymbol sym [2];
+}
+ChafaSymbol2;
+
 struct ChafaSymbolMap
 {
     gint refs;
@@ -54,12 +61,20 @@ struct ChafaSymbolMap
     guint use_builtin_glyphs : 1;
 
     GHashTable *glyphs;
+    GHashTable *glyphs2;  /* Wide glyphs with left/right bitmaps */
     GArray *selectors;
 
-    /* Populated by chafa_symbol_map_prepare () */
-    guint64 *packed_bitmaps;
+    /* Remaining fields are populated by chafa_symbol_map_prepare () */
+
+    /* Narrow symbols */
     ChafaSymbol *symbols;
     gint n_symbols;
+    guint64 *packed_bitmaps;
+
+    /* Wide symbols */
+    ChafaSymbol2 *symbols2;
+    gint n_symbols2;
+    guint64 *packed_bitmaps2;
 };
 
 /* Symbol selection candidate */
@@ -128,6 +143,16 @@ void chafa_symbol_map_find_fill_candidates (const ChafaSymbolMap *symbol_map,
                                             gboolean do_inverse,
                                             ChafaCandidate *candidates_out,
                                             gint *n_candidates_inout);
+void chafa_symbol_map_find_wide_candidates (const ChafaSymbolMap *symbol_map,
+                                            const guint64 *bitmaps,
+                                            gboolean do_inverse,
+                                            ChafaCandidate *candidates_out,
+                                            gint *n_candidates_inout);
+void chafa_symbol_map_find_wide_fill_candidates (const ChafaSymbolMap *symbol_map,
+                                                 gint popcount,
+                                                 gboolean do_inverse,
+                                                 ChafaCandidate *candidates_out,
+                                                 gint *n_candidates_inout);
 
 void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);

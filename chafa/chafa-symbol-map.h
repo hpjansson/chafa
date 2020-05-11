@@ -49,6 +49,7 @@ typedef enum
     CHAFA_SYMBOL_TAG_TECHNICAL   = (1 << 12),
     CHAFA_SYMBOL_TAG_GEOMETRIC   = (1 << 13),
     CHAFA_SYMBOL_TAG_ASCII       = (1 << 14),
+    CHAFA_SYMBOL_TAG_WIDE        = (1 << 15),
 
     CHAFA_SYMBOL_TAG_EXTRA       = (1 << 30),
 
