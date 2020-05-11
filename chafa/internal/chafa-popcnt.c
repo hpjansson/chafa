@@ -69,7 +69,7 @@ chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gin
     __int32_t* aa = (__int32_t*)&a;
     __int32_t* wb = (__int32_t*)vb;
     while (n--) {
-        *(vc++) = _mm_popcnt_u32(aa[0]^wb[0]) + _mm_popcnt_u32(aa[1]^wb[1]);
+        *(vc++) = _mm_popcnt_u32 (aa [0] ^ wb [0]) + _mm_popcnt_u32 (aa [1] ^ wb [1]);
         wb += 2;
     }
 #endif
