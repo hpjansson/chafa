@@ -154,6 +154,7 @@ gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const g
 gint chafa_pop_count_u64_builtin (guint64 v) G_GNUC_PURE;
 void chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n);
 void chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gint n);
+void chafa_hamming_distance_2_vu64_builtin (const guint64 *a, const guint64 *vb, gint *vc, gint n);
 #endif
 
 /* Inline functions */
@@ -216,6 +217,25 @@ chafa_hamming_distance_vu64 (guint64 a, const guint64 *vb, gint *vc, gint n)
 
     while (n--)
         *(vc++) = chafa_slow_pop_count (a ^ *(vb++));
+}
+
+static inline void
+chafa_hamming_distance_2_vu64 (const guint64 *a, const guint64 *vb, gint *vc, gint n)
+{
+#ifdef HAVE_POPCNT_INTRINSICS
+    if (chafa_have_popcnt ())
+    {
+        chafa_hamming_distance_2_vu64_builtin (a, vb, vc, n);
+        return;
+    }
+#endif
+
+    while (n--)
+    {
+        *(vc++) = chafa_slow_pop_count (a [0] ^ vb [0])
+            + chafa_slow_pop_count (a [1] ^ vb [1]);
+        vb += 2;
+    }
 }
 
 G_END_DECLS

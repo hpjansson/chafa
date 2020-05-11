@@ -74,3 +74,36 @@ chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gin
     }
 #endif
 }
+
+/* Two bitmaps per item (a points to a pair, vb points to array of pairs) */
+void
+chafa_hamming_distance_2_vu64_builtin (const guint64 *a, const guint64 *vb, gint *vc, gint n)
+{
+#if defined(HAVE_POPCNT64_INTRINSICS)
+    while (n >= 4)
+    {
+        n -= 4;
+        *vc = _mm_popcnt_u64 (a [0] ^ *(vb++));
+        *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
+        *vc = _mm_popcnt_u64 (a [0] ^ *(vb++));
+        *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
+        *vc = _mm_popcnt_u64 (a [0] ^ *(vb++));
+        *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
+        *vc = _mm_popcnt_u64 (a [0] ^ *(vb++));
+        *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
+    }
+
+    while (n--) {
+        *vc = _mm_popcnt_u64 (a [0] ^ *(vb++));
+        *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
+    }
+#else /* HAVE_POPCNT32_INTRINSICS */
+    guint32 *aa = (const guint32 *) a;
+    guint32 *wb = (guint32 *) vb;
+    while (n--) {
+        *(vc++) = _mm_popcnt_u32 (aa [0] ^ wb [0]) + _mm_popcnt_u32 (aa [1] ^ wb [1])
+            + _mm_popcnt_u32 (aa [2] ^ wb [2]) + _mm_popcnt_u32 (aa [3] ^ wb [3]);
+        wb += 4;
+    }
+#endif
+}
