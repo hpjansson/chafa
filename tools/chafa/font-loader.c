@@ -35,6 +35,16 @@
 #define REQ_WIDTH_DEFAULT 15
 #define REQ_HEIGHT_DEFAULT 8
 
+/* The font is read in two passes; once for narrow (single-cell) symbols,
+ * and once for wide (double-cell) ones. This allows us to use a different
+ * resolution for each -- 8x8 vs 16x8. */
+typedef enum
+{
+    FONT_PASS_NARROW,
+    FONT_PASS_WIDE
+}
+FontPass;
+
 struct FontLoader
 {
     /* General / I/O */
@@ -52,6 +62,7 @@ struct FontLoader
     gint baseline_ofs;
 
     /* Iterator */
+    FontPass pass;
     FT_ULong glyph_charcode;
     gint n_glyphs_read;
 };
@@ -146,7 +157,7 @@ get_bitmap_bit (const FT_Bitmap *bm, const guint8 *a, gint x, gint y, gint rowst
 /* Get the 7th octile values for glyph width, height and baseline. This means 87.5% of
  * the glyphs will have values equal to or lower than the returned value. Discarding
  * the upper 12.5% prevents outliers from affecting the result. */
-static void
+static gboolean
 measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *baseline_out)
 {
     FT_ULong glyph_charcode;
@@ -156,14 +167,21 @@ measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *bas
     SmallHistogram asc_hist;
     SmallHistogram desc_hist;
     gint asc_max, desc_max;
+    gboolean success = FALSE;
 
     small_histogram_init (&x_adv_hist);
     small_histogram_init (&asc_hist);
     small_histogram_init (&desc_hist);
 
-    glyph_charcode = FT_Get_First_Char (loader->ft_face, &glyph_index);
-    while (glyph_index != 0)
+    for (glyph_charcode = FT_Get_First_Char (loader->ft_face, &glyph_index);
+         glyph_index != 0;
+         glyph_charcode = FT_Get_Next_Char (loader->ft_face, glyph_charcode, &glyph_index))
     {
+        /* Skip glyphs that are not relevant to this pass */
+        if ((loader->pass == FONT_PASS_NARROW && g_unichar_iswide (glyph_charcode))
+            || (loader->pass == FONT_PASS_WIDE && !g_unichar_iswide (glyph_charcode)))
+            continue;
+
         /* FIXME: No need to render? */
         if (FT_Load_Glyph (loader->ft_face, glyph_index, FT_LOAD_RENDER | FT_LOAD_MONOCHROME | FT_LOAD_TARGET_MONO))
             continue;
@@ -174,9 +192,10 @@ measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *bas
                              ? slot->advance.x / 64 : slot->bitmap_left + slot->bitmap.width);
         small_histogram_add (&asc_hist, slot->bitmap_top);
         small_histogram_add (&desc_hist, (gint) slot->bitmap.rows - (gint) slot->bitmap_top);
-
-        glyph_charcode = FT_Get_Next_Char (loader->ft_face, glyph_charcode, &glyph_index);
     }
+
+    if (x_adv_hist.n_values == 0)
+        goto out;
 
     small_histogram_get_range (&x_adv_hist, NULL, width_out);
     small_histogram_get_range (&asc_hist, NULL, &asc_max);
@@ -186,6 +205,11 @@ measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *bas
         *height_out = asc_max + desc_max;
     if (baseline_out)
         *baseline_out = asc_max;
+
+    success = TRUE;
+
+out:
+    return success;
 }
 
 /* Find a pixel size that produces rendered symbols matching our ideal
@@ -197,7 +221,7 @@ measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *bas
  * until we either hit our desired size or exceed it. Then we back off
  * once. This is done in both dimensions simultaneously. */
 static gboolean
-find_best_pixel_size_scalable (FontLoader *loader)
+find_best_pixel_size_scalable (FontLoader *loader, gint target_width)
 {
     gboolean success = FALSE;
     gint req_width = REQ_WIDTH_DEFAULT;
@@ -205,17 +229,18 @@ find_best_pixel_size_scalable (FontLoader *loader)
     gint width = 0, height = 0, baseline;
     gint width_chg = 0, height_chg = 0;
 
-    while ((width != CHAFA_SYMBOL_WIDTH_PIXELS && width_chg != 3)
+    while ((width != target_width && width_chg != 3)
            || (height != CHAFA_SYMBOL_HEIGHT_PIXELS && height_chg != 3))
     {
         if (FT_Set_Pixel_Sizes (loader->ft_face, req_width, req_height))
             goto out;
 
-        measure_glyphs (loader, &width, &height, &baseline);
+        if (!measure_glyphs (loader, &width, &height, &baseline))
+            goto out;
 
-        if (width < CHAFA_SYMBOL_WIDTH_PIXELS)
+        if (width < target_width)
         { req_width++; width_chg |= 1; }
-        if (width > CHAFA_SYMBOL_WIDTH_PIXELS)
+        if (width > target_width)
         { req_width--; width_chg |= 2; }
 
         if (height < CHAFA_SYMBOL_HEIGHT_PIXELS)
@@ -233,7 +258,8 @@ find_best_pixel_size_scalable (FontLoader *loader)
         if (FT_Set_Pixel_Sizes (loader->ft_face, req_width, req_height))
             goto out;
 
-        measure_glyphs (loader, &width, &height, &baseline);
+        if (!measure_glyphs (loader, &width, &height, &baseline))
+            goto out;
     }
 
     loader->font_width = width;
@@ -248,7 +274,7 @@ out:
 /* See the description of find_best_pixel_size_scalable() for the overall
  * strategy used here. */
 static gboolean
-find_best_pixel_size_fixed (FontLoader *loader)
+find_best_pixel_size_fixed (FontLoader *loader, gint target_width)
 {
     gboolean success = FALSE;
     const FT_Bitmap_Size *avsz = loader->ft_face->available_sizes;
@@ -265,13 +291,14 @@ find_best_pixel_size_fixed (FontLoader *loader)
         if (FT_Set_Pixel_Sizes (loader->ft_face, avsz [i].width, avsz [i].height))
             continue;
 
-        measure_glyphs (loader, &width, &height, &baseline);
+        if (!measure_glyphs (loader, &width, &height, &baseline))
+            goto out;
 
         /* Prefer strikes bigger than and as close as possible to actual target size */
-        if (((best_width < CHAFA_SYMBOL_WIDTH_PIXELS || best_height < CHAFA_SYMBOL_HEIGHT_PIXELS)
+        if (((best_width < target_width || best_height < CHAFA_SYMBOL_HEIGHT_PIXELS)
              && (width >= best_width && height >= best_height))
-            || ((best_width > CHAFA_SYMBOL_WIDTH_PIXELS || best_height > CHAFA_SYMBOL_HEIGHT_PIXELS)
-                && (width >= CHAFA_SYMBOL_WIDTH_PIXELS && height >= CHAFA_SYMBOL_HEIGHT_PIXELS)
+            || ((best_width > target_width || best_height > CHAFA_SYMBOL_HEIGHT_PIXELS)
+                && (width >= target_width && height >= CHAFA_SYMBOL_HEIGHT_PIXELS)
                 && (width < best_width || height < best_height)))
         {
             best_width = width;
@@ -294,6 +321,42 @@ find_best_pixel_size_fixed (FontLoader *loader)
 
 out:
     return success;
+}
+
+static gboolean
+begin_pass (FontLoader *loader, FontPass pass)
+{
+    loader->pass = pass;
+
+    if (pass == FONT_PASS_NARROW)
+    {
+        if (!find_best_pixel_size_scalable (loader, CHAFA_SYMBOL_WIDTH_PIXELS)
+            && !find_best_pixel_size_fixed (loader, CHAFA_SYMBOL_WIDTH_PIXELS))
+            return FALSE;
+    }
+    else if (pass == FONT_PASS_WIDE)
+    {
+        if (!find_best_pixel_size_scalable (loader, CHAFA_SYMBOL_WIDTH_PIXELS * 2)
+            && !find_best_pixel_size_fixed (loader, CHAFA_SYMBOL_WIDTH_PIXELS * 2))
+            return FALSE;
+    }
+    else
+    {
+        g_assert_not_reached ();
+    }
+
+    return TRUE;
+}
+
+static gboolean
+next_pass (FontLoader *loader)
+{
+    loader->n_glyphs_read = 0;
+
+    if (loader->pass == FONT_PASS_NARROW)
+        return begin_pass (loader, FONT_PASS_WIDE);
+
+    return FALSE;
 }
 
 FontLoader *
@@ -321,8 +384,8 @@ font_loader_new_from_mapping (FileMapping *mapping)
                             &loader->ft_face))
         goto out;
 
-    if (!find_best_pixel_size_scalable (loader)
-        && !find_best_pixel_size_fixed (loader))
+    if (!begin_pass (loader, FONT_PASS_NARROW)
+        && !begin_pass (loader, FONT_PASS_WIDE))
         goto out;
 
     success = TRUE;
@@ -415,26 +478,46 @@ font_loader_get_next_glyph (FontLoader *loader, gunichar *char_out,
 
     slot = loader->ft_face->glyph;
 
-    if (loader->n_glyphs_read == 0)
+    while (!glyph_index)
     {
-        loader->glyph_charcode = FT_Get_First_Char (loader->ft_face, &glyph_index);
-    }
-    else
-    {
-        loader->glyph_charcode = FT_Get_Next_Char (loader->ft_face, loader->glyph_charcode, &glyph_index);
+        if (loader->n_glyphs_read == 0)
+        {
+            loader->glyph_charcode = FT_Get_First_Char (loader->ft_face, &glyph_index);
+        }
+        else
+        {
+            loader->glyph_charcode = FT_Get_Next_Char (loader->ft_face, loader->glyph_charcode, &glyph_index);
+        }
+
+        if (!glyph_index)
+        {
+            if (next_pass (loader))
+                continue;
+            break;
+        }
+
+        loader->n_glyphs_read++;
+
+        /* Skip glyphs that are not relevant to this pass */
+        if ((loader->pass == FONT_PASS_NARROW && g_unichar_iswide (loader->glyph_charcode))
+            || (loader->pass == FONT_PASS_WIDE && !g_unichar_iswide (loader->glyph_charcode)))
+            glyph_index = 0;
     }
 
     if (!glyph_index)
         goto out;
 
-    loader->n_glyphs_read++;
-
     if (FT_Load_Glyph (loader->ft_face, glyph_index, FT_LOAD_RENDER | FT_LOAD_MONOCHROME | FT_LOAD_TARGET_MONO))
         goto out;
 
     generate_glyph (loader, slot, glyph_out, width_out, height_out);
-
     *char_out = loader->glyph_charcode;
+
+    DEBUG (g_printerr ("Loaded symbol %04x: %dx%d -> %dx%d\n",
+                       *char_out,
+                       loader->font_width, loader->font_height,
+                       *width_out, *height_out));
+
     success = TRUE;
 
 out:
