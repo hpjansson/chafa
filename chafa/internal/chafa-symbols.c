@@ -2040,6 +2040,7 @@ chafa_init_symbols (void)
 ChafaSymbolTags
 chafa_get_tags_for_char (gunichar c)
 {
+    ChafaSymbolTags tags = CHAFA_SYMBOL_TAG_NONE;
     gint i;
 
     chafa_init_symbols ();
@@ -2050,17 +2051,19 @@ chafa_get_tags_for_char (gunichar c)
             return chafa_symbols [i].sc;
     }
 
+    if (g_unichar_iswide (c))
+        tags |= CHAFA_SYMBOL_TAG_WIDE;
+
     if (c <= 0x7f)
-        return CHAFA_SYMBOL_TAG_ASCII;
+        tags |= CHAFA_SYMBOL_TAG_ASCII;
+    else if (c >= 0x2300 && c <= 0x23ff)
+        tags |= CHAFA_SYMBOL_TAG_TECHNICAL;
+    else if (c >= 0x25a0 && c <= 0x25ff)
+        tags |= CHAFA_SYMBOL_TAG_GEOMETRIC;
+    else if (c >= 0x2800 && c <= 0x28ff)
+        tags |= CHAFA_SYMBOL_TAG_BRAILLE;
+    else
+        tags |= CHAFA_SYMBOL_TAG_EXTRA;
 
-    if (c >= 0x2300 && c <= 0x23ff)
-        return CHAFA_SYMBOL_TAG_TECHNICAL;
-
-    if (c >= 0x25a0 && c <= 0x25ff)
-        return CHAFA_SYMBOL_TAG_GEOMETRIC;
-
-    if (c >= 0x2800 && c <= 0x28ff)
-        return CHAFA_SYMBOL_TAG_BRAILLE;
-
-    return CHAFA_SYMBOL_TAG_EXTRA;
+    return tags;
 }
