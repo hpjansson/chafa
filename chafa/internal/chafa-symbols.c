@@ -25,6 +25,12 @@
 
 typedef struct
 {
+    gunichar first, last;
+}
+UnicharRange;
+
+typedef struct
+{
     ChafaSymbolTags sc;
     gunichar c;
     gchar *coverage;
@@ -33,6 +39,51 @@ ChafaSymbolDef;
 
 ChafaSymbol *chafa_symbols;
 static gboolean symbols_initialized;
+
+/* Ranges we treat as ambiguous-width in addition to the ones defined by
+ * GLib. For instance: VTE, although spacing correctly, has many glyphs
+ * extending well outside their cells resulting in ugly overlapping. */
+static const UnicharRange ambiguous_ranges [] =
+{
+    {  0x00ad,  0x00ad },  /* Soft hyphen */
+    {  0x2196,  0x21ff },  /* Arrows (most) */
+
+    {  0x222c,  0x2237 },  /* Mathematical ops (some) */
+    {  0x2245,  0x2269 },  /* Mathematical ops (some) */
+    {  0x226d,  0x2279 },  /* Mathematical ops (some) */
+    {  0x2295,  0x22af },  /* Mathematical ops (some) */
+    {  0x22bf,  0x22bf },  /* Mathematical ops (some) */
+    {  0x22c8,  0x22ff },  /* Mathematical ops (some) */
+
+    {  0x2300,  0x23ff },  /* Technical */
+    {  0x2460,  0x24ff },  /* Enclosed alphanumerics */
+    {  0x25a0,  0x25ff },  /* Geometric */
+    {  0x2600,  0x26ff },  /* Miscellaneous symbols */
+    {  0x2700,  0x27bf },  /* Dingbats */
+    {  0x27c0,  0x27e5 },  /* Miscellaneous mathematical symbols A (most) */
+    {  0x27f0,  0x27ff },  /* Supplemental arrows A */
+    {  0x2900,  0x297f },  /* Supplemental arrows B */
+    {  0x2980,  0x29ff },  /* Miscellaneous mathematical symbols B */
+    {  0x2b00,  0x2bff },  /* Miscellaneous symbols and arrows */
+    { 0x1f100, 0x1f1ff },  /* Enclosed alphanumeric supplement */
+
+    { 0, 0 }
+};
+
+/* Emojis of various kinds; usually multicolored. We have no control over
+ * the foreground colors of these, and they may render poorly for other
+ * reasons (e.g. too wide). */
+static const UnicharRange emoji_ranges [] =
+{
+    { 0x1f000, 0x1ffff },  /* Emojis */
+
+    /* This symbol usually prints fine, but we don't want it randomly
+     * popping up in our output anyway. So we add it to the "ugly" category,
+     * which is excluded from "all". */
+    {  0x534d,  0x534d },
+
+    { 0, 0 }
+};
 
 static const ChafaSymbolDef symbol_defs [] =
 {
@@ -1721,8 +1772,7 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black Lower Right Triangle */
-        /* CHAFA_SYMBOL_TAG_GEOMETRIC, */
-        CHAFA_SYMBOL_TAG_EXTRA,
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e2,
         "        "
         "        "
@@ -1735,8 +1785,7 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black Lower Left Triangle */
-        /* CHAFA_SYMBOL_TAG_GEOMETRIC, */
-        CHAFA_SYMBOL_TAG_EXTRA,
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e3,
         "        "
         "        "
@@ -1749,8 +1798,7 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black Upper Left Triangle */
-        /* CHAFA_SYMBOL_TAG_GEOMETRIC, */
-        CHAFA_SYMBOL_TAG_EXTRA,
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e4,
         "        "
         "        "
@@ -1763,8 +1811,7 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black Upper Right Triangle */
-        /* CHAFA_SYMBOL_TAG_GEOMETRIC, */
-        CHAFA_SYMBOL_TAG_EXTRA,
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e5,
         "        "
         "        "
@@ -1905,6 +1952,21 @@ static const ChafaSymbolDef symbol_defs [] =
         0, 0, ""
     }
 };
+
+/* ranges must be terminated by zero first, last */
+static gboolean
+unichar_is_in_ranges (gunichar c, const UnicharRange *ranges)
+{
+    for ( ; ranges->first != 0 || ranges->last != 0; ranges++)
+    {
+        g_assert (ranges->first <= ranges->last);
+
+        if (c >= ranges->first && c <= ranges->last)
+            return TRUE;
+    }
+
+    return FALSE;
+}
 
 static void
 calc_weights (ChafaSymbol *sym)
@@ -2048,11 +2110,21 @@ chafa_get_tags_for_char (gunichar c)
     for (i = 0; chafa_symbols [i].c != 0; i++)
     {
         if (chafa_symbols [i].c == c)
-            return chafa_symbols [i].sc;
+            return chafa_symbols [i].sc | CHAFA_SYMBOL_TAG_NARROW;
     }
 
     if (g_unichar_iswide (c))
         tags |= CHAFA_SYMBOL_TAG_WIDE;
+    else if (g_unichar_iswide_cjk (c))
+        tags |= CHAFA_SYMBOL_TAG_AMBIGUOUS;
+
+    if (g_unichar_ismark (c)
+        || g_unichar_iszerowidth (c)
+        || unichar_is_in_ranges (c, ambiguous_ranges))
+        tags |= CHAFA_SYMBOL_TAG_AMBIGUOUS;
+
+    if (unichar_is_in_ranges (c, emoji_ranges))
+        tags |= CHAFA_SYMBOL_TAG_UGLY;
 
     if (c <= 0x7f)
         tags |= CHAFA_SYMBOL_TAG_ASCII;
@@ -2064,6 +2136,9 @@ chafa_get_tags_for_char (gunichar c)
         tags |= CHAFA_SYMBOL_TAG_BRAILLE;
     else
         tags |= CHAFA_SYMBOL_TAG_EXTRA;
+
+    if (!(tags & (CHAFA_SYMBOL_TAG_WIDE | CHAFA_SYMBOL_TAG_AMBIGUOUS)))
+        tags |= CHAFA_SYMBOL_TAG_NARROW;
 
     return tags;
 }

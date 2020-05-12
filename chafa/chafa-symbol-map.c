@@ -766,8 +766,13 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "technical", CHAFA_SYMBOL_TAG_TECHNICAL },
         { "geometric", CHAFA_SYMBOL_TAG_GEOMETRIC },
         { "ascii", CHAFA_SYMBOL_TAG_ASCII },
+        { "narrow", CHAFA_SYMBOL_TAG_NARROW },
         { "wide", CHAFA_SYMBOL_TAG_WIDE },
+        { "ambiguous", CHAFA_SYMBOL_TAG_AMBIGUOUS },
+        { "ugly", CHAFA_SYMBOL_TAG_UGLY },
         { "extra", CHAFA_SYMBOL_TAG_EXTRA },
+        { "bad", CHAFA_SYMBOL_TAG_BAD },
+
         { NULL, 0 }
     };
     gint parsed_len;

@@ -49,11 +49,16 @@ typedef enum
     CHAFA_SYMBOL_TAG_TECHNICAL   = (1 << 12),
     CHAFA_SYMBOL_TAG_GEOMETRIC   = (1 << 13),
     CHAFA_SYMBOL_TAG_ASCII       = (1 << 14),
-    CHAFA_SYMBOL_TAG_WIDE        = (1 << 15),
 
+    CHAFA_SYMBOL_TAG_NARROW      = (1 << 15),
+    CHAFA_SYMBOL_TAG_WIDE        = (1 << 16),
+    CHAFA_SYMBOL_TAG_AMBIGUOUS   = (1 << 17),
+
+    CHAFA_SYMBOL_TAG_UGLY        = (1 << 18),
     CHAFA_SYMBOL_TAG_EXTRA       = (1 << 30),
 
-    CHAFA_SYMBOL_TAG_ALL         = 0x7fffffff
+    CHAFA_SYMBOL_TAG_BAD         = CHAFA_SYMBOL_TAG_AMBIGUOUS | CHAFA_SYMBOL_TAG_UGLY,
+    CHAFA_SYMBOL_TAG_ALL         = ~(CHAFA_SYMBOL_TAG_EXTRA | CHAFA_SYMBOL_TAG_BAD)
 }
 ChafaSymbolTags;
 
