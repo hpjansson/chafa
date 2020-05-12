@@ -126,6 +126,14 @@ typedef struct
 }
 SymbolEval;
 
+typedef struct
+{
+    ChafaPixel fg;
+    ChafaPixel bg;
+    gint error [2];
+}
+SymbolEval2;
+
 static void
 accum_to_color (const ChafaColorAccum *accum, ChafaColor *color)
 {
@@ -520,6 +528,24 @@ eval_symbol_colors (ChafaCanvas *canvas, WorkCell *wcell, const ChafaSymbol *sym
     }
 }
 
+static void
+eval_symbol_colors_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell_b,
+                         const ChafaSymbol *sym_a, const ChafaSymbol *sym_b,
+                         SymbolEval2 *eval)
+{
+    SymbolEval part_eval [2];
+
+    eval_symbol_colors (canvas, wcell_a, sym_a, &part_eval [0]);
+    eval_symbol_colors (canvas, wcell_b, sym_b, &part_eval [1]);
+
+    CHAFA_COLOR8_U32 (eval->fg.col) =
+        ((CHAFA_COLOR8_U32 (part_eval [0].fg.col) >> 1) & 0x7f7f7f7f)
+        + ((CHAFA_COLOR8_U32 (part_eval [1].fg.col) >> 1) & 0x7f7f7f7f);
+    CHAFA_COLOR8_U32 (eval->bg.col) =
+        ((CHAFA_COLOR8_U32 (part_eval [0].bg.col) >> 1) & 0x7f7f7f7f)
+        + ((CHAFA_COLOR8_U32 (part_eval [1].bg.col) >> 1) & 0x7f7f7f7f);
+}
+
 static gint
 calc_error_plain (const ChafaPixel *block, const ChafaColor *cols, const guint8 *cov)
 {
@@ -580,6 +606,24 @@ eval_symbol_error (ChafaCanvas *canvas, const WorkCell *wcell,
     }
 
     eval->error = error;
+}
+
+static void
+eval_symbol_error_wide (ChafaCanvas *canvas, const WorkCell *wcell_a, const WorkCell *wcell_b,
+                        const ChafaSymbol2 *sym, SymbolEval2 *wide_eval)
+{
+    SymbolEval eval [2];
+
+    eval [0].bg = wide_eval->bg;
+    eval [0].fg = wide_eval->fg;
+    eval [1].bg = wide_eval->bg;
+    eval [1].fg = wide_eval->fg;
+
+    eval_symbol_error (canvas, wcell_a, &sym->sym [0], &eval [0]);
+    eval_symbol_error (canvas, wcell_b, &sym->sym [1], &eval [1]);
+
+    wide_eval->error [0] = eval [0].error;
+    wide_eval->error [1] = eval [1].error;
 }
 
 static void
@@ -679,6 +723,111 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
 }
 
 static void
+pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
+                                  WorkCell *wcell_a,
+                                  WorkCell *wcell_b,
+                                  gunichar *sym_out,
+                                  ChafaColor *fg_col_out,
+                                  ChafaColor *bg_col_out,
+                                  gint *error_a_out,
+                                  gint *error_b_out)
+{
+    SymbolEval2 *eval;
+    gint n;
+    gint i;
+
+    eval = g_alloca (sizeof (SymbolEval2) * (canvas->config.symbol_map.n_symbols2 + 1));
+    memset (eval, 0, sizeof (SymbolEval2) * (canvas->config.symbol_map.n_symbols2 + 1));
+
+    for (i = 0; canvas->config.symbol_map.symbols2 [i].sym [0].c != 0; i++)
+    {
+        eval [i].error [0] = eval [i].error [1] = G_MAXINT;
+
+        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+        {
+            eval [i].fg.col = canvas->fg_color;
+            eval [i].bg.col = canvas->bg_color;
+        }
+        else
+        {
+            ChafaColorCandidates ccand;
+            ChafaColor fg_col, bg_col;
+
+            eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
+                                     &canvas->config.symbol_map.symbols2 [i].sym [0],
+                                     &canvas->config.symbol_map.symbols2 [i].sym [1],
+                                     &eval [i]);
+
+            /* Threshold alpha */
+
+            threshold_alpha (canvas, &eval [i].fg.col);
+            threshold_alpha (canvas, &eval [i].bg.col);
+            fg_col = eval [i].fg.col;
+            bg_col = eval [i].bg.col;
+
+            /* Pick palette colors before error evaluation; this improves
+             * fine detail fidelity slightly. */
+
+            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
+                || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
+            {
+                chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &fg_col, &ccand);
+                fg_col = *chafa_palette_get_color (&canvas->palette, canvas->config.color_space, ccand.index [0]);
+                chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &bg_col, &ccand);
+                bg_col = *chafa_palette_get_color (&canvas->palette, canvas->config.color_space, ccand.index [0]);
+            }
+
+            /* FIXME: The logic here seems overly complicated */
+            if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_TRUECOLOR)
+            {
+                /* Transfer mean alpha over so we can use it later */
+
+                fg_col.ch [3] = eval [i].fg.col.ch [3];
+                bg_col.ch [3] = eval [i].bg.col.ch [3];
+
+                eval [i].fg.col = fg_col;
+                eval [i].bg.col = bg_col;
+            }
+        }
+
+        eval_symbol_error_wide (canvas, wcell_a, wcell_b,
+                                &canvas->config.symbol_map.symbols2 [i],
+                                &eval [i]);
+    }
+
+#ifdef HAVE_MMX_INTRINSICS
+    /* Make FPU happy again */
+    if (chafa_have_mmx ())
+        leave_mmx ();
+#endif
+
+    if (error_a_out)
+        *error_a_out = eval [0].error [0];
+    if (error_b_out)
+        *error_b_out = eval [0].error [1];
+
+    for (i = 0, n = 0; canvas->config.symbol_map.symbols2 [i].sym [0].c != 0; i++)
+    {
+        if ((eval [i].fg.col.ch [0] != eval [i].bg.col.ch [0]
+             || eval [i].fg.col.ch [1] != eval [i].bg.col.ch [1]
+             || eval [i].fg.col.ch [2] != eval [i].bg.col.ch [2])
+            && eval [i].error [0] + eval [i].error [1] < eval [n].error [0] + eval [n].error [1])
+        {
+            n = i;
+            if (error_a_out)
+                *error_a_out = eval [i].error [0];
+            if (error_b_out)
+                *error_b_out = eval [i].error [1];
+        }
+    }
+
+    *sym_out = canvas->config.symbol_map.symbols2 [n].sym [0].c;
+    *fg_col_out = eval [n].fg.col;
+    *bg_col_out = eval [n].bg.col;
+}
+
+static void
 pick_symbol_and_colors_fast (ChafaCanvas *canvas,
                              WorkCell *wcell,
                              gunichar *sym_out,
@@ -717,43 +866,26 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     g_assert (n_candidates > 0);
 
-    if (n_candidates == 1)
+    for (i = 0; i < n_candidates; i++)
     {
+        const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [candidates [i].symbol_index];
+
         if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
         {
-            eval [0].fg.col = canvas->fg_color;
-            eval [0].bg.col = canvas->bg_color;
+            eval [i].fg.col = canvas->fg_color;
+            eval [i].bg.col = canvas->bg_color;
         }
         else
         {
-            eval_symbol_colors (canvas, wcell,
-                                &canvas->config.symbol_map.symbols [candidates [0].symbol_index],
-                                &eval [0]);
+            eval_symbol_colors (canvas, wcell, sym, &eval [i]);
         }
-    }
-    else
-    {
-        for (i = 0; i < n_candidates; i++)
+
+        eval_symbol_error (canvas, wcell, sym, &eval [i]);
+
+        if (eval [i].error < best_error)
         {
-            const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [candidates [i].symbol_index];
-
-            if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
-            {
-                eval [i].fg.col = canvas->fg_color;
-                eval [i].bg.col = canvas->bg_color;
-            }
-            else
-            {
-                eval_symbol_colors (canvas, wcell, sym, &eval [i]);
-            }
-
-            eval_symbol_error (canvas, wcell, sym, &eval [i]);
-
-            if (eval [i].error < best_error)
-            {
-                best_candidate = i;
-                best_error = eval [i].error;
-            }
+            best_candidate = i;
+            best_error = eval [i].error;
         }
     }
 
@@ -769,6 +901,100 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     if (error_out)
         *error_out = best_error;
+}
+
+static void
+pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
+                                  WorkCell *wcell_a,
+                                  WorkCell *wcell_b,
+                                  gunichar *sym_out,
+                                  ChafaColor *fg_col_out,
+                                  ChafaColor *bg_col_out,
+                                  gint *error_a_out,
+                                  gint *error_b_out)
+{
+    ChafaColor color_pair [2];
+    guint64 bitmaps [2];
+    ChafaCandidate candidates [N_CANDIDATES_MAX];
+    SymbolEval2 eval [N_CANDIDATES_MAX];
+    gint n_candidates = 0;
+    gint best_candidate = 0;
+    gint best_error = G_MAXINT;
+    gint i;
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+    {
+        color_pair [0] = canvas->fg_color;
+        color_pair [1] = canvas->bg_color;
+    }
+    else
+    {
+        ChafaColor color_pair_part [2] [2];
+
+        work_cell_get_contrasting_color_pair (wcell_a, color_pair_part [0]);
+        work_cell_get_contrasting_color_pair (wcell_b, color_pair_part [1]);
+
+        CHAFA_COLOR8_U32 (color_pair [0]) =
+            ((CHAFA_COLOR8_U32 (color_pair_part [0] [0]) >> 1) & 0x7f7f7f7f)
+            + ((CHAFA_COLOR8_U32 (color_pair_part [1] [0]) >> 1) & 0x7f7f7f7f);
+        CHAFA_COLOR8_U32 (color_pair [1]) =
+            ((CHAFA_COLOR8_U32 (color_pair_part [0] [1]) >> 1) & 0x7f7f7f7f)
+            + ((CHAFA_COLOR8_U32 (color_pair_part [1] [1]) >> 1) & 0x7f7f7f7f);
+    }
+
+    bitmaps [0] = block_to_bitmap (wcell_a->pixels, color_pair);
+    bitmaps [1] = block_to_bitmap (wcell_b->pixels, color_pair);
+    n_candidates = CLAMP (canvas->work_factor_int, 1, N_CANDIDATES_MAX);
+
+    chafa_symbol_map_find_wide_candidates (&canvas->config.symbol_map,
+                                           bitmaps,
+                                           canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+                                           ? FALSE : TRUE,  /* Consider inverted? */
+                                           candidates, &n_candidates);
+
+    g_assert (n_candidates > 0);
+
+    for (i = 0; i < n_candidates; i++)
+    {
+        const ChafaSymbol2 *sym = &canvas->config.symbol_map.symbols2 [candidates [i].symbol_index];
+
+        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+        {
+            eval [i].fg.col = canvas->fg_color;
+            eval [i].bg.col = canvas->bg_color;
+        }
+        else
+        {
+            eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
+                                     &sym->sym [0],
+                                     &sym->sym [1],
+                                     &eval [i]);
+        }
+
+        eval_symbol_error_wide (canvas, wcell_a, wcell_b, sym, &eval [i]);
+
+        if (eval [i].error [0] + eval [i].error [1] < best_error)
+        {
+            best_candidate = i;
+            best_error = eval [i].error [0] + eval [i].error [1];
+        }
+    }
+
+    *sym_out = canvas->config.symbol_map.symbols2 [candidates [best_candidate].symbol_index].sym [0].c;
+    *fg_col_out = eval [best_candidate].fg.col;
+    *bg_col_out = eval [best_candidate].bg.col;
+
+#ifdef HAVE_MMX_INTRINSICS
+    /* Make FPU happy again */
+    if (chafa_have_mmx ())
+        leave_mmx ();
+#endif
+
+    if (error_a_out)
+        *error_a_out = eval [best_candidate].error [0];
+    if (error_b_out)
+        *error_b_out = eval [best_candidate].error [1];
 }
 
 static const ChafaColor *
@@ -922,35 +1148,119 @@ update_cell (ChafaCanvas *canvas, WorkCell *work_cell, ChafaCanvasCell *cell_out
 }
 
 static void
+update_cells_wide (ChafaCanvas *canvas, WorkCell *work_cell_a, WorkCell *work_cell_b,
+                   ChafaCanvasCell *cell_a_out, ChafaCanvasCell *cell_b_out,
+                   gint *error_a_out, gint *error_b_out)
+{
+    gunichar sym = 0;
+    ChafaColorCandidates ccand;
+    ChafaColor fg_col, bg_col;
+
+    *error_a_out = *error_b_out = SYMBOL_ERROR_MAX;
+
+    if (canvas->config.symbol_map.n_symbols2 == 0)
+        return;
+
+    if (canvas->work_factor_int >= 8)
+        pick_symbol_and_colors_wide_slow (canvas, work_cell_a, work_cell_b,
+                                          &sym, &fg_col, &bg_col,
+                                          error_a_out, error_b_out);
+    else
+        pick_symbol_and_colors_wide_fast (canvas, work_cell_a, work_cell_b,
+                                          &sym, &fg_col, &bg_col,
+                                          error_a_out, error_b_out);
+
+    cell_a_out->c = sym;
+    cell_b_out->c = 0;
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+    {
+        chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &fg_col, &ccand);
+        cell_a_out->fg_color = cell_b_out->fg_color = ccand.index [0];
+        chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &bg_col, &ccand);
+        cell_a_out->bg_color = cell_b_out->bg_color = ccand.index [0];
+    }
+    else
+    {
+        cell_a_out->fg_color = cell_b_out->fg_color = chafa_pack_color (&fg_col);
+        cell_a_out->bg_color = cell_b_out->bg_color = chafa_pack_color (&bg_col);
+    }
+}
+
+/* Number of entries in our cell ring buffer. This allows us to do lookback
+ * and replace single-cell symbols with double-cell ones if it improves
+ * the error value. */
+#define N_BUF_CELLS 4
+
+/* Calculate index after positive or negative wraparound(s) */
+#define buf_cell_index(i) (((i) + N_BUF_CELLS * 64) % N_BUF_CELLS)
+
+static void
 update_cells_row (ChafaCanvas *canvas, gint row)
 {
+    ChafaCanvasCell *cells;
+    WorkCell work_cells [N_BUF_CELLS];
+    gint cell_errors [N_BUF_CELLS];
     gint cx, cy;
-    gint i = 0;
 
+    cells = &canvas->cells [row * canvas->config.width];
     cy = row;
-    i = row * canvas->config.width;
 
-    for (cx = 0; cx < canvas->config.width; cx++, i++)
+    for (cx = 0; cx < canvas->config.width; cx++)
     {
-        ChafaCanvasCell *cell = &canvas->cells [i];
-        WorkCell wcell;
+        gint buf_index = cx % N_BUF_CELLS;
+        WorkCell *wcell = &work_cells [buf_index];
+        ChafaCanvasCell wide_cells [2];
+        gint wide_cell_errors [2];
 
-        memset (cell, 0, sizeof (*cell));
-        cell->c = ' ';
+        memset (&cells [cx], 0, sizeof (cells [cx]));
+        cells [cx].c = ' ';
 
-        work_cell_init (&wcell, canvas, cx, cy);
-        update_cell (canvas, &wcell, cell);
+        work_cell_init (wcell, canvas, cx, cy);
+        cell_errors [buf_index] = update_cell (canvas, wcell, &cells [cx]);
 
-#if 1
+        /* Try wide symbol */
+
+        /* FIXME: If we're overlapping the rightmost half of a wide symbol,
+         * try to revert it to two regular symbols and overwrite the rightmost
+         * one. */
+
+        if (cx >= 1 && cells [cx - 1].c != 0)
+        {
+            gint wide_buf_index [2];
+
+            wide_buf_index [0] = buf_cell_index (cx - 1);
+            wide_buf_index [1] = buf_index;
+
+            update_cells_wide (canvas,
+                               &work_cells [wide_buf_index [0]],
+                               &work_cells [wide_buf_index [1]],
+                               &wide_cells [0],
+                               &wide_cells [1],
+                               &wide_cell_errors [0],
+                               &wide_cell_errors [1]);
+
+            if (wide_cell_errors [0] + wide_cell_errors [1] <
+                cell_errors [wide_buf_index [0]] + cell_errors [wide_buf_index [1]])
+            {
+                cells [cx - 1] = wide_cells [0];
+                cells [cx] = wide_cells [1]; cells [cx].c = 0;
+                cell_errors [wide_buf_index [0]] = wide_cell_errors [0];
+                cell_errors [wide_buf_index [1]] = wide_cell_errors [1];
+            }
+        }
+
         /* If we produced a featureless cell, try fill */
 
         /* FIXME: Check popcount == 0 or == 64 instead of symbol char */
-        if (cell->c == 0 || cell->c == ' ' || cell->c == 0x2588
-            || cell->fg_color == cell->bg_color)
+        if (cells [cx].c != 0 && (cells [cx].c == ' ' || cells [cx].c == 0x2588
+                                  || cells [cx].fg_color == cells [cx].bg_color))
         {
-            apply_fill (canvas, &wcell, cell);
+            apply_fill (canvas, wcell, &cells [cx]);
         }
-#endif
     }
 }
 
@@ -1717,6 +2027,10 @@ emit_ansi_truecolor (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
         ChafaCanvasCell *cell = &canvas->cells [i];
         ChafaColor fg, bg;
 
+        /* Wide symbols have a zero code point in the rightmost cell */
+        if (cell->c == 0)
+            continue;
+
         chafa_unpack_color (cell->fg_color, &fg);
         chafa_unpack_color (cell->bg_color, &bg);
 
@@ -1757,6 +2071,10 @@ emit_ansi_256 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
 
+        /* Wide symbols have a zero code point in the rightmost cell */
+        if (cell->c == 0)
+            continue;
+
         if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
             if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
@@ -1793,6 +2111,10 @@ emit_ansi_16 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     for ( ; i < i_max; i++)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
+
+        /* Wide symbols have a zero code point in the rightmost cell */
+        if (cell->c == 0)
+            continue;
 
         if (cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
@@ -1847,7 +2169,13 @@ emit_ansi_fgbg_bgfg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
         gboolean invert = FALSE;
         gunichar c = cell->c;
 
-        if (cell->fg_color == cell->bg_color && blank_symbol != 0)
+        /* Wide symbols have a zero code point in the rightmost cell */
+        if (c == 0)
+            continue;
+
+        /* Replace with blank symbol only if this is a single-width cell */
+        if (cell->fg_color == cell->bg_color && blank_symbol != 0
+            && (i == i_max - 1 || (canvas->cells [i + 1].c != 0)))
         {
             c = blank_symbol;
             if (blank_symbol == 0x2588)
@@ -1871,6 +2199,10 @@ emit_ansi_fgbg (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
     for ( ; i < i_max; i++)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
+
+        /* Wide symbols have a zero code point in the rightmost cell */
+        if (cell->c == 0)
+            continue;
 
         g_string_append_unichar (gs, cell->c);
     }
