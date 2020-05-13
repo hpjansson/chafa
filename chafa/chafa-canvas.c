@@ -45,6 +45,10 @@
 /* Fixed point multiplier */
 #define FIXED_MULT 16384
 
+/* Used for cell initialization. May be added up over multiple cells, so a
+ * low multiple needs to fit in an integer. */
+#define SYMBOL_ERROR_MAX (G_MAXINT / 8)
+
 /* Max candidates to consider in pick_symbol_and_colors_fast(). This is also
  * limited by a similar constant in chafa-symbol-map.c */
 #define N_CANDIDATES_MAX 8
@@ -1107,8 +1111,6 @@ apply_fill (ChafaCanvas *canvas, const WorkCell *wcell, ChafaCanvasCell *cell)
 done:
     cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
 }
-
-#define SYMBOL_ERROR_MAX (256 * 256 * 3 * CHAFA_SYMBOL_N_PIXELS)
 
 static gint
 update_cell (ChafaCanvas *canvas, WorkCell *work_cell, ChafaCanvasCell *cell_out)
