@@ -177,6 +177,10 @@ measure_glyphs (FontLoader *loader, gint *width_out, gint *height_out, gint *bas
          glyph_index != 0;
          glyph_charcode = FT_Get_Next_Char (loader->ft_face, glyph_charcode, &glyph_index))
     {
+        if (!g_unichar_isprint (glyph_charcode)
+            || g_unichar_ismark (glyph_charcode))
+            continue;
+
         /* Skip glyphs that are not relevant to this pass */
         if ((loader->pass == FONT_PASS_NARROW && g_unichar_iswide (glyph_charcode))
             || (loader->pass == FONT_PASS_WIDE && !g_unichar_iswide (glyph_charcode)))
@@ -499,7 +503,9 @@ font_loader_get_next_glyph (FontLoader *loader, gunichar *char_out,
         loader->n_glyphs_read++;
 
         /* Skip glyphs that are not relevant to this pass */
-        if ((loader->pass == FONT_PASS_NARROW && g_unichar_iswide (loader->glyph_charcode))
+        if (!g_unichar_isprint (loader->glyph_charcode)
+            || g_unichar_ismark (loader->glyph_charcode)
+            || (loader->pass == FONT_PASS_NARROW && g_unichar_iswide (loader->glyph_charcode))
             || (loader->pass == FONT_PASS_WIDE && !g_unichar_iswide (loader->glyph_charcode)))
             glyph_index = 0;
     }
