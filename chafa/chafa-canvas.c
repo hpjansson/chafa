@@ -542,12 +542,8 @@ eval_symbol_colors_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell
     eval_symbol_colors (canvas, wcell_a, sym_a, &part_eval [0]);
     eval_symbol_colors (canvas, wcell_b, sym_b, &part_eval [1]);
 
-    CHAFA_COLOR8_U32 (eval->fg.col) =
-        ((CHAFA_COLOR8_U32 (part_eval [0].fg.col) >> 1) & 0x7f7f7f7f)
-        + ((CHAFA_COLOR8_U32 (part_eval [1].fg.col) >> 1) & 0x7f7f7f7f);
-    CHAFA_COLOR8_U32 (eval->bg.col) =
-        ((CHAFA_COLOR8_U32 (part_eval [0].bg.col) >> 1) & 0x7f7f7f7f)
-        + ((CHAFA_COLOR8_U32 (part_eval [1].bg.col) >> 1) & 0x7f7f7f7f);
+    eval->fg.col = chafa_color_average_2 (part_eval [0].fg.col, part_eval [1].fg.col);
+    eval->bg.col = chafa_color_average_2 (part_eval [0].bg.col, part_eval [1].bg.col);
 }
 
 static gint
@@ -939,12 +935,8 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
         work_cell_get_contrasting_color_pair (wcell_a, color_pair_part [0]);
         work_cell_get_contrasting_color_pair (wcell_b, color_pair_part [1]);
 
-        CHAFA_COLOR8_U32 (color_pair [0]) =
-            ((CHAFA_COLOR8_U32 (color_pair_part [0] [0]) >> 1) & 0x7f7f7f7f)
-            + ((CHAFA_COLOR8_U32 (color_pair_part [1] [0]) >> 1) & 0x7f7f7f7f);
-        CHAFA_COLOR8_U32 (color_pair [1]) =
-            ((CHAFA_COLOR8_U32 (color_pair_part [0] [1]) >> 1) & 0x7f7f7f7f)
-            + ((CHAFA_COLOR8_U32 (color_pair_part [1] [1]) >> 1) & 0x7f7f7f7f);
+        color_pair [0] = chafa_color_average_2 (color_pair_part [0] [0], color_pair_part [1] [0]);
+        color_pair [1] = chafa_color_average_2 (color_pair_part [0] [1], color_pair_part [1] [1]);
     }
 
     bitmaps [0] = block_to_bitmap (wcell_a->pixels, color_pair);

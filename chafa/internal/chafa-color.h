@@ -68,6 +68,18 @@ chafa_color8_store_to_rgba8 (ChafaColor col, gpointer p)
     *p32 = cc.u.u32;
 }
 
+static inline ChafaColor
+chafa_color_average_2 (ChafaColor color_a, ChafaColor color_b)
+{
+    ChafaColor avg = { 0 };
+
+    CHAFA_COLOR8_U32 (avg) =
+        ((CHAFA_COLOR8_U32 (color_a) >> 1) & 0x7f7f7f7f)
+        + ((CHAFA_COLOR8_U32 (color_b) >> 1) & 0x7f7f7f7f);
+
+    return avg;
+}
+
 typedef struct
 {
     ChafaColor col [CHAFA_COLOR_SPACE_MAX];
