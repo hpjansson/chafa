@@ -2137,6 +2137,11 @@ chafa_get_tags_for_char (gunichar c)
     else
         tags |= CHAFA_SYMBOL_TAG_EXTRA;
 
+    if (g_unichar_isalpha (c))
+        tags |= CHAFA_SYMBOL_TAG_ALPHA;
+    if (g_unichar_isdigit (c))
+        tags |= CHAFA_SYMBOL_TAG_DIGIT;
+
     if (!(tags & (CHAFA_SYMBOL_TAG_WIDE | CHAFA_SYMBOL_TAG_AMBIGUOUS)))
         tags |= CHAFA_SYMBOL_TAG_NARROW;
 
