@@ -1986,7 +1986,10 @@ emit_ansi_truecolor (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
             if (bg.ch [3] < canvas->config.alpha_threshold)
             {
                 /* FIXME: Respect include/exclude for space */
-                g_string_append (gs, "\x1b[0m ");
+                if (i < i_max - 1 && canvas->cells [i + 1].c == 0)
+                    g_string_append (gs, "\x1b[0m  ");
+                else
+                    g_string_append (gs, "\x1b[0m ");
             }
             else
             {
@@ -2026,7 +2029,10 @@ emit_ansi_256 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
         {
             if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
             {
-                g_string_append (gs, "\x1b[0m ");
+                if (i < i_max - 1 && canvas->cells [i + 1].c == 0)
+                    g_string_append (gs, "\x1b[0m  ");
+                else
+                    g_string_append (gs, "\x1b[0m ");
             }
             else
             {
@@ -2067,7 +2073,10 @@ emit_ansi_16 (ChafaCanvas *canvas, GString *gs, gint i, gint i_max)
         {
             if (cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
             {
-                g_string_append (gs, "\x1b[0m ");
+                if (i < i_max - 1 && canvas->cells [i + 1].c == 0)
+                    g_string_append (gs, "\x1b[0m  ");
+                else
+                    g_string_append (gs, "\x1b[0m ");
             }
             else
             {
