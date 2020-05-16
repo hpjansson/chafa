@@ -66,7 +66,6 @@ Optimization
 - Avoid ImageMagick for remaining common formats like PNG, JPEG and directly
   use more efficient decoders instead.
 - Speed up alpha transparency code path.
-- Speed up 240/256 color mapping for DIN99d.
 - Preload next image/frame in delay phase.
 - Don't calculate error if we're only using a single symbol (e.g. vhalf).
 
