@@ -40,7 +40,7 @@ Minor Features/UX
 Major features
 --------------
 
-- Lossy/lossless intra-frame compression.
+- Lossy/lossless intra-frame compression. Data rate regulated:
   - By desired output size.
   - By maximum desired per-cell error.
   - By total error?
