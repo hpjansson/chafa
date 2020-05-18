@@ -191,17 +191,13 @@ static void
 boost_saturation_rgb (ChafaColor *col)
 {
     gint ch [3];
+    gfloat P = sqrtf (col->ch [0] * (gfloat) col->ch [0] * .299f
+                      + col->ch [1] * (gfloat) col->ch [1] * .587f
+                      + col->ch [2] * (gfloat) col->ch [2] * .144f);
 
-#define Pr .299
-#define Pg .587
-#define Pb .144
-    gdouble P = sqrt ((col->ch [0]) * (gdouble) (col->ch [0]) * Pr
-                      + (col->ch [1]) * (gdouble) (col->ch [1]) * Pg
-                      + (col->ch [2]) * (gdouble) (col->ch [2]) * Pb);
-
-    ch [0] = P + ((gdouble) col->ch [0] - P) * 2;
-    ch [1] = P + ((gdouble) col->ch [1] - P) * 2;
-    ch [2] = P + ((gdouble) col->ch [2] - P) * 2;
+    ch [0] = P + ((gfloat) col->ch [0] - P) * 2;
+    ch [1] = P + ((gfloat) col->ch [1] - P) * 2;
+    ch [2] = P + ((gfloat) col->ch [2] - P) * 2;
 
     col->ch [0] = CLAMP (ch [0], 0, 255);
     col->ch [1] = CLAMP (ch [1], 0, 255);
