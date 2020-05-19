@@ -146,15 +146,6 @@ fetch_canvas_pixel_block (ChafaCanvas *canvas, ChafaPixel *pixels_out, gint cx, 
 }
 
 static void
-threshold_alpha (ChafaCanvas *canvas, ChafaColor *color)
-{
-    if (color->ch [3] < canvas->config.alpha_threshold)
-        color->ch [3] = 0x00;
-    else
-        color->ch [3] = 0xff;
-}
-
-static void
 calc_mean_color (const ChafaPixel *block, ChafaColor *color_out)
 {
     ChafaColorAccum accum = { 0 };
@@ -604,45 +595,6 @@ eval_symbol_error_wide (ChafaCanvas *canvas, const WorkCell *wcell_a, const Work
 }
 
 static void
-adjust_eval_colors (ChafaCanvas *canvas, ChafaColor *fg_inout, ChafaColor *bg_inout)
-{
-    ChafaColorCandidates ccand;
-    ChafaColor fg_col, bg_col;
-
-    /* Threshold alpha */
-
-    threshold_alpha (canvas, fg_inout);
-    threshold_alpha (canvas, bg_inout);
-    fg_col = *fg_inout;
-    bg_col = *bg_inout;
-
-    /* Pick palette colors before error evaluation; this improves
-     * fine detail fidelity slightly. */
-
-    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
-        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
-        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256)
-    {
-        chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &fg_col, &ccand);
-        fg_col = *chafa_palette_get_color (&canvas->palette, canvas->config.color_space, ccand.index [0]);
-        chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &bg_col, &ccand);
-        bg_col = *chafa_palette_get_color (&canvas->palette, canvas->config.color_space, ccand.index [0]);
-    }
-
-    /* FIXME: The logic here seems overly complicated */
-    if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_TRUECOLOR)
-    {
-        /* Transfer mean alpha over so we can use it later */
-
-        fg_col.ch [3] = fg_inout->ch [3];
-        bg_col.ch [3] = fg_inout->ch [3];
-
-        *fg_inout = fg_col;
-        *bg_inout = bg_col;
-    }
-}
-
-static void
 pick_symbol_and_colors_slow (ChafaCanvas *canvas,
                              WorkCell *wcell,
                              gunichar *sym_out,
@@ -668,7 +620,6 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
         else
         {
             eval_symbol_colors (canvas, wcell, &canvas->config.symbol_map.symbols [i], &eval);
-            adjust_eval_colors (canvas, &eval.fg.col, &eval.bg.col);
         }
 
         eval_symbol_error (canvas, wcell, &canvas->config.symbol_map.symbols [i], &eval);
@@ -725,7 +676,6 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
                                      &canvas->config.symbol_map.symbols2 [i].sym [0],
                                      &canvas->config.symbol_map.symbols2 [i].sym [1],
                                      &eval);
-            adjust_eval_colors (canvas, &eval.fg.col, &eval.bg.col);
         }
 
         eval_symbol_error_wide (canvas, wcell_a, wcell_b,
