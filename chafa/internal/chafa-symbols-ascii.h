@@ -245,7 +245,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '0',
         " XXXXX  "
         "XX   XX "
@@ -257,7 +257,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '1',
         "  XX    "
         " XXX    "
@@ -269,7 +269,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '2',
         " XXXX   "
         "XX  XX  "
@@ -281,7 +281,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '3',
         " XXXX   "
         "XX  XX  "
@@ -293,7 +293,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '4',
         "   XXX  "
         "  XXXX  "
@@ -305,7 +305,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '5',
         "XXXXXX  "
         "XX      "
@@ -317,7 +317,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '6',
         "  XXX   "
         " XX     "
@@ -329,7 +329,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '7',
         "XXXXXX  "
         "XX  XX  "
@@ -341,7 +341,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '8',
         " XXXX   "
         "XX  XX  "
@@ -353,7 +353,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '9',
         " XXXX   "
         "XX  XX  "
@@ -449,7 +449,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'A',
         "  XX    "
         " XXXX   "
@@ -461,7 +461,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'B',
         "XXXXXX  "
         " XX  XX "
@@ -473,7 +473,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'C',
         "  XXXX  "
         " XX  XX "
@@ -485,7 +485,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'D',
         "XXXXX   "
         " XX XX  "
@@ -497,7 +497,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'E',
         "XXXXXXX "
         " XX   X "
@@ -509,7 +509,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'F',
         "XXXXXXX "
         " XX   X "
@@ -521,7 +521,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'G',
         "  XXXX  "
         " XX  XX "
@@ -533,7 +533,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'H',
         "XX  XX  "
         "XX  XX  "
@@ -545,7 +545,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'I',
         " XXXX   "
         "  XX    "
@@ -557,7 +557,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'J',
         "   XXXX "
         "    XX  "
@@ -569,7 +569,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'K',
         "XXX  XX "
         " XX  XX "
@@ -581,7 +581,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'L',
         "XXXX    "
         " XX     "
@@ -593,7 +593,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'M',
         "XX   XX "
         "XXX XXX "
@@ -605,7 +605,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'N',
         "XX   XX "
         "XXX  XX "
@@ -617,7 +617,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'O',
         "  XXX   "
         " XX XX  "
@@ -629,7 +629,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'P',
         "XXXXXX  "
         " XX  XX "
@@ -641,7 +641,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'Q',
         " XXXX   "
         "XX  XX  "
@@ -653,7 +653,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'R',
         "XXXXXX  "
         " XX  XX "
@@ -665,7 +665,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'S',
         " XXXX   "
         "XX  XX  "
@@ -677,7 +677,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'T',
         "XXXXXX  "
         "X XX X  "
@@ -689,7 +689,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'U',
         "XX  XX  "
         "XX  XX  "
@@ -701,7 +701,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'V',
         "XX  XX  "
         "XX  XX  "
@@ -713,7 +713,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'W',
         "XX   XX "
         "XX   XX "
@@ -725,7 +725,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'X',
         "XX   XX "
         "XX   XX "
@@ -737,7 +737,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'Y',
         "XX  XX  "
         "XX  XX  "
@@ -749,7 +749,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'Z',
         "XXXXXXX "
         "XX   XX "
@@ -833,7 +833,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'a',
         "        "
         "        "
@@ -845,7 +845,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'b',
         "XXX     "
         " XX     "
@@ -857,7 +857,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'c',
         "        "
         "        "
@@ -869,7 +869,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'd',
         "   XXX  "
         "    XX  "
@@ -881,7 +881,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'e',
         "        "
         "        "
@@ -893,7 +893,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'f',
         "  XXX   "
         " XX XX  "
@@ -905,7 +905,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'g',
         "        "
         "        "
@@ -917,7 +917,7 @@
         "XXXXX   "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'h',
         "XXX     "
         " XX     "
@@ -929,7 +929,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'i',
         "  XX    "
         "        "
@@ -941,7 +941,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'j',
         "    XX  "
         "        "
@@ -953,7 +953,7 @@
         " XXXX   "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'k',
         "XXX     "
         " XX     "
@@ -965,7 +965,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'l',
         " XXX    "
         "  XX    "
@@ -977,7 +977,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'm',
         "        "
         "        "
@@ -989,7 +989,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'n',
         "        "
         "        "
@@ -1001,7 +1001,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'o',
         "        "
         "        "
@@ -1013,7 +1013,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'p',
         "        "
         "        "
@@ -1025,7 +1025,7 @@
         "XXXX    "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'q',
         "        "
         "        "
@@ -1037,7 +1037,7 @@
         "   XXXX "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'r',
         "        "
         "        "
@@ -1049,7 +1049,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         's',
         "        "
         "        "
@@ -1061,7 +1061,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         't',
         "   X    "
         "  XX    "
@@ -1073,7 +1073,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'u',
         "        "
         "        "
@@ -1085,7 +1085,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'v',
         "        "
         "        "
@@ -1097,7 +1097,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'w',
         "        "
         "        "
@@ -1109,7 +1109,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'x',
         "        "
         "        "
@@ -1121,7 +1121,7 @@
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'y',
         "        "
         "        "
@@ -1133,7 +1133,7 @@
         "XXXXX   "
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'z',
         "        "
         "        "
