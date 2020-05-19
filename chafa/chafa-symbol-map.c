@@ -442,6 +442,7 @@ compile_symbols_wide (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
 static gboolean
 char_is_selected (GArray *selectors, ChafaSymbolTags tags, gunichar c)
 {
+    ChafaSymbolTags auto_exclude_tags = CHAFA_SYMBOL_TAG_BAD;
     gboolean is_selected = FALSE;
     gint i;
 
@@ -458,7 +459,14 @@ char_is_selected (GArray *selectors, ChafaSymbolTags tags, gunichar c)
         {
             case SELECTOR_TAG:
                 if (tags & selector->tags)
+                {
                     is_selected = selector->additive ? TRUE : FALSE;
+
+                    /* We exclude "bad" symbols unless the user explicitly refers
+                     * to them by tag. I.e. the selector string "0..fffff" will not
+                     * include matches for "ugly", but "-ugly+0..fffff" will. */
+                    auto_exclude_tags &= ~((guint) selector->tags);
+                }
                 break;
 
             case SELECTOR_RANGE:
@@ -467,6 +475,9 @@ char_is_selected (GArray *selectors, ChafaSymbolTags tags, gunichar c)
                 break;
         }
     }
+
+    if (tags & auto_exclude_tags)
+        is_selected = FALSE;
 
     return is_selected;
 }
