@@ -100,8 +100,15 @@ Glyph2;
  * @CHAFA_SYMBOL_TAG_TECHNICAL: Miscellaneous technical symbols.
  * @CHAFA_SYMBOL_TAG_GEOMETRIC: Geometric shapes.
  * @CHAFA_SYMBOL_TAG_ASCII: Printable ASCII characters.
- * @CHAFA_SYMBOL_TAG_WIDE: Characters that occupy two cells of width.
+ * @CHAFA_SYMBOL_TAG_ALPHA: Letters.
+ * @CHAFA_SYMBOL_TAG_DIGIT: Digits.
+ * @CHAFA_SYMBOL_TAG_ALNUM: Joint set of letters and digits.
+ * @CHAFA_SYMBOL_TAG_NARROW: Characters that are one cell wide.
+ * @CHAFA_SYMBOL_TAG_WIDE: Characters that are two cells wide.
+ * @CHAFA_SYMBOL_TAG_AMBIGUOUS: Characters of uncertain width. Always excluded unless specifically asked for.
+ * @CHAFA_SYMBOL_TAG_UGLY: Characters that are generally undesired or unlikely to render well. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
+ * @CHAFA_SYMBOL_TAG_BAD: Joint set of ugly and ambiguous characters. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
  **/
 
