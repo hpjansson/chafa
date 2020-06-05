@@ -36,10 +36,6 @@ Minor Features/UX
   - Emacs ansi-term.
   - Emacs shell (TERM=dumb).
   - Come up with some kind of support matrix.
-- Optional double-width symbol support.
-  - Many geometric shapes/math symbols need this.
-  - Process two cells at a time and compare summed error to corresponding
-    sum of the two cells for double-width symbols.
 
 Major features
 --------------
