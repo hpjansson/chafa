@@ -58,7 +58,6 @@ static const UnicharRange ambiguous_ranges [] =
     {  0x2300,  0x23ff },  /* Technical */
     {  0x2460,  0x24ff },  /* Enclosed alphanumerics */
     {  0x25a0,  0x25ff },  /* Geometric */
-    {  0x2600,  0x26ff },  /* Miscellaneous symbols */
     {  0x2700,  0x27bf },  /* Dingbats */
     {  0x27c0,  0x27e5 },  /* Miscellaneous mathematical symbols A (most) */
     {  0x27f0,  0x27ff },  /* Supplemental arrows A */
@@ -75,6 +74,7 @@ static const UnicharRange ambiguous_ranges [] =
  * reasons (e.g. too wide). */
 static const UnicharRange emoji_ranges [] =
 {
+    {  0x2600,  0x26ff },  /* Miscellaneous symbols */
     { 0x1f000, 0x1ffff },  /* Emojis */
 
     /* This symbol usually prints fine, but we don't want it randomly
