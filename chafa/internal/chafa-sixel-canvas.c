@@ -25,6 +25,7 @@
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-sixel-canvas.h"
+#include "internal/chafa-string-util.h"
 
 #define SIXEL_CELL_HEIGHT 6
 
@@ -191,34 +192,6 @@ sixel_data_to_schar (const SixelData *sdata, guint64 expanded_pen)
 }
 
 static gchar *
-format_3digit_dec (gint n, gchar *p)
-{
-    guint m;
-
-    m = n / 100;
-    n = n % 100;
-
-    if (m)
-    {
-        *(p++) = '0' + m;
-        m = n / 10;
-        n = n % 10;
-        *(p++) = '0' + m;
-    }
-    else
-    {
-        m = n / 10;
-        n = n % 10;
-        
-        if (m)
-            *(p++) = '0' + m;
-    }
-
-    *(p++) = '0' + n;
-    return p;
-}
-
-static gchar *
 format_schar_reps (gchar rep_schar, gint n_reps, gchar *p)
 {
     g_assert (n_reps > 0);
@@ -235,7 +208,7 @@ format_schar_reps (gchar rep_schar, gint n_reps, gchar *p)
         else if (n_reps < 255)
         {
             *(p++) = '!';
-            p = format_3digit_dec (n_reps, p);
+            p = chafa_format_dec_u8 (p, n_reps);
             *(p++) = rep_schar;
             goto out;
         }
@@ -259,7 +232,7 @@ static gchar *
 format_pen (guint8 pen, gchar *p)
 {
     *(p++) = '#';
-    return format_3digit_dec (pen, p);
+    return chafa_format_dec_u8 (p, pen);
 }
 
 /* force_full_width is a workaround for a bug in mlterm; we need to
@@ -405,7 +378,7 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     srow.data = g_alloca (sizeof (SixelData) * ctx->sixel_canvas->width);
     chafa_bitfield_init (&srow.filter_bits, ((ctx->sixel_canvas->width + FILTER_BANK_WIDTH - 1) / FILTER_BANK_WIDTH) * 256);
 
-    sixel_ansi = p = g_malloc (256 * (ctx->sixel_canvas->width + 5) * n_sixel_rows);
+    sixel_ansi = p = g_malloc (256 * (ctx->sixel_canvas->width + 5) * n_sixel_rows + 1);
 
     for (i = 0; i < n_sixel_rows; i++)
     {
@@ -452,18 +425,18 @@ build_sixel_palette (ChafaSixelCanvas *sixel_canvas, GString *out_str)
         col = chafa_palette_get_color (&sixel_canvas->image->palette, CHAFA_COLOR_SPACE_RGB,
                                        first_color + pen);
         *(p++) = '#';
-        p = format_3digit_dec (pen, p);
+        p = chafa_format_dec_u8 (p, pen);
         *(p++) = ';';
         *(p++) = '2';  /* Color space: RGB */
         *(p++) = ';';
 
         /* Sixel color channel range is 0..100 */
 
-        p = format_3digit_dec ((col->ch [0] * 100) / 255, p);
+        p = chafa_format_dec_u8 (p, (col->ch [0] * 100) / 255);
         *(p++) = ';';
-        p = format_3digit_dec ((col->ch [1] * 100) / 255, p);
+        p = chafa_format_dec_u8 (p, (col->ch [1] * 100) / 255);
         *(p++) = ';';
-        p = format_3digit_dec ((col->ch [2] * 100) / 255, p);
+        p = chafa_format_dec_u8 (p, (col->ch [2] * 100) / 255);
     }
 
     g_string_append_len (out_str, str, p - str);
