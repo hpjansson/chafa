@@ -75,3 +75,47 @@ const char chafa_ascii_dec_u8 [256] [4] =
     GEN_1 (3, '2', '5', '0'), GEN_1 (3, '2', '5', '1'), GEN_1 (3, '2', '5', '2'),
     GEN_1 (3, '2', '5', '3'), GEN_1 (3, '2', '5', '4'), GEN_1 (3, '2', '5', '5')
 };
+
+/* We need this because reg may contain garbage that will end up being
+ * harmlessly dumped past end-of-output. Avoiding initialization saves
+ * us approx. 3%, enough to matter. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+gchar *
+chafa_format_dec_uint_0_to_9999 (char *dest, guint arg)
+{
+    guint n, m;
+    guint32 reg;
+    gint i = 0;
+
+    m = arg < 9999 ? arg : 9999;
+
+    /* Reduce argument one decimal digit at a time and shift their
+     * ASCII equivalents into a register. The register can usually be
+     * written to memory all at once. memcpy() will do that if possible
+     * while keeping us safe from potential alignment issues.
+     *
+     * We take advantage of the fact that registers are backwards on
+     * x86 to reverse the result. GUINT32_TO_LE() will be a no-op there.
+     * On BE archs, it will manually reverse using a bswap.
+     *
+     * With -O2 -fno-inline, this is approx. 15 times faster than sprintf()
+     * in my tests. */
+
+    do
+    {
+        n = (m * (((1 << 15) + 9) / 10)) >> 15;
+        reg <<= 8;
+        reg |= '0' + (m - n * 10);
+        m = n;
+        i++;
+    }
+    while (m != 0);
+
+    reg = GUINT32_TO_LE (reg);
+    memcpy (dest, &reg, 4);
+    return dest + i;
+}
+
+#pragma GCC diagnostic pop

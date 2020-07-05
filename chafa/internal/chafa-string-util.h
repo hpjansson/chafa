@@ -36,6 +36,10 @@ chafa_format_dec_u8 (gchar *dest, guint8 n)
     return dest + chafa_ascii_dec_u8 [n] [3];
 }
 
+/* Will overwrite 4 bytes starting at dest. Returns a pointer to the first
+ * byte after the formatted ASCII decimal number (dest + 1..4). */
+gchar *chafa_format_dec_uint_0_to_9999 (char *dest, guint arg);
+
 G_END_DECLS
 
 #endif /* __CHAFA_STRING_UTIL_H__ */
