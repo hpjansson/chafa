@@ -6,6 +6,7 @@ BUILT_SOURCES =
 
 lib_LTLIBRARIES = libchafa.la
 noinst_LTLIBRARIES =
+noinst_HEADERS =
 
 libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
 libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 4:0:4
@@ -26,8 +27,20 @@ chafainclude_HEADERS = \
 	chafa-common.h \
 	chafa-features.h \
 	chafa-symbol-map.h \
+	chafa-term-seq-def.h \
 	chafa-util.h \
 	chafa-version-macros.h
+
+# Generate header prototypes with docstrings (-CC to pass through comments)
+# for terminal sequence accessors. These will be processed by gtk-doc to
+# produce documentation.
+
+noinst_HEADERS += chafa-term-seq-doc.h chafa-term-seq-doc-in.h
+DISTCLEANFILES += chafa-term-seq-doc.h
+BUILT_SOURCES += chafa-term-seq-doc.h
+
+chafa-term-seq-doc.h: $(srcdir)/chafa-term-seq-doc-in.h
+	$(CPP) -CC $< -o $@
 
 # Generate chafaconfig.h
 #
