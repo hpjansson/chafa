@@ -33,6 +33,7 @@ G_BEGIN_DECLS
 #include <chafa-canvas-config.h>
 #include <chafa-canvas.h>
 #include <chafa-symbol-map.h>
+#include <chafa-term-info.h>
 #include <chafa-util.h>
 
 G_END_DECLS
