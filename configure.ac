@@ -417,6 +417,7 @@ AC_OUTPUT(Makefile
           chafa.pc
           docs/Makefile
           docs/version.xml
+          tests/Makefile
           tools/Makefile
           tools/chafa/Makefile
           tools/fontgen/Makefile)
