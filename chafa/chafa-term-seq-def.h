@@ -58,7 +58,7 @@
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -73,7 +73,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_RESET_TERMINAL_HARD.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -88,7 +88,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_RESET_ATTRIBUTES.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -103,7 +103,7 @@ CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CLEAR.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -118,7 +118,7 @@ CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_INVERT_COLORS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -135,7 +135,7 @@ CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -150,7 +150,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -167,7 +167,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_TO_POS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -182,7 +182,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, guint, CHAFA_TERM_SEQ_ARGS g
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_UP_1.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -198,7 +198,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_UP.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -213,7 +213,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_DOWN_1.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -229,7 +229,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_DOWN.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -244,7 +244,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_LEFT_1.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -260,7 +260,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_LEFT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -275,7 +275,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_RIGHT_1.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -291,7 +291,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_RIGHT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -309,7 +309,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_UP_SCROLL.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -324,7 +324,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -342,7 +342,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_INSERT_CELLS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -358,7 +358,7 @@ CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_DELETE_CELLS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -378,7 +378,7 @@ CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_INSERT_ROWS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -394,7 +394,7 @@ CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_DELETE_ROWS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -413,7 +413,7 @@ CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_SCROLLING_ROWS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -433,7 +433,7 @@ CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, guint, CHAFA_TERM_
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_INSERT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -448,7 +448,7 @@ CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_INSERT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -463,7 +463,7 @@ CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_CURSOR.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -478,7 +478,7 @@ CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_CURSOR.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -493,7 +493,7 @@ CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_ECHO.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -508,7 +508,7 @@ CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_ECHO.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -527,7 +527,7 @@ CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_WRAP.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -542,7 +542,7 @@ CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_WRAP.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -560,7 +560,7 @@ CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, void)
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -578,7 +578,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, guint8, CHAFA_TE
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -599,7 +599,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, guint8, CHAFA_TE
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -615,7 +615,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, guint8, CHAF
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FG_256.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -631,7 +631,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, guint8, CHAFA_TERM_SEQ
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_BG_256.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -648,7 +648,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, guint8, CHAFA_TERM_SEQ
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FGBG_256.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -664,7 +664,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, guint8, CHAFA_TERM
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FG_16.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -680,7 +680,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, guint8, CHAFA_TERM_SEQ_A
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_BG_16.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -697,7 +697,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, guint8, CHAFA_TERM_SEQ_A
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FGBG_16.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -715,7 +715,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, guint8, CHAFA_TERM_S
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_BEGIN_SIXELS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
@@ -732,7 +732,7 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Prints the control sequence for CHAFA_TERM_SEQ_END_SIXELS.
  *
- * @dest must have enough space to hold at least
+ * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
  * shorter. The output will not be zero-terminated.
  *
