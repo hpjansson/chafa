@@ -26,8 +26,16 @@
 /**
  * SECTION:chafa-term-info
  * @title: ChafaTermInfo
- * @short_description: Information on a particular terminal type
+ * @short_description: Describes a particular terminal type
  *
+ * A #ChafaTermInfo describes the characteristics of one particular kind
+ * of display terminal. It stores control sequences that can be used to
+ * move the cursor, change text attributes, mark the beginning and end of
+ * sixel graphics data, etc.
+ *
+ * #ChafaTermInfo also implements an efficient low-level API for formatting
+ * these sequences with marshaled arguments so they can be sent to the
+ * terminal.
  **/
 
 /* Maximum number of arguments + 1 for the sentinel */
@@ -275,6 +283,13 @@ emit_seq_6_args_uint8 (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq 
 
 /* Public */
 
+/**
+ * chafa_term_info_new:
+ *
+ * Creates a new, blank #ChafaTermInfo.
+ *
+ * Returns: The new #ChafaTermInfo
+ **/
 ChafaTermInfo *
 chafa_term_info_new (void)
 {
@@ -292,6 +307,14 @@ chafa_term_info_new (void)
     return term_info;
 }
 
+/**
+ * chafa_term_info_copy:
+ * @term_info: A #ChafaTermInfo to copy.
+ *
+ * Creates a new #ChafaTermInfo that's a copy of @term_info.
+ *
+ * Returns: The new #ChafaTermInfo
+ **/
 ChafaTermInfo *
 chafa_term_info_copy (const ChafaTermInfo *term_info)
 {
@@ -311,12 +334,24 @@ chafa_term_info_copy (const ChafaTermInfo *term_info)
     return new_term_info;
 }
 
+/**
+ * chafa_term_info_ref:
+ * @term_info: #ChafaTermInfo to add a reference to.
+ *
+ * Adds a reference to @term_info.
+ **/
 void
 chafa_term_info_ref (ChafaTermInfo *term_info)
 {
     term_info->n_refs++;
 }
 
+/**
+ * chafa_term_info_unref:
+ * @term_info: #ChafaTermInfo to remove a reference from.
+ *
+ * Removes a reference from @term_info.
+ **/
 void
 chafa_term_info_unref (ChafaTermInfo *term_info)
 {
@@ -333,12 +368,30 @@ chafa_term_info_unref (ChafaTermInfo *term_info)
     }
 }
 
+/**
+ * chafa_term_info_have_seq:
+ * @term_info: A #ChafaTermInfo.
+ * @seq: A #ChafaTermSeq to query for.
+ *
+ * Checks if @term_info can emit @seq.
+ *
+ * Returns: %TRUE if @seq can be emitted, %FALSE otherwise
+ **/
 gboolean
 chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq)
 {
     return term_info->unparsed_str [seq] ? TRUE : FALSE;
 }
 
+/**
+ * chafa_term_info_get_seq:
+ * @term_info: A #ChafaTermInfo.
+ * @seq: A #ChafaTermSeq to query for.
+ *
+ * Gets the string equivalent of @seq stored in @term_info.
+ *
+ * Returns: An unformatted string sequence, or %NULL if not set.
+ **/
 const gchar *
 chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq)
 {
