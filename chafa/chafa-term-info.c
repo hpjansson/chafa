@@ -66,7 +66,7 @@ SeqMeta;
 
 static const SeqMeta seq_meta [CHAFA_TERM_SEQ_MAX] =
 {
-#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_type, ...) \
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     [CHAFA_TERM_SEQ_##NAME] = { n_args, sizeof (arg_type) },
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF
@@ -492,39 +492,51 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
     return result;
 }
 
-#define DEFINE_EMIT_SEQ_0_void(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_0_none_void(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest) \
 { return emit_seq_0_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name); }
 
-#define DEFINE_EMIT_SEQ_1_guint(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_1_none_guint(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg) \
 { return emit_seq_1_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg); }
 
-#define DEFINE_EMIT_SEQ_1_guint8(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_1_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
 { return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg); }
 
-#define DEFINE_EMIT_SEQ_2_guint(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_1_aix16fg_guint8(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
+{ return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg + (arg < 8 ? 30 : (90 - 8))); }
+
+#define DEFINE_EMIT_SEQ_1_aix16bg_guint8(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
+{ return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg + (arg < 8 ? 40 : (100 - 8))); }
+
+#define DEFINE_EMIT_SEQ_2_none_guint(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg0, guint arg1) \
 { return emit_seq_2_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1); }
 
-#define DEFINE_EMIT_SEQ_2_guint8(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_2_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1) \
 { return emit_seq_2_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1); }
 
-#define DEFINE_EMIT_SEQ_3_guint(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_2_aix16fgbg_guint8(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1) \
+{ return emit_seq_2_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0 + (arg0 < 8 ? 30 : (90 - 8)), arg1 + (arg1 < 8 ? 40 : (100 - 8))); }
+
+#define DEFINE_EMIT_SEQ_3_none_guint(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg0, guint arg1, guint arg2) \
 { return emit_seq_3_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2); }
 
-#define DEFINE_EMIT_SEQ_3_guint8(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_3_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1, guint8 arg2) \
 { return emit_seq_3_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2); }
 
-#define DEFINE_EMIT_SEQ_6_guint8(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_6_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1, guint8 arg2, guint8 arg3, guint8 arg4, guint8 arg5) \
 { return emit_seq_6_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2, arg3, arg4, arg5); }
 
-#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_type, ...) \
-    DEFINE_EMIT_SEQ_##n_args##_##arg_type(name, NAME)
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
+    DEFINE_EMIT_SEQ_##n_args##_##arg_proc##_##arg_type(name, NAME)
 #include "chafa-term-seq-def.h"
 #undef CHAFA_TERM_SEQ_DEF

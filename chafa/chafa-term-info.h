@@ -33,7 +33,7 @@ G_BEGIN_DECLS
  * https://hpjansson.org/chafa/ref/ for verbose definitions. */
 typedef enum
 {
-#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_type, ...) CHAFA_TERM_SEQ_##NAME,
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...) CHAFA_TERM_SEQ_##NAME,
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF
 
@@ -95,7 +95,7 @@ gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq 
  * chafa-term-seq-def.h for more information, or look up the canonical
  * documentation at https://hpjansson.org/chafa/ref/ for verbose
  * function prototypes. */
-#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_type, ...) \
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     CHAFA_TERM_SEQ_AVAILABILITY gchar * chafa_term_info_emit_##name(const ChafaTermInfo *term_info, gchar *dest __VA_ARGS__);
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF

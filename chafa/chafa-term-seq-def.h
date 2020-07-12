@@ -29,7 +29,7 @@
  *
  * The generator macro is invoked with the following arguments:
  *
- * CHAFA_TERM_SEQ_DEF (name, NAME, n_args, args_type, optional_args)
+ * CHAFA_TERM_SEQ_DEF (name, NAME, n_args, args_proc, args_type, ...)
  *
  * Sequences are grouped by the library version they became available in,
  * with CHAFA_TERM_SEQ_AVAILABILITY expanding to the appropriate version
@@ -64,7 +64,7 @@
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, void)
+CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, void)
 
 /**
  * chafa_term_info_emit_reset_terminal_hard:
@@ -79,7 +79,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, void)
+CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, void)
 
 /**
  * chafa_term_info_emit_reset_attributes:
@@ -94,7 +94,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, void)
+CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, void)
 
 /**
  * chafa_term_info_emit_clear:
@@ -109,7 +109,7 @@ CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, void)
+CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, void)
 
 /**
  * chafa_term_info_emit_invert_colors:
@@ -124,7 +124,7 @@ CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, void)
+CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, void)
 
 /* Cursor movement. Cursor stops at margins. */
 
@@ -141,7 +141,7 @@ CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_to_bottom_left:
@@ -156,7 +156,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_to_pos:
@@ -173,7 +173,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, guint, CHAFA_TERM_SEQ_ARGS guint x, guint y)
+CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint x, guint y)
 
 /**
  * chafa_term_info_emit_cursor_up_1:
@@ -188,7 +188,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, guint, CHAFA_TERM_SEQ_ARGS g
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_up:
@@ -204,7 +204,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /**
  * chafa_term_info_emit_cursor_down_1:
@@ -219,7 +219,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_down:
@@ -235,7 +235,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /**
  * chafa_term_info_emit_cursor_left_1:
@@ -250,7 +250,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_left:
@@ -266,7 +266,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /**
  * chafa_term_info_emit_cursor_right_1:
@@ -281,7 +281,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_right:
@@ -297,7 +297,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /* Cursor movement. Cursor crossing margin causes scrolling region to
  * scroll. */
@@ -315,7 +315,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, void)
 
 /**
  * chafa_term_info_emit_cursor_down_scroll:
@@ -330,7 +330,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, void)
+CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, void)
 
 /* Cells will shift on insert. Cells shifted off the edge will be lost. */
 
@@ -348,7 +348,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /**
  * chafa_term_info_emit_delete_cells:
@@ -364,7 +364,7 @@ CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /* Cursor must be inside scrolling region. Rows are shifted inside the
  * scrolling region. Rows shifted off the edge will be lost. The cursor
@@ -384,7 +384,7 @@ CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /**
  * chafa_term_info_emit_delete_rows:
@@ -400,7 +400,7 @@ CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
 /* Defines the scrolling region. */
 
@@ -419,7 +419,7 @@ CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, guint, CHAFA_TERM_SEQ_ARGS guint
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, guint, CHAFA_TERM_SEQ_ARGS guint top, guint bottom)
+CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint top, guint bottom)
 
 /* Indicates whether characters printed in the middle of a row should
  * cause subsequent cells to shift forwards. Cells shifted off the edge
@@ -439,7 +439,7 @@ CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, guint, CHAFA_TERM_
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, void)
+CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, void)
 
 /**
  * chafa_term_info_emit_disable_insert:
@@ -454,7 +454,7 @@ CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, void)
+CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, void)
 
 /**
  * chafa_term_info_emit_enable_cursor:
@@ -469,7 +469,7 @@ CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, void)
+CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, void)
 
 /**
  * chafa_term_info_emit_disable_cursor:
@@ -484,7 +484,7 @@ CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, void)
+CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, void)
 
 /**
  * chafa_term_info_emit_enable_echo:
@@ -499,7 +499,7 @@ CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, void)
+CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, void)
 
 /**
  * chafa_term_info_emit_disable_echo:
@@ -514,7 +514,7 @@ CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, void)
+CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, void)
 
 /* When printing a character in the last column, indicates whether the
  * cursor should move to the next row and potentially cause scrolling. If
@@ -533,7 +533,7 @@ CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, void)
+CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, void)
 
 /**
  * chafa_term_info_emit_disable_wrap:
@@ -548,7 +548,7 @@ CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, void)
+CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, void)
 
 /**
  * chafa_term_info_emit_set_color_fg_direct:
@@ -566,7 +566,7 @@ CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
+CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
 
 /**
  * chafa_term_info_emit_set_color_bg_direct:
@@ -584,7 +584,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, guint8, CHAFA_TE
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
+CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
 
 /**
  * chafa_term_info_emit_set_color_fgbg_direct:
@@ -605,7 +605,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, guint8, CHAFA_TE
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_r, guint8 fg_g, guint8 fg_b, guint8 bg_r, guint8 bg_g, guint8 bg_b)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_r, guint8 fg_g, guint8 fg_b, guint8 bg_r, guint8 bg_g, guint8 bg_b)
 
 /**
  * chafa_term_info_emit_set_color_fg_256:
@@ -621,7 +621,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, guint8, CHAF
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
 /**
  * chafa_term_info_emit_set_color_bg_256:
@@ -637,7 +637,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, guint8, CHAFA_TERM_SEQ
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
 /**
  * chafa_term_info_emit_set_color_fgbg_256:
@@ -654,7 +654,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, guint8, CHAFA_TERM_SEQ
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
 
 /**
  * chafa_term_info_emit_set_color_fg_16:
@@ -670,7 +670,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, guint8, CHAFA_TERM
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+    CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
 /**
  * chafa_term_info_emit_set_color_bg_16:
@@ -686,7 +686,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, guint8, CHAFA_TERM_SEQ_A
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
 /**
  * chafa_term_info_emit_set_color_fgbg_16:
@@ -703,7 +703,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, guint8, CHAFA_TERM_SEQ_A
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
 
 /**
  * chafa_term_info_emit_begin_sixels:
@@ -723,7 +723,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, guint8, CHAFA_TERM_S
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, guint, CHAFA_TERM_SEQ_ARGS guint p1, guint p2, guint p3)
+CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_ARGS guint p1, guint p2, guint p3)
 
 /**
  * chafa_term_info_emit_end_sixels:
@@ -738,7 +738,7 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, void)
+CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, void)
 
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
