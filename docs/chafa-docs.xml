@@ -28,9 +28,11 @@
     <xi:include href="xml/chafa-canvas.xml"/>
     <xi:include href="xml/chafa-canvas-config.xml"/>
     <xi:include href="xml/chafa-symbol-map.xml"/>
+    <xi:include href="xml/chafa-term-info.xml"/>
     <xi:include href="xml/chafa-features.xml"/>
     <xi:include href="xml/chafa-util.xml"/>
   </chapter>
+
   <index id="api-index-full">
     <title>API Index</title>
     <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
