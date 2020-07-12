@@ -400,6 +400,9 @@ chafa_term_info_unref (ChafaTermInfo *term_info)
 gboolean
 chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq)
 {
+    g_return_val_if_fail (term_info != NULL, FALSE);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, FALSE);
+
     return term_info->unparsed_str [seq] ? TRUE : FALSE;
 }
 
@@ -415,6 +418,9 @@ chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq)
 const gchar *
 chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq)
 {
+    g_return_val_if_fail (term_info != NULL, NULL);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, NULL);
+
     return term_info->unparsed_str [seq];
 }
 
@@ -450,6 +456,9 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
     gchar seq_str [CHAFA_TERM_SEQ_MAX];
     SeqArgInfo seq_args [CHAFA_TERM_SEQ_ARGS_MAX];
     gboolean result = FALSE;
+
+    g_return_val_if_fail (term_info != NULL, FALSE);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, FALSE);
 
     if (!str)
     {
