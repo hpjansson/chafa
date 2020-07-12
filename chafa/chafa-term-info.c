@@ -51,7 +51,7 @@ SeqArgInfo;
 
 struct ChafaTermInfo
 {
-    gint n_refs;
+    gint refs;
     gchar seq_str [CHAFA_TERM_SEQ_MAX] [CHAFA_TERM_SEQ_LENGTH_MAX];
     SeqArgInfo seq_args [CHAFA_TERM_SEQ_MAX] [CHAFA_TERM_SEQ_ARGS_MAX];
     gchar *unparsed_str [CHAFA_TERM_SEQ_MAX];
@@ -305,7 +305,7 @@ chafa_term_info_new (void)
     gint i;
 
     term_info = g_new0 (ChafaTermInfo, 1);
-    term_info->n_refs = 1;
+    term_info->refs = 1;
 
     for (i = 0; i < CHAFA_TERM_SEQ_MAX; i++)
     {
@@ -329,9 +329,11 @@ chafa_term_info_copy (const ChafaTermInfo *term_info)
     ChafaTermInfo *new_term_info;
     gint i;
 
+    g_return_val_if_fail (term_info != NULL, NULL);
+
     new_term_info = g_new (ChafaTermInfo, 1);
     memcpy (new_term_info, term_info, sizeof (ChafaTermInfo));
-    new_term_info->n_refs = 1;
+    new_term_info->refs = 1;
 
     for (i = 0; i < CHAFA_TERM_SEQ_MAX; i++)
     {
@@ -351,7 +353,13 @@ chafa_term_info_copy (const ChafaTermInfo *term_info)
 void
 chafa_term_info_ref (ChafaTermInfo *term_info)
 {
-    term_info->n_refs++;
+    gint refs;
+
+    g_return_if_fail (term_info != NULL);
+    refs = g_atomic_int_get (&term_info->refs);
+    g_return_if_fail (refs > 0);
+
+    g_atomic_int_inc (&term_info->refs);
 }
 
 /**
@@ -363,9 +371,13 @@ chafa_term_info_ref (ChafaTermInfo *term_info)
 void
 chafa_term_info_unref (ChafaTermInfo *term_info)
 {
-    term_info->n_refs--;
+    gint refs;
 
-    if (!term_info->n_refs)
+    g_return_if_fail (term_info != NULL);
+    refs = g_atomic_int_get (&term_info->refs);
+    g_return_if_fail (refs > 0);
+
+    if (g_atomic_int_dec_and_test (&term_info->refs))
     {
         gint i;
 
