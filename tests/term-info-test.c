@@ -10,12 +10,12 @@ formatting_test (void)
 
     ti = chafa_term_info_new ();
 
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT, "soft-reset");
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_CURSOR_UP, "cursor-up-%1");
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_CURSOR_TO_POS, "%1-cursor-to-pos-%2");
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT, "%1%2-fg-direct-%3");
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT, "%1-bg-direct%2%3-");
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT, "%1%2-fgbg-%3,%4%5-%6");
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT, "soft-reset", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_CURSOR_UP, "cursor-up-%1", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_CURSOR_TO_POS, "%1-cursor-to-pos-%2", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT, "%1%2-fg-direct-%3", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT, "%1-bg-direct%2%3-", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT, "%1%2-fgbg-%3,%4%5-%6", NULL);
 
     out = chafa_term_info_emit_reset_terminal_soft (ti, out);
     out = chafa_term_info_emit_cursor_up (ti, out, 9876);

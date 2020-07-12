@@ -43,6 +43,37 @@ ChafaTermSeq;
 
 typedef struct ChafaTermInfo ChafaTermInfo;
 
+/**
+ * CHAFA_TERM_INFO_ERROR:
+ * 
+ * Error domain for #ChafaTermInfo. Errors in this domain will
+ * be from the #ChafaTermInfoError enumeration. See #GError for information on 
+ * error domains.
+ **/
+#define CHAFA_TERM_INFO_ERROR (chafa_term_info_error_quark ())
+
+/**
+ * ChafaTermInfoError:
+ * @CHAFA_TERM_INFO_ERROR_SEQ_TOO_LONG: A control sequence could exceed
+ *  #CHAFA_TERM_SEQ_LENGTH_MAX bytes if formatted with maximum argument lengths.
+ * @CHAFA_TERM_INFO_ERROR_BAD_ESCAPE: An illegal escape sequence was used.
+ * @CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS: A control sequence specified
+ *  more than the maximum number of arguments, or an argument index was out
+ *  of range.
+ * 
+ * Error codes returned by control sequence parsing.
+ **/
+typedef enum
+{
+    CHAFA_TERM_INFO_ERROR_SEQ_TOO_LONG,
+    CHAFA_TERM_INFO_ERROR_BAD_ESCAPE,
+    CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS
+}
+ChafaTermInfoError;
+
+CHAFA_AVAILABLE_IN_1_6
+GQuark chafa_term_info_error_quark (void);
+
 CHAFA_AVAILABLE_IN_1_6
 ChafaTermInfo *chafa_term_info_new (void);
 CHAFA_AVAILABLE_IN_1_6
@@ -53,11 +84,12 @@ CHAFA_AVAILABLE_IN_1_6
 void chafa_term_info_unref (ChafaTermInfo *term_info);
 
 CHAFA_AVAILABLE_IN_1_6
-gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
-CHAFA_AVAILABLE_IN_1_6
 const gchar *chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq);
 CHAFA_AVAILABLE_IN_1_6
-gint chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar *str);
+gint chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar *str,
+                              GError **error);
+CHAFA_AVAILABLE_IN_1_6
+gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
 
 /* This declares the prototypes for chafa_term_info_emit_*(). See
  * chafa-term-seq-def.h for more information, or look up the canonical

@@ -89,13 +89,13 @@ copy_bytes (gchar *out, const gchar *in, gint n)
     while (i < n);
 }
 
-static gint
+static gboolean
 parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
-                gint n_args, gint arg_len_max)
+                gint n_args, gint arg_len_max, GError **error)
 {
     gint i, j, k;
     gint pre_len = 0;
-    gint result = -1;
+    gint result = FALSE;
 
     g_assert (n_args < CHAFA_TERM_SEQ_ARGS_MAX);
 
@@ -132,6 +132,8 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
                 if (arg_info [k].arg_index >= n_args)
                 {
                     /* Bad argument index (out of range) */
+                    g_set_error (error, CHAFA_TERM_INFO_ERROR, CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS,
+                                 "Control sequence had too many arguments.");
                     goto out;
                 }
 
@@ -154,6 +156,8 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
     if (k == CHAFA_TERM_SEQ_ARGS_MAX)
     {
         /* Too many argument expansions */
+        g_set_error (error, CHAFA_TERM_INFO_ERROR, CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS,
+                     "Control sequence had too many arguments.");
         goto out;
     }
 
@@ -161,13 +165,15 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
     if (j + k * arg_len_max + 1 > CHAFA_TERM_SEQ_LENGTH_MAX)
     {
         /* Formatted string may be too long */
+        g_set_error (error, CHAFA_TERM_INFO_ERROR, CHAFA_TERM_INFO_ERROR_SEQ_TOO_LONG,
+                     "Control sequence too long.");
         goto out;
     }
 
     arg_info [k].pre_len = pre_len;
     arg_info [k].arg_index = ARG_INDEX_SENTINEL;
 
-    result = 0;
+    result = TRUE;
 
 out:
     return result;
@@ -282,6 +288,8 @@ emit_seq_6_args_uint8 (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq 
 }
 
 /* Public */
+
+G_DEFINE_QUARK (chafa-term-info-error-quark, chafa_term_info_error)
 
 /**
  * chafa_term_info_new:
@@ -398,12 +406,38 @@ chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq)
     return term_info->unparsed_str [seq];
 }
 
-gint
-chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar *str)
+/**
+ * chafa_term_info_set_seq:
+ * @term_info: A #ChafaTermInfo.
+ * @seq: A #ChafaTermSeq to query for.
+ * @str: A control sequence string, or %NULL to clear.
+ * @error: A return location for error details, or %NULL.
+ *
+ * Sets the control sequence string equivalent of @seq stored in @term_info to @str.
+ *
+ * The string may contain argument indexes to be substituted with integers on
+ * formatting. The indexes are preceded by a percentage character and start at 1,
+ * i.e. \%1, \%2, \%3, etc.
+ *
+ * The string's length after formatting must not exceed %CHAFA_TERM_SEQ_LENGTH_MAX
+ * bytes. Each argument can add up to four digits, or three for those specified as
+ * 8-bit integers. If the string could potentially exceed this length when
+ * formatted, chafa_term_info_set_seq() will return %FALSE.
+ *
+ * If parsing fails or @str is too long, any previously existing sequence
+ * will be left untouched.
+ *
+ * Passing %NULL for @str clears the corresponding control sequence.
+ *
+ * Returns: %TRUE if parsing succeeded, %FALSE otherwise
+ **/
+gboolean
+chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar *str,
+                         GError **error)
 {
     gchar seq_str [CHAFA_TERM_SEQ_MAX];
     SeqArgInfo seq_args [CHAFA_TERM_SEQ_ARGS_MAX];
-    gint result;
+    gboolean result = FALSE;
 
     if (!str)
     {
@@ -413,15 +447,16 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
 
         g_free (term_info->unparsed_str [seq]);
         term_info->unparsed_str [seq] = NULL;
-        result = 0;
+        result = TRUE;
     }
     else
     {
         result = parse_seq_args (&seq_str [0], &seq_args [0], str,
                                  seq_meta [seq].n_args,
-                                 seq_meta [seq].type_size == 1 ? 3 : 4);
+                                 seq_meta [seq].type_size == 1 ? 3 : 4,
+                                 error);
 
-        if (result == 0)
+        if (result == TRUE)
         {
             memcpy (&term_info->seq_str [seq] [0], &seq_str [0],
                     CHAFA_TERM_SEQ_MAX);
