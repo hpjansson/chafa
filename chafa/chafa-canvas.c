@@ -24,6 +24,7 @@
 #include <glib.h>
 #include "chafa.h"
 #include "internal/chafa-canvas-internal.h"
+#include "internal/chafa-canvas-printer.h"
 #include "internal/chafa-private.h"
 #include "internal/chafa-pixops.h"
 #include "internal/smolscale/smolscale.h"
