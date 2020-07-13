@@ -42,21 +42,18 @@ void chafa_canvas_unref (ChafaCanvas *canvas);
 CHAFA_AVAILABLE_IN_ALL
 const ChafaCanvasConfig *chafa_canvas_peek_config (ChafaCanvas *canvas);
 
-CHAFA_DEPRECATED_IN_1_2
-void chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
-                                     gint src_width, gint src_height, gint src_rowstride);
-
-
 CHAFA_AVAILABLE_IN_1_2
 void chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                    const guint8 *src_pixels,
                                    gint src_width, gint src_height, gint src_rowstride);
-
-CHAFA_DEPRECATED_IN_1_6
-GString *chafa_canvas_build_ansi (ChafaCanvas *canvas);
-
 CHAFA_AVAILABLE_IN_1_6
 GString *chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info);
+
+CHAFA_DEPRECATED_IN_1_2
+void chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
+                                     gint src_width, gint src_height, gint src_rowstride);
+CHAFA_DEPRECATED_IN_1_6
+GString *chafa_canvas_build_ansi (ChafaCanvas *canvas);
 
 G_END_DECLS
 
