@@ -30,12 +30,18 @@ G_BEGIN_DECLS
 
 typedef struct ChafaTermDb ChafaTermDb;
 
+CHAFA_AVAILABLE_IN_1_6
 ChafaTermDb *chafa_term_db_new (void);
+CHAFA_AVAILABLE_IN_1_6
 ChafaTermDb *chafa_term_db_copy (const ChafaTermDb *term_db);
+CHAFA_AVAILABLE_IN_1_6
 void chafa_term_db_ref (ChafaTermDb *term_db);
+CHAFA_AVAILABLE_IN_1_6
 void chafa_term_db_unref (ChafaTermDb *term_db);
 
+CHAFA_AVAILABLE_IN_1_6
 ChafaTermInfo *chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp);
+CHAFA_AVAILABLE_IN_1_6
 ChafaTermInfo *chafa_term_db_get_fallback_info (ChafaTermDb *term_db);
 
 G_END_DECLS
