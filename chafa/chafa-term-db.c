@@ -139,6 +139,24 @@ static const SeqStr *color_16_list [] =
     NULL
 };
 
+static const SeqStr color_fbterm_seqs [] =
+{
+    { CHAFA_TERM_SEQ_SET_COLOR_FG_16, "\033[1;%1}" },
+    { CHAFA_TERM_SEQ_SET_COLOR_BG_16, "\033[2;%1}" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_16, "\033[1;%1}\033[2;%2}" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FG_256, "\033[1;%1}" },
+    { CHAFA_TERM_SEQ_SET_COLOR_BG_256, "\033[2;%1}" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_256, "\033[1;%1}\033[2;%2}" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
+static const SeqStr *color_fbterm_list [] =
+{
+    color_fbterm_seqs,
+    NULL
+};
+
 static void
 add_seqs (ChafaTermInfo *ti, const SeqStr *seqstr)
 {
@@ -260,6 +278,10 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
      * can apply preprocessing and exotic color spaces. */
     if (!strcmp (term, "linux"))
         color_seq_list = color_16_list;
+
+    /* FbTerm can use 256 colors through a private extension; see fbterm(1) */
+    if (!strcmp (term, "fbterm"))
+        color_seq_list = color_fbterm_list;
 
     add_seq_list (ti, color_seq_list);
     add_seqs (ti, gfx_seqs);
