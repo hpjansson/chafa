@@ -670,7 +670,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAF
  *
  * Returns: Pointer to first byte after emitted string
  **/
-    CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
 /**
  * chafa_term_info_emit_set_color_bg_16:
