@@ -163,4 +163,5 @@ chafa_term_db_copy
 chafa_term_db_ref
 chafa_term_db_unref
 chafa_term_db_detect
+chafa_term_db_get_fallback_info
 </SECTION>

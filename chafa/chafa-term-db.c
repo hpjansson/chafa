@@ -305,6 +305,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
  * Creates a new, blank #ChafaTermDb.
  *
  * Returns: The new #ChafaTermDb
+ *
+ * Since: 1.6
  **/
 ChafaTermDb *
 chafa_term_db_new (void)
@@ -324,6 +326,8 @@ chafa_term_db_new (void)
  * Creates a new #ChafaTermDb that's a copy of @term_db.
  *
  * Returns: The new #ChafaTermDb
+ *
+ * Since: 1.6
  **/
 ChafaTermDb *
 chafa_term_db_copy (const ChafaTermDb *term_db)
@@ -342,6 +346,8 @@ chafa_term_db_copy (const ChafaTermDb *term_db)
  * @term_db: #ChafaTermDb to add a reference to.
  *
  * Adds a reference to @term_db.
+ *
+ * Since: 1.6
  **/
 void
 chafa_term_db_ref (ChafaTermDb *term_db)
@@ -360,6 +366,8 @@ chafa_term_db_ref (ChafaTermDb *term_db)
  * @term_db: #ChafaTermDb to remove a reference from.
  *
  * Removes a reference from @term_db.
+ *
+ * Since: 1.6
  **/
 void
 chafa_term_db_unref (ChafaTermDb *term_db)
@@ -387,6 +395,8 @@ chafa_term_db_unref (ChafaTermDb *term_db)
  * @envp can be gotten from g_get_environ().
  *
  * Returns: A new #ChafaTermInfo.
+ *
+ * Since: 1.6
  **/
 ChafaTermInfo *
 chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp)
@@ -400,6 +410,21 @@ chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp)
     return ti;
 }
 
+/**
+ * chafa_term_db_get_fallback_info:
+ * @term_db: A #ChafaTermDb.
+ *
+ * Builds a new #ChafaTermInfo with fallback control sequences. This
+ * can be used with unknown but presumably modern terminals, or to
+ * supplement missing capabilities in a detected terminal.
+ *
+ * Fallback control sequences may cause unpredictable behavior and
+ * should only be used as a last resort.
+ *
+ * Returns: A new #ChafaTermInfo.
+ *
+ * Since: 1.6
+ **/
 ChafaTermInfo *
 chafa_term_db_get_fallback_info (ChafaTermDb *term_db)
 {
