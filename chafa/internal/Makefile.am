@@ -12,6 +12,9 @@ libchafa_internal_la_SOURCES = \
 	chafa-batch.c \
 	chafa-batch.h \
 	chafa-bitfield.h \
+	chafa-canvas-internal.h \
+	chafa-canvas-printer.c \
+	chafa-canvas-printer.h \
 	chafa-color.c \
 	chafa-color.h \
 	chafa-color-hash.c \
