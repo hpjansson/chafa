@@ -36,6 +36,7 @@ void chafa_term_db_ref (ChafaTermDb *term_db);
 void chafa_term_db_unref (ChafaTermDb *term_db);
 
 ChafaTermInfo *chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp);
+ChafaTermInfo *chafa_term_db_get_fallback_info (ChafaTermDb *term_db);
 
 G_END_DECLS
 

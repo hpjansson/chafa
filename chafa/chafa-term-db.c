@@ -157,6 +157,16 @@ static const SeqStr *color_fbterm_list [] =
     NULL
 };
 
+static const SeqStr *fallback_list [] =
+{
+    vt220_seqs,
+    color_direct_seqs,
+    color_256_seqs,
+    color_16_seqs,
+    sixel_seqs,
+    NULL
+};
+
 static void
 add_seqs (ChafaTermInfo *ti, const SeqStr *seqstr)
 {
@@ -387,5 +397,18 @@ chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp)
 
     ti = chafa_term_info_new ();
     detect_capabilities (ti, envp);
+    return ti;
+}
+
+ChafaTermInfo *
+chafa_term_db_get_fallback_info (ChafaTermDb *term_db)
+{
+    ChafaTermInfo *ti;
+
+    g_return_val_if_fail (term_db != NULL, NULL);
+
+    ti = chafa_term_info_new ();
+    add_seq_list (ti, fallback_list);
+
     return ti;
 }
