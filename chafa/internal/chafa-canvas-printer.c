@@ -313,24 +313,10 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 }
 
 GString *
-chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *ti)
+chafa_canvas_print_symbols (ChafaCanvas *canvas, ChafaTermInfo *ti)
 {
-    GString *str;
+    g_assert (canvas != NULL);
+    g_assert (ti != NULL);
 
-    if (ti)
-    {
-        chafa_term_info_ref (ti);
-    }
-    else
-    {
-        gchar *env_vars [] = { "TERM=xterm-256color", NULL };
-        ChafaTermDb *term_db = chafa_term_db_new ();
-        ti = chafa_term_db_detect (term_db, env_vars);
-        chafa_term_db_unref (term_db);
-    }
-
-    str = build_ansi_gstring (canvas, ti);
-
-    chafa_term_info_unref (ti);
-    return str;
+    return build_ansi_gstring (canvas, ti);
 }

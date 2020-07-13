@@ -28,7 +28,7 @@
 
 G_BEGIN_DECLS
 
-GString *chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *ti);
+GString *chafa_canvas_print_symbols (ChafaCanvas *canvas, ChafaTermInfo *ti);
 
 G_END_DECLS
 

@@ -24,9 +24,9 @@
 # error "Only <chafa.h> can be included directly."
 #endif
 
-G_BEGIN_DECLS
+#include <chafa-term-info.h>
 
-/* Canvas */
+G_BEGIN_DECLS
 
 typedef struct ChafaCanvas ChafaCanvas;
 
@@ -52,8 +52,11 @@ void chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel
                                    const guint8 *src_pixels,
                                    gint src_width, gint src_height, gint src_rowstride);
 
-CHAFA_AVAILABLE_IN_ALL
+CHAFA_DEPRECATED_IN_1_6
 GString *chafa_canvas_build_ansi (ChafaCanvas *canvas);
+
+CHAFA_AVAILABLE_IN_1_6
+GString *chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info);
 
 G_END_DECLS
 

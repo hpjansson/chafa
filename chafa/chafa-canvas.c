@@ -1557,29 +1557,80 @@ chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
  * All output lines except for the last one will end in a newline.
  *
  * Returns: A UTF-8 string of ANSI sequences and symbols
+ *
+ * Deprecated: 1.6: Use chafa_canvas_print() instead.
  **/
 GString *
 chafa_canvas_build_ansi (ChafaCanvas *canvas)
+{
+    g_return_val_if_fail (canvas != NULL, NULL);
+    g_return_val_if_fail (canvas->refs > 0, NULL);
+
+    return chafa_canvas_print (canvas, NULL);
+}
+
+/**
+ * chafa_canvas_print:
+ * @canvas: The canvas to generate a printable representation of
+ * @term_info: Terminal to format for, or %NULL for fallback
+ *
+ * Builds a UTF-8 string of terminal contorl sequences and symbols
+ * representing the canvas' current contents. This can e.g. be printed
+ * to a terminal. The exact choice of escape sequences and symbols,
+ * dimensions, etc. is determined by the configuration assigned to
+ * @canvas on its creation.
+ *
+ * All output lines except for the last one will end in a newline.
+ *
+ * Returns: A UTF-8 string of terminal control sequences and symbols
+ **/
+GString *
+chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
 {
     GString *str;
 
     g_return_val_if_fail (canvas != NULL, NULL);
     g_return_val_if_fail (canvas->refs > 0, NULL);
 
-    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    if (term_info)
     {
-        maybe_clear (canvas);
-        str = chafa_canvas_print (canvas, NULL);
+        chafa_term_info_ref (term_info);
     }
     else
     {
-        /* Sixel mode */
-
-        str = g_string_new ("\x1bP0;1;0q");
-        g_string_append_printf (str, "\"1;1;%d;%d", canvas->width_pixels, canvas->height_pixels);
-        chafa_sixel_canvas_build_ansi (canvas->sixel_canvas, str);
-        g_string_append (str, "\x1b\\");
+        ChafaTermDb *term_db = chafa_term_db_new ();
+        term_info = chafa_term_db_get_fallback_info (term_db);
+        chafa_term_db_unref (term_db);
     }
 
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        maybe_clear (canvas);
+        str = chafa_canvas_print_symbols (canvas, term_info);
+    }
+    else if (chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS))
+    {
+        gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+        gchar *out;
+
+        /* Sixel mode */
+
+        out = chafa_term_info_emit_begin_sixels (term_info, buf, 0, 1, 0);
+        *out = '\0';
+        str = g_string_new (buf);
+
+        g_string_append_printf (str, "\"1;1;%d;%d", canvas->width_pixels, canvas->height_pixels);
+        chafa_sixel_canvas_build_ansi (canvas->sixel_canvas, str);
+
+        out = chafa_term_info_emit_end_sixels (term_info, buf);
+        *out = '\0';
+        g_string_append (str, buf);
+    }
+    else
+    {
+        str = g_string_new ("");
+    }
+
+    chafa_term_info_unref (term_info);
     return str;
 }
