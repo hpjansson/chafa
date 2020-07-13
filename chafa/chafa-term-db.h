@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2020 Hans Petter Jansson
+/* Copyright (C) 2020 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -17,27 +17,26 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __CHAFA_H__
-#define __CHAFA_H__
-#define __CHAFA_H_INSIDE__
+#ifndef __CHAFA_TERM_DB_H__
+#define __CHAFA_TERM_DB_H__
 
-#include <glib.h>
+#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
+# error "Only <chafa.h> can be included directly."
+#endif
+
+#include <chafa-term-info.h>
 
 G_BEGIN_DECLS
 
-/* Version macros go before everything else */
-#include <chafa-version-macros.h>
+typedef struct ChafaTermDb ChafaTermDb;
 
-#include <chafa-common.h>
-#include <chafa-features.h>
-#include <chafa-canvas-config.h>
-#include <chafa-canvas.h>
-#include <chafa-symbol-map.h>
-#include <chafa-term-info.h>
-#include <chafa-term-db.h>
-#include <chafa-util.h>
+ChafaTermDb *chafa_term_db_new (void);
+ChafaTermDb *chafa_term_db_copy (const ChafaTermDb *term_db);
+void chafa_term_db_ref (ChafaTermDb *term_db);
+void chafa_term_db_unref (ChafaTermDb *term_db);
+
+ChafaTermInfo *chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp);
 
 G_END_DECLS
 
-#undef __CHAFA_H_INSIDE__
-#endif /* __CHAFA_H__ */
+#endif /* __CHAFA_TERM_DB_H__ */

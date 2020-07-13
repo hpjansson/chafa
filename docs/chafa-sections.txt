@@ -154,3 +154,13 @@ chafa_term_info_emit_set_color_fgbg_direct
 chafa_term_info_emit_begin_sixels
 chafa_term_info_emit_end_sixels
 </SECTION>
+
+<SECTION>
+<FILE>chafa-term-db</FILE>
+ChafaTermDb
+chafa_term_db_new
+chafa_term_db_copy
+chafa_term_db_ref
+chafa_term_db_unref
+chafa_term_db_detect
+</SECTION>
