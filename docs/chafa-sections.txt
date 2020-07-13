@@ -7,6 +7,7 @@ chafa_canvas_ref
 chafa_canvas_unref
 chafa_canvas_peek_config
 chafa_canvas_draw_all_pixels
+chafa_canvas_print
 chafa_canvas_build_ansi
 chafa_canvas_set_contents_rgba8
 </SECTION>

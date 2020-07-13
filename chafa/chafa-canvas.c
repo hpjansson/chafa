@@ -1583,6 +1583,8 @@ chafa_canvas_build_ansi (ChafaCanvas *canvas)
  * All output lines except for the last one will end in a newline.
  *
  * Returns: A UTF-8 string of terminal control sequences and symbols
+ *
+ * Since: 1.6
  **/
 GString *
 chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
