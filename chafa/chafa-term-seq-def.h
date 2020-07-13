@@ -173,7 +173,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, void)
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint x, guint y)
+CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_ARGS guint x, guint y)
 
 /**
  * chafa_term_info_emit_cursor_up_1:
@@ -419,7 +419,7 @@ CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Returns: Pointer to first byte after emitted string
  **/
-CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint top, guint bottom)
+CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_TERM_SEQ_ARGS guint top, guint bottom)
 
 /* Indicates whether characters printed in the middle of a row should
  * cause subsequent cells to shift forwards. Cells shifted off the edge

@@ -516,6 +516,10 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg0, guint arg1) \
 { return emit_seq_2_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1); }
 
+#define DEFINE_EMIT_SEQ_2_pos_guint(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg0, guint arg1) \
+{ return emit_seq_2_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0 + 1, arg1 + 1); }
+
 #define DEFINE_EMIT_SEQ_2_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1) \
 { return emit_seq_2_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1); }
