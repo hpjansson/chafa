@@ -91,6 +91,9 @@ gint chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const 
 CHAFA_AVAILABLE_IN_1_6
 gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
 
+CHAFA_AVAILABLE_IN_1_6
+void chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source);
+
 /* This declares the prototypes for chafa_term_info_emit_*(). See
  * chafa-term-seq-def.h for more information, or look up the canonical
  * documentation at https://hpjansson.org/chafa/ref/ for verbose

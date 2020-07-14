@@ -492,6 +492,37 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
     return result;
 }
 
+/**
+ * chafa_term_info_supplement:
+ * @term_info: A #ChafaTermInfo to supplement
+ * @source: A #ChafaTermInfo to copy from
+ *
+ * Supplements missing sequences in @term_info with ones copied
+ * from @source.
+ *
+ * Since: 1.6
+ **/
+void
+chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source)
+{
+    gint i;
+
+    g_return_if_fail (term_info != NULL);
+    g_return_if_fail (source != NULL);
+
+    for (i = 0; i < CHAFA_TERM_SEQ_MAX; i++)
+    {
+        if (!term_info->unparsed_str [i] && source->unparsed_str [i])
+        {
+            term_info->unparsed_str [i] = g_strdup (source->unparsed_str [i]);
+            memcpy (&term_info->seq_str [i] [0], &source->seq_str [i] [0],
+                    CHAFA_TERM_SEQ_MAX);
+            memcpy (&term_info->seq_args [i] [0], &source->seq_args [i] [0],
+                    CHAFA_TERM_SEQ_ARGS_MAX * sizeof (SeqArgInfo));
+        }
+    }
+}
+
 #define DEFINE_EMIT_SEQ_0_none_void(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest) \
 { return emit_seq_0_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name); }
