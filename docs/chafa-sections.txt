@@ -95,6 +95,7 @@ CHAFA_VERSION_MAX_ALLOWED
 CHAFA_VERSION_1_0
 CHAFA_VERSION_1_2
 CHAFA_VERSION_1_4
+CHAFA_VERSION_1_6
 ChafaPixelType
 chafa_calc_canvas_geometry
 </SECTION>
@@ -112,6 +113,7 @@ chafa_term_info_unref
 chafa_term_info_get_seq
 chafa_term_info_set_seq
 chafa_term_info_have_seq
+chafa_term_info_supplement
 chafa_term_info_emit_reset_terminal_soft
 chafa_term_info_emit_reset_terminal_hard
 chafa_term_info_emit_reset_attributes
@@ -163,6 +165,7 @@ chafa_term_db_new
 chafa_term_db_copy
 chafa_term_db_ref
 chafa_term_db_unref
+chafa_term_db_get_default
 chafa_term_db_detect
 chafa_term_db_get_fallback_info
 </SECTION>
