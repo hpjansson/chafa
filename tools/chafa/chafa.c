@@ -1245,6 +1245,8 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
     gint loop_n = 0;
     FileMapping *file_mapping;
     XwdLoader *xwd_loader;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    gchar *p0;
 
     timer = g_timer_new ();
 
@@ -1396,27 +1398,30 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
                     g_free ((void *) pixels);
             }
 
+            p0 = buf;
+
             if (options.clear)
             {
                 if (is_first_frame)
                 {
                     /* Clear */
-                    printf ("\x1b[2J");
+                    p0 = chafa_term_info_emit_clear (options.term_info, p0);
                 }
 
                 /* Home cursor between frames */
-                printf ("\x1b[0f");
+                p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
             }
             else if (!is_first_frame)
             {
                 /* Cursor up N steps */
-                printf ("\x1b[%dA", frame->dest_height);
+                p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, frame->dest_height);
             }
 
             /* Put a blank line between files in non-clear mode */
             if (is_first_frame && !options.clear && !is_first_file)
-                fputc ('\n', stdout);
+                *(p0++) = '\n';
 
+            fwrite (buf, sizeof (gchar), p0 - buf, stdout);
             fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
 
             /* No linefeed after frame in sixel mode */
@@ -1475,6 +1480,8 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
     Group group = { NULL };
     GList *l;
     gint loop_n = 0;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    gchar *p0;
 
     timer = g_timer_new ();
 
@@ -1543,27 +1550,30 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
                 gif_loader_next_frame (loader);
             }
 
+            p0 = buf;
+
             if (options.clear)
             {
                 if (is_first_frame)
                 {
                     /* Clear */
-                    printf ("\x1b[2J");
+                    p0 = chafa_term_info_emit_clear (options.term_info, p0);
                 }
 
                 /* Home cursor between frames */
-                printf ("\x1b[0f");
+                p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
             }
             else if (!is_first_frame)
             {
                 /* Cursor up N steps */
-                printf ("\x1b[%dA", frame->dest_height);
+                p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, frame->dest_height);
             }
 
             /* Put a blank line between files in non-clear mode */
             if (is_first_frame && !options.clear && !is_first_file)
-                fputc ('\n', stdout);
+                *(p0++) = '\n';
 
+            fwrite (buf, sizeof (gchar), p0 - buf, stdout);
             fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
 
             /* No linefeed after frame in sixel mode */
