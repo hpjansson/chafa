@@ -63,6 +63,8 @@
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, void)
 
@@ -78,6 +80,8 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, void)
 
@@ -93,6 +97,8 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, void)
 
@@ -108,6 +114,8 @@ CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, void)
 
@@ -123,6 +131,8 @@ CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, void)
 
@@ -140,6 +150,8 @@ CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, void)
 
@@ -155,6 +167,8 @@ CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, void)
 
@@ -172,6 +186,8 @@ CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_ARGS guint x, guint y)
 
@@ -187,6 +203,8 @@ CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_A
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, void)
 
@@ -203,6 +221,8 @@ CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -218,6 +238,8 @@ CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS gui
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, void)
 
@@ -234,6 +256,8 @@ CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -249,6 +273,8 @@ CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, void)
 
@@ -265,6 +291,8 @@ CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -280,6 +308,8 @@ CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, void)
 
@@ -296,6 +326,8 @@ CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -314,6 +346,8 @@ CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_AR
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, void)
 
@@ -329,6 +363,8 @@ CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, void)
 
@@ -347,6 +383,8 @@ CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -363,6 +401,8 @@ CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, CHAFA_TERM_SEQ_AR
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -383,6 +423,8 @@ CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, CHAFA_TERM_SEQ_AR
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -399,6 +441,8 @@ CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
 
@@ -418,6 +462,8 @@ CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_TERM_SEQ_ARGS guint top, guint bottom)
 
@@ -438,6 +484,8 @@ CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, void)
 
@@ -453,6 +501,8 @@ CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, void)
 
@@ -468,6 +518,8 @@ CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, void)
 
@@ -483,6 +535,8 @@ CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, void)
 
@@ -498,6 +552,8 @@ CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, void)
 
@@ -513,6 +569,8 @@ CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, void)
 
@@ -532,6 +590,8 @@ CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, void)
 
@@ -547,6 +607,8 @@ CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, void)
 
@@ -565,6 +627,8 @@ CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, void)
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
 
@@ -583,6 +647,8 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, CH
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
 
@@ -604,6 +670,8 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, CH
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_r, guint8 fg_g, guint8 fg_b, guint8 bg_r, guint8 bg_g, guint8 bg_b)
 
@@ -620,6 +688,8 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
@@ -636,6 +706,8 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, CHAFA_TE
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
@@ -653,6 +725,8 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, CHAFA_TE
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
 
@@ -669,6 +743,8 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAF
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
@@ -685,6 +761,8 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_T
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
 
@@ -702,6 +780,8 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, CHAFA_T
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
 
@@ -722,6 +802,8 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, C
  * All three parameters (@p1, @p2 and @p3) can normally be set to 0.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_ARGS guint p1, guint p2, guint p3)
 
@@ -737,6 +819,8 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_AR
  * shorter. The output will not be zero-terminated.
  *
  * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
  **/
 CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, void)
 

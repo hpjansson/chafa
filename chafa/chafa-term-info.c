@@ -297,6 +297,8 @@ G_DEFINE_QUARK (chafa-term-info-error-quark, chafa_term_info_error)
  * Creates a new, blank #ChafaTermInfo.
  *
  * Returns: The new #ChafaTermInfo
+ *
+ * Since: 1.6
  **/
 ChafaTermInfo *
 chafa_term_info_new (void)
@@ -322,6 +324,8 @@ chafa_term_info_new (void)
  * Creates a new #ChafaTermInfo that's a copy of @term_info.
  *
  * Returns: The new #ChafaTermInfo
+ *
+ * Since: 1.6
  **/
 ChafaTermInfo *
 chafa_term_info_copy (const ChafaTermInfo *term_info)
@@ -349,6 +353,8 @@ chafa_term_info_copy (const ChafaTermInfo *term_info)
  * @term_info: #ChafaTermInfo to add a reference to.
  *
  * Adds a reference to @term_info.
+ *
+ * Since: 1.6
  **/
 void
 chafa_term_info_ref (ChafaTermInfo *term_info)
@@ -367,6 +373,8 @@ chafa_term_info_ref (ChafaTermInfo *term_info)
  * @term_info: #ChafaTermInfo to remove a reference from.
  *
  * Removes a reference from @term_info.
+ *
+ * Since: 1.6
  **/
 void
 chafa_term_info_unref (ChafaTermInfo *term_info)
@@ -396,6 +404,8 @@ chafa_term_info_unref (ChafaTermInfo *term_info)
  * Checks if @term_info can emit @seq.
  *
  * Returns: %TRUE if @seq can be emitted, %FALSE otherwise
+ *
+ * Since: 1.6
  **/
 gboolean
 chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq)
@@ -414,6 +424,8 @@ chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq)
  * Gets the string equivalent of @seq stored in @term_info.
  *
  * Returns: An unformatted string sequence, or %NULL if not set.
+ *
+ * Since: 1.6
  **/
 const gchar *
 chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq)
@@ -448,6 +460,8 @@ chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq)
  * Passing %NULL for @str clears the corresponding control sequence.
  *
  * Returns: %TRUE if parsing succeeded, %FALSE otherwise
+ *
+ * Since: 1.6
  **/
 gboolean
 chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar *str,
