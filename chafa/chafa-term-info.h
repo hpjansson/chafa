@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define CHAFA_TERM_SEQ_LENGTH_MAX 32
+#define CHAFA_TERM_SEQ_LENGTH_MAX 48
 
 /* This declares the enum for CHAFA_TERM_SEQ_*. See chafa-term-seq-def.h
  * for more information, or look up the canonical documentation at
