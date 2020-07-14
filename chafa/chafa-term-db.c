@@ -297,6 +297,12 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     add_seqs (ti, gfx_seqs);
 }
 
+static ChafaTermDb *
+instantiate_singleton (G_GNUC_UNUSED gpointer data)
+{
+    return chafa_term_db_new ();
+}
+
 /* Public */
 
 /**
@@ -382,6 +388,26 @@ chafa_term_db_unref (ChafaTermDb *term_db)
     {
         g_free (term_db);
     }
+}
+
+/**
+ * chafa_term_db_get_default:
+ *
+ * Gets the global #ChafaTermDb. This can normally be used safely
+ * in a read-only capacity. The caller should not unref the
+ * returned object.
+ *
+ * Returns: The global #ChafaTermDb
+ *
+ * Since: 1.6
+ **/
+ChafaTermDb *
+chafa_term_db_get_default (void)
+{
+  static GOnce my_once = G_ONCE_INIT;
+
+  g_once (&my_once, (GThreadFunc) instantiate_singleton, NULL);
+  return my_once.retval;
 }
 
 /**
