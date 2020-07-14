@@ -1245,7 +1245,7 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
     gint loop_n = 0;
     FileMapping *file_mapping;
     XwdLoader *xwd_loader;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
     gchar *p0;
 
     timer = g_timer_new ();
@@ -1480,7 +1480,7 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
     Group group = { NULL };
     GList *l;
     gint loop_n = 0;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
     gchar *p0;
 
     timer = g_timer_new ();
