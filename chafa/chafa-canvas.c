@@ -1595,15 +1595,9 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
     g_return_val_if_fail (canvas->refs > 0, NULL);
 
     if (term_info)
-    {
         chafa_term_info_ref (term_info);
-    }
     else
-    {
-        ChafaTermDb *term_db = chafa_term_db_new ();
-        term_info = chafa_term_db_get_fallback_info (term_db);
-        chafa_term_db_unref (term_db);
-    }
+        term_info = chafa_term_db_get_fallback_info (chafa_term_db_get_default ());
 
     if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
