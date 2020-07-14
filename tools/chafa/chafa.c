@@ -89,6 +89,8 @@ typedef struct
     /* Applied after FPS is determined. If final value >= ANIM_FPS_MAX,
      * eliminate interframe delay altogether. */
     gdouble anim_speed_multiplier;
+
+    ChafaTermInfo *term_info;
 }
 GlobalOptions;
 
@@ -770,106 +772,53 @@ tty_options_deinit (void)
     tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
 }
 
-/* I really would've preferred to use termcap, but termcap contents
- * and the TERM env var are often unreliable/unrepresentative, so
- * instead we have this.
- *
- * If you're getting poor results, I'd love to hear about it so it can
- * be improved. */
 static void
-detect_terminal_modes (ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out)
+detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out)
 {
-    const gchar *term;
-    const gchar *colorterm;
-    const gchar *vte_version;
-    const gchar *tmux;
-    ChafaCanvasMode mode = CHAFA_CANVAS_MODE_INDEXED_240;
-    ChafaPixelMode pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+    ChafaCanvasMode mode;
+    ChafaPixelMode pixel_mode;
+    ChafaTermInfo *term_info;
+    ChafaTermInfo *fallback_info;
+    gchar **envp;
 
-    term = g_getenv ("TERM");
-    if (!term) term = "";
+    envp = g_get_environ ();
+    term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
 
-    colorterm = g_getenv ("COLORTERM");
-    if (!colorterm) colorterm = "";
-
-    vte_version = g_getenv ("VTE_VERSION");
-    if (!vte_version) vte_version = "";
-
-    tmux = g_getenv ("TMUX");
-    if (!tmux) tmux = "";
-
-    /* Some terminals set COLORTERM=truecolor. However, this env var can
-     * make its way into environments where truecolor is not desired
-     * (e.g. screen sessions), so check it early on and override it later. */
-    if (!g_ascii_strcasecmp (colorterm, "truecolor")
-        || !g_ascii_strcasecmp (colorterm, "gnome-terminal")
-        || !g_ascii_strcasecmp (colorterm, "xfce-terminal"))
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT))
         mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-
-    /* In a modern VTE we can rely on VTE_VERSION. It's a great terminal emulator
-     * which supports truecolor. */
-    if (strlen (vte_version) > 0)
-        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-
-    /* Terminals that advertise 256 colors usually support truecolor too,
-     * (VTE, xterm) although some (xterm) may quantize to an indexed palette
-     * regardless. */
-    if (!strcmp (term, "xterm-256color")
-        || !strcmp (term, "xterm-kitty"))
-        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-
-    /* mlterm's truecolor support seems to be broken; it looks like a color
-     * allocation issue. This affects character cells, but not sixels.
-     *
-     * yaft supports sixels and truecolor escape codes, but it remaps cell
-     * colors to a 256-color palette. */
-    if (!strcmp (term, "mlterm")
-        || !strcmp (term, "yaft")
-        || !strcmp (term, "yaft-256color"))
-    {
-        /* The default canvas mode is truecolor for sixels. 240 colors is
-         * the default for symbols. */
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_256)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_256)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_256))
         mode = CHAFA_CANVAS_MODE_INDEXED_240;
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_16)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_16)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_16))
+        mode = CHAFA_CANVAS_MODE_INDEXED_16;
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_INVERT_COLORS)
+             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_RESET_ATTRIBUTES))
+        mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
+    else
+        mode = CHAFA_CANVAS_MODE_FGBG;
+
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS))
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
-    }
+    else
+        pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
 
-    /* rxvt 256-color really is 256 colors only */
-    if (!strcmp (term, "rxvt-unicode-256color"))
-        mode = CHAFA_CANVAS_MODE_INDEXED_240;
+    /* Make sure we have fallback sequences in case the user forces
+     * a mode that's technically unsupported by the terminal. */
+    fallback_info = chafa_term_db_get_fallback_info (chafa_term_db_get_default ());
+    chafa_term_info_supplement (term_info, fallback_info);
+    chafa_term_info_unref (fallback_info);
 
-    /* Regular rxvt supports 16 colors at most */
-    if (!strcmp (term, "rxvt-unicode"))
-        mode = CHAFA_CANVAS_MODE_INDEXED_16;
-
-    /* 'screen' does not like truecolor at all, but 256 colors works fine.
-     * Sometimes we'll see the outer terminal appended to the TERM string,
-     * like so: screen.xterm-256color */
-    if (!strncmp (term, "screen", 6))
-    {
-        mode = CHAFA_CANVAS_MODE_INDEXED_240;
-
-        /* 'tmux' also sets TERM=screen, but it supports truecolor codes.
-         * You may have to add the following to .tmux.conf to prevent
-         * remapping to 256 colors:
-         *
-         * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
-        if (strlen (tmux) > 0)
-            mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-    }
-
-    /* If TERM is "linux", we're probably on the Linux console, which supports
-     * 16 colors only. It also sets COLORTERM=1.
-     *
-     * https://github.com/torvalds/linux/commit/cec5b2a97a11ade56a701e83044d0a2a984c67b4
-     *
-     * In theory we could emit truecolor codes and let the console remap,
-     * but we get better results if we do the conversion ourselves, since we
-     * can apply preprocessing and exotic color spaces. */
-    if (!strcmp (term, "linux"))
-        mode = CHAFA_CANVAS_MODE_INDEXED_16;
-
+    *term_info_out = term_info;
     *mode_out = mode;
     *pixel_mode_out = pixel_mode;
+
+    g_strfreev (envp);
 }
 
 static gboolean
@@ -935,7 +884,7 @@ parse_options (int *argc, char **argv [])
     options.fill_symbol_map = chafa_symbol_map_new ();
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
-    detect_terminal_modes (&canvas_mode, &pixel_mode);
+    detect_terminal (&options.term_info, &canvas_mode, &pixel_mode);
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
@@ -1136,7 +1085,7 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
 
     canvas = chafa_canvas_new (config);
     chafa_canvas_draw_all_pixels (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);
-    gs = chafa_canvas_build_ansi (canvas);
+    gs = chafa_canvas_print (canvas, options.term_info);
 
     chafa_canvas_unref (canvas);
     chafa_canvas_config_unref (config);
@@ -1780,5 +1729,7 @@ main (int argc, char *argv [])
         chafa_symbol_map_unref (options.symbol_map);
     if (options.fill_symbol_map)
         chafa_symbol_map_unref (options.fill_symbol_map);
+    if (options.term_info)
+        chafa_term_info_unref (options.term_info);
     return ret;
 }
