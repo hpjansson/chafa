@@ -21,11 +21,16 @@ config.status
 config.sub
 configure
 depcomp
+docs/html
+docs/xml
 install-sh
 libtool
 ltmain.sh
 m4
 missing
 stamp-h1
-test
 tools/chafa/chafa
+
+test
+demo
+resource
