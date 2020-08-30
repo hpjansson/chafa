@@ -163,8 +163,7 @@ emit_ansi_16 (ChafaCanvas *canvas, ChafaTermInfo *ti, gchar *out, gint i, gint i
         else
         {
             out = chafa_term_info_emit_reset_attributes (ti, out);
-            out = chafa_term_info_emit_set_color_fg_256 (ti, out, cell->fg_color);
-            out = chafa_term_info_emit_set_color_bg_256 (ti, out, cell->bg_color);
+            out = chafa_term_info_emit_set_color_fgbg_16 (ti, out, cell->fg_color, cell->bg_color);
             out += g_unichar_to_utf8 (cell->c, out);
         }
     }
