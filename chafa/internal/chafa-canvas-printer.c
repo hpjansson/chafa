@@ -66,10 +66,9 @@ emit_ansi_truecolor (ChafaCanvas *canvas, ChafaTermInfo *ti, gchar *out, gint i,
         else
         {
             out = chafa_term_info_emit_reset_attributes (ti, out);
-            out = chafa_term_info_emit_set_color_fg_direct (ti, out,
-                                                            fg.ch [0], fg.ch [1], fg.ch [2]);
-            out = chafa_term_info_emit_set_color_bg_direct (ti, out,
-                                                            bg.ch [0], bg.ch [1], bg.ch [2]);
+            out = chafa_term_info_emit_set_color_fgbg_direct (ti, out,
+                                                              fg.ch [0], fg.ch [1], fg.ch [2],
+                                                              bg.ch [0], bg.ch [1], bg.ch [2]);
             out += g_unichar_to_utf8 (cell->c, out);
         }
     }
@@ -115,8 +114,7 @@ emit_ansi_256 (ChafaCanvas *canvas, ChafaTermInfo *ti, gchar *out, gint i, gint 
         else
         {
             out = chafa_term_info_emit_reset_attributes (ti, out);
-            out = chafa_term_info_emit_set_color_fg_256 (ti, out, cell->fg_color);
-            out = chafa_term_info_emit_set_color_bg_256 (ti, out, cell->bg_color);
+            out = chafa_term_info_emit_set_color_fgbg_256 (ti, out, cell->fg_color, cell->bg_color);
             out += g_unichar_to_utf8 (cell->c, out);
         }
     }
