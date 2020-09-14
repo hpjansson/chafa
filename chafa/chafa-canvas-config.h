@@ -88,6 +88,21 @@ typedef enum
 }
 ChafaPixelMode;
 
+/* Sequence optimization flags. When enabled, these may produce more compact
+ * output at the cost of reduced compatibility and increased CPU use. Output
+ * quality is unaffected. */
+
+typedef enum
+{
+    CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES = (1 << 0),
+    CHAFA_OPTIMIZATION_SKIP_CELLS = (1 << 1),
+    CHAFA_OPTIMIZATION_REPEAT_CELLS = (1 << 2),
+
+    CHAFA_OPTIMIZATION_NONE = 0,
+    CHAFA_OPTIMIZATION_ALL = 0x7fffffff
+}
+ChafaOptimizations;
+
 /* Canvas config */
 
 typedef struct ChafaCanvasConfig ChafaCanvasConfig;
@@ -180,6 +195,11 @@ CHAFA_AVAILABLE_IN_1_4
 ChafaPixelMode chafa_canvas_config_get_pixel_mode (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_1_4
 void chafa_canvas_config_set_pixel_mode (ChafaCanvasConfig *config, ChafaPixelMode pixel_mode);
+
+CHAFA_AVAILABLE_IN_1_6
+ChafaOptimizations chafa_canvas_config_get_optimizations (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_6
+void chafa_canvas_config_set_optimizations (ChafaCanvasConfig *config, ChafaOptimizations optimizations);
 
 G_END_DECLS
 

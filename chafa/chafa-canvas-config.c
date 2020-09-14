@@ -105,6 +105,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->alpha_threshold = 127;
     canvas_config->work_factor = 0.5;
     canvas_config->preprocessing_enabled = TRUE;
+    canvas_config->optimizations = CHAFA_OPTIMIZATION_ALL;
 
     chafa_symbol_map_init (&canvas_config->symbol_map);
     chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_ALL);
@@ -829,4 +830,45 @@ chafa_canvas_config_set_pixel_mode (ChafaCanvasConfig *config, ChafaPixelMode pi
     g_return_if_fail (pixel_mode < CHAFA_PIXEL_MODE_MAX);
 
     config->pixel_mode = pixel_mode;
+}
+
+/**
+ * chafa_canvas_config_get_pixel_mode:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's optimization flags. When enabled, these may produce
+ * more compact output at the cost of reduced compatibility and increased CPU
+ * use. Output quality is unaffected.
+ *
+ * Returns: The #ChafaOptimizations flags.
+ *
+ * Since: 1.6
+ **/
+ChafaOptimizations
+chafa_canvas_config_get_optimizations (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, CHAFA_OPTIMIZATION_NONE);
+    g_return_val_if_fail (config->refs > 0, CHAFA_OPTIMIZATION_NONE);
+
+    return config->optimizations;
+}
+
+/**
+ * chafa_canvas_config_set_pixel_mode:
+ * @config: A #ChafaCanvasConfig
+ * @optimizations: A combination of #ChafaOptimizations flags
+ *
+ * Sets @config's stored optimization flags. When enabled, these may produce
+ * more compact output at the cost of reduced compatibility and increased CPU
+ * use. Output quality is unaffected.
+ *
+ * Since: 1.6
+ **/
+void
+chafa_canvas_config_set_optimizations (ChafaCanvasConfig *config, ChafaOptimizations optimizations)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    config->optimizations = optimizations;
 }
