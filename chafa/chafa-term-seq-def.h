@@ -824,6 +824,24 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_AR
  **/
 CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, void)
 
+/**
+ * chafa_term_info_emit_repeat_char:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @n: Number of repetitions
+ *
+ * Prints the control sequence for CHAFA_TERM_SEQ_REPEAT_CHAR.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.6
+ **/
+CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

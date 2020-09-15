@@ -79,6 +79,7 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_DISABLE_ECHO, "\033[12h" },
     { CHAFA_TERM_SEQ_ENABLE_WRAP, "\033[?7h" },
     { CHAFA_TERM_SEQ_DISABLE_WRAP, "\033[?7l" },
+    { CHAFA_TERM_SEQ_REPEAT_CHAR, "\033[%1b" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
