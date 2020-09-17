@@ -76,6 +76,8 @@ typedef struct
     gint cell_width, cell_height;
     gdouble font_ratio;
     gint work_factor;
+    gint optimization_level;
+    ChafaOptimizations optimizations;
     guint32 fg_color;
     gboolean fg_color_set;
     guint32 bg_color;
@@ -250,6 +252,10 @@ print_summary (void)
     "                     font file supported by FreeType (TTF, PCF, etc).\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
+    "  -O, --optimize=NUM  Compress the output by using control sequences\n"
+    "                     intelligently [0-9]. 0 disables, 9 enables every\n"
+    "                     available optimization. Defaults to 5, except for when\n"
+    "                     used with \"-c none\", where it defaults to 0.\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
     "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
@@ -849,6 +855,7 @@ parse_options (int *argc, char **argv [])
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
+        { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
@@ -898,6 +905,7 @@ parse_options (int *argc, char **argv [])
     options.height = 25;
     options.font_ratio = -1.0;  /* Unset */
     options.work_factor = 5;
+    options.optimization_level = G_MININT;  /* Unset */
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
     options.transparency_threshold = -1.0;
@@ -997,6 +1005,30 @@ parse_options (int *argc, char **argv [])
     if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.symbols_specified)
         chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_INVERTED);
 
+    /* If optimization level is unset, enable optimizations. However, we
+     * leave them off for FGBG mode, since control sequences may be
+     * unexpected in this mode unless explicitly asked for. */
+    if (options.optimization_level == G_MININT)
+        options.optimization_level = (options.mode == CHAFA_CANVAS_MODE_FGBG) ? 0 : 5;
+
+    if (options.optimization_level < 0 || options.optimization_level > 9)
+    {
+        g_printerr ("%s: Optimization level %d is not in the range [0-9].\n",
+                    options.executable_name, options.optimization_level);
+        return FALSE;
+    }
+
+    /* Translate optimization level to flags */
+
+    options.optimizations = CHAFA_OPTIMIZATION_NONE;
+
+    if (options.optimization_level >= 1)
+        options.optimizations |= CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES;
+    if (options.optimization_level >= 2)
+        options.optimizations |= CHAFA_OPTIMIZATION_REPEAT_CELLS;
+    if (options.optimization_level >= 3)
+        options.optimizations |= CHAFA_OPTIMIZATION_SKIP_CELLS;
+
     g_option_context_free (context);
 
     return result;
@@ -1082,6 +1114,8 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     /* Work switch takes values [1..9], we normalize to [0.0..1.0] to
      * get the work factor. */
     chafa_canvas_config_set_work_factor (config, (options.work_factor - 1) / 8.0);
+
+    chafa_canvas_config_set_optimizations (config, options.optimizations);
 
     canvas = chafa_canvas_new (config);
     chafa_canvas_draw_all_pixels (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);

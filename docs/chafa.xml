@@ -204,6 +204,15 @@ none. Swaps --fg and --bg.
 </varlistentry>
 
 <varlistentry>
+<term><option>-O <replaceable>num</replaceable>, --optimize <replaceable>num</replaceable></option></term>
+<listitem><para>
+Compress the output by using control sequences intelligently [0-9]. 0
+disables, 9 enables every available optimization. Defaults to 5, except
+for when used with "-c none", where it defaults to 0.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-p <replaceable>bool</replaceable>, --preprocess <replaceable>bool</replaceable></option></term>
 <listitem><para>
 Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off
