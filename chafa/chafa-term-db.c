@@ -96,7 +96,7 @@ static const SeqStr color_direct_seqs [] =
 {
     { CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT, "\033[38;2;%1;%2;%3m" },
     { CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT, "\033[48;2;%1;%2;%3m" },
-    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT, "\033[38;2;%1;%2;%3m\033[48;2;%4;%5;%6m" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT, "\033[38;2;%1;%2;%3;48;2;%4;%5;%6m" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
@@ -105,7 +105,7 @@ static const SeqStr color_256_seqs [] =
 {
     { CHAFA_TERM_SEQ_SET_COLOR_FG_256, "\033[38;5;%1m" },
     { CHAFA_TERM_SEQ_SET_COLOR_BG_256, "\033[48;5;%1m" },
-    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_256, "\033[38;5;%1m\033[48;5;%2m" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_256, "\033[38;5;%1;48;5;%2m" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
@@ -114,7 +114,7 @@ static const SeqStr color_16_seqs [] =
 {
     { CHAFA_TERM_SEQ_SET_COLOR_FG_16, "\033[%1m" },
     { CHAFA_TERM_SEQ_SET_COLOR_BG_16, "\033[%1m" },
-    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_16, "\033[%1m\033[%2m" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_16, "\033[%1;%2m" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
