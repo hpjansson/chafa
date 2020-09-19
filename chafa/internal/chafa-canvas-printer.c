@@ -27,6 +27,7 @@ typedef struct
     ChafaCanvas *canvas;
     ChafaTermInfo *term_info;
 
+    gunichar cur_char;
     gint n_reps;
     guint cur_inverted : 1;
     guint32 cur_fg;
@@ -52,6 +53,62 @@ threshold_alpha (ChafaColor col, gint alpha_threshold)
 }
 
 static gchar *
+flush_chars (PrintCtx *ctx, gchar *out)
+{
+    gchar buf [8];
+    gint len;
+
+    if (!ctx->cur_char)
+        return out;
+
+    len = g_unichar_to_utf8 (ctx->cur_char, buf);
+
+    if ((ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REPEAT_CELLS)
+        && ctx->n_reps > 1
+        && ctx->n_reps * len > len + 4 /* ESC [#b */)
+    {
+        memcpy (out, buf, len);
+        out += len;
+
+        out = chafa_term_info_emit_repeat_char (ctx->term_info, out, ctx->n_reps - 1);
+
+        ctx->n_reps = 0;
+    }
+    else
+    {
+        do
+        {
+            memcpy (out, buf, len);
+            out += len;
+            ctx->n_reps--;
+        }
+        while (ctx->n_reps != 0);
+    }
+
+    ctx->cur_char = 0;
+    return out;
+}
+
+static gchar *
+queue_char (PrintCtx *ctx, gchar *out, gunichar c)
+{
+    if (ctx->cur_char == c)
+    {
+        ctx->n_reps++;
+    }
+    else
+    {
+        if (ctx->cur_char)
+            out = flush_chars (ctx, out);
+
+        ctx->cur_char = c;
+        ctx->n_reps = 1;
+    }
+
+    return out;
+}
+
+static gchar *
 emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
                            ChafaColor fg, ChafaColor bg, gboolean inverted)
 {
@@ -61,6 +118,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
             || (ctx->cur_fg_direct.ch [3] != 0 && fg.ch [3] == 0)
             || (ctx->cur_bg_direct.ch [3] != 0 && bg.ch [3] == 0))
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
             ctx->cur_fg_direct.ch [3] = 0;
             ctx->cur_bg_direct.ch [3] = 0;
@@ -68,6 +126,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
 
         if (!ctx->cur_inverted && inverted)
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
         }
 
@@ -75,24 +134,28 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
         {
             if (cmp_colors (bg, ctx->cur_bg_direct) && bg.ch [3] != 0)
             {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_set_color_fgbg_direct (ctx->term_info, out,
                                                                   fg.ch [0], fg.ch [1], fg.ch [2],
                                                                   bg.ch [0], bg.ch [1], bg.ch [2]);
             }
             else if (fg.ch [3] != 0)
             {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_set_color_fg_direct (ctx->term_info, out,
                                                                 fg.ch [0], fg.ch [1], fg.ch [2]);
             }
         }
         else if (cmp_colors (bg, ctx->cur_bg_direct) && bg.ch [3] != 0)
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_set_color_bg_direct (ctx->term_info, out,
                                                             bg.ch [0], bg.ch [1], bg.ch [2]);
         }
     }
     else
     {
+        out = flush_chars (ctx, out);
         out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
@@ -148,13 +211,13 @@ emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 
         if (fg.ch [3] == 0 && bg.ch [3] == 0)
         {
-            *(out++) = ' ';
+            out = queue_char (ctx, out, ' ');
             if (i < i_max - 1 && ctx->canvas->cells [i + 1].c == 0)
-                *(out++) = ' ';
+                out = queue_char (ctx, out, ' ');
         }
         else
         {
-            out += g_unichar_to_utf8 (cell->c, out);
+            out = queue_char (ctx, out, cell->c);
         }
     }
 
@@ -174,6 +237,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
             || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
             || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
             ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
             ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
@@ -181,6 +245,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
 
         if (!ctx->cur_inverted && inverted)
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
         }
 
@@ -188,20 +253,24 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
         {
             if (bg != ctx->cur_bg && bg != CHAFA_PALETTE_INDEX_TRANSPARENT)
             {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_set_color_fgbg_256 (ctx->term_info, out, fg, bg);
             }
             else if (fg != CHAFA_PALETTE_INDEX_TRANSPARENT)
             {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_set_color_fg_256 (ctx->term_info, out, fg);
             }
         }
         else if (bg != ctx->cur_bg && bg != CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_set_color_bg_256 (ctx->term_info, out, bg);
         }
     }
     else
     {
+        out = flush_chars (ctx, out);
         out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
@@ -251,13 +320,13 @@ emit_ansi_256 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 
         if (fg == CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
-            *(out++) = ' ';
+            out = queue_char (ctx, out, ' ');
             if (i < i_max - 1 && ctx->canvas->cells [i + 1].c == 0)
-                *(out++) = ' ';
+                out = queue_char (ctx, out, ' ');
         }
         else
         {
-            out += g_unichar_to_utf8 (cell->c, out);
+            out = queue_char (ctx, out, cell->c);
         }
     }
 
@@ -277,6 +346,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
             || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
             || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
             ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
             ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
@@ -284,6 +354,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
 
         if (!ctx->cur_inverted && inverted)
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
         }
 
@@ -291,20 +362,24 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
         {
             if (bg != ctx->cur_bg && bg != CHAFA_PALETTE_INDEX_TRANSPARENT)
             {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_set_color_fgbg_16 (ctx->term_info, out, fg, bg);
             }
             else if (fg != CHAFA_PALETTE_INDEX_TRANSPARENT)
             {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_set_color_fg_16 (ctx->term_info, out, fg);
             }
         }
         else if (bg != ctx->cur_bg && bg != CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
+            out = flush_chars (ctx, out);
             out = chafa_term_info_emit_set_color_bg_16 (ctx->term_info, out, bg);
         }
     }
     else
     {
+        out = flush_chars (ctx, out);
         out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
@@ -355,13 +430,13 @@ emit_ansi_16 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 
         if (fg == CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
-            *(out++) = ' ';
+            out = queue_char (ctx, out, ' ');
             if (i < i_max - 1 && ctx->canvas->cells [i + 1].c == 0)
-                *(out++) = ' ';
+                out = queue_char (ctx, out, ' ');
         }
         else
         {
-            out += g_unichar_to_utf8 (cell->c, out);
+            out = queue_char (ctx, out, cell->c);
         }
     }
 
@@ -412,21 +487,28 @@ emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
         if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
         {
             if (!ctx->cur_inverted && invert)
+            {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
+            }
             else if (ctx->cur_inverted && !invert)
+            {
+                out = flush_chars (ctx, out);
                 out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+            }
 
             ctx->cur_inverted = invert;
         }
         else
         {
+            out = flush_chars (ctx, out);
             if (invert)
                 out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
             else
                 out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
         }
 
-        out += g_unichar_to_utf8 (cell->c, out);
+        out = queue_char (ctx, out, cell->c);
     }
 
     ctx->cur_inverted = FALSE;
@@ -444,7 +526,7 @@ emit_ansi_fgbg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
         if (cell->c == 0)
             continue;
 
-        out += g_unichar_to_utf8 (cell->c, out);
+        out = queue_char (ctx, out, cell->c);
     }
 
     return out;
@@ -471,7 +553,7 @@ static GString *
 build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 {
     GString *gs = g_string_new ("");
-    PrintCtx ctx;
+    PrintCtx ctx = { 0 };
     gint i, i_max, i_step, i_next;
 
     ctx.canvas = canvas;
@@ -512,6 +594,8 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
                 g_assert_not_reached ();
                 break;
         }
+
+        out = flush_chars (&ctx, out);
 
         /* No control codes in FGBG mode */
         if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
