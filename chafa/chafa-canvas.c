@@ -986,6 +986,9 @@ update_cell (ChafaCanvas *canvas, WorkCell *work_cell, ChafaCanvasCell *cell_out
         cell_out->bg_color = chafa_pack_color (&bg_col);
     }
 
+    /* FIXME: It would probably be better to do the fgbg/bgfg blank symbol check
+     * from emit_ansi_fgbg_bgfg() here. */
+
     return sym_error;
 }
 

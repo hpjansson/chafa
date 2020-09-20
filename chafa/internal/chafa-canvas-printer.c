@@ -508,7 +508,7 @@ emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
                 out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
         }
 
-        out = queue_char (ctx, out, cell->c);
+        out = queue_char (ctx, out, c);
     }
 
     ctx->cur_inverted = FALSE;
