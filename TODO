@@ -25,9 +25,6 @@ Minor Features/UX
 - Test with more terminals.
   - iTerm?
   - Other OSX terminals?
-  - fbterm.
-    - See man page under "256 color extension".
-    - Identifies as "linux" unless overridden. Will need ad-hoc detection.
   - PuTTY on Windows 8, 10?
     - Windows 7 fonts support half, solid, some borders.
   - Terminology.
