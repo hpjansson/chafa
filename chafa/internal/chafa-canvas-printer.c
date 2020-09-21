@@ -109,6 +109,20 @@ queue_char (PrintCtx *ctx, gchar *out, gunichar c)
 }
 
 static gchar *
+reset_attributes (PrintCtx *ctx, gchar *out)
+{
+    out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+
+    ctx->cur_inverted = FALSE;
+    ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
+    ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
+    ctx->cur_fg_direct.ch [3] = 0;
+    ctx->cur_bg_direct.ch [3] = 0;
+
+    return out;
+}
+
+static gchar *
 emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
                            ChafaColor fg, ChafaColor bg, gboolean inverted)
 {
@@ -119,9 +133,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
             || (ctx->cur_bg_direct.ch [3] != 0 && bg.ch [3] == 0))
         {
             out = flush_chars (ctx, out);
-            out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
-            ctx->cur_fg_direct.ch [3] = 0;
-            ctx->cur_bg_direct.ch [3] = 0;
+            out = reset_attributes (ctx, out);
         }
 
         if (!ctx->cur_inverted && inverted)
@@ -156,7 +168,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
     else
     {
         out = flush_chars (ctx, out);
-        out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+        out = reset_attributes (ctx, out);
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
 
@@ -221,9 +233,6 @@ emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
         }
     }
 
-    ctx->cur_inverted = FALSE;
-    ctx->cur_fg_direct.ch [3] = 0;
-    ctx->cur_bg_direct.ch [3] = 0;
     return out;
 }
 
@@ -238,9 +247,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
             || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
         {
             out = flush_chars (ctx, out);
-            out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
-            ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
-            ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
+            out = reset_attributes (ctx, out);
         }
 
         if (!ctx->cur_inverted && inverted)
@@ -271,7 +278,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
     else
     {
         out = flush_chars (ctx, out);
-        out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+        out = reset_attributes (ctx, out);
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
 
@@ -330,9 +337,6 @@ emit_ansi_256 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
         }
     }
 
-    ctx->cur_inverted = FALSE;
-    ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
-    ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
     return out;
 }
 
@@ -347,9 +351,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
             || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
         {
             out = flush_chars (ctx, out);
-            out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
-            ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
-            ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
+            out = reset_attributes (ctx, out);
         }
 
         if (!ctx->cur_inverted && inverted)
@@ -380,7 +382,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
     else
     {
         out = flush_chars (ctx, out);
-        out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+        out = reset_attributes (ctx, out);
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
 
@@ -440,9 +442,6 @@ emit_ansi_16 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
         }
     }
 
-    ctx->cur_inverted = FALSE;
-    ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
-    ctx->cur_bg = CHAFA_PALETTE_INDEX_TRANSPARENT;
     return out;
 }
 
@@ -494,7 +493,7 @@ emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
             else if (ctx->cur_inverted && !invert)
             {
                 out = flush_chars (ctx, out);
-                out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+                out = reset_attributes (ctx, out);
             }
 
             ctx->cur_inverted = invert;
@@ -505,13 +504,12 @@ emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
             if (invert)
                 out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
             else
-                out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
+                out = reset_attributes (ctx, out);
         }
 
         out = queue_char (ctx, out, c);
     }
 
-    ctx->cur_inverted = FALSE;
     return out;
 }
 
@@ -572,6 +570,9 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
         prealloc_string (gs, i_step);
         out = gs->str + gs->len;
 
+        if (i == 0)
+            out = reset_attributes (&ctx, out);
+
         switch (canvas->config.canvas_mode)
         {
             case CHAFA_CANVAS_MODE_TRUECOLOR:
@@ -599,7 +600,7 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 
         /* No control codes in FGBG mode */
         if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
-            out = chafa_term_info_emit_reset_attributes (ctx.term_info, out);
+            out = reset_attributes (&ctx, out);
 
         /* Last line should not end in newline */
         if (i_next < i_max)
