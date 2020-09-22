@@ -570,7 +570,8 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
         prealloc_string (gs, i_step);
         out = gs->str + gs->len;
 
-        if (i == 0)
+        /* Avoid control codes in FGBG mode */
+        if (i == 0 && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
             out = reset_attributes (&ctx, out);
 
         switch (canvas->config.canvas_mode)
@@ -598,7 +599,7 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 
         out = flush_chars (&ctx, out);
 
-        /* No control codes in FGBG mode */
+        /* Avoid control codes in FGBG mode */
         if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
             out = reset_attributes (&ctx, out);
 
