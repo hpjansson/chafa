@@ -563,6 +563,67 @@ eval_symbol_error_wide (ChafaCanvas *canvas, const WorkCell *wcell_a, const Work
 }
 
 static void
+eval_symbol (ChafaCanvas *canvas, WorkCell *wcell, gint sym_index,
+             gint *best_sym_index_out, SymbolEval *best_eval_inout)
+{
+    const ChafaSymbol *sym;
+    SymbolEval eval;
+
+    sym = &canvas->config.symbol_map.symbols [sym_index];
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+    {
+        eval.fg.col = canvas->fg_color;
+        eval.bg.col = canvas->bg_color;
+    }
+    else
+    {
+        eval_symbol_colors (canvas, wcell, sym, &eval);
+    }
+
+    eval_symbol_error (canvas, wcell, sym, &eval);
+
+    if (eval.error < best_eval_inout->error)
+    {
+        *best_sym_index_out = sym_index;
+        *best_eval_inout = eval;
+    }
+}
+
+static void
+eval_symbol_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell_b, gint sym_index,
+                  gint *best_sym_index_out, SymbolEval2 *best_eval_inout)
+{
+    const ChafaSymbol2 *sym2;
+    SymbolEval2 eval;
+
+    sym2 = &canvas->config.symbol_map.symbols2 [sym_index];
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+    {
+        eval.fg.col = canvas->fg_color;
+        eval.bg.col = canvas->bg_color;
+    }
+    else
+    {
+        eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
+                                 &sym2->sym [0],
+                                 &sym2->sym [1],
+                                 &eval);
+    }
+
+    eval_symbol_error_wide (canvas, wcell_a, wcell_b,
+                            sym2,
+                            &eval);
+
+    if (eval.error [0] + eval.error [1] < best_eval_inout->error [0] + best_eval_inout->error [1])
+    {
+        *best_sym_index_out = sym_index;
+        *best_eval_inout = eval;
+    }
+}
+
+static void
 pick_symbol_and_colors_slow (ChafaCanvas *canvas,
                              WorkCell *wcell,
                              gunichar *sym_out,
@@ -570,34 +631,16 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
                              ChafaColor *bg_col_out,
                              gint *error_out)
 {
-    SymbolEval eval, best_eval;
+    SymbolEval best_eval;
     gint best_symbol = -1;
     gint i;
 
-    best_eval.error = G_MAXINT;
+    /* Find best symbol. All symbols are candidates. */
+
+    best_eval.error = SYMBOL_ERROR_MAX;
 
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
-    {
-        /* FIXME: Always evaluate space so we get fallback colors */
-
-        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
-        {
-            eval.fg.col = canvas->fg_color;
-            eval.bg.col = canvas->bg_color;
-        }
-        else
-        {
-            eval_symbol_colors (canvas, wcell, &canvas->config.symbol_map.symbols [i], &eval);
-        }
-
-        eval_symbol_error (canvas, wcell, &canvas->config.symbol_map.symbols [i], &eval);
-
-        if (eval.error < best_eval.error)
-        {
-            best_symbol = i;
-            best_eval = eval;
-        }
-    }
+        eval_symbol (canvas, wcell, i, &best_symbol, &best_eval);
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
@@ -605,14 +648,16 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
         leave_mmx ();
 #endif
 
-    g_assert (best_symbol >= 0);
+    /* Output */
 
-    if (error_out)
-        *error_out = best_eval.error;
+    g_assert (best_symbol >= 0);
 
     *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
     *fg_col_out = best_eval.fg.col;
     *bg_col_out = best_eval.bg.col;
+
+    if (error_out)
+        *error_out = best_eval.error;
 }
 
 static void
@@ -625,37 +670,16 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
                                   gint *error_a_out,
                                   gint *error_b_out)
 {
-    SymbolEval2 eval, best_eval;
+    SymbolEval2 best_eval;
     gint best_symbol = -1;
     gint i;
+
+    /* Find best symbol. All symbols are candidates. */
 
     best_eval.error [0] = best_eval.error [1] = SYMBOL_ERROR_MAX;
 
     for (i = 0; canvas->config.symbol_map.symbols2 [i].sym [0].c != 0; i++)
-    {
-        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
-        {
-            eval.fg.col = canvas->fg_color;
-            eval.bg.col = canvas->bg_color;
-        }
-        else
-        {
-            eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
-                                     &canvas->config.symbol_map.symbols2 [i].sym [0],
-                                     &canvas->config.symbol_map.symbols2 [i].sym [1],
-                                     &eval);
-        }
-
-        eval_symbol_error_wide (canvas, wcell_a, wcell_b,
-                                &canvas->config.symbol_map.symbols2 [i],
-                                &eval);
-
-        if (eval.error [0] + eval.error [1] < best_eval.error [0] + best_eval.error [1])
-        {
-            best_symbol = i;
-            best_eval = eval;
-        }
-    }
+        eval_symbol_wide (canvas, wcell_a, wcell_b, i, &best_symbol, &best_eval);
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
@@ -663,16 +687,18 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
         leave_mmx ();
 #endif
 
+    /* Output */
+
     g_assert (best_symbol >= 0);
+
+    *sym_out = canvas->config.symbol_map.symbols2 [best_symbol].sym [0].c;
+    *fg_col_out = best_eval.fg.col;
+    *bg_col_out = best_eval.bg.col;
 
     if (error_a_out)
         *error_a_out = best_eval.error [0];
     if (error_b_out)
         *error_b_out = best_eval.error [1];
-
-    *sym_out = canvas->config.symbol_map.symbols2 [best_symbol].sym [0].c;
-    *fg_col_out = best_eval.fg.col;
-    *bg_col_out = best_eval.bg.col;
 }
 
 static void
@@ -686,11 +712,12 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
     ChafaColor color_pair [2];
     guint64 bitmap;
     ChafaCandidate candidates [N_CANDIDATES_MAX];
-    SymbolEval eval [N_CANDIDATES_MAX];
     gint n_candidates = 0;
-    gint best_candidate = 0;
-    gint best_error = G_MAXINT;
+    SymbolEval best_eval;
+    gint best_symbol;
     gint i;
+
+    /* Generate short list of candidates */
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
@@ -714,32 +741,13 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     g_assert (n_candidates > 0);
 
+    /* Find best candidate */
+
+    best_symbol = -1;
+    best_eval.error = SYMBOL_ERROR_MAX;
+
     for (i = 0; i < n_candidates; i++)
-    {
-        const ChafaSymbol *sym = &canvas->config.symbol_map.symbols [candidates [i].symbol_index];
-
-        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
-        {
-            eval [i].fg.col = canvas->fg_color;
-            eval [i].bg.col = canvas->bg_color;
-        }
-        else
-        {
-            eval_symbol_colors (canvas, wcell, sym, &eval [i]);
-        }
-
-        eval_symbol_error (canvas, wcell, sym, &eval [i]);
-
-        if (eval [i].error < best_error)
-        {
-            best_candidate = i;
-            best_error = eval [i].error;
-        }
-    }
-
-    *sym_out = canvas->config.symbol_map.symbols [candidates [best_candidate].symbol_index].c;
-    *fg_col_out = eval [best_candidate].fg.col;
-    *bg_col_out = eval [best_candidate].bg.col;
+        eval_symbol (canvas, wcell, candidates [i].symbol_index, &best_symbol, &best_eval);
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
@@ -747,8 +755,16 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
         leave_mmx ();
 #endif
 
+    /* Output */
+
+    g_assert (best_symbol >= 0);
+
+    *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
+    *fg_col_out = best_eval.fg.col;
+    *bg_col_out = best_eval.bg.col;
+
     if (error_out)
-        *error_out = best_error;
+        *error_out = best_eval.error;
 }
 
 static void
@@ -764,11 +780,12 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
     ChafaColor color_pair [2];
     guint64 bitmaps [2];
     ChafaCandidate candidates [N_CANDIDATES_MAX];
-    SymbolEval2 eval [N_CANDIDATES_MAX];
     gint n_candidates = 0;
-    gint best_candidate = 0;
-    gint best_error = G_MAXINT;
+    SymbolEval2 best_eval;
+    gint best_symbol;
     gint i;
+
+    /* Generate short list of candidates */
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
@@ -799,35 +816,14 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
 
     g_assert (n_candidates > 0);
 
+    /* Find best candidate */
+
+    best_symbol = -1;
+    best_eval.error [0] = best_eval.error [1] = SYMBOL_ERROR_MAX;
+
     for (i = 0; i < n_candidates; i++)
-    {
-        const ChafaSymbol2 *sym = &canvas->config.symbol_map.symbols2 [candidates [i].symbol_index];
-
-        if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
-        {
-            eval [i].fg.col = canvas->fg_color;
-            eval [i].bg.col = canvas->bg_color;
-        }
-        else
-        {
-            eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
-                                     &sym->sym [0],
-                                     &sym->sym [1],
-                                     &eval [i]);
-        }
-
-        eval_symbol_error_wide (canvas, wcell_a, wcell_b, sym, &eval [i]);
-
-        if (eval [i].error [0] + eval [i].error [1] < best_error)
-        {
-            best_candidate = i;
-            best_error = eval [i].error [0] + eval [i].error [1];
-        }
-    }
-
-    *sym_out = canvas->config.symbol_map.symbols2 [candidates [best_candidate].symbol_index].sym [0].c;
-    *fg_col_out = eval [best_candidate].fg.col;
-    *bg_col_out = eval [best_candidate].bg.col;
+        eval_symbol_wide (canvas, wcell_a, wcell_b, candidates [i].symbol_index,
+                          &best_symbol, &best_eval);
 
 #ifdef HAVE_MMX_INTRINSICS
     /* Make FPU happy again */
@@ -835,10 +831,18 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
         leave_mmx ();
 #endif
 
+    /* Output */
+
+    g_assert (best_symbol >= 0);
+
+    *sym_out = canvas->config.symbol_map.symbols2 [best_symbol].sym [0].c;
+    *fg_col_out = best_eval.fg.col;
+    *bg_col_out = best_eval.bg.col;
+
     if (error_a_out)
-        *error_a_out = eval [best_candidate].error [0];
+        *error_a_out = best_eval.error [0];
     if (error_b_out)
-        *error_b_out = eval [best_candidate].error [1];
+        *error_b_out = best_eval.error [1];
 }
 
 static const ChafaColor *
