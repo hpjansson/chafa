@@ -36,6 +36,9 @@ typedef struct
 {
     gint32 c [INTENSITY_MAX];
 
+    /* Transparent pixels are not sampled, so we must keep count */
+    gint n_samples;
+
     /* Lower and upper bounds */
     gint32 min, max;
 }
@@ -99,6 +102,8 @@ sum_histograms (const Histogram *hist_in, Histogram *hist_accum)
 {
     gint i;
 
+    hist_accum->n_samples += hist_in->n_samples;
+
     for (i = 0; i < INTENSITY_MAX; i++)
     {
         hist_accum->c [i] += hist_in->c [i];
@@ -106,13 +111,13 @@ sum_histograms (const Histogram *hist_in, Histogram *hist_accum)
 }
 
 static void
-histogram_calc_bounds (Histogram *hist, gint n_pixels, gint crop_pct)
+histogram_calc_bounds (Histogram *hist, gint crop_pct)
 {
     gint64 pixels_crop;
     gint i;
     gint t;
 
-    pixels_crop = (n_pixels * (((gint64) crop_pct * 1024) / 100)) / 1024;
+    pixels_crop = (hist->n_samples * (((gint64) crop_pct * 1024) / 100)) / 1024;
 
     /* Find lower bound */
 
@@ -446,7 +451,6 @@ prepare_pixels_1_inner (PreparePixelsBatch1 *work,
                         gint *alpha_sum)
 {
     ChafaColor *col = &pixel_out->col;
-    gint v;
 
     col->ch [0] = data_p [0];
     col->ch [1] = data_p [1];
@@ -462,8 +466,12 @@ prepare_pixels_1_inner (PreparePixelsBatch1 *work,
     }
 
     /* Build histogram */
-    v = rgb_to_intensity_fast (col);
-    work->hist.c [v]++;
+    if (col->ch [3] > 127)
+    {
+        gint v = rgb_to_intensity_fast (col);
+        work->hist.c [v]++;
+        work->hist.n_samples++;
+    }
 }
 
 static void
@@ -581,7 +589,7 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
         for (i = 0; i < prep_ctx->n_batches_pixels; i++)
             sum_histograms (&batches [i].hist, &prep_ctx->hist);
 
-        histogram_calc_bounds (&prep_ctx->hist, prep_ctx->dest_width * prep_ctx->dest_height,
+        histogram_calc_bounds (&prep_ctx->hist,
                                prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16 ? INDEXED_16_CROP_PCT : INDEXED_2_CROP_PCT);
     }
 
