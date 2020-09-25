@@ -85,6 +85,15 @@ static const UnicharRange emoji_ranges [] =
     { 0, 0 }
 };
 
+static const UnicharRange meta_ranges [] =
+{
+    /* Ideographic description characters. These convert poorly to our
+     * internal format. */
+    {  0x2ff0, 0x2fff },
+
+    { 0, 0 }
+};
+
 static const ChafaSymbolDef symbol_defs [] =
 {
 #include "chafa-symbols-ascii.h"
@@ -2123,7 +2132,8 @@ chafa_get_tags_for_char (gunichar c)
         || unichar_is_in_ranges (c, ambiguous_ranges))
         tags |= CHAFA_SYMBOL_TAG_AMBIGUOUS;
 
-    if (unichar_is_in_ranges (c, emoji_ranges))
+    if (unichar_is_in_ranges (c, emoji_ranges)
+        || unichar_is_in_ranges (c, meta_ranges))
         tags |= CHAFA_SYMBOL_TAG_UGLY;
 
     if (c <= 0x7f)
