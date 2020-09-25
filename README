@@ -12,6 +12,9 @@ characters to produce the desired output.
 The core functionality is provided by a C library with a public,
 well-documented API.
 
+Both library and frontend tools are covered by the Lesser GPL license,
+version 3 or later (LGPLv3+).
+
 For the most up-to-date information, please see https://hpjansson.org/chafa/
 
 Installing with package manager

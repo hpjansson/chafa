@@ -33,9 +33,12 @@ characters to produce the desired output.
 The core functionality is provided by a C library with a public,
 well-documented API.
 
-It has [official web pages](https://hpjansson.org/chafa/) and [C API
-documentation](https://hpjansson.org/chafa/ref/) online. Check out the
-[gallery](https://hpjansson.org/chafa/gallery/) for screenshots.
+Both library and frontend tools are covered by the Lesser GPL license,
+version 3 or later (LGPLv3+).
+
+The [official web pages](https://hpjansson.org/chafa/) and [C API
+documentation](https://hpjansson.org/chafa/ref/) can be found online. Check
+out the [gallery](https://hpjansson.org/chafa/gallery/) for screenshots.
 
 ## Installing
 
