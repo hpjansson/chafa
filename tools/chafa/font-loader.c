@@ -145,13 +145,21 @@ font_loader_new (void)
  *
  * Returns: 1 for inked bits or 0 for uninked. */
 static guint
-get_bitmap_bit (const FT_Bitmap *bm, const guint8 *a, gint x, gint y, gint rowstride)
+get_bitmap_bit (const FontLoader *loader, const FT_GlyphSlot slot,
+                gint i, gint j)
 {
+    const FT_Bitmap *bm;
+    gint x, y;
+
+    bm = &slot->bitmap;
+    x = i - (gint) slot->bitmap_left - (loader->font_width - (slot->advance.x >> 6)) / 2;
+    y = j - (loader->font_height - (gint) slot->bitmap_top) + (loader->font_height - loader->baseline_ofs);
+
     if (x < 0 || x >= (gint) bm->width || y < 0 || y >= (gint) bm->rows)
         return 0;
 
     /* MSB first */
-    return (a [y * rowstride + (x / 8)] >> (7 - (x % 8))) & 1;
+    return (bm->buffer [y * bm->pitch + (x / 8)] >> (7 - (x % 8))) & 1;
 }
 
 /* Get the 7th octile values for glyph width, height and baseline. This means 87.5% of
@@ -426,7 +434,6 @@ static void
 generate_glyph (const FontLoader *loader, const FT_GlyphSlot slot,
                 gpointer *glyph_out, gint *width_out, gint *height_out)
 {
-    const FT_Bitmap *bm = &slot->bitmap;
     guint8 *glyph_data;
     gint i, j;
     const guint8 val [2] = { 0x00, 0xff };
@@ -437,12 +444,7 @@ generate_glyph (const FontLoader *loader, const FT_GlyphSlot slot,
     {
         for (i = 0; i < loader->font_width; i++)
         {
-            guint b;
-
-            b = get_bitmap_bit (bm, bm->buffer,
-                                i - (gint) slot->bitmap_left,
-                                j - (loader->font_height - (gint) slot->bitmap_top) + (loader->font_height - loader->baseline_ofs),
-                                bm->pitch);
+            guint b = get_bitmap_bit (loader, slot, i, j);
 
             if (b)
             {
@@ -519,10 +521,14 @@ font_loader_get_next_glyph (FontLoader *loader, gunichar *char_out,
     generate_glyph (loader, slot, glyph_out, width_out, height_out);
     *char_out = loader->glyph_charcode;
 
-    DEBUG (g_printerr ("Loaded symbol %04x: %dx%d -> %dx%d\n",
+    DEBUG (g_printerr ("Loaded symbol %04x: %dx%d -> %dx%d (ofs %d,%d bmsize %dx%d xadv %d/64=%d)\n",
                        *char_out,
                        loader->font_width, loader->font_height,
-                       *width_out, *height_out));
+                       *width_out, *height_out,
+                       slot->bitmap_left, slot->bitmap_top,
+                       slot->bitmap.width, slot->bitmap.rows,
+                       (gint) slot->advance.x,
+                       (gint) slot->advance.x >> 6));
 
     success = TRUE;
 
