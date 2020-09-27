@@ -908,7 +908,7 @@ parse_options (int *argc, char **argv [])
     options.optimization_level = G_MININT;  /* Unset */
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
-    options.transparency_threshold = -1.0;
+    options.transparency_threshold = G_MAXDOUBLE;  /* Unset */
     options.file_duration_s = G_MAXDOUBLE;
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
@@ -952,6 +952,15 @@ parse_options (int *argc, char **argv [])
     if (options.work_factor < 1 || options.work_factor > 9)
     {
         g_printerr ("%s: Work factor must be in the range [1-9].\n", options.executable_name);
+        return FALSE;
+    }
+
+    if (options.transparency_threshold == G_MAXDOUBLE)
+        options.transparency_threshold = 0.5;
+
+    if (options.transparency_threshold < 0.0 || options.transparency_threshold > 1.0)
+    {
+        g_printerr ("%s: Transparency threshold %.1lf is not in the range [0.0-1.0].\n", options.executable_name, options.transparency_threshold);
         return FALSE;
     }
 
