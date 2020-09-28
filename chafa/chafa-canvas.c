@@ -483,7 +483,7 @@ eval_symbol_colors_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell
 }
 
 static gint
-calc_error_plain (const ChafaPixel *block, const ChafaColor *cols, const guint8 *cov)
+calc_error_plain (const ChafaPixel *block, const ChafaColorPair *color_pair, const guint8 *cov)
 {
     gint error = 0;
     gint i;
@@ -493,14 +493,14 @@ calc_error_plain (const ChafaPixel *block, const ChafaColor *cols, const guint8 
         guint8 p = *cov++;
         const ChafaPixel *p0 = block++;
 
-        error += chafa_color_diff_fast (&cols [p], &p0->col);
+        error += chafa_color_diff_fast (&color_pair->colors [p], &p0->col);
     }
 
     return error;
 }
 
 static gint
-calc_error_with_alpha (const ChafaPixel *block, const ChafaColor *cols, const guint8 *cov, ChafaColorSpace cs)
+calc_error_with_alpha (const ChafaPixel *block, const ChafaColorPair *color_pair, const guint8 *cov, ChafaColorSpace cs)
 {
     gint error = 0;
     gint i;
@@ -510,7 +510,7 @@ calc_error_with_alpha (const ChafaPixel *block, const ChafaColor *cols, const gu
         guint8 p = *cov++;
         const ChafaPixel *p0 = block++;
 
-        error += chafa_color_diff_slow (&cols [p], &p0->col, cs);
+        error += chafa_color_diff_slow (&color_pair->colors [p], &p0->col, cs);
     }
 
     return error;
@@ -521,24 +521,24 @@ eval_symbol_error (ChafaCanvas *canvas, const WorkCell *wcell,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
-    ChafaColor cols [2] = { 0 };
+    ChafaColorPair color_pair = { 0 };
     gint error;
 
-    cols [0] = eval->bg.col;
-    cols [1] = eval->fg.col;
+    color_pair.colors [0] = eval->bg.col;
+    color_pair.colors [1] = eval->fg.col;
 
     if (canvas->have_alpha)
     {
-        error = calc_error_with_alpha (wcell->pixels, cols, covp, canvas->config.color_space);
+        error = calc_error_with_alpha (wcell->pixels, &color_pair, covp, canvas->config.color_space);
     }
     else
     {
 #ifdef HAVE_SSE41_INTRINSICS
         if (chafa_have_sse41 ())
-            error = calc_error_sse41 (wcell->pixels, cols, covp);
+            error = calc_error_sse41 (wcell->pixels, &color_pair, covp);
         else
 #endif
-            error = calc_error_plain (wcell->pixels, cols, covp);
+            error = calc_error_plain (wcell->pixels, &color_pair, covp);
     }
 
     eval->error = error;

@@ -24,10 +24,10 @@
 #include "internal/chafa-private.h"
 
 gint
-calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov)
+calc_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov)
 {
     const guint32 *u32p0 = (const guint32 *) pixels;
-    const guint32 *u32p1 = (const guint32 *) cols;
+    const guint32 *u32p1 = (const guint32 *) color_pair->colors;
     __m128i err4 = { 0 };
     const gint32 *e = (gint32 *) &err4;
     gint i;

@@ -169,7 +169,7 @@ void leave_mmx (void);
 #endif
 
 #ifdef HAVE_SSE41_INTRINSICS
-gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColor *cols, const guint8 *cov) G_GNUC_PURE;
+gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov) G_GNUC_PURE;
 #endif
 
 #if defined(HAVE_POPCNT64_INTRINSICS) || defined(HAVE_POPCNT32_INTRINSICS)

@@ -42,6 +42,12 @@ ChafaColor;
 
 typedef struct
 {
+    ChafaColor colors [2];
+}
+ChafaColorPair;
+
+typedef struct
+{
     union
     {
         guint32 u32;
