@@ -793,3 +793,42 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
 
     smol_scale_destroy (prep_ctx.scale_ctx);
 }
+
+void
+chafa_sort_pixel_index_by_channel (guint8 *index, const ChafaPixel *pixels, gint n_pixels, gint ch)
+{
+    const gint gaps [] = { 57, 23, 10, 4, 1 };
+    gint g, i, j;
+
+    /* Since we don't care about stability and the number of elements
+     * is small and known in advance, use a simple in-place shellsort.
+     *
+     * Due to locality and callback overhead this is probably faster
+     * than qsort(), although admittedly I haven't benchmarked it.
+     *
+     * Another option is to use radix, but since we support multiple
+     * color spaces with fixed-point reals, we could get more buckets
+     * than is practical. */
+
+    for (g = 0; ; g++)
+    {
+        gint gap = gaps [g];
+
+        for (i = gap; i < n_pixels; i++)
+        {
+            guint8 ptemp = index [i];
+
+            for (j = i; j >= gap && pixels [index [j - gap]].col.ch [ch]
+                                  > pixels [ptemp].col.ch [ch]; j -= gap)
+            {
+                index [j] = index [j - gap];
+            }
+
+            index [j] = ptemp;
+        }
+
+        /* After gap == 1 the array is always left sorted */
+        if (gap == 1)
+            break;
+    }
+}

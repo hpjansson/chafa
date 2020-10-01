@@ -39,6 +39,10 @@ void chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                            gint dest_width,
                                            gint dest_height);
 
+void chafa_sort_pixel_index_by_channel (guint8 *index,
+                                        const ChafaPixel *pixels, gint n_pixels,
+                                        gint ch);
+
 G_END_DECLS
 
 #endif /* __CHAFA_PIXOPS_H__ */
