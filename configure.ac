@@ -11,7 +11,7 @@ m4_define([chafa_micro_version], [0])
 m4_define([chafa_version], [chafa_major_version.chafa_minor_version.chafa_micro_version])
 
 AC_PREREQ(2.59)
-AC_INIT([chafa], chafa_version, [hpj@copyleft.no])
+AC_INIT([chafa], chafa_version, [hpj@hpjansson.org])
 AM_INIT_AUTOMAKE([1.9 foreign dist-xz no-dist-gzip -Wall])
 
 AC_CONFIG_SRCDIR([chafa.pc.in])
