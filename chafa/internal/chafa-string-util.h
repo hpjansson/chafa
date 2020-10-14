@@ -25,7 +25,7 @@
 
 G_BEGIN_DECLS
 
-const char chafa_ascii_dec_u8 [256] [4];
+extern const char chafa_ascii_dec_u8 [256] [4];
 
 /* Will overwrite 4 bytes starting at dest. Returns a pointer to the first
  * byte after the formatted ASCII decimal number (dest + 1..3). */
