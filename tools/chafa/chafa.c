@@ -97,7 +97,7 @@ typedef struct
 GlobalOptions;
 
 static GlobalOptions options;
-static gboolean interrupted_by_user;
+static volatile sig_atomic_t interrupted_by_user = FALSE;
 
 static void
 sigint_handler (G_GNUC_UNUSED int sig)
