@@ -26,7 +26,7 @@ The core algorithm used to generate the glyphs is
 clustering algorithms in the machine learning literature.
 
 You can generate a font by using some image dataset e.g.
-[MSCOCO](http://cocodataset.org) dataset (reserach-oriented).
+[MSCOCO](http://cocodataset.org) dataset (research-oriented).
 
 ## License
 
