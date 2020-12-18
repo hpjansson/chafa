@@ -582,15 +582,14 @@ parse_glyph_file_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
     }
 
     font_loader = font_loader_new_from_mapping (file_mapping);
+    file_mapping = NULL;  /* Font loader owns it now */
+
     if (!font_loader)
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Unable to load glyph file '%s'.", value);
         goto out;
     }
-
-    /* Font loader owns it now */
-    file_mapping = NULL;
 
     while (font_loader_get_next_glyph (font_loader, &c, &c_bitmap, &width, &height))
     {
