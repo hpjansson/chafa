@@ -54,6 +54,7 @@
  * ChafaColorExtractor:
  * @CHAFA_COLOR_EXTRACTOR_AVERAGE: Use the average colors of each symbol's coverage area.
  * @CHAFA_COLOR_EXTRACTOR_MEDIAN: Use the median colors of each symbol's coverage area.
+ * @CHAFA_COLOR_EXTRACTOR_MAX: Last supported color extractor plus one.
  **/
 
 /**
