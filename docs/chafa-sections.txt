@@ -104,6 +104,7 @@ chafa_calc_canvas_geometry
 <SECTION>
 <FILE>chafa-term-info</FILE>
 CHAFA_TERM_SEQ_LENGTH_MAX
+ChafaTermSeq
 ChafaTermInfo
 CHAFA_TERM_INFO_ERROR
 ChafaTermInfoError
