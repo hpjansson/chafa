@@ -898,7 +898,7 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
     options.preprocess = TRUE;
-    options.color_extractor = CHAFA_COLOR_EXTRACTOR_MEDIAN;
+    options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
     options.height = 25;
