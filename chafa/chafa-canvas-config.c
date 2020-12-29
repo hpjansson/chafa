@@ -79,6 +79,15 @@
  * @CHAFA_PIXEL_MODE_MAX: Last supported pixel mode plus one.
  **/
 
+/**
+ * ChafaOptimizations:
+ * @CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES: Suppress redundant SGR control sequences.
+ * @CHAFA_OPTIMIZATION_SKIP_CELLS: Reserved for future use.
+ * @CHAFA_OPTIMIZATION_REPEAT_CELLS: Use REP sequence to compress repeated runs of similar cells.
+ * @CHAFA_OPTIMIZATION_NONE: All optimizations disabled.
+ * @CHAFA_OPTIMIZATION_ALL: All optimizations enabled.
+ **/
+
 /* Private */
 
 void
