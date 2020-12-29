@@ -19,6 +19,7 @@ ChafaColorSpace
 ChafaCanvasMode
 ChafaDitherMode
 ChafaColorExtractor
+ChafaOptimizations
 ChafaCanvasConfig
 chafa_canvas_config_new
 chafa_canvas_config_copy
@@ -36,8 +37,6 @@ chafa_canvas_config_get_color_extractor
 chafa_canvas_config_set_color_extractor
 chafa_canvas_config_get_color_space
 chafa_canvas_config_set_color_space
-chafa_canvas_config_get_dither_mode
-chafa_canvas_config_set_dither_mode
 chafa_canvas_config_get_preprocessing_enabled
 chafa_canvas_config_set_preprocessing_enabled
 chafa_canvas_config_peek_symbol_map
@@ -58,6 +57,8 @@ chafa_canvas_config_get_dither_grain_size
 chafa_canvas_config_set_dither_grain_size
 chafa_canvas_config_get_dither_intensity
 chafa_canvas_config_set_dither_intensity
+chafa_canvas_config_get_optimizations
+chafa_canvas_config_set_optimizations
 </SECTION>
 
 <SECTION>
