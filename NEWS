@@ -4,7 +4,8 @@ Chafa releases
 1.6.0 (TBA)
 -----------
 
-This version has not yet been released.
+This release adds major features and important fixes to both libchafa and
+the chafa command-line tool.
 
 * Added support for fullwidth symbols that take up two character
   cells. These are common in East Asian scripts. Single-cell and
@@ -31,7 +32,13 @@ This version has not yet been released.
   (ChafaTermInfo and ChafaTermDb). This allows for improved terminal
   support.
 
-* FbTerm is now supported with TERM=fbterm.
+* FbTerm is now supported with TERM=fbterm in the environment.
+
+* Bug fixes:
+  github#43  Fix signal handler (reported by Markus Elfring).
+  [unfiled]  Crash when invalid font paths were passed on command line.
+  [unfiled]  Small typo in fontgen's README (Tim Gates).
+  [unfiled]  Bad contrast adjustment in images with transparency.
 
 1.4.1 (2020-04-10)
 ------------------
