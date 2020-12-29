@@ -66,11 +66,6 @@ Optimization
 - Preload next image/frame in delay phase.
 - Don't calculate error if we're only using a single symbol (e.g. vhalf).
 
-Cleanup
--------
-
-- Use a ChafaColorPair struct internally instead of an array.
-
 The Fine Material
 -----------------
 
