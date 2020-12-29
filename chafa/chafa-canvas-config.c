@@ -843,7 +843,7 @@ chafa_canvas_config_set_pixel_mode (ChafaCanvasConfig *config, ChafaPixelMode pi
 }
 
 /**
- * chafa_canvas_config_get_pixel_mode:
+ * chafa_canvas_config_get_optimizations:
  * @config: A #ChafaCanvasConfig
  *
  * Returns @config's optimization flags. When enabled, these may produce
@@ -864,7 +864,7 @@ chafa_canvas_config_get_optimizations (const ChafaCanvasConfig *config)
 }
 
 /**
- * chafa_canvas_config_set_pixel_mode:
+ * chafa_canvas_config_set_optimizations:
  * @config: A #ChafaCanvasConfig
  * @optimizations: A combination of #ChafaOptimizations flags
  *
