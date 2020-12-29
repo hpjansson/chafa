@@ -1032,9 +1032,9 @@ parse_options (int *argc, char **argv [])
 
     if (options.optimization_level >= 1)
         options.optimizations |= CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES;
-    if (options.optimization_level >= 2)
+    if (options.optimization_level >= 6)
         options.optimizations |= CHAFA_OPTIMIZATION_REPEAT_CELLS;
-    if (options.optimization_level >= 3)
+    if (options.optimization_level >= 7)
         options.optimizations |= CHAFA_OPTIMIZATION_SKIP_CELLS;
 
     g_option_context_free (context);
