@@ -19,14 +19,15 @@ DOC_SOURCE_DIR = $(top_srcdir)/chafa
 SCAN_OPTIONS=--deprecated-guards="G_DISABLE_DEPRECATED" --ignore-decorators="GLIB_VAR|G_GNUC_WARN_UNUSED_RESULT"
 
 # Used for dependencies
-HFILE_GLOB = $(top_srcdir)/chafa/chafa.h
+HFILE_GLOB = $(top_srcdir)/chafa/chafa-*.h
 CFILE_GLOB = $(top_srcdir)/chafa/chafa-*.c
 
 # Ignore some private headers
 IGNORE_HFILES = \
 	chafa.h \
-	named-colors.h \
-	chafa-private.h
+	chafa-private.h \
+	chafa-term-seq-doc-in.h \
+	named-colors.h
 
 # Extra options to supply to gtkdoc-mkdb
 MKDB_OPTIONS=--output-format=xml --name-space=chafa

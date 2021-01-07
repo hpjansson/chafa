@@ -20,3 +20,14 @@
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     gchar *chafa_term_info_emit_##name (const ChafaTermInfo *term_info, gchar *dest __VA_ARGS__);
 #include "chafa-term-seq-def.h"
+#undef CHAFA_TERM_SEQ_DEF
+
+typedef enum
+{
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...) CHAFA_TERM_SEQ_##NAME,
+#include "chafa-term-seq-def.h"
+#undef CHAFA_TERM_SEQ_DEF
+
+    CHAFA_TERM_SEQ_MAX
+}
+ChafaTermSeq;
