@@ -64,6 +64,7 @@ flush_chars (PrintCtx *ctx, gchar *out)
     len = g_unichar_to_utf8 (ctx->cur_char, buf);
 
     if ((ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REPEAT_CELLS)
+        && chafa_term_info_have_seq (ctx->term_info, CHAFA_TERM_SEQ_REPEAT_CHAR)
         && ctx->n_reps > 1
         && ctx->n_reps * len > len + 4 /* ESC [#b */)
     {

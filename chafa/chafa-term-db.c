@@ -79,6 +79,12 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_DISABLE_ECHO, "\033[12h" },
     { CHAFA_TERM_SEQ_ENABLE_WRAP, "\033[?7h" },
     { CHAFA_TERM_SEQ_DISABLE_WRAP, "\033[?7l" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
+static const SeqStr rep_seqs [] =
+{
     { CHAFA_TERM_SEQ_REPEAT_CHAR, "\033[%1b" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
@@ -205,6 +211,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *tmux;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
+    const SeqStr *rep_seqs_local = NULL;
 
     add_seqs (ti, vt220_seqs);
 
@@ -231,7 +238,14 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     /* In a modern VTE we can rely on VTE_VERSION. It's a great terminal emulator
      * which supports truecolor. */
     if (strlen (vte_version) > 0)
+    {
         color_seq_list = color_direct_list;
+
+        /* Newer VTE versions understand REP */
+        if (g_ascii_strtoull (vte_version, NULL, 10) >= 5202
+            && !strcmp (term, "xterm-256color"))
+            rep_seqs_local = rep_seqs;
+    }
 
     /* Terminals that advertise 256 colors usually support truecolor too,
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
@@ -277,6 +291,10 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
          * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
         if (strlen (tmux) > 0)
             color_seq_list = color_direct_list;
+
+        /* screen and older tmux do not support REP. Newer tmux does,
+         * but there's no reliable way to tell which version we're dealing with. */
+        rep_seqs_local = NULL;
     }
 
     /* If TERM is "linux", we're probably on the Linux console, which supports
@@ -296,6 +314,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     add_seq_list (ti, color_seq_list);
     add_seqs (ti, gfx_seqs);
+    add_seqs (ti, rep_seqs_local);
 }
 
 static ChafaTermDb *
