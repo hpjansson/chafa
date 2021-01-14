@@ -158,6 +158,7 @@ chafa_term_info_emit_set_color_bg_direct
 chafa_term_info_emit_set_color_fgbg_direct
 chafa_term_info_emit_begin_sixels
 chafa_term_info_emit_end_sixels
+chafa_term_info_emit_repeat_char
 </SECTION>
 
 <SECTION>
