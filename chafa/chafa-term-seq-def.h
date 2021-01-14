@@ -56,7 +56,7 @@
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -73,7 +73,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_RESET_TERMINAL_HARD.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_TERMINAL_HARD.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -90,7 +90,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_RESET_ATTRIBUTES.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_ATTRIBUTES.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -107,7 +107,7 @@ CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CLEAR.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CLEAR.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -124,7 +124,7 @@ CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_INVERT_COLORS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_INVERT_COLORS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -143,7 +143,7 @@ CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -160,7 +160,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -179,7 +179,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, void)
  * @x: Offset from left edge of display, zero-indexed
  * @y: Offset from top edge of display, zero-indexed
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_TO_POS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_TO_POS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -196,7 +196,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_A
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_UP_1.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_UP_1.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -214,7 +214,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, void)
  * @dest: String destination
  * @n: Distance to move the cursor
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_UP.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_UP.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -231,7 +231,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS gui
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_DOWN_1.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_DOWN_1.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -249,7 +249,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, void)
  * @dest: String destination
  * @n: Distance to move the cursor
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_DOWN.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_DOWN.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -266,7 +266,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_LEFT_1.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_LEFT_1.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -284,7 +284,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, void)
  * @dest: String destination
  * @n: Distance to move the cursor
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_LEFT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_LEFT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -301,7 +301,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_RIGHT_1.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_RIGHT_1.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -319,7 +319,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, void)
  * @dest: String destination
  * @n: Distance to move the cursor
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_RIGHT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_RIGHT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -339,7 +339,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_AR
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_UP_SCROLL.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_UP_SCROLL.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -356,7 +356,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -376,7 +376,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, void)
  * @dest: String destination
  * @n: Number of cells to insert
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_INSERT_CELLS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_INSERT_CELLS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -394,7 +394,7 @@ CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, CHAFA_TERM_SEQ_AR
  * @dest: String destination
  * @n: Number of cells to delete
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_DELETE_CELLS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DELETE_CELLS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -416,7 +416,7 @@ CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, CHAFA_TERM_SEQ_AR
  * @dest: String destination
  * @n: Number of rows to insert
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_INSERT_ROWS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_INSERT_ROWS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -434,7 +434,7 @@ CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * @dest: String destination
  * @n: Number of rows to delete
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_DELETE_ROWS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DELETE_ROWS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -455,7 +455,7 @@ CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * @top: First row in scrolling area, zero-indexed
  * @bottom: Last row in scrolling area, zero-indexed
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_SCROLLING_ROWS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_SCROLLING_ROWS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -477,7 +477,7 @@ CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_INSERT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_INSERT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -494,7 +494,7 @@ CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_INSERT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DISABLE_INSERT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -511,7 +511,7 @@ CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_CURSOR.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_CURSOR.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -528,7 +528,7 @@ CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_CURSOR.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DISABLE_CURSOR.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -545,7 +545,7 @@ CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_ECHO.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_ECHO.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -562,7 +562,7 @@ CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_ECHO.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DISABLE_ECHO.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -583,7 +583,7 @@ CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_ENABLE_WRAP.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_WRAP.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -600,7 +600,7 @@ CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, void)
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_DISABLE_WRAP.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DISABLE_WRAP.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -620,7 +620,7 @@ CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, void)
  * @g: Green component, 0-255
  * @b: Blue component, 0-255
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -640,7 +640,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, CH
  * @g: Green component, 0-255
  * @b: Blue component, 0-255
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -663,7 +663,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, CH
  * @bg_g: Background green component, 0-255
  * @bg_b: Background blue component, 0-255
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -681,7 +681,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8
  * @dest: String destination
  * @pen: Pen number, 0-255
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FG_256.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FG_256.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -699,7 +699,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, CHAFA_TE
  * @dest: String destination
  * @pen: Pen number, 0-255
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_BG_256.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_BG_256.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -718,7 +718,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, CHAFA_TE
  * @fg_pen: Foreground pen number, 0-255
  * @bg_pen: Background pen number, 0-255
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FGBG_256.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FGBG_256.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -736,7 +736,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAF
  * @dest: String destination
  * @pen: Pen number, 0-15
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FG_16.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FG_16.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -754,7 +754,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_T
  * @dest: String destination
  * @pen: Pen number, 0-15
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_BG_16.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_BG_16.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -773,7 +773,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, CHAFA_T
  * @fg_pen: Foreground pen number, 0-15
  * @bg_pen: Background pen number, 0-15
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_SET_COLOR_FGBG_16.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FGBG_16.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -793,7 +793,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, C
  * @p2: Background color selector
  * @p3: Horizontal grid selector
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_BEGIN_SIXELS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_SIXELS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -812,7 +812,7 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_AR
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_END_SIXELS.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_END_SIXELS.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -830,7 +830,7 @@ CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, void)
  * @dest: String destination
  * @n: Number of repetitions
  *
- * Prints the control sequence for CHAFA_TERM_SEQ_REPEAT_CHAR.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_REPEAT_CHAR.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
