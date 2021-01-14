@@ -42,47 +42,47 @@
  * ChafaTermSeq:
  * @CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT: Reset the terminal to configured defaults.
  * @CHAFA_TERM_SEQ_RESET_TERMINAL_HARD: Reset the terminal to factory defaults.
- * @CHAFA_TERM_SEQ_RESET_ATTRIBUTES:
- * @CHAFA_TERM_SEQ_CLEAR:
- * @CHAFA_TERM_SEQ_INVERT_COLORS:
- * @CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT:
- * @CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT:
- * @CHAFA_TERM_SEQ_CURSOR_TO_POS:
- * @CHAFA_TERM_SEQ_CURSOR_UP_1:
- * @CHAFA_TERM_SEQ_CURSOR_UP:
- * @CHAFA_TERM_SEQ_CURSOR_DOWN_1:
- * @CHAFA_TERM_SEQ_CURSOR_DOWN:
- * @CHAFA_TERM_SEQ_CURSOR_LEFT_1:
- * @CHAFA_TERM_SEQ_CURSOR_LEFT:
- * @CHAFA_TERM_SEQ_CURSOR_RIGHT_1:
- * @CHAFA_TERM_SEQ_CURSOR_RIGHT:
- * @CHAFA_TERM_SEQ_CURSOR_UP_SCROLL:
- * @CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL:
- * @CHAFA_TERM_SEQ_INSERT_CELLS:
- * @CHAFA_TERM_SEQ_DELETE_CELLS:
- * @CHAFA_TERM_SEQ_INSERT_ROWS:
- * @CHAFA_TERM_SEQ_DELETE_ROWS:
- * @CHAFA_TERM_SEQ_SET_SCROLLING_ROWS:
- * @CHAFA_TERM_SEQ_ENABLE_INSERT:
- * @CHAFA_TERM_SEQ_DISABLE_INSERT:
- * @CHAFA_TERM_SEQ_ENABLE_CURSOR:
- * @CHAFA_TERM_SEQ_DISABLE_CURSOR:
- * @CHAFA_TERM_SEQ_ENABLE_ECHO:
- * @CHAFA_TERM_SEQ_DISABLE_ECHO:
- * @CHAFA_TERM_SEQ_ENABLE_WRAP:
- * @CHAFA_TERM_SEQ_DISABLE_WRAP:
- * @CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT:
- * @CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT:
- * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT:
- * @CHAFA_TERM_SEQ_SET_COLOR_FG_256:
- * @CHAFA_TERM_SEQ_SET_COLOR_BG_256:
- * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_256:
- * @CHAFA_TERM_SEQ_SET_COLOR_FG_16:
- * @CHAFA_TERM_SEQ_SET_COLOR_BG_16:
- * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_16:
- * @CHAFA_TERM_SEQ_BEGIN_SIXELS:
- * @CHAFA_TERM_SEQ_END_SIXELS:
- * @CHAFA_TERM_SEQ_REPEAT_CHAR:
+ * @CHAFA_TERM_SEQ_RESET_ATTRIBUTES: Reset active graphics rendition (colors and other attributes) to terminal defaults.
+ * @CHAFA_TERM_SEQ_CLEAR: Clear the screen.
+ * @CHAFA_TERM_SEQ_INVERT_COLORS: Invert foreground and background colors.
+ * @CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT: Move cursor to top left of screen.
+ * @CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT: Move cursor to bottom left of screen.
+ * @CHAFA_TERM_SEQ_CURSOR_TO_POS: Move cursor to specific position.
+ * @CHAFA_TERM_SEQ_CURSOR_UP_1: Move cursor up one cell.
+ * @CHAFA_TERM_SEQ_CURSOR_UP: Move cursor up N cells.
+ * @CHAFA_TERM_SEQ_CURSOR_DOWN_1: Move cursor down one cell.
+ * @CHAFA_TERM_SEQ_CURSOR_DOWN: Move cursor down N cells.
+ * @CHAFA_TERM_SEQ_CURSOR_LEFT_1: Move cursor left one cell.
+ * @CHAFA_TERM_SEQ_CURSOR_LEFT: Move cursor left N cells.
+ * @CHAFA_TERM_SEQ_CURSOR_RIGHT_1: Move cursor right one cell.
+ * @CHAFA_TERM_SEQ_CURSOR_RIGHT: Move cursor right N cells.
+ * @CHAFA_TERM_SEQ_CURSOR_UP_SCROLL: Move cursor up one cell. Scroll area contents down when at the edge.
+ * @CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL: Move cursor down one cell. Scroll area contents up when at the edge.
+ * @CHAFA_TERM_SEQ_INSERT_CELLS: Insert blank cells at cursor position.
+ * @CHAFA_TERM_SEQ_DELETE_CELLS: Delete cells at cursor position.
+ * @CHAFA_TERM_SEQ_INSERT_ROWS: Insert rows at cursor position.
+ * @CHAFA_TERM_SEQ_DELETE_ROWS: Delete rows at cursor position.
+ * @CHAFA_TERM_SEQ_SET_SCROLLING_ROWS: Set scrolling area extents.
+ * @CHAFA_TERM_SEQ_ENABLE_INSERT: Enable insert mode.
+ * @CHAFA_TERM_SEQ_DISABLE_INSERT: Disable insert mode.
+ * @CHAFA_TERM_SEQ_ENABLE_CURSOR: Show the cursor.
+ * @CHAFA_TERM_SEQ_DISABLE_CURSOR: Hide the cursor.
+ * @CHAFA_TERM_SEQ_ENABLE_ECHO: Make the terminal echo input locally.
+ * @CHAFA_TERM_SEQ_DISABLE_ECHO: Don't echo input locally.
+ * @CHAFA_TERM_SEQ_ENABLE_WRAP: Make cursor wrap around to the next row after output in the final column.
+ * @CHAFA_TERM_SEQ_DISABLE_WRAP: Make cursor stay in place after output to the final column.
+ * @CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT: Set foreground color (directcolor/truecolor).
+ * @CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT: Set background color (directcolor/truecolor).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT: Set foreground and background color (directcolor/truecolor).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FG_256: Set foreground color (256 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_BG_256: Set background color (256 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_256: Set foreground and background colors (256 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FG_16: Set foreground color (16 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_BG_16: Set background color (16 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_16: Set foreground and background colors (16 colors).
+ * @CHAFA_TERM_SEQ_BEGIN_SIXELS: Begin sixel image data.
+ * @CHAFA_TERM_SEQ_END_SIXELS: End sixel image data.
+ * @CHAFA_TERM_SEQ_REPEAT_CHAR: Repeat previous character N times.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
