@@ -28,21 +28,20 @@ G_BEGIN_DECLS
 
 #define CHAFA_TERM_SEQ_LENGTH_MAX 48
 
+#ifndef __GTK_DOC_IGNORE__
 /* This declares the enum for CHAFA_TERM_SEQ_*. See chafa-term-seq-def.h
  * for more information, or look up the canonical documentation at
  * https://hpjansson.org/chafa/ref/ for verbose definitions. */
-enum ChafaTermSeqEnum
+typedef enum
 {
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...) CHAFA_TERM_SEQ_##NAME,
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF
 
     CHAFA_TERM_SEQ_MAX
-};
-
-/* We declare this typedef in two steps so gtk-doc picks up the one
- * from chafa-term-seq-doc.h, which it can parse correctly, instead. */
-typedef enum ChafaTermSeqEnum ChafaTermSeq;
+}
+ChafaTermSeq;
+#endif /* __GTK_DOC_IGNORE__ */
 
 typedef struct ChafaTermInfo ChafaTermInfo;
 
