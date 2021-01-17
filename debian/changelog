@@ -1,3 +1,9 @@
+chafa (1.7.0-0) unstable; urgency=medium
+
+  * Track upstream version 1.7.0 (development, unofficial).
+
+ -- Hans Petter Jansson <hpj@hpjansson.org>  Mon, 18 Jan 2021 00:39:46 +0100
+
 chafa (1.6.0-1) unstable; urgency=medium
 
   * New upstream version 1.6.0
