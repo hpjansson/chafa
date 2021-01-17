@@ -8,7 +8,7 @@ Vcs-Git: https://salsa.debian.org/debian/chafa.git
 Vcs-Browser: https://salsa.debian.org/debian/chafa
 Maintainer: Mo Zhou <lumin@debian.org>
 Build-Depends:
- debhelper-compat (=12),
+ debhelper-compat (= 13),
  libmagickwand-dev,
  gtk-doc-tools,
  libxml2-utils,

@@ -2,3 +2,4 @@ usr/include/chafa
 usr/lib/*/pkgconfig/chafa.pc
 usr/lib/*/libchafa.so
 usr/lib/*/libchafa.a
+usr/lib/*/chafa/include/*.h

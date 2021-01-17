@@ -1,15 +1,20 @@
 libchafa.so.0 libchafa0 #MINVER#
+* Build-Depends-Package: libchafa-dev
  chafa_calc_canvas_geometry@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_build_ansi@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_copy@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_get_bg_color@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_get_canvas_mode@Base 0.9.0+git20180731.5ddfe4c
+ chafa_canvas_config_get_cell_geometry@Base 1.4.0
+ chafa_canvas_config_get_color_extractor@Base 1.4.0
  chafa_canvas_config_get_color_space@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_get_dither_grain_size@Base 1.2.0
  chafa_canvas_config_get_dither_intensity@Base 1.2.0
  chafa_canvas_config_get_dither_mode@Base 1.2.0
  chafa_canvas_config_get_fg_color@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_get_geometry@Base 0.9.0+git20180731.5ddfe4c
+ chafa_canvas_config_get_optimizations@Base 1.6.0
+ chafa_canvas_config_get_pixel_mode@Base 1.4.0
  chafa_canvas_config_get_preprocessing_enabled@Base 0.9.0+git20180820.609f4c5
  chafa_canvas_config_get_transparency_threshold@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_get_work_factor@Base 0.9.0+git20180731.5ddfe4c
@@ -19,6 +24,8 @@ libchafa.so.0 libchafa0 #MINVER#
  chafa_canvas_config_ref@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_set_bg_color@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_set_canvas_mode@Base 0.9.0+git20180731.5ddfe4c
+ chafa_canvas_config_set_cell_geometry@Base 1.4.0
+ chafa_canvas_config_set_color_extractor@Base 1.4.0
  chafa_canvas_config_set_color_space@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_set_dither_grain_size@Base 1.2.0
  chafa_canvas_config_set_dither_intensity@Base 1.2.0
@@ -26,6 +33,8 @@ libchafa.so.0 libchafa0 #MINVER#
  chafa_canvas_config_set_fg_color@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_set_fill_symbol_map@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_set_geometry@Base 0.9.0+git20180731.5ddfe4c
+ chafa_canvas_config_set_optimizations@Base 1.6.0
+ chafa_canvas_config_set_pixel_mode@Base 1.4.0
  chafa_canvas_config_set_preprocessing_enabled@Base 0.9.0+git20180820.609f4c5
  chafa_canvas_config_set_symbol_map@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_config_set_transparency_threshold@Base 0.9.0+git20180731.5ddfe4c
@@ -35,16 +44,81 @@ libchafa.so.0 libchafa0 #MINVER#
  chafa_canvas_new@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_new_similar@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_peek_config@Base 0.9.0+git20180731.5ddfe4c
+ chafa_canvas_print@Base 1.6.0
  chafa_canvas_ref@Base 0.9.0+git20180731.5ddfe4c
  chafa_canvas_set_contents_rgba8@Base 1.2.2
  chafa_canvas_unref@Base 0.9.0+git20180731.5ddfe4c
  chafa_describe_features@Base 0.9.0+git20180731.5ddfe4c
  chafa_get_builtin_features@Base 0.9.0+git20180731.5ddfe4c
  chafa_get_supported_features@Base 0.9.0+git20180731.5ddfe4c
+ chafa_symbol_map_add_by_range@Base 1.4.0
  chafa_symbol_map_add_by_tags@Base 0.9.0+git20180731.5ddfe4c
+ chafa_symbol_map_add_glyph@Base 1.4.0
  chafa_symbol_map_apply_selectors@Base 0.9.0+git20180731.5ddfe4c
  chafa_symbol_map_copy@Base 0.9.0+git20180731.5ddfe4c
+ chafa_symbol_map_get_allow_builtin_glyphs@Base 1.4.0
  chafa_symbol_map_new@Base 0.9.0+git20180731.5ddfe4c
  chafa_symbol_map_ref@Base 0.9.0+git20180731.5ddfe4c
+ chafa_symbol_map_remove_by_range@Base 1.4.0
  chafa_symbol_map_remove_by_tags@Base 0.9.0+git20180731.5ddfe4c
+ chafa_symbol_map_set_allow_builtin_glyphs@Base 1.4.0
  chafa_symbol_map_unref@Base 0.9.0+git20180731.5ddfe4c
+ chafa_term_db_copy@Base 1.6.0
+ chafa_term_db_detect@Base 1.6.0
+ chafa_term_db_get_default@Base 1.6.0
+ chafa_term_db_get_fallback_info@Base 1.6.0
+ chafa_term_db_new@Base 1.6.0
+ chafa_term_db_ref@Base 1.6.0
+ chafa_term_db_unref@Base 1.6.0
+ chafa_term_info_copy@Base 1.6.0
+ chafa_term_info_emit_begin_sixels@Base 1.6.0
+ chafa_term_info_emit_clear@Base 1.6.0
+ chafa_term_info_emit_cursor_down@Base 1.6.0
+ chafa_term_info_emit_cursor_down_1@Base 1.6.0
+ chafa_term_info_emit_cursor_down_scroll@Base 1.6.0
+ chafa_term_info_emit_cursor_left@Base 1.6.0
+ chafa_term_info_emit_cursor_left_1@Base 1.6.0
+ chafa_term_info_emit_cursor_right@Base 1.6.0
+ chafa_term_info_emit_cursor_right_1@Base 1.6.0
+ chafa_term_info_emit_cursor_to_bottom_left@Base 1.6.0
+ chafa_term_info_emit_cursor_to_pos@Base 1.6.0
+ chafa_term_info_emit_cursor_to_top_left@Base 1.6.0
+ chafa_term_info_emit_cursor_up@Base 1.6.0
+ chafa_term_info_emit_cursor_up_1@Base 1.6.0
+ chafa_term_info_emit_cursor_up_scroll@Base 1.6.0
+ chafa_term_info_emit_delete_cells@Base 1.6.0
+ chafa_term_info_emit_delete_rows@Base 1.6.0
+ chafa_term_info_emit_disable_cursor@Base 1.6.0
+ chafa_term_info_emit_disable_echo@Base 1.6.0
+ chafa_term_info_emit_disable_insert@Base 1.6.0
+ chafa_term_info_emit_disable_wrap@Base 1.6.0
+ chafa_term_info_emit_enable_cursor@Base 1.6.0
+ chafa_term_info_emit_enable_echo@Base 1.6.0
+ chafa_term_info_emit_enable_insert@Base 1.6.0
+ chafa_term_info_emit_enable_wrap@Base 1.6.0
+ chafa_term_info_emit_end_sixels@Base 1.6.0
+ chafa_term_info_emit_insert_cells@Base 1.6.0
+ chafa_term_info_emit_insert_rows@Base 1.6.0
+ chafa_term_info_emit_invert_colors@Base 1.6.0
+ chafa_term_info_emit_repeat_char@Base 1.6.0
+ chafa_term_info_emit_reset_attributes@Base 1.6.0
+ chafa_term_info_emit_reset_terminal_hard@Base 1.6.0
+ chafa_term_info_emit_reset_terminal_soft@Base 1.6.0
+ chafa_term_info_emit_set_color_bg_16@Base 1.6.0
+ chafa_term_info_emit_set_color_bg_256@Base 1.6.0
+ chafa_term_info_emit_set_color_bg_direct@Base 1.6.0
+ chafa_term_info_emit_set_color_fg_16@Base 1.6.0
+ chafa_term_info_emit_set_color_fg_256@Base 1.6.0
+ chafa_term_info_emit_set_color_fg_direct@Base 1.6.0
+ chafa_term_info_emit_set_color_fgbg_16@Base 1.6.0
+ chafa_term_info_emit_set_color_fgbg_256@Base 1.6.0
+ chafa_term_info_emit_set_color_fgbg_direct@Base 1.6.0
+ chafa_term_info_emit_set_scrolling_rows@Base 1.6.0
+ chafa_term_info_error_quark@Base 1.6.0
+ chafa_term_info_get_seq@Base 1.6.0
+ chafa_term_info_have_seq@Base 1.6.0
+ chafa_term_info_new@Base 1.6.0
+ chafa_term_info_ref@Base 1.6.0
+ chafa_term_info_set_seq@Base 1.6.0
+ chafa_term_info_supplement@Base 1.6.0
+ chafa_term_info_unref@Base 1.6.0

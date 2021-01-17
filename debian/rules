@@ -13,5 +13,5 @@ override_dh_autoreconf:
 	gtkdocize
 	dh_autoreconf
 
-override_dh_missing:
-	dh_missing --list-missing
+override_dh_auto_configure:
+	dh_auto_configure -- --enable-rpath=no

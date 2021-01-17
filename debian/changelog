@@ -1,8 +1,35 @@
-chafa (1.5.0-0) unstable; urgency=medium
+chafa (1.6.0-1) unstable; urgency=medium
 
-  * Track upstream version 1.5.0 (development, unofficial).
+  * New upstream version 1.6.0
+  * Refresh symbols control file.
 
- -- Hans Petter Jansson <hpj@cl.no>  Tue, 13 Apr 2020 12:00:00 +0100
+ -- Mo Zhou <lumin@debian.org>  Fri, 15 Jan 2021 11:03:13 +0800
+
+chafa (1.4.1-2) unstable; urgency=medium
+
+  * Mark autopkgtest as superficial. (Closes: #969809)
+  * Bump debhelper compat level to 13.
+  * Remove dh_missing override as it defaults to --fail-missing since compat 13.
+  * Specify Build-Depends-Package: libchafa-dev in the symbols control file.
+
+ -- Mo Zhou <lumin@debian.org>  Tue, 15 Sep 2020 19:03:33 +0800
+
+chafa (1.4.1-1) unstable; urgency=medium
+
+  * New upstream version 1.4.1
+  * Remove the merged rpath.patch.
+
+ -- Mo Zhou <lumin@debian.org>  Sat, 11 Apr 2020 09:21:02 +0800
+
+chafa (1.4.0-1) unstable; urgency=medium
+
+  * New upstream version 1.4.0
+  * Change dh_missing behavior to fail-missing.
+  * Update symbols control file: new ABI, no breaking change.
+  * Install the auto-generated config header to the -dev package.
+  * Patch autoconf files, allowing us to disable the RPATH option.
+
+ -- Mo Zhou <lumin@debian.org>  Thu, 09 Apr 2020 12:11:55 +0800
 
 chafa (1.2.2-1) unstable; urgency=medium
 
