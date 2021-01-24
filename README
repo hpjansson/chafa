@@ -30,6 +30,7 @@ Fedora ........ dnf install chafa
 Gentoo ........ emerge media-gfx/chafa
 Guix .......... guix install chafa
 Kali Linux .... apt install chafa
+OpenBSD ....... pkg_add chafa
 openSUSE ...... zypper ar -f obs://graphics graphics && zypper in chafa
 Ubuntu ........ apt install chafa
 
