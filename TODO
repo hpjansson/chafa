@@ -33,6 +33,8 @@ Minor Features/UX
   - Emacs ansi-term.
   - Emacs shell (TERM=dumb).
   - Come up with some kind of support matrix.
+- More symbol aliases
+  - CP437
 
 Major features
 --------------
