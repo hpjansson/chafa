@@ -75,8 +75,8 @@ void lzw_context_destroy(
 lzw_result lzw_decode_init(
 		struct lzw_ctx *ctx,
 		const uint8_t *compressed_data,
-		uint32_t compressed_data_len,
-		uint32_t compressed_data_pos,
+		uint64_t compressed_data_len,
+		uint64_t compressed_data_pos,
 		uint8_t code_size,
 		const uint8_t ** const stack_base_out,
 		const uint8_t ** const stack_pos_out);

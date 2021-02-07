@@ -34,12 +34,12 @@
  */
 struct lzw_read_ctx {
 	const uint8_t *data;    /**< Pointer to start of input data */
-	uint32_t data_len;      /**< Input data length */
-	uint32_t data_sb_next;  /**< Offset to sub-block size */
+	uint64_t data_len;      /**< Input data length */
+	uint64_t data_sb_next;  /**< Offset to sub-block size */
 
 	const uint8_t *sb_data; /**< Pointer to current sub-block in data */
-	uint32_t sb_bit;        /**< Current bit offset in sub-block */
-	uint32_t sb_bit_count;  /**< Bit count in sub-block */
+	uint64_t sb_bit;        /**< Current bit offset in sub-block */
+	uint64_t sb_bit_count;  /**< Bit count in sub-block */
 };
 
 /**
@@ -113,8 +113,8 @@ void lzw_context_destroy(struct lzw_ctx *ctx)
  */
 static lzw_result lzw__block_advance(struct lzw_read_ctx *ctx)
 {
-	uint32_t block_size;
-	uint32_t next_block_pos = ctx->data_sb_next;
+	uint64_t block_size;
+	uint64_t next_block_pos = ctx->data_sb_next;
 	const uint8_t *data_next = ctx->data + next_block_pos;
 
 	if (next_block_pos >= ctx->data_len) {
@@ -264,8 +264,8 @@ static lzw_result lzw__clear_codes(
 lzw_result lzw_decode_init(
 		struct lzw_ctx *ctx,
 		const uint8_t *compressed_data,
-		uint32_t compressed_data_len,
-		uint32_t compressed_data_pos,
+		uint64_t compressed_data_len,
+		uint64_t compressed_data_pos,
 		uint8_t code_size,
 		const uint8_t ** const stack_base_out,
 		const uint8_t ** const stack_pos_out)
