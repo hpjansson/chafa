@@ -119,9 +119,9 @@ typedef struct gif_animation {
         /* Internal members are listed below */
 
         /** current index into GIF data */
-        unsigned int buffer_position;
+        ssize_t buffer_position;
         /** total number of bytes of GIF data available */
-        unsigned int buffer_size;
+        ssize_t buffer_size;
         /** current number of frame holders */
         unsigned int frame_holders;
         /** index in the colour table for the background colour */

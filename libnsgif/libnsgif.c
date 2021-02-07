@@ -123,8 +123,8 @@ static gif_result
 gif_initialise_frame_extensions(gif_animation *gif, const int frame)
 {
         const unsigned char *gif_data, *gif_end;
-        int gif_bytes;
-        unsigned int block_size;
+        ssize_t gif_bytes;
+        ssize_t block_size;
 
         /* Get our buffer position etc.	*/
         gif_data = (const unsigned char *)(gif->gif_data + gif->buffer_position);
@@ -255,10 +255,10 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         gif_frame *temp_buf;
 
         const unsigned char *gif_data, *gif_end;
-        int gif_bytes;
+        ssize_t gif_bytes;
         unsigned int flags = 0;
         unsigned int width, height, offset_x, offset_y;
-        unsigned int block_size, colour_table_size;
+        ssize_t block_size, colour_table_size;
         bool first_image = true;
         gif_result return_value;
         bool premature_eof = false;
@@ -287,9 +287,8 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         /* We could theoretically get some junk data that gives us millions of
          * frames, so we ensure that we don't have a silly number
          */
-        if (frame > 4096) {
+        if (frame > 262143)
                 return GIF_FRAME_DATA_ERROR;
-        }
 
         /* Get some memory to store our pointers in etc. */
         if ((int)gif->frame_holders <= frame) {
@@ -435,7 +434,7 @@ static gif_result gif_initialise_frame(gif_animation *gif)
                 if (gif_bytes < 1) return GIF_INSUFFICIENT_FRAME_DATA;
                 block_size = gif_data[0] + 1;
                 /* Check if the frame data runs off the end of the file	*/
-                if ((int)(gif_bytes - block_size) < 0) {
+                if ((ssize_t)(gif_bytes - block_size) < 0) {
                         /* Try to recover by signaling the end of the gif.
                          * Once we get garbage data, there is no logical way to
                          * determine where the next frame is.  It's probably
@@ -484,8 +483,8 @@ static gif_result gif_initialise_frame(gif_animation *gif)
 static gif_result gif_skip_frame_extensions(gif_animation *gif)
 {
         const unsigned char *gif_data, *gif_end;
-        int gif_bytes;
-        unsigned int block_size;
+        ssize_t gif_bytes;
+        ssize_t block_size;
 
         /* Get our buffer position etc.	*/
         gif_data = (const unsigned char *)(gif->gif_data + gif->buffer_position);
@@ -585,13 +584,13 @@ gif_internal_decode_frame(gif_animation *gif,
 {
         unsigned int index = 0;
         const unsigned char *gif_data, *gif_end;
-        int gif_bytes;
+        ssize_t gif_bytes;
         unsigned int width, height, offset_x, offset_y;
         unsigned int flags, colour_table_size, interlace;
         unsigned int *colour_table;
         unsigned int *frame_data = 0;	// Set to 0 for no warnings
         unsigned int *frame_scanline;
-        unsigned int save_buffer_position;
+        ssize_t save_buffer_position;
         unsigned int return_value = 0;
         unsigned int x, y, decode_y, burst_bytes;
         register unsigned char colour;
