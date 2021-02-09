@@ -27,6 +27,7 @@ Arch Linux .... pacman -S chafa
 Brew .......... brew install chafa
 Debian ........ apt install chafa
 Fedora ........ dnf install chafa
+FreeBSD ....... pkg install chafa
 Gentoo ........ emerge media-gfx/chafa
 Guix .......... guix install chafa
 Kali Linux .... apt install chafa
