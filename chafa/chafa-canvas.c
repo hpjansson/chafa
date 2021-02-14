@@ -74,6 +74,78 @@ typedef struct
 }
 SymbolEval2;
 
+static ChafaColor
+threshold_alpha (ChafaColor col, gint alpha_threshold)
+{
+    col.ch [3] = col.ch [3] < alpha_threshold ? 0 : 255;
+    return col;
+}
+
+static gint
+color_to_rgb (const ChafaCanvas *canvas, ChafaColor col)
+{
+    col = threshold_alpha (col, canvas->config.alpha_threshold);
+    if (col.ch [3] == 0)
+        return -1;
+
+    return ((gint) col.ch [0] << 16) | ((gint) col.ch [1] << 8) | (gint) col.ch [2];
+}
+
+static gint
+packed_rgba_to_rgb (const ChafaCanvas *canvas, guint32 rgba)
+{
+    ChafaColor col;
+
+    chafa_unpack_color (rgba, &col);
+    return color_to_rgb (canvas, col);
+}
+
+static ChafaColor
+packed_rgb_to_color (gint rgb)
+{
+    ChafaColor col;
+
+    if (rgb < 0)
+    {
+        col.ch [0] = 0x80;
+        col.ch [1] = 0x80;
+        col.ch [2] = 0x80;
+        col.ch [3] = 0x00;
+    }
+    else
+    {
+        col.ch [0] = (rgb >> 16) & 0xff;
+        col.ch [1] = (rgb >> 8) & 0xff;
+        col.ch [2] = rgb & 0xff;
+        col.ch [3] = 0xff;
+    }
+
+    return col;
+}
+
+static guint32
+packed_rgb_to_rgba (gint rgb)
+{
+    ChafaColor col;
+
+    col = packed_rgb_to_color (rgb);
+    return chafa_pack_color (&col);
+}
+
+static gint16
+packed_rgb_to_index (const ChafaPalette *palette, ChafaColorSpace cs, gint rgb)
+{
+    ChafaColorCandidates ccand;
+    ChafaColor col;
+
+    if (rgb < 0)
+        return CHAFA_PALETTE_INDEX_TRANSPARENT;
+
+    col = packed_rgb_to_color (rgb);
+    chafa_palette_lookup_nearest (palette, cs, &col, &ccand);
+    return ccand.index [0];
+}
+
 static void
 eval_symbol_colors (ChafaCanvas *canvas, ChafaWorkCell *wcell, const ChafaSymbol *sym, SymbolEval *eval)
 {
@@ -447,7 +519,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
 }
 
 static const ChafaColor *
-get_palette_color (ChafaCanvas *canvas, gint index)
+get_palette_color_with_color_space (ChafaCanvas *canvas, gint index, ChafaColorSpace cs)
 {
     if (index == CHAFA_PALETTE_INDEX_FG)
         return &canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG];
@@ -456,7 +528,13 @@ get_palette_color (ChafaCanvas *canvas, gint index)
     if (index == CHAFA_PALETTE_INDEX_TRANSPARENT)
         return &canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG];
 
-    return chafa_get_palette_color_256 (index, canvas->config.color_space);
+    return chafa_get_palette_color_256 (index, cs);
+}
+
+static const ChafaColor *
+get_palette_color (ChafaCanvas *canvas, gint index)
+{
+    return get_palette_color_with_color_space (canvas, index, canvas->config.color_space);
 }
 
 static void
@@ -1247,4 +1325,218 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
 
     chafa_term_info_unref (term_info);
     return str;
+}
+
+gunichar
+chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y)
+{
+    g_return_val_if_fail (canvas != NULL, 0);
+    g_return_val_if_fail (canvas->refs > 0, 0);
+    g_return_val_if_fail (x >= 0 && x < canvas->config.width, 0);
+    g_return_val_if_fail (y >= 0 && y < canvas->config.height, 0);
+
+    return canvas->cells [y * canvas->config.width + x].c;
+}
+
+gint
+chafa_canvas_set_char_at (ChafaCanvas *canvas, gint x, gint y, gunichar c)
+{
+    ChafaCanvasCell *cell;
+    gint cwidth = 1;
+
+    g_return_val_if_fail (canvas != NULL, 0);
+    g_return_val_if_fail (canvas->refs > 0, 0);
+    g_return_val_if_fail (x >= 0 && x < canvas->config.width, 0);
+    g_return_val_if_fail (y >= 0 && y < canvas->config.height, 0);
+
+    if (!g_unichar_isprint (c) || g_unichar_iszerowidth (c))
+        return 0;
+
+    if (g_unichar_iswide (c))
+        cwidth = 2;
+
+    if (x + cwidth > canvas->config.width)
+        return 0;
+
+    cell = &canvas->cells [y * canvas->config.width + x];
+    cell [0].c = c;
+
+    if (cwidth == 2)
+    {
+        cell [1].c = 0;
+        cell [1].fg_color = cell [0].fg_color;
+        cell [1].bg_color = cell [0].bg_color;
+    }
+
+    return cwidth;
+}
+
+void
+chafa_canvas_get_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                            gint *fg_out, gint *bg_out)
+{
+    const ChafaCanvasCell *cell;
+    gint fg = -1, bg = -1;
+
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (x >= 0 && x < canvas->config.width);
+    g_return_if_fail (y >= 0 && y < canvas->config.height);
+
+    cell = &canvas->cells [y * canvas->config.width + x];
+
+    switch (canvas->config.canvas_mode)
+    {
+        case CHAFA_CANVAS_MODE_TRUECOLOR:
+            fg = packed_rgba_to_rgb (canvas, cell->fg_color);
+            bg = packed_rgba_to_rgb (canvas, cell->bg_color);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_256:
+        case CHAFA_CANVAS_MODE_INDEXED_240:
+        case CHAFA_CANVAS_MODE_INDEXED_16:
+        case CHAFA_CANVAS_MODE_FGBG_BGFG:
+        case CHAFA_CANVAS_MODE_FGBG:
+            if (cell->fg_color == CHAFA_PALETTE_INDEX_BG
+                || cell->fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                fg = -1;
+            else
+                fg = color_to_rgb (canvas,
+                                   *get_palette_color_with_color_space (canvas, cell->fg_color,
+                                                                        CHAFA_COLOR_SPACE_RGB));
+            if (cell->bg_color == CHAFA_PALETTE_INDEX_BG
+                || cell->bg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                bg = -1;
+            else
+                bg = color_to_rgb (canvas,
+                                   *get_palette_color_with_color_space (canvas, cell->bg_color,
+                                                                        CHAFA_COLOR_SPACE_RGB));
+            break;
+        case CHAFA_CANVAS_MODE_MAX:
+            g_assert_not_reached ();
+            break;
+    }
+
+    *fg_out = fg;
+    *bg_out = bg;
+}
+
+void
+chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                            gint fg, gint bg)
+{
+    ChafaCanvasCell *cell;
+
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (x >= 0 && x < canvas->config.width);
+    g_return_if_fail (y >= 0 && y < canvas->config.height);
+
+    cell = &canvas->cells [y * canvas->config.width + x];
+
+    switch (canvas->config.canvas_mode)
+    {
+        case CHAFA_CANVAS_MODE_TRUECOLOR:
+            cell->fg_color = packed_rgb_to_rgba (fg);
+            cell->bg_color = packed_rgb_to_rgba (bg);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_256:
+        case CHAFA_CANVAS_MODE_INDEXED_240:
+        case CHAFA_CANVAS_MODE_INDEXED_16:
+            cell->fg_color = packed_rgb_to_index (&canvas->palette, canvas->config.color_space, fg);
+            cell->bg_color = packed_rgb_to_index (&canvas->palette, canvas->config.color_space, bg);
+            break;
+        case CHAFA_CANVAS_MODE_FGBG_BGFG:
+            cell->fg_color = fg >= 0 ? CHAFA_PALETTE_INDEX_FG : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            cell->bg_color = bg >= 0 ? CHAFA_PALETTE_INDEX_FG : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            break;
+        case CHAFA_CANVAS_MODE_FGBG:
+            cell->fg_color = fg >= 0 ? fg : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            break;
+        case CHAFA_CANVAS_MODE_MAX:
+            g_assert_not_reached ();
+            break;
+    }
+}
+
+void
+chafa_canvas_get_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                                gint *fg_out, gint *bg_out)
+{
+    const ChafaCanvasCell *cell;
+    gint fg = -1, bg = -1;
+
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (x >= 0 && x < canvas->config.width);
+    g_return_if_fail (y >= 0 && y < canvas->config.height);
+
+    cell = &canvas->cells [y * canvas->config.width + x];
+
+    switch (canvas->config.canvas_mode)
+    {
+        case CHAFA_CANVAS_MODE_TRUECOLOR:
+            fg = packed_rgba_to_rgb (canvas, cell->fg_color);
+            bg = packed_rgba_to_rgb (canvas, cell->bg_color);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_256:
+        case CHAFA_CANVAS_MODE_INDEXED_240:
+        case CHAFA_CANVAS_MODE_INDEXED_16:
+            fg = cell->fg_color < 256 ? (gint) cell->fg_color : -1;
+            bg = cell->bg_color < 256 ? (gint) cell->bg_color : -1;
+            break;
+        case CHAFA_CANVAS_MODE_FGBG_BGFG:
+            fg = cell->fg_color == CHAFA_PALETTE_INDEX_FG ? 0 : -1;
+            bg = cell->bg_color == CHAFA_PALETTE_INDEX_FG ? 0 : -1;
+            break;
+        case CHAFA_CANVAS_MODE_FGBG:
+            fg = 0;
+            bg = -1;
+            break;
+        case CHAFA_CANVAS_MODE_MAX:
+            g_assert_not_reached ();
+            break;
+    }
+
+    if (fg_out)
+        *fg_out = fg;
+    if (bg_out)
+        *bg_out = bg;
+}
+
+void
+chafa_canvas_set_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                                gint fg, gint bg)
+{
+    ChafaCanvasCell *cell;
+
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (x >= 0 && x < canvas->config.width);
+    g_return_if_fail (y >= 0 && y < canvas->config.height);
+
+    cell = &canvas->cells [y * canvas->config.width + x];
+
+    switch (canvas->config.canvas_mode)
+    {
+        case CHAFA_CANVAS_MODE_TRUECOLOR:
+            cell->fg_color = packed_rgb_to_rgba (fg);
+            cell->bg_color = packed_rgb_to_rgba (bg);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_256:
+        case CHAFA_CANVAS_MODE_INDEXED_240:
+        case CHAFA_CANVAS_MODE_INDEXED_16:
+            cell->fg_color = fg >= 0 ? fg : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            cell->bg_color = bg >= 0 ? bg : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            break;
+        case CHAFA_CANVAS_MODE_FGBG_BGFG:
+            cell->fg_color = fg >= 0 ? CHAFA_PALETTE_INDEX_FG : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            cell->bg_color = bg >= 0 ? CHAFA_PALETTE_INDEX_FG : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            break;
+        case CHAFA_CANVAS_MODE_FGBG:
+            cell->fg_color = fg >= 0 ? fg : CHAFA_PALETTE_INDEX_TRANSPARENT;
+            break;
+        case CHAFA_CANVAS_MODE_MAX:
+            g_assert_not_reached ();
+            break;
+    }
 }

@@ -49,6 +49,25 @@ void chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel
 CHAFA_AVAILABLE_IN_1_6
 GString *chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info);
 
+CHAFA_AVAILABLE_IN_1_8
+gunichar chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y);
+CHAFA_AVAILABLE_IN_1_8
+gint chafa_canvas_set_char_at (ChafaCanvas *canvas, gint x, gint y, gunichar c);
+
+CHAFA_AVAILABLE_IN_1_8
+void chafa_canvas_get_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                                 gint *fg_out, gint *bg_out);
+CHAFA_AVAILABLE_IN_1_8
+void chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                                 gint fg, gint bg);
+
+CHAFA_AVAILABLE_IN_1_8
+void chafa_canvas_get_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                                     gint *fg_out, gint *bg_out);
+CHAFA_AVAILABLE_IN_1_8
+void chafa_canvas_set_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
+                                     gint fg, gint bg);
+
 CHAFA_DEPRECATED_IN_1_2
 void chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
                                      gint src_width, gint src_height, gint src_rowstride);
