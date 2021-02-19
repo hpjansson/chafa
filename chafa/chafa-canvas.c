@@ -131,7 +131,7 @@ calc_mean_color (const ChafaPixel *block, ChafaColor *color_out)
 
 /* colors must point to an array of two elements */
 static guint64
-block_to_bitmap (const ChafaPixel *block, ChafaColor *colors)
+block_to_bitmap (const ChafaPixel *block, ChafaColorPair *color_pair)
 {
     guint64 bitmap = 0;
     gint i;
@@ -143,8 +143,8 @@ block_to_bitmap (const ChafaPixel *block, ChafaColor *colors)
         bitmap <<= 1;
 
         /* FIXME: What to do about alpha? */
-        error [0] = chafa_color_diff_fast (&block [i].col, &colors [0]);
-        error [1] = chafa_color_diff_fast (&block [i].col, &colors [1]);
+        error [0] = chafa_color_diff_fast (&block [i].col, &color_pair->colors [0]);
+        error [1] = chafa_color_diff_fast (&block [i].col, &color_pair->colors [1]);
 
         if (error [0] < error [1])
             bitmap |= 1;
@@ -311,7 +311,7 @@ work_cell_get_dominant_channels_for_symbol (WorkCell *wcell, const ChafaSymbol *
 
 /* colors_out must point to an array of two elements */
 static void
-work_cell_get_contrasting_color_pair (WorkCell *wcell, ChafaColor *colors_out)
+work_cell_get_contrasting_color_pair (WorkCell *wcell, ChafaColorPair *color_pair_out)
 {
     const guint8 *sorted_pixels;
 
@@ -319,8 +319,8 @@ work_cell_get_contrasting_color_pair (WorkCell *wcell, ChafaColor *colors_out)
 
     /* Choose two colors by median cut */
 
-    colors_out [0] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS / 4]].col;
-    colors_out [1] = wcell->pixels [sorted_pixels [(CHAFA_SYMBOL_N_PIXELS * 3) / 4]].col;
+    color_pair_out->colors [0] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS / 4]].col;
+    color_pair_out->colors [1] = wcell->pixels [sorted_pixels [(CHAFA_SYMBOL_N_PIXELS * 3) / 4]].col;
 }
 
 static const ChafaPixel *
@@ -670,7 +670,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
                              ChafaColor *bg_col_out,
                              gint *error_out)
 {
-    ChafaColor color_pair [2];
+    ChafaColorPair color_pair;
     guint64 bitmap;
     ChafaCandidate candidates [N_CANDIDATES_MAX];
     gint n_candidates = 0;
@@ -683,15 +683,15 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
     {
-        color_pair [0] = canvas->fg_color;
-        color_pair [1] = canvas->bg_color;
+        color_pair.colors [0] = canvas->fg_color;
+        color_pair.colors [1] = canvas->bg_color;
     }
     else
     {
-        work_cell_get_contrasting_color_pair (wcell, color_pair);
+        work_cell_get_contrasting_color_pair (wcell, &color_pair);
     }
 
-    bitmap = block_to_bitmap (wcell->pixels, color_pair);
+    bitmap = block_to_bitmap (wcell->pixels, &color_pair);
     n_candidates = CLAMP (canvas->work_factor_int, 1, N_CANDIDATES_MAX);
 
     chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
@@ -738,7 +738,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
                                   gint *error_a_out,
                                   gint *error_b_out)
 {
-    ChafaColor color_pair [2];
+    ChafaColorPair color_pair;
     guint64 bitmaps [2];
     ChafaCandidate candidates [N_CANDIDATES_MAX];
     gint n_candidates = 0;
@@ -751,22 +751,22 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
     {
-        color_pair [0] = canvas->fg_color;
-        color_pair [1] = canvas->bg_color;
+        color_pair.colors [0] = canvas->fg_color;
+        color_pair.colors [1] = canvas->bg_color;
     }
     else
     {
-        ChafaColor color_pair_part [2] [2];
+        ChafaColorPair color_pair_part [2];
 
-        work_cell_get_contrasting_color_pair (wcell_a, color_pair_part [0]);
-        work_cell_get_contrasting_color_pair (wcell_b, color_pair_part [1]);
+        work_cell_get_contrasting_color_pair (wcell_a, &color_pair_part [0]);
+        work_cell_get_contrasting_color_pair (wcell_b, &color_pair_part [1]);
 
-        color_pair [0] = chafa_color_average_2 (color_pair_part [0] [0], color_pair_part [1] [0]);
-        color_pair [1] = chafa_color_average_2 (color_pair_part [0] [1], color_pair_part [1] [1]);
+        color_pair.colors [0] = chafa_color_average_2 (color_pair_part [0].colors [0], color_pair_part [1].colors [0]);
+        color_pair.colors [1] = chafa_color_average_2 (color_pair_part [0].colors [1], color_pair_part [1].colors [1]);
     }
 
-    bitmaps [0] = block_to_bitmap (wcell_a->pixels, color_pair);
-    bitmaps [1] = block_to_bitmap (wcell_b->pixels, color_pair);
+    bitmaps [0] = block_to_bitmap (wcell_a->pixels, &color_pair);
+    bitmaps [1] = block_to_bitmap (wcell_b->pixels, &color_pair);
     n_candidates = CLAMP (canvas->work_factor_int, 1, N_CANDIDATES_MAX);
 
     chafa_symbol_map_find_wide_candidates (&canvas->config.symbol_map,
