@@ -40,6 +40,9 @@ typedef struct
 }
 ChafaColor;
 
+#define CHAFA_COLOR_PAIR_FG 0
+#define CHAFA_COLOR_PAIR_BG 1
+
 typedef struct
 {
     ChafaColor colors [2];

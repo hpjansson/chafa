@@ -27,6 +27,7 @@
 #include "internal/chafa-canvas-printer.h"
 #include "internal/chafa-private.h"
 #include "internal/chafa-pixops.h"
+#include "internal/chafa-work-cell.h"
 #include "internal/smolscale/smolscale.h"
 
 /**
@@ -60,15 +61,6 @@
 
 typedef struct
 {
-    ChafaPixel pixels [CHAFA_SYMBOL_N_PIXELS];
-    guint8 pixels_sorted_index [4] [CHAFA_SYMBOL_N_PIXELS];
-    guint8 have_pixels_sorted_by_channel [4];
-    gint dominant_channel;
-}
-WorkCell;
-
-typedef struct
-{
     ChafaPixel fg;
     ChafaPixel bg;
     gint error;
@@ -84,353 +76,25 @@ typedef struct
 SymbolEval2;
 
 static void
-accum_to_color (const ChafaColorAccum *accum, ChafaColor *color)
+eval_symbol_colors (ChafaCanvas *canvas, ChafaWorkCell *wcell, const ChafaSymbol *sym, SymbolEval *eval)
 {
-    gint i;
-
-    for (i = 0; i < 4; i++)
-        color->ch [i] = accum->ch [i];
-}
-
-/* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
-static void
-fetch_canvas_pixel_block (ChafaCanvas *canvas, ChafaPixel *pixels_out, gint cx, gint cy)
-{
-    ChafaPixel *row_p;
-    ChafaPixel *end_p;
-    gint i = 0;
-
-    row_p = &canvas->pixels [cy * CHAFA_SYMBOL_HEIGHT_PIXELS * canvas->width_pixels + cx * CHAFA_SYMBOL_WIDTH_PIXELS];
-    end_p = row_p + (canvas->width_pixels * CHAFA_SYMBOL_HEIGHT_PIXELS);
-
-    for ( ; row_p < end_p; row_p += canvas->width_pixels)
-    {
-        ChafaPixel *p0 = row_p;
-        ChafaPixel *p1 = p0 + CHAFA_SYMBOL_WIDTH_PIXELS;
-
-        for ( ; p0 < p1; p0++)
-            pixels_out [i++] = *p0;
-    }
-}
-
-static void
-calc_mean_color (const ChafaPixel *block, ChafaColor *color_out)
-{
-    ChafaColorAccum accum = { 0 };
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        chafa_color_accum_add (&accum, &block->col);
-        block++;
-    }
-
-    chafa_color_accum_div_scalar (&accum, CHAFA_SYMBOL_N_PIXELS);
-    accum_to_color (&accum, color_out);
-}
-
-/* colors must point to an array of two elements */
-static guint64
-block_to_bitmap (const ChafaPixel *block, ChafaColorPair *color_pair)
-{
-    guint64 bitmap = 0;
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        gint error [2];
-
-        bitmap <<= 1;
-
-        /* FIXME: What to do about alpha? */
-        error [0] = chafa_color_diff_fast (&block [i].col, &color_pair->colors [0]);
-        error [1] = chafa_color_diff_fast (&block [i].col, &color_pair->colors [1]);
-
-        if (error [0] < error [1])
-            bitmap |= 1;
-    }
-
-    return bitmap;
-}
-
-/* Get cell's pixels sorted by a specific channel. Sorts on demand and caches
- * the results. */
-static const guint8 *
-work_cell_get_sorted_pixels (WorkCell *wcell, gint ch)
-{
-    guint8 *index;
-    const guint8 index_init [CHAFA_SYMBOL_N_PIXELS] =
-    {
-        0,   1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63
-    };
-
-    index = &wcell->pixels_sorted_index [ch] [0];
-
-    if (wcell->have_pixels_sorted_by_channel [ch])
-        return index;
-
-    memcpy (index, index_init, CHAFA_SYMBOL_N_PIXELS);
-    chafa_sort_pixel_index_by_channel (index, wcell->pixels, CHAFA_SYMBOL_N_PIXELS, ch);
-
-    wcell->have_pixels_sorted_by_channel [ch] = TRUE;
-    return index;
-}
-
-static void
-work_cell_init (WorkCell *wcell, ChafaCanvas *canvas, gint cx, gint cy)
-{
-    memset (wcell->have_pixels_sorted_by_channel, 0,
-            sizeof (wcell->have_pixels_sorted_by_channel));
-    fetch_canvas_pixel_block (canvas, wcell->pixels, cx, cy);
-    wcell->dominant_channel = -1;
-}
-
-static gint
-work_cell_get_dominant_channel (WorkCell *wcell)
-{
-    const guint8 *sorted_pixels [4];
-    gint best_range;
-    gint best_ch;
-    gint i;
-
-    if (wcell->dominant_channel >= 0)
-        return wcell->dominant_channel;
-
-    for (i = 0; i < 4; i++)
-        sorted_pixels [i] = work_cell_get_sorted_pixels (wcell, i);
-
-    best_range = wcell->pixels [sorted_pixels [0] [63]].col.ch [0]
-        - wcell->pixels [sorted_pixels [0] [0]].col.ch [0];
-    best_ch = 0;
-
-    for (i = 1; i < 4; i++)
-    {
-        gint range = wcell->pixels [sorted_pixels [i] [63]].col.ch [i]
-            - wcell->pixels [sorted_pixels [i] [0]].col.ch [i];
-
-        if (range > best_range)
-        {
-            best_range = range;
-            best_ch = i;
-        }
-    }
-
-    wcell->dominant_channel = best_ch;
-    return wcell->dominant_channel;
-}
-
-static void
-work_cell_get_dominant_channels_for_symbol (WorkCell *wcell, const ChafaSymbol *sym,
-                                            gint *bg_ch_out, gint *fg_ch_out)
-{
-    gint16 min [2] [4] = { { G_MAXINT16, G_MAXINT16, G_MAXINT16, G_MAXINT16 },
-                           { G_MAXINT16, G_MAXINT16, G_MAXINT16, G_MAXINT16 } };
-    gint16 max [2] [4] = { { G_MININT16, G_MININT16, G_MININT16, G_MININT16 },
-                           { G_MININT16, G_MININT16, G_MININT16, G_MININT16 } };
-    gint16 range [2] [4];
-    gint ch, best_ch [2];
-    const guint8 *sorted_pixels [4];
-    gint i, j;
-
-    if (sym->popcount == 0)
-    {
-        *bg_ch_out = work_cell_get_dominant_channel (wcell);
-        *fg_ch_out = -1;
-        return;
-    }
-    else if (sym->popcount == 64)
-    {
-        *bg_ch_out = -1;
-        *fg_ch_out = work_cell_get_dominant_channel (wcell);
-        return;
-    }
-
-    for (i = 0; i < 4; i++)
-        sorted_pixels [i] = work_cell_get_sorted_pixels (wcell, i);
-
-    /* Get minimums */
-
-    for (j = 0; j < 4; j++)
-    {
-        gint pen_a = sym->coverage [sorted_pixels [j] [0]];
-        min [pen_a] [j] = wcell->pixels [sorted_pixels [j] [0]].col.ch [j];
-
-        for (i = 1; ; i++)
-        {
-            gint pen_b = sym->coverage [sorted_pixels [j] [i]];
-            if (pen_b != pen_a)
-            {
-                min [pen_b] [j] = wcell->pixels [sorted_pixels [j] [i]].col.ch [j];
-                break;
-            }
-        }
-    }
-
-    /* Get maximums */
-
-    for (j = 0; j < 4; j++)
-    {
-        gint pen_a = sym->coverage [sorted_pixels [j] [63]];
-        max [pen_a] [j] = wcell->pixels [sorted_pixels [j] [63]].col.ch [j];
-
-        for (i = 62; ; i--)
-        {
-            gint pen_b = sym->coverage [sorted_pixels [j] [i]];
-            if (pen_b != pen_a)
-            {
-                max [pen_b] [j] = wcell->pixels [sorted_pixels [j] [i]].col.ch [j];
-                break;
-            }
-        }
-    }
-
-    /* Find channel with the greatest range */
-
-    for (ch = 0; ch < 4; ch++)
-    {
-        range [0] [ch] = max [0] [ch] - min [0] [ch];
-        range [1] [ch] = max [1] [ch] - min [1] [ch];
-    }
-
-    best_ch [0] = 0;
-    best_ch [1] = 0;
-    for (ch = 1; ch < 4; ch++)
-    {
-        if (range [0] [ch] > range [0] [best_ch [0]])
-            best_ch [0] = ch;
-        if (range [1] [ch] > range [1] [best_ch [1]])
-            best_ch [1] = ch;
-    }
-
-    *bg_ch_out = best_ch [0];
-    *fg_ch_out = best_ch [1];
-}
-
-/* colors_out must point to an array of two elements */
-static void
-work_cell_get_contrasting_color_pair (WorkCell *wcell, ChafaColorPair *color_pair_out)
-{
-    const guint8 *sorted_pixels;
-
-    sorted_pixels = work_cell_get_sorted_pixels (wcell, work_cell_get_dominant_channel (wcell));
-
-    /* Choose two colors by median cut */
-
-    color_pair_out->colors [0] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS / 4]].col;
-    color_pair_out->colors [1] = wcell->pixels [sorted_pixels [(CHAFA_SYMBOL_N_PIXELS * 3) / 4]].col;
-}
-
-static const ChafaPixel *
-work_cell_get_nth_sorted_pixel (WorkCell *wcell, const ChafaSymbol *sym,
-                                gint channel, gint pen, gint n)
-{
-    const guint8 *sorted_pixels;
-    gint i, j;
-
-    pen ^= 1;
-    sorted_pixels = work_cell_get_sorted_pixels (wcell, channel);
-
-    for (i = 0, j = 0; ; i++)
-    {
-        j += (sym->coverage [sorted_pixels [i]] ^ pen);
-        if (j > n)
-            return &wcell->pixels [sorted_pixels [i]];
-    }
-
-    g_assert_not_reached ();
-    return NULL;
-}
-
-static void
-work_cell_get_median_pixels_for_symbol (WorkCell *wcell, const ChafaSymbol *sym,
-                                        ChafaPixel *pixels_out)
-{
-    gint bg_ch, fg_ch;
-
-    /* This is extremely slow and makes almost no difference */
-    work_cell_get_dominant_channels_for_symbol (wcell, sym, &bg_ch, &fg_ch);
-
-    if (bg_ch < 0)
-    {
-        pixels_out [0] = pixels_out [1]
-            = *work_cell_get_nth_sorted_pixel (wcell, sym, fg_ch, 1, sym->popcount / 2);
-    }
-    else if (fg_ch < 0)
-    {
-        pixels_out [0] = pixels_out [1]
-            = *work_cell_get_nth_sorted_pixel (wcell, sym, bg_ch, 0,
-                                               (CHAFA_SYMBOL_N_PIXELS - sym->popcount) / 2);
-    }
-    else
-    {
-        pixels_out [0] = *work_cell_get_nth_sorted_pixel (wcell, sym, bg_ch, 0,
-                                                          (CHAFA_SYMBOL_N_PIXELS - sym->popcount) / 2);
-        pixels_out [1] = *work_cell_get_nth_sorted_pixel (wcell, sym, fg_ch, 1, sym->popcount / 2);
-    }
-}
-
-static void
-calc_colors_plain (const ChafaPixel *block, ChafaColorAccum *accums, const guint8 *cov)
-{
-    const guint8 *in_u8 = (const guint8 *) block;
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        gint16 *out_s16 = (gint16 *) (accums + *cov++);
-
-        *out_s16++ += *in_u8++;
-        *out_s16++ += *in_u8++;
-        *out_s16++ += *in_u8++;
-        *out_s16++ += *in_u8++;
-    }
-}
-
-static void
-eval_symbol_colors_mean (WorkCell *wcell, const ChafaSymbol *sym, SymbolEval *eval)
-{
-    const guint8 *covp = (guint8 *) &sym->coverage [0];
-    ChafaColorAccum accums [2] = { 0 };
-
-#ifdef HAVE_MMX_INTRINSICS
-    if (chafa_have_mmx ())
-        calc_colors_mmx (wcell->pixels, accums, covp);
-    else
-#endif
-        calc_colors_plain (wcell->pixels, accums, covp);
-
-    if (sym->fg_weight > 1)
-        chafa_color_accum_div_scalar (&accums [1], sym->fg_weight);
-
-    if (sym->bg_weight > 1)
-        chafa_color_accum_div_scalar (&accums [0], sym->bg_weight);
-
-    accum_to_color (&accums [1], &eval->fg.col);
-    accum_to_color (&accums [0], &eval->bg.col);
-}
-
-static void
-eval_symbol_colors (ChafaCanvas *canvas, WorkCell *wcell, const ChafaSymbol *sym, SymbolEval *eval)
-{
-    ChafaPixel pixels [2];
+    ChafaColorPair color_pair;
 
     if (canvas->config.color_extractor == CHAFA_COLOR_EXTRACTOR_AVERAGE)
     {
-        eval_symbol_colors_mean (wcell, sym, eval);
+        chafa_work_cell_get_mean_colors_for_symbol (wcell, sym, &color_pair);
     }
     else
     {
-        work_cell_get_median_pixels_for_symbol (wcell, sym, pixels);
-        eval->bg.col = pixels [0].col;
-        eval->fg.col = pixels [1].col;
+        chafa_work_cell_get_median_colors_for_symbol (wcell, sym, &color_pair);
     }
+
+    eval->bg.col = color_pair.colors [CHAFA_COLOR_PAIR_BG];
+    eval->fg.col = color_pair.colors [CHAFA_COLOR_PAIR_FG];
 }
 
 static void
-eval_symbol_colors_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell_b,
+eval_symbol_colors_wide (ChafaCanvas *canvas, ChafaWorkCell *wcell_a, ChafaWorkCell *wcell_b,
                          const ChafaSymbol *sym_a, const ChafaSymbol *sym_b,
                          SymbolEval2 *eval)
 {
@@ -478,7 +142,7 @@ calc_error_with_alpha (const ChafaPixel *block, const ChafaColorPair *color_pair
 }
 
 static void
-eval_symbol_error (ChafaCanvas *canvas, const WorkCell *wcell,
+eval_symbol_error (ChafaCanvas *canvas, const ChafaWorkCell *wcell,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
@@ -506,7 +170,7 @@ eval_symbol_error (ChafaCanvas *canvas, const WorkCell *wcell,
 }
 
 static void
-eval_symbol_error_wide (ChafaCanvas *canvas, const WorkCell *wcell_a, const WorkCell *wcell_b,
+eval_symbol_error_wide (ChafaCanvas *canvas, const ChafaWorkCell *wcell_a, const ChafaWorkCell *wcell_b,
                         const ChafaSymbol2 *sym, SymbolEval2 *wide_eval)
 {
     SymbolEval eval [2];
@@ -524,7 +188,7 @@ eval_symbol_error_wide (ChafaCanvas *canvas, const WorkCell *wcell_a, const Work
 }
 
 static void
-eval_symbol (ChafaCanvas *canvas, WorkCell *wcell, gint sym_index,
+eval_symbol (ChafaCanvas *canvas, ChafaWorkCell *wcell, gint sym_index,
              gint *best_sym_index_out, SymbolEval *best_eval_inout)
 {
     const ChafaSymbol *sym;
@@ -552,8 +216,8 @@ eval_symbol (ChafaCanvas *canvas, WorkCell *wcell, gint sym_index,
 }
 
 static void
-eval_symbol_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell_b, gint sym_index,
-                  gint *best_sym_index_out, SymbolEval2 *best_eval_inout)
+eval_symbol_wide (ChafaCanvas *canvas, ChafaWorkCell *wcell_a, ChafaWorkCell *wcell_b,
+                  gint sym_index, gint *best_sym_index_out, SymbolEval2 *best_eval_inout)
 {
     const ChafaSymbol2 *sym2;
     SymbolEval2 eval;
@@ -586,7 +250,7 @@ eval_symbol_wide (ChafaCanvas *canvas, WorkCell *wcell_a, WorkCell *wcell_b, gin
 
 static void
 pick_symbol_and_colors_slow (ChafaCanvas *canvas,
-                             WorkCell *wcell,
+                             ChafaWorkCell *wcell,
                              gunichar *sym_out,
                              ChafaColor *fg_col_out,
                              ChafaColor *bg_col_out,
@@ -623,8 +287,8 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
 
 static void
 pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
-                                  WorkCell *wcell_a,
-                                  WorkCell *wcell_b,
+                                  ChafaWorkCell *wcell_a,
+                                  ChafaWorkCell *wcell_b,
                                   gunichar *sym_out,
                                   ChafaColor *fg_col_out,
                                   ChafaColor *bg_col_out,
@@ -664,7 +328,7 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
 
 static void
 pick_symbol_and_colors_fast (ChafaCanvas *canvas,
-                             WorkCell *wcell,
+                             ChafaWorkCell *wcell,
                              gunichar *sym_out,
                              ChafaColor *fg_col_out,
                              ChafaColor *bg_col_out,
@@ -688,10 +352,10 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
     }
     else
     {
-        work_cell_get_contrasting_color_pair (wcell, &color_pair);
+        chafa_work_cell_get_contrasting_color_pair (wcell, &color_pair);
     }
 
-    bitmap = block_to_bitmap (wcell->pixels, &color_pair);
+    bitmap = chafa_work_cell_to_bitmap (wcell, &color_pair);
     n_candidates = CLAMP (canvas->work_factor_int, 1, N_CANDIDATES_MAX);
 
     chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
@@ -730,8 +394,8 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
 static void
 pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
-                                  WorkCell *wcell_a,
-                                  WorkCell *wcell_b,
+                                  ChafaWorkCell *wcell_a,
+                                  ChafaWorkCell *wcell_b,
                                   gunichar *sym_out,
                                   ChafaColor *fg_col_out,
                                   ChafaColor *bg_col_out,
@@ -758,15 +422,15 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
     {
         ChafaColorPair color_pair_part [2];
 
-        work_cell_get_contrasting_color_pair (wcell_a, &color_pair_part [0]);
-        work_cell_get_contrasting_color_pair (wcell_b, &color_pair_part [1]);
+        chafa_work_cell_get_contrasting_color_pair (wcell_a, &color_pair_part [0]);
+        chafa_work_cell_get_contrasting_color_pair (wcell_b, &color_pair_part [1]);
 
         color_pair.colors [0] = chafa_color_average_2 (color_pair_part [0].colors [0], color_pair_part [1].colors [0]);
         color_pair.colors [1] = chafa_color_average_2 (color_pair_part [0].colors [1], color_pair_part [1].colors [1]);
     }
 
-    bitmaps [0] = block_to_bitmap (wcell_a->pixels, &color_pair);
-    bitmaps [1] = block_to_bitmap (wcell_b->pixels, &color_pair);
+    bitmaps [0] = chafa_work_cell_to_bitmap (wcell_a, &color_pair);
+    bitmaps [1] = chafa_work_cell_to_bitmap (wcell_b, &color_pair);
     n_candidates = CLAMP (canvas->work_factor_int, 1, N_CANDIDATES_MAX);
 
     chafa_symbol_map_find_wide_candidates (&canvas->config.symbol_map,
@@ -820,7 +484,7 @@ get_palette_color (ChafaCanvas *canvas, gint index)
 }
 
 static void
-apply_fill (ChafaCanvas *canvas, const WorkCell *wcell, ChafaCanvasCell *cell)
+apply_fill (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *cell)
 {
     ChafaColor mean;
     ChafaColor col [3];
@@ -833,7 +497,7 @@ apply_fill (ChafaCanvas *canvas, const WorkCell *wcell, ChafaCanvasCell *cell)
     if (canvas->config.fill_symbol_map.n_symbols == 0)
         return;
 
-    calc_mean_color (wcell->pixels, &mean);
+    chafa_work_cell_calc_mean_color (wcell, &mean);
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
     {
@@ -918,7 +582,7 @@ done:
 }
 
 static gint
-update_cell (ChafaCanvas *canvas, WorkCell *work_cell, ChafaCanvasCell *cell_out)
+update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cell_out)
 {
     gunichar sym = 0;
     ChafaColorCandidates ccand;
@@ -958,7 +622,7 @@ update_cell (ChafaCanvas *canvas, WorkCell *work_cell, ChafaCanvasCell *cell_out
 }
 
 static void
-update_cells_wide (ChafaCanvas *canvas, WorkCell *work_cell_a, WorkCell *work_cell_b,
+update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCell *work_cell_b,
                    ChafaCanvasCell *cell_a_out, ChafaCanvasCell *cell_b_out,
                    gint *error_a_out, gint *error_b_out)
 {
@@ -1012,7 +676,7 @@ static void
 update_cells_row (ChafaCanvas *canvas, gint row)
 {
     ChafaCanvasCell *cells;
-    WorkCell work_cells [N_BUF_CELLS];
+    ChafaWorkCell work_cells [N_BUF_CELLS];
     gint cell_errors [N_BUF_CELLS];
     gint cx, cy;
 
@@ -1022,14 +686,14 @@ update_cells_row (ChafaCanvas *canvas, gint row)
     for (cx = 0; cx < canvas->config.width; cx++)
     {
         gint buf_index = cx % N_BUF_CELLS;
-        WorkCell *wcell = &work_cells [buf_index];
+        ChafaWorkCell *wcell = &work_cells [buf_index];
         ChafaCanvasCell wide_cells [2];
         gint wide_cell_errors [2];
 
         memset (&cells [cx], 0, sizeof (cells [cx]));
         cells [cx].c = ' ';
 
-        work_cell_init (wcell, canvas, cx, cy);
+        chafa_work_cell_init (wcell, canvas->pixels, canvas->width_pixels, cx, cy);
         cell_errors [buf_index] = update_cell (canvas, wcell, &cells [cx]);
 
         /* Try wide symbol */

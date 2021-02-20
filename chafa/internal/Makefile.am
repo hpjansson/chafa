@@ -37,7 +37,9 @@ libchafa_internal_la_SOURCES = \
 	chafa-string-util.c \
 	chafa-string-util.h \
 	chafa-symbols.c \
-	chafa-symbols-ascii.h
+	chafa-symbols-ascii.h \
+	chafa-work-cell.c \
+	chafa-work-cell.h
 
 if HAVE_MMX_INTRINSICS
 noinst_LTLIBRARIES += libchafa-mmx.la
