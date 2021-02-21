@@ -158,7 +158,7 @@ chafa_work_cell_to_bitmap (const ChafaWorkCell *wcell, const ChafaColorPair *col
         error [0] = chafa_color_diff_fast (&block [i].col, &color_pair->colors [0]);
         error [1] = chafa_color_diff_fast (&block [i].col, &color_pair->colors [1]);
 
-        if (error [0] < error [1])
+        if (error [0] > error [1])
             bitmap |= 1;
     }
 

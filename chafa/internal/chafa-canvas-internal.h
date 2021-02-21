@@ -45,8 +45,7 @@ struct ChafaCanvas
     ChafaCanvasCell *cells;
     guint have_alpha : 1;
     guint needs_clear : 1;
-    ChafaColor fg_color;
-    ChafaColor bg_color;
+    ChafaColorPair default_colors;
     guint work_factor_int;
 
     ChafaCanvasConfig config;

@@ -40,8 +40,10 @@ typedef struct
 }
 ChafaColor;
 
-#define CHAFA_COLOR_PAIR_FG 0
-#define CHAFA_COLOR_PAIR_BG 1
+/* BG/FG indexes must be 0 and 1 respectively, corresponding to
+ * coverage bitmap values */
+#define CHAFA_COLOR_PAIR_BG 0
+#define CHAFA_COLOR_PAIR_FG 1
 
 typedef struct
 {
