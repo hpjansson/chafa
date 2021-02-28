@@ -1876,7 +1876,7 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
         "        "
         "        "
-        "    XX   "
+        "    XX  "
         "    XX  "
         "        "
         "        "
