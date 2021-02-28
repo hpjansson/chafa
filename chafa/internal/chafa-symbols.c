@@ -33,9 +33,28 @@ typedef struct
 {
     ChafaSymbolTags sc;
     gunichar c;
-    gchar *coverage;
+
+    /* Each 64-bit integer represents an 8x8 bitmap, scanning left-to-right
+     * and top-to-bottom, stored in host byte order.
+     *
+     * Narrow symbols use bitmap [0], with bitmap [1] set to zero. Wide
+     * symbols are implemented as two narrow symbols side-by-side, with
+     * the leftmost in [0] and rightmost in [1]. */
+    guint64 bitmap [2];
 }
 ChafaSymbolDef;
+
+#define CHAFA_OUTLINE_CHAR_TO_BIT(c) ((c) == ' ' ? G_GUINT64_CONSTANT (0) : G_GUINT64_CONSTANT (1))
+#define CHAFA_OUTLINE_8_CHARS_TO_BITS(s,i) \
+    ((CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 0]) << 7) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 1]) << 6) | \
+     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 2]) << 5) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 3]) << 4) | \
+     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 4]) << 3) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 5]) << 2) | \
+     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 6]) << 1) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 7]) << 0))
+#define CHAFA_OUTLINE_TO_BITMAP_8X8(s) { \
+    ((CHAFA_OUTLINE_8_CHARS_TO_BITS (s,  0) << 56) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s,  8) << 48) | \
+     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 16) << 40) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 24) << 32) | \
+     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 32) << 24) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 40) << 16) | \
+     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 48) <<  8) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 56) <<  0)), 0 }
 
 ChafaSymbol *chafa_symbols;
 static gboolean symbols_initialized;
@@ -101,1864 +120,2017 @@ static const ChafaSymbolDef symbol_defs [] =
         /* Horizontal Scan Line 1 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23ba,
-        "        "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         /* Horizontal Scan Line 3 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23bb,
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         /* Horizontal Scan Line 7 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23bc,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         /* Horizontal Scan Line 9 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23bd,
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_INVERTED,
         0x2580,
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2581,
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2582,
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2583,
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF,
         0x2584,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2585,
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2586,
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2587,
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         /* Full block */
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_SOLID,
         0x2588,
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x2589,
-        "XXXXXXX "
-        "XXXXXXX "
-        "XXXXXXX "
-        "XXXXXXX "
-        "XXXXXXX "
-        "XXXXXXX "
-        "XXXXXXX "
-        "XXXXXXX "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x258a,
-        "XXXXXX  "
-        "XXXXXX  "
-        "XXXXXX  "
-        "XXXXXX  "
-        "XXXXXX  "
-        "XXXXXX  "
-        "XXXXXX  "
-        "XXXXXX  "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x258b,
-        "XXXXX   "
-        "XXXXX   "
-        "XXXXX   "
-        "XXXXX   "
-        "XXXXX   "
-        "XXXXX   "
-        "XXXXX   "
-        "XXXXX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF,
         0x258c,
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x258d,
-        "XXX     "
-        "XXX     "
-        "XXX     "
-        "XXX     "
-        "XXX     "
-        "XXX     "
-        "XXX     "
-        "XXX     "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x258e,
-        "XX      "
-        "XX      "
-        "XX      "
-        "XX      "
-        "XX      "
-        "XX      "
-        "XX      "
-        "XX      "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK,
         0x258f,
-        "X       "
-        "X       "
-        "X       "
-        "X       "
-        "X       "
-        "X       "
-        "X       "
-        "X       "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_INVERTED,
         0x2590,
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_INVERTED,
         0x2594,
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_INVERTED,
         0x2595,
-        "       X"
-        "       X"
-        "       X"
-        "       X"
-        "       X"
-        "       X"
-        "       X"
-        "       X"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
         0x2596,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
         0x2597,
-        "        "
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
         0x2598,
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
         0x2599,
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
         0x259a,
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
         0x259b,
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
         0x259c,
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
         0x259d,
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
         0x259e,
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
-        "XXXX    "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
     },
     {
         CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
         0x259f,
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "    XXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "XXXXXXXX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     /* Begin box drawing characters */
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2500,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2501,
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2502,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2503,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2504,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XX XX XX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XX XX XX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2505,
-        "        "
-        "        "
-        "        "
-        "XX XX XX"
-        "XX XX XX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XX XX XX"
+            "XX XX XX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2506,
-        "    X   "
-        "    X   "
-        "        "
-        "    X   "
-        "    X   "
-        "        "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "        "
+            "    X   "
+            "    X   "
+            "        "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2507,
-        "   XX   "
-        "   XX   "
-        "        "
-        "   XX   "
-        "   XX   "
-        "        "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "        "
+            "   XX   "
+            "   XX   "
+            "        "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2508,
-        "        "
-        "        "
-        "        "
-        "        "
-        "X X X X "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "X X X X "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2509,
-        "        "
-        "        "
-        "        "
-        "X X X X "
-        "X X X X "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "X X X X "
+            "X X X X "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x250a,
-        "    X   "
-        "        "
-        "    X   "
-        "        "
-        "    X   "
-        "        "
-        "    X   "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "        "
+            "    X   "
+            "        "
+            "    X   "
+            "        "
+            "    X   "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x250b,
-        "   XX   "
-        "        "
-        "   XX   "
-        "        "
-        "   XX   "
-        "        "
-        "   XX   "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "        "
+            "   XX   "
+            "        "
+            "   XX   "
+            "        "
+            "   XX   "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x250c,
-        "        "
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x250d,
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "    XXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "    XXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x250e,
-        "        "
-        "        "
-        "        "
-        "        "
-        "   XXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "   XXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x250f,
-        "        "
-        "        "
-        "        "
-        "   XXXXX"
-        "   XXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "   XXXXX"
+            "   XXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2510,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXX   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXX   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2511,
-        "        "
-        "        "
-        "        "
-        "XXXXX   "
-        "XXXXX   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXX   "
+            "XXXXX   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2512,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2513,
-        "        "
-        "        "
-        "        "
-        "XXXXX   "
-        "XXXXX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXX   "
+            "XXXXX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2514,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    XXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    XXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2515,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    XXXX"
-        "    XXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    XXXX"
+            "    XXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2516,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2517,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "   XXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "   XXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2518,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2519,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "XXXXX   "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "XXXXX   "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x251a,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x251b,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "XXXXX   "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "XXXXX   "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x251c,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    XXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    XXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x251d,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    XXXX"
-        "    XXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    XXXX"
+            "    XXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x251e,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x251f,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "   XXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "   XXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2520,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2521,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "   XXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "   XXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2522,
-        "    X   "
-        "    X   "
-        "    X   "
-        "   XXXXX"
-        "   XXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "   XXXXX"
+            "   XXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2523,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "   XXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "   XXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2524,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2525,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "XXXXX   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "XXXXX   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2526,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2527,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2528,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2529,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "XXXXX   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "XXXXX   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x252a,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "XXXXX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "XXXXX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x252b,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "XXXXX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "XXXXX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x252c,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x252d,
-        "        "
-        "        "
-        "        "
-        "XXXXX   "
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXX   "
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x252e,
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x252f,
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2530,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2531,
-        "        "
-        "        "
-        "        "
-        "XXXXX   "
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXX   "
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2532,
-        "        "
-        "        "
-        "        "
-        "   XXXXX"
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "   XXXXX"
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2533,
-        "        "
-        "        "
-        "        "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2534,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2535,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2536,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    XXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    XXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2537,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2538,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2539,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x253a,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x253b,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x253c,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x253d,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x253e,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    XXXX"
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    XXXX"
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x253f,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2540,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2541,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2542,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2543,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2544,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2545,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXX   "
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXX   "
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2546,
-        "    X   "
-        "    X   "
-        "    X   "
-        "   XXXXX"
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "   XXXXX"
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2547,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2548,
-        "    X   "
-        "    X   "
-        "    X   "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x2549,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXX   "
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXX   "
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x254a,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XXXXX"
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XXXXX"
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x254b,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "XXXXXXXX"
-        "XXXXXXXX"
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x254c,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXX  XXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXX  XXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x254d,
-        "        "
-        "        "
-        "        "
-        "XXX  XXX"
-        "XXX  XXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXX  XXX"
+            "XXX  XXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x254e,
-        "    X   "
-        "    X   "
-        "    X   "
-        "        "
-        "        "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "        "
+            "        "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x254f,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "        "
-        "        "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "        "
+            "        "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
         0x2571,
-        "       X"
-        "      X "
-        "     X  "
-        "    X   "
-        "   X    "
-        "  X     "
-        " X      "
-        "X       "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "       X"
+            "      X "
+            "     X  "
+            "    X   "
+            "   X    "
+            "  X     "
+            " X      "
+            "X       ")
     },
     {
         /* Variant */
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
         0x2571,
-        "      XX"
-        "     XXX"
-        "    XXX "
-        "   XXX  "
-        "  XXX   "
-        " XXX    "
-        "XXX     "
-        "XX      "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "      XX"
+            "     XXX"
+            "    XXX "
+            "   XXX  "
+            "  XXX   "
+            " XXX    "
+            "XXX     "
+            "XX      ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
         0x2572,
-        "X       "
-        " X      "
-        "  X     "
-        "   X    "
-        "    X   "
-        "     X  "
-        "      X "
-        "       X"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "X       "
+            " X      "
+            "  X     "
+            "   X    "
+            "    X   "
+            "     X  "
+            "      X "
+            "       X")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
         0x2572,
-        "XX      "
-        "XXX     "
-        " XXX    "
-        "  XXX   "
-        "   XXX  "
-        "    XXX "
-        "     XXX"
-        "      XX"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "XX      "
+            "XXX     "
+            " XXX    "
+            "  XXX   "
+            "   XXX  "
+            "    XXX "
+            "     XXX"
+            "      XX")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
         0x2573,
-        "X      X"
-        " X    X "
-        "  X  X  "
-        "   XX   "
-        "   XX   "
-        "  X  X  "
-        " X    X "
-        "X      X"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "X      X"
+            " X    X "
+            "  X  X  "
+            "   XX   "
+            "   XX   "
+            "  X  X  "
+            " X    X "
+            "X      X")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2574,
-        "        "
-        "        "
-        "        "
-        "        "
-        "XXXX    "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXX    "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2575,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2576,
-        "        "
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2577,
-        "        "
-        "        "
-        "        "
-        "        "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2578,
-        "        "
-        "        "
-        "        "
-        "XXXX    "
-        "XXXX    "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXX    "
+            "XXXX    "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x2579,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "        "
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x257a,
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "    XXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "    XXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DOT,
         0x257b,
-        "        "
-        "        "
-        "        "
-        "        "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x257c,
-        "        "
-        "        "
-        "        "
-        "    XXXX"
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x257d,
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x257e,
-        "        "
-        "        "
-        "        "
-        "XXXX    "
-        "XXXXXXXX"
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXX    "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER,
         0x257f,
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "   XX   "
-        "    X   "
-        "    X   "
-        "    X   "
-        "    X   "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "   XX   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   ")
     },
     /* Begin dot characters*/
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x25ae, /* Black vertical rectangle */
-        "        "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x25a0, /* Black square */
-        "        "
-        "        "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x25aa, /* Black small square */
-        "        "
-        "        "
-        "  XXXX  "
-        "  XXXX  "
-        "  XXXX  "
-        "  XXXX  "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "  XXXX  "
+            "  XXXX  "
+            "  XXXX  "
+            "  XXXX  "
+            "        "
+            "        ")
     },
     {
         /* Black up-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25b2,
-        "        "
-        "   XX   "
-        "  XXXX  "
-        " XXXXXX "
-        " XXXXXX "
-        "XXXXXXXX"
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "   XX   "
+            "  XXXX  "
+            " XXXXXX "
+            " XXXXXX "
+            "XXXXXXXX"
+            "        "
+            "        ")
     },
     {
         /* Black right-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25b6,
-        " X      "
-        " XXX    "
-        " XXXX   "
-        " XXXXXX "
-        " XXXX   "
-        " XXX    "
-        " X      "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            " X      "
+            " XXX    "
+            " XXXX   "
+            " XXXXXX "
+            " XXXX   "
+            " XXX    "
+            " X      "
+            "        ")
     },
     {
         /* Black down-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25bc,
-        "        "
-        "XXXXXXXX"
-        " XXXXXX "
-        " XXXXXX "
-        "  XXXX  "
-        "   XX   "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "XXXXXXXX"
+            " XXXXXX "
+            " XXXXXX "
+            "  XXXX  "
+            "   XX   "
+            "        "
+            "        ")
     },
     {
         /* Black left-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25c0,
-        "      X "
-        "    XXX "
-        "   XXXX "
-        " XXXXXX "
-        "   XXXX "
-        "    XXX "
-        "      X "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "      X "
+            "    XXX "
+            "   XXXX "
+            " XXXXXX "
+            "   XXXX "
+            "    XXX "
+            "      X "
+            "        ")
     },
     {
         /* Black diamond */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25c6,
-        "        "
-        "   XX   "
-        "  XXXX  "
-        " XXXXXX "
-        "  XXXX  "
-        "   XX   "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "   XX   "
+            "  XXXX  "
+            " XXXXXX "
+            "  XXXX  "
+            "   XX   "
+            "        "
+            "        ")
     },
     {
         /* Black Circle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25cf,
-        "        "
-        "  XXXX  "
-        " XXXXXX "
-        " XXXXXX "
-        " XXXXXX "
-        "  XXXX  "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "  XXXX  "
+            " XXXXXX "
+            " XXXXXX "
+            " XXXXXX "
+            "  XXXX  "
+            "        "
+            "        ")
     },
     {
         /* Black Lower Right Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e2,
-        "        "
-        "        "
-        "     XX "
-        "    XXX "
-        "   XXXX "
-        " XXXXXX "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "     XX "
+            "    XXX "
+            "   XXXX "
+            " XXXXXX "
+            "        "
+            "        ")
     },
     {
         /* Black Lower Left Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e3,
-        "        "
-        "        "
-        " XX     "
-        " XXX    "
-        " XXXX   "
-        " XXXXXX "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            " XX     "
+            " XXX    "
+            " XXXX   "
+            " XXXXXX "
+            "        "
+            "        ")
     },
     {
         /* Black Upper Left Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e4,
-        "        "
-        "        "
-        " XXXXXX "
-        " XXXX   "
-        " XXX    "
-        " XX     "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            " XXXXXX "
+            " XXXX   "
+            " XXX    "
+            " XX     "
+            "        "
+            "        ")
     },
     {
         /* Black Upper Right Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e5,
-        "        "
-        "        "
-        " XXXXXX "
-        "   XXXX "
-        "    XXX "
-        "     XX "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            " XXXXXX "
+            "   XXXX "
+            "    XXX "
+            "     XX "
+            "        "
+            "        ")
     },
     {
         /* Black Medium Square */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25fc,
-        "        "
-        "        "
-        "  XXXX  "
-        "  XXXX  "
-        "  XXXX  "
-        "  XXXX  "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "  XXXX  "
+            "  XXXX  "
+            "  XXXX  "
+            "  XXXX  "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        "        "
-        "        "
-        "        "
-        "   XX   "
-        "   XX   "
-        "        "
-        "        "
-        "        "
-    },
-    {
-        /* Variant */
-        CHAFA_SYMBOL_TAG_DOT,
-        0x00b7, /* Middle dot */
-        "        "
-        "        "
-        "        "
-        "  XX    "
-        "  XX    "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "   XX   "
+            "   XX   "
+            "        "
+            "        "
+            "        ")
     },
     {
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        "        "
-        "        "
-        "        "
-        "    XX   "
-        "    XX  "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "  XX    "
+            "  XX    "
+            "        "
+            "        "
+            "        ")
     },
     {
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        "        "
-        "        "
-        "   XX   "
-        "   XX   "
-        "        "
-        "        "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "    XX   "
+            "    XX  "
+            "        "
+            "        "
+            "        ")
     },
     {
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        "        "
-        "        "
-        "        "
-        "        "
-        "   XX   "
-        "   XX   "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "   XX   "
+            "   XX   "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        /* Variant */
+        CHAFA_SYMBOL_TAG_DOT,
+        0x00b7, /* Middle dot */
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "   XX   "
+            "   XX   "
+            "        "
+            "        ")
     },
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2591,
-        "X   X   "
-        "  X   X "
-        "X   X   "
-        "  X   X "
-        "X   X   "
-        "  X   X "
-        "X   X   "
-        "  X   X "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "X   X   "
+            "  X   X "
+            "X   X   "
+            "  X   X "
+            "X   X   "
+            "  X   X "
+            "X   X   "
+            "  X   X ")
     },
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2592,
-        "X X X X "
-        " X X X X"
-        "X X X X "
-        " X X X X"
-        "X X X X "
-        " X X X X"
-        "X X X X "
-        " X X X X"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "X X X X "
+            " X X X X"
+            "X X X X "
+            " X X X X"
+            "X X X X "
+            " X X X X"
+            "X X X X "
+            " X X X X")
     },
     {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2593,
-        " XXX XXX"
-        "XX XXX X"
-        " XXX XXX"
-        "XX XXX X"
-        " XXX XXX"
-        "XX XXX X"
-        " XXX XXX"
-        "XX XXX X"
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            " XXX XXX"
+            "XX XXX X"
+            " XXX XXX"
+            "XX XXX X"
+            " XXX XXX"
+            "XX XXX X"
+            " XXX XXX"
+            "XX XXX X")
     },
     {
         /* Greek Capital Letter Xi */
         CHAFA_SYMBOL_TAG_EXTRA,
         0x039e,
-        "        "
-        " XXXXXX "
-        "        "
-        "  XXXX  "
-        "        "
-        " XXXXXX "
-        "        "
-        "        "
+        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+            "        "
+            " XXXXXX "
+            "        "
+            "  XXXX  "
+            "        "
+            " XXXXXX "
+            "        "
+            "        ")
     },
     {
-        0, 0, ""
+        0, 0, { 0, 0 }
     }
 };
 
@@ -1994,22 +2166,6 @@ calc_weights (ChafaSymbol *sym)
     }
 }
 
-static void
-xlate_coverage (const gchar *coverage_in, gchar *coverage_out)
-{
-    gchar xlate [256];
-    gint i;
-
-    xlate [' '] = 0;
-    xlate ['X'] = 1;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        guchar p = (guchar) coverage_in [i];
-        coverage_out [i] = xlate [p];
-    }
-}
-
 static guint64
 coverage_to_bitmap (const gchar *cov)
 {
@@ -2025,6 +2181,17 @@ coverage_to_bitmap (const gchar *cov)
     }
 
     return bitmap;
+}
+
+static void
+bitmap_to_coverage (guint64 bitmap, gchar *cov_out)
+{
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        cov_out [i] = (bitmap >> (63 - i)) & 1;
+    }
 }
 
 static void
@@ -2087,9 +2254,9 @@ init_symbol_array (const ChafaSymbolDef *defs)
         syms [i].c = defs [i].c;
         syms [i].coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
 
-        xlate_coverage (defs [i].coverage, syms [i].coverage);
+        bitmap_to_coverage (defs [i].bitmap [0], syms [i].coverage);
         calc_weights (&syms [i]);
-        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage);
+        syms [i].bitmap = defs [i].bitmap [0];
         syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
     }
 
