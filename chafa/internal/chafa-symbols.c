@@ -23,6 +23,19 @@
 #include "chafa.h"
 #include "internal/chafa-private.h"
 
+/* Fancy macros that turn our ASCII symbol outlines into compact bitmaps */
+#define CHAFA_OUTLINE_CHAR_TO_BIT(c) ((c) == ' ' ? G_GUINT64_CONSTANT (0) : G_GUINT64_CONSTANT (1))
+#define CHAFA_OUTLINE_8_CHARS_TO_BITS(s, i) \
+    ((CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 0]) << 7) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 1]) << 6) | \
+     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 2]) << 5) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 3]) << 4) | \
+     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 4]) << 3) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 5]) << 2) | \
+     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 6]) << 1) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 7]) << 0))
+#define CHAFA_OUTLINE_TO_BITMAP_8X8(s) { \
+    ((CHAFA_OUTLINE_8_CHARS_TO_BITS (s,  0) << 56) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s,  8) << 48) | \
+     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 16) << 40) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 24) << 32) | \
+     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 32) << 24) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 40) << 16) | \
+     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 48) <<  8) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 56) <<  0)), 0 }
+
 typedef struct
 {
     gunichar first, last;
@@ -43,18 +56,6 @@ typedef struct
     guint64 bitmap [2];
 }
 ChafaSymbolDef;
-
-#define CHAFA_OUTLINE_CHAR_TO_BIT(c) ((c) == ' ' ? G_GUINT64_CONSTANT (0) : G_GUINT64_CONSTANT (1))
-#define CHAFA_OUTLINE_8_CHARS_TO_BITS(s,i) \
-    ((CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 0]) << 7) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 1]) << 6) | \
-     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 2]) << 5) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 3]) << 4) | \
-     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 4]) << 3) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 5]) << 2) | \
-     (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 6]) << 1) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 7]) << 0))
-#define CHAFA_OUTLINE_TO_BITMAP_8X8(s) { \
-    ((CHAFA_OUTLINE_8_CHARS_TO_BITS (s,  0) << 56) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s,  8) << 48) | \
-     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 16) << 40) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 24) << 32) | \
-     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 32) << 24) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 40) << 16) | \
-     (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 48) <<  8) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 56) <<  0)), 0 }
 
 ChafaSymbol *chafa_symbols;
 static gboolean symbols_initialized;
