@@ -23,6 +23,18 @@
 #include "chafa.h"
 #include "internal/chafa-private.h"
 
+/* Standard C doesn't require that "s"[0] be considered a compile-time constant.
+ * Modern compilers support it as an extension, but gcc < 8.1 does not. That's a
+ * bit too recent, enough to make our tests fail. Therefore we disable it for now.
+ *
+ * See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69960
+ *
+ * Another option is to use binary literals, but that is itself an extension,
+ * and the symbol outlines would be less legible that way. */
+#undef CHAFA_USE_CONSTANT_STRING_EXPR
+
+#if CHAFA_USE_CONSTANT_STRING_EXPR
+
 /* Fancy macros that turn our ASCII symbol outlines into compact bitmaps */
 #define CHAFA_FOLD_BYTE_TO_BIT(x) ((((x) >> 0) | ((x) >> 1) | ((x) >> 2) | ((x) >> 3) | \
                                     ((x) >> 4) | ((x) >> 5) | ((x) >> 6) | ((x) >> 7)) & 1)
@@ -37,6 +49,13 @@
      (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 16) << 40) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 24) << 32) | \
      (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 32) << 24) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 40) << 16) | \
      (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 48) <<  8) | (CHAFA_OUTLINE_8_CHARS_TO_BITS (s, 56) <<  0)), 0 }
+#define CHAFA_SYMBOL_OUTLINE_8X8(x) CHAFA_OUTLINE_TO_BITMAP_8X8(x)
+
+#else
+
+#define CHAFA_SYMBOL_OUTLINE_8X8(x) x
+
+#endif
 
 typedef struct
 {
@@ -49,6 +68,7 @@ typedef struct
     ChafaSymbolTags sc;
     gunichar c;
 
+#if CHAFA_USE_CONSTANT_STRING_EXPR
     /* Each 64-bit integer represents an 8x8 bitmap, scanning left-to-right
      * and top-to-bottom, stored in host byte order.
      *
@@ -56,6 +76,9 @@ typedef struct
      * symbols are implemented as two narrow symbols side-by-side, with
      * the leftmost in [0] and rightmost in [1]. */
     guint64 bitmap [2];
+#else
+    gchar *outline;
+#endif
 }
 ChafaSymbolDef;
 
@@ -122,7 +145,11 @@ static const ChafaSymbolDef symbol_defs [] =
 #include "chafa-symbols-block.h"
 #include "chafa-symbols-misc-narrow.h"
     {
+#if CHAFA_USE_CONSTANT_STRING_EXPR
         0, 0, { 0, 0 }
+#else
+        0, 0, NULL
+#endif
     }
 };
 
@@ -158,18 +185,36 @@ calc_weights (ChafaSymbol *sym)
     }
 }
 
-static guint64
-coverage_to_bitmap (const gchar *cov)
+static void
+outline_to_coverage (const gchar *outline, gchar *coverage_out)
 {
-    guint64 bitmap = 0;
+    gchar xlate [256];
     gint i;
+
+    xlate [' '] = 0;
+    xlate ['X'] = 1;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        bitmap <<= 1;
+        guchar p = (guchar) outline [i];
+        coverage_out [i] = xlate [p];
+    }
+}
 
-        if (cov [i])
-            bitmap |= 1;
+static guint64
+coverage_to_bitmap (const gchar *cov, gint rowstride)
+{
+    guint64 bitmap = 0;
+    gint x, y;
+
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS; y++)
+    {
+        for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
+        {
+            bitmap <<= 1;
+            if (cov [y * rowstride + x])
+                bitmap |= 1;
+        }
     }
 
     return bitmap;
@@ -227,7 +272,7 @@ generate_braille_syms (ChafaSymbol *syms, gint first_ofs)
 
         gen_braille_sym (sym->coverage, c - 0x2800);
         calc_weights (&syms [i]);
-        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage);
+        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
         syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
     }
 }
@@ -246,9 +291,9 @@ init_symbol_array (const ChafaSymbolDef *defs)
         syms [i].c = defs [i].c;
         syms [i].coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
 
-        bitmap_to_coverage (defs [i].bitmap [0], syms [i].coverage);
+        outline_to_coverage (defs [i].outline, syms [i].coverage);
+        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
         calc_weights (&syms [i]);
-        syms [i].bitmap = defs [i].bitmap [0];
         syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
     }
 

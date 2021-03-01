@@ -27,7 +27,7 @@
         /* Horizontal Scan Line 1 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23ba,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "XXXXXXXX"
             "        "
@@ -41,7 +41,7 @@
         /* Horizontal Scan Line 3 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23bb,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -55,7 +55,7 @@
         /* Horizontal Scan Line 7 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23bc,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -69,7 +69,7 @@
         /* Horizontal Scan Line 9 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23bd,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -83,7 +83,7 @@
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x25ae, /* Black vertical rectangle */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             " XXXXXX "
             " XXXXXX "
@@ -96,7 +96,7 @@
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x25a0, /* Black square */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXXXX "
@@ -109,7 +109,7 @@
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x25aa, /* Black small square */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "  XXXX  "
@@ -123,7 +123,7 @@
         /* Black up-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25b2,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "   XX   "
             "  XXXX  "
@@ -137,7 +137,7 @@
         /* Black right-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25b6,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " X      "
             " XXX    "
             " XXXX   "
@@ -151,7 +151,7 @@
         /* Black down-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25bc,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "XXXXXXXX"
             " XXXXXX "
@@ -165,7 +165,7 @@
         /* Black left-pointing triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25c0,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "      X "
             "    XXX "
             "   XXXX "
@@ -179,7 +179,7 @@
         /* Black diamond */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25c6,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "   XX   "
             "  XXXX  "
@@ -193,7 +193,7 @@
         /* Black Circle */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25cf,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "  XXXX  "
             " XXXXXX "
@@ -207,7 +207,7 @@
         /* Black Lower Right Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e2,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "     XX "
@@ -221,7 +221,7 @@
         /* Black Lower Left Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e3,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XX     "
@@ -235,7 +235,7 @@
         /* Black Upper Left Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e4,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXXXX "
@@ -249,7 +249,7 @@
         /* Black Upper Right Triangle */
         CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25e5,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXXXX "
@@ -263,7 +263,7 @@
         /* Black Medium Square */
         CHAFA_SYMBOL_TAG_GEOMETRIC,
         0x25fc,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "  XXXX  "
@@ -276,7 +276,7 @@
     {
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -290,7 +290,7 @@
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -304,7 +304,7 @@
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -318,7 +318,7 @@
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "   XX   "
@@ -332,7 +332,7 @@
         /* Variant */
         CHAFA_SYMBOL_TAG_DOT,
         0x00b7, /* Middle dot */
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -346,7 +346,7 @@
         /* Greek Capital Letter Xi */
         CHAFA_SYMBOL_TAG_EXTRA,
         0x039e,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             " XXXXXX "
             "        "

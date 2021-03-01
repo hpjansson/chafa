@@ -55,7 +55,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_SPACE,
         ' ',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -68,7 +68,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '!',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XX   "
             "  XXXX  "
             "  XXXX  "
@@ -81,7 +81,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '"',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XX XX  "
             " XX XX  "
             "        "
@@ -94,7 +94,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '#',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XX XX  "
             " XX XX  "
             "XXXXXXX "
@@ -107,7 +107,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '$',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XX    "
             " XXXXX  "
             "XX      "
@@ -120,7 +120,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '%',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "XX   XX "
             "XX  XX  "
@@ -133,7 +133,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '&',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXX   "
             " XX XX  "
             "  XXX   "
@@ -146,7 +146,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         0x27,
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XX     "
             " XX     "
             "XX      "
@@ -159,7 +159,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '(',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XX   "
             "  XX    "
             " XX     "
@@ -172,7 +172,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         ')',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XX     "
             "  XX    "
             "   XX   "
@@ -185,7 +185,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '*',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             " XX  XX "
             "  XXXX  "
@@ -198,7 +198,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '+',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "  XX    "
             "  XX    "
@@ -211,7 +211,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         ',',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -224,7 +224,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '-',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -237,7 +237,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '.',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -250,7 +250,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '/',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "     XX "
             "    XX  "
             "   XX   "
@@ -263,7 +263,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '0',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXXX  "
             "XX   XX "
             "XX  XXX "
@@ -276,7 +276,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '1',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XX    "
             " XXX    "
             "  XX    "
@@ -289,7 +289,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '2',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "    XX  "
@@ -302,7 +302,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '3',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "    XX  "
@@ -315,7 +315,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '4',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XXX  "
             "  XXXX  "
             " XX XX  "
@@ -328,7 +328,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '5',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXX  "
             "XX      "
             "XXXXX   "
@@ -341,7 +341,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '6',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXX   "
             " XX     "
             "XX      "
@@ -354,7 +354,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '7',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXX  "
             "XX  XX  "
             "    XX  "
@@ -367,7 +367,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '8',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "XX  XX  "
@@ -380,7 +380,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
         '9',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "XX  XX  "
@@ -393,7 +393,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         ':',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "  XX    "
             "  XX    "
@@ -406,7 +406,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         ';',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "  XX    "
             "  XX    "
@@ -419,7 +419,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '<',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XX   "
             "  XX    "
             " XX     "
@@ -432,7 +432,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '=',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XXXXXX  "
@@ -445,7 +445,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '>',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XX     "
             "  XX    "
             "   XX   "
@@ -458,7 +458,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '?',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "    XX  "
@@ -471,7 +471,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '@',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXXX  "
             "XX   XX "
             "XX XXXX "
@@ -484,7 +484,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'A',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XX    "
             " XXXX   "
             "XX  XX  "
@@ -497,7 +497,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'B',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXX  "
             " XX  XX "
             " XX  XX "
@@ -510,7 +510,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'C',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXXX  "
             " XX  XX "
             "XX      "
@@ -523,7 +523,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'D',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXX   "
             " XX XX  "
             " XX  XX "
@@ -536,7 +536,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'E',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXX "
             " XX   X "
             " XX X   "
@@ -549,7 +549,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'F',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXX "
             " XX   X "
             " XX X   "
@@ -562,7 +562,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'G',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXXX  "
             " XX  XX "
             "XX      "
@@ -575,7 +575,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'H',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX  XX  "
             "XX  XX  "
             "XX  XX  "
@@ -588,7 +588,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'I',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "  XX    "
             "  XX    "
@@ -601,7 +601,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'J',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XXXX "
             "    XX  "
             "    XX  "
@@ -614,7 +614,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'K',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXX  XX "
             " XX  XX "
             " XX XX  "
@@ -627,7 +627,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'L',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXX    "
             " XX     "
             " XX     "
@@ -640,7 +640,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'M',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX   XX "
             "XXX XXX "
             "XXXXXXX "
@@ -653,7 +653,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'N',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX   XX "
             "XXX  XX "
             "XXXX XX "
@@ -666,7 +666,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'O',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXX   "
             " XX XX  "
             "XX   XX "
@@ -679,7 +679,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'P',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXX  "
             " XX  XX "
             " XX  XX "
@@ -692,7 +692,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'Q',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "XX  XX  "
@@ -705,7 +705,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'R',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXX  "
             " XX  XX "
             " XX  XX "
@@ -718,7 +718,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'S',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "XX  XX  "
             "XXX     "
@@ -731,7 +731,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'T',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXX  "
             "X XX X  "
             "  XX    "
@@ -744,7 +744,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'U',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX  XX  "
             "XX  XX  "
             "XX  XX  "
@@ -757,7 +757,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'V',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX  XX  "
             "XX  XX  "
             "XX  XX  "
@@ -770,7 +770,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'W',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX   XX "
             "XX   XX "
             "XX   XX "
@@ -783,7 +783,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'X',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX   XX "
             "XX   XX "
             " XX XX  "
@@ -796,7 +796,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'Y',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX  XX  "
             "XX  XX  "
             "XX  XX  "
@@ -809,7 +809,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'Z',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXX "
             "XX   XX "
             "X   XX  "
@@ -822,7 +822,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '[',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             " XX     "
             " XX     "
@@ -835,7 +835,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '\\',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX      "
             " XX     "
             "  XX    "
@@ -848,7 +848,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         ']',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXX   "
             "   XX   "
             "   XX   "
@@ -861,7 +861,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '^',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   X    "
             "  XXX   "
             " XX XX  "
@@ -874,7 +874,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '_',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
@@ -887,7 +887,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '`',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XX    "
             "  XX    "
             "   XX   "
@@ -900,7 +900,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'a',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXX   "
@@ -913,7 +913,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'b',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXX     "
             " XX     "
             " XX     "
@@ -926,7 +926,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'c',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXX   "
@@ -939,7 +939,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'd',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XXX  "
             "    XX  "
             "    XX  "
@@ -952,7 +952,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'e',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXX   "
@@ -965,7 +965,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'f',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXX   "
             " XX XX  "
             " XX     "
@@ -978,7 +978,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'g',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXX XX "
@@ -991,7 +991,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'h',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXX     "
             " XX     "
             " XX XX  "
@@ -1004,7 +1004,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'i',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XX    "
             "        "
             " XXX    "
@@ -1017,7 +1017,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'j',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "    XX  "
             "        "
             "    XX  "
@@ -1030,7 +1030,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'k',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXX     "
             " XX     "
             " XX  XX "
@@ -1043,7 +1043,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'l',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXX    "
             "  XX    "
             "  XX    "
@@ -1056,7 +1056,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'm',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX  XX  "
@@ -1069,7 +1069,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'n',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XXXXX   "
@@ -1082,7 +1082,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'o',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXX   "
@@ -1095,7 +1095,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'p',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX XXX  "
@@ -1108,7 +1108,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'q',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXX XX "
@@ -1121,7 +1121,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'r',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX XXX  "
@@ -1134,7 +1134,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         's',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             " XXXXX  "
@@ -1147,7 +1147,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         't',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   X    "
             "  XX    "
             " XXXXX  "
@@ -1160,7 +1160,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'u',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX  XX  "
@@ -1173,7 +1173,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'v',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX  XX  "
@@ -1186,7 +1186,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'w',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX   XX "
@@ -1199,7 +1199,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'x',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX   XX "
@@ -1212,7 +1212,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'y',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XX  XX  "
@@ -1225,7 +1225,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
         'z',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "XXXXXX  "
@@ -1238,7 +1238,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '{',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XXX  "
             "  XX    "
             "  XX    "
@@ -1251,7 +1251,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '|',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XX   "
             "   XX   "
             "   XX   "
@@ -1264,7 +1264,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '}',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXX     "
             "  XX    "
             "  XX    "
@@ -1277,7 +1277,7 @@
     {
         CHAFA_SYMBOL_TAG_ASCII,
         '~',
-        CHAFA_OUTLINE_TO_BITMAP_8X8 (
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXX XX "
             "XX XXX  "
             "        "
