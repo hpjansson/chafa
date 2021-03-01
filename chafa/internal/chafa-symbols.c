@@ -24,7 +24,9 @@
 #include "internal/chafa-private.h"
 
 /* Fancy macros that turn our ASCII symbol outlines into compact bitmaps */
-#define CHAFA_OUTLINE_CHAR_TO_BIT(c) ((c) == ' ' ? G_GUINT64_CONSTANT (0) : G_GUINT64_CONSTANT (1))
+#define CHAFA_FOLD_BYTE_TO_BIT(x) ((((x) >> 0) | ((x) >> 1) | ((x) >> 2) | ((x) >> 3) | \
+                                    ((x) >> 4) | ((x) >> 5) | ((x) >> 6) | ((x) >> 7)) & 1)
+#define CHAFA_OUTLINE_CHAR_TO_BIT(c) ((guint64) CHAFA_FOLD_BYTE_TO_BIT ((c) ^ 0x20))
 #define CHAFA_OUTLINE_8_CHARS_TO_BITS(s, i) \
     ((CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 0]) << 7) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 1]) << 6) | \
      (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 2]) << 5) | (CHAFA_OUTLINE_CHAR_TO_BIT (s [i + 3]) << 4) | \
