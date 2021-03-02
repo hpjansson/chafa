@@ -145,6 +145,7 @@ static const ChafaSymbolDef symbol_defs [] =
 {
 #include "chafa-symbols-ascii.h"
 #include "chafa-symbols-block.h"
+#include "chafa-symbols-kana.h"
 #include "chafa-symbols-misc-narrow.h"
     {
 #if CHAFA_USE_CONSTANT_STRING_EXPR
