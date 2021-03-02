@@ -54,6 +54,7 @@
 #else
 
 #define CHAFA_SYMBOL_OUTLINE_8X8(x) x
+#define CHAFA_SYMBOL_OUTLINE_16X8(x) x
 
 #endif
 
@@ -83,6 +84,7 @@ typedef struct
 ChafaSymbolDef;
 
 ChafaSymbol *chafa_symbols;
+ChafaSymbol2 *chafa_symbols2;
 static gboolean symbols_initialized;
 
 /* Ranges we treat as ambiguous-width in addition to the ones defined by
@@ -186,18 +188,21 @@ calc_weights (ChafaSymbol *sym)
 }
 
 static void
-outline_to_coverage (const gchar *outline, gchar *coverage_out)
+outline_to_coverage (const gchar *outline, gchar *coverage_out, gint rowstride)
 {
     gchar xlate [256];
-    gint i;
+    gint x, y;
 
     xlate [' '] = 0;
     xlate ['X'] = 1;
 
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS; y++)
     {
-        guchar p = (guchar) outline [i];
-        coverage_out [i] = xlate [p];
+        for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
+        {
+            guchar p = (guchar) outline [y * rowstride + x];
+            coverage_out [y * CHAFA_SYMBOL_HEIGHT_PIXELS + x] = xlate [p];
+        }
     }
 }
 
@@ -277,54 +282,10 @@ generate_braille_syms (ChafaSymbol *syms, gint first_ofs)
     }
 }
 
-static ChafaSymbol *
-init_symbol_array (const ChafaSymbolDef *defs)
-{
-    gint i;
-    ChafaSymbol *syms;
-
-    syms = g_new0 (ChafaSymbol, CHAFA_N_SYMBOLS_MAX);
-
-    for (i = 0; defs [i].c; i++)
-    {
-        syms [i].sc = defs [i].sc;
-        syms [i].c = defs [i].c;
-        syms [i].coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
-
-        outline_to_coverage (defs [i].outline, syms [i].coverage);
-        syms [i].bitmap = coverage_to_bitmap (syms [i].coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
-        calc_weights (&syms [i]);
-        syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
-    }
-
-    generate_braille_syms (syms, i);
-    return syms;
-}
-
-void
-chafa_init_symbols (void)
-{
-    if (symbols_initialized)
-        return;
-
-    chafa_symbols = init_symbol_array (symbol_defs);
-
-    symbols_initialized = TRUE;
-}
-
-ChafaSymbolTags
-chafa_get_tags_for_char (gunichar c)
+static ChafaSymbolTags
+get_default_tags_for_char (gunichar c)
 {
     ChafaSymbolTags tags = CHAFA_SYMBOL_TAG_NONE;
-    gint i;
-
-    chafa_init_symbols ();
-
-    for (i = 0; chafa_symbols [i].c != 0; i++)
-    {
-        if (chafa_symbols [i].c == c)
-            return chafa_symbols [i].sc | CHAFA_SYMBOL_TAG_NARROW;
-    }
 
     if (g_unichar_iswide (c))
         tags |= CHAFA_SYMBOL_TAG_WIDE;
@@ -348,16 +309,134 @@ chafa_get_tags_for_char (gunichar c)
         tags |= CHAFA_SYMBOL_TAG_GEOMETRIC;
     else if (c >= 0x2800 && c <= 0x28ff)
         tags |= CHAFA_SYMBOL_TAG_BRAILLE;
-    else
-        tags |= CHAFA_SYMBOL_TAG_EXTRA;
 
     if (g_unichar_isalpha (c))
         tags |= CHAFA_SYMBOL_TAG_ALPHA;
     if (g_unichar_isdigit (c))
         tags |= CHAFA_SYMBOL_TAG_DIGIT;
 
-    if (!(tags & (CHAFA_SYMBOL_TAG_WIDE | CHAFA_SYMBOL_TAG_AMBIGUOUS)))
+    if (!(tags & CHAFA_SYMBOL_TAG_WIDE))
         tags |= CHAFA_SYMBOL_TAG_NARROW;
 
     return tags;
+}
+
+static void
+def_to_symbol (const ChafaSymbolDef *def, ChafaSymbol *sym, gint x_ofs, gint rowstride)
+{
+    sym->c = def->c;
+
+    /* FIXME: g_unichar_iswide_cjk() will erroneously mark many of our
+     * builtin symbols as ambiguous. Find a better way to deal with it. */
+    sym->sc = def->sc | (get_default_tags_for_char (def->c) & ~CHAFA_SYMBOL_TAG_AMBIGUOUS);
+
+    sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
+    outline_to_coverage (def->outline, sym->coverage + x_ofs, rowstride);
+
+    sym->bitmap = coverage_to_bitmap (sym->coverage, rowstride);
+    sym->popcount = chafa_population_count_u64 (sym->bitmap);
+
+    calc_weights (sym);
+}
+
+static ChafaSymbol *
+init_symbol_array (const ChafaSymbolDef *defs)
+{
+    ChafaSymbol *syms;
+    gint i, j;
+
+    syms = g_new0 (ChafaSymbol, CHAFA_N_SYMBOLS_MAX);
+
+    for (i = 0, j = 0; defs [i].c; i++)
+    {
+        gint outline_len;
+
+        outline_len = strlen (defs [i].outline);
+        g_assert (outline_len == CHAFA_SYMBOL_N_PIXELS
+                  || outline_len == CHAFA_SYMBOL_N_PIXELS * 2);
+
+        if (outline_len != CHAFA_SYMBOL_N_PIXELS
+            || g_unichar_iswide (defs [i].c))
+            continue;
+
+        def_to_symbol (&defs [i], &syms [j], 0, CHAFA_SYMBOL_WIDTH_PIXELS);
+        j++;
+    }
+
+    generate_braille_syms (syms, i);
+    return syms;
+}
+
+static ChafaSymbol2 *
+init_symbol_array_wide (const ChafaSymbolDef *defs)
+{
+    ChafaSymbol2 *syms;
+    gint i, j;
+
+    syms = g_new0 (ChafaSymbol2, CHAFA_N_SYMBOLS_MAX);
+
+    for (i = 0, j = 0; defs [i].c; i++)
+    {
+        gint outline_len;
+
+        outline_len = strlen (defs [i].outline);
+        g_assert (outline_len == CHAFA_SYMBOL_N_PIXELS
+                  || outline_len == CHAFA_SYMBOL_N_PIXELS * 2);
+
+        if (outline_len != CHAFA_SYMBOL_N_PIXELS * 2
+            || !g_unichar_iswide (defs [i].c))
+            continue;
+
+        def_to_symbol (&defs [i], &syms [j].sym [0],
+                       0, CHAFA_SYMBOL_WIDTH_PIXELS * 2);
+        def_to_symbol (&defs [i], &syms [j].sym [1],
+                       CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_WIDTH_PIXELS * 2);
+        j++;
+    }
+
+    return syms;
+}
+
+void
+chafa_init_symbols (void)
+{
+    if (symbols_initialized)
+        return;
+
+    chafa_symbols = init_symbol_array (symbol_defs);
+    chafa_symbols2 = init_symbol_array_wide (symbol_defs);
+
+    symbols_initialized = TRUE;
+}
+
+ChafaSymbolTags
+chafa_get_tags_for_char (gunichar c)
+{
+    gint i;
+
+    chafa_init_symbols ();
+
+    if (chafa_symbols)
+    {
+        for (i = 0; chafa_symbols [i].c != 0; i++)
+        {
+            if (chafa_symbols [i].c == c)
+            {
+                return chafa_symbols [i].sc;
+            }
+        }
+    }
+
+    if (chafa_symbols2)
+    {
+        for (i = 0; chafa_symbols2 [i].sym [0].c != 0; i++)
+        {
+            if (chafa_symbols2 [i].sym [0].c == c)
+            {
+                return chafa_symbols2 [i].sym [0].sc;
+            }
+        }
+    }
+
+    return get_default_tags_for_char (c);
 }

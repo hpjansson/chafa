@@ -119,6 +119,7 @@ typedef struct ChafaCanvasCell ChafaCanvasCell;
 /* Library functions */
 
 extern ChafaSymbol *chafa_symbols;
+extern ChafaSymbol2 *chafa_symbols2;
 
 void chafa_init_palette (void);
 void chafa_init_symbols (void);

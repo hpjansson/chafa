@@ -526,8 +526,6 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
     {
         for (i = 0; chafa_symbols [i].c != 0; i++)
         {
-            /* This assumes built-in symbols are always non-wide */
-
             if (char_is_selected (symbol_map->selectors,
                                   chafa_symbols [i].sc,
                                   chafa_symbols [i].c))
@@ -538,6 +536,28 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
                 sym->coverage = g_memdup (sym->coverage, CHAFA_SYMBOL_N_PIXELS);
                 g_hash_table_replace (desired_syms,
                                       GUINT_TO_POINTER (chafa_symbols [i].c),
+                                      sym);
+            }
+        }
+    }
+
+    /* Pick built-in symbols (wide) */
+
+    if (symbol_map->use_builtin_glyphs)
+    {
+        for (i = 0; chafa_symbols2 [i].sym [0].c != 0; i++)
+        {
+            if (char_is_selected (symbol_map->selectors,
+                                  chafa_symbols2 [i].sym [0].sc,
+                                  chafa_symbols2 [i].sym [0].c))
+            {
+                ChafaSymbol2 *sym = g_new (ChafaSymbol2, 1);
+
+                *sym = chafa_symbols2 [i];
+                sym->sym [0].coverage = g_memdup (sym->sym [0].coverage, CHAFA_SYMBOL_N_PIXELS);
+                sym->sym [1].coverage = g_memdup (sym->sym [1].coverage, CHAFA_SYMBOL_N_PIXELS);
+                g_hash_table_replace (desired_syms_wide,
+                                      GUINT_TO_POINTER (chafa_symbols2 [i].sym [0].c),
                                       sym);
             }
         }

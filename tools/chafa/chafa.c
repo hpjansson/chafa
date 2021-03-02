@@ -881,6 +881,7 @@ parse_options (int *argc, char **argv [])
 
     options.symbol_map = chafa_symbol_map_new ();
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
+    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_WIDE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_STIPPLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BRAILLE);
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ASCII);
