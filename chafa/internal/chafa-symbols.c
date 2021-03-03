@@ -1690,7 +1690,8 @@ static const ChafaSymbolDef symbol_defs [] =
         "        "
     },
     {
-        CHAFA_SYMBOL_TAG_DOT,
+        /* Has an emoji variant that may show up unbidden */
+        CHAFA_SYMBOL_TAG_DOT | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25aa, /* Black small square */
         "        "
         "        "
@@ -1716,7 +1717,8 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black right-pointing triangle */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Has an emoji variant that may show up unbidden */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25b6,
         " X      "
         " XXX    "
@@ -1742,7 +1744,8 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black left-pointing triangle */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Has an emoji variant that may show up unbidden */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25c0,
         "      X "
         "    XXX "
@@ -1755,7 +1758,8 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black diamond */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Depending on font, may exceed cell boundaries on VTE */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25c6,
         "        "
         "   XX   "
@@ -1833,7 +1837,9 @@ static const ChafaSymbolDef symbol_defs [] =
     },
     {
         /* Black Medium Square */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Has en emoji variant that may show up unbidden. See:
+         * https://github.com/hpjansson/chafa/issues/52 */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25fc,
         "        "
         "        "
