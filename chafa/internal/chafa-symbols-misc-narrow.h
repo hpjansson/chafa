@@ -107,7 +107,8 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_DOT,
+        /* Has an emoji variant that may show up unbidden */
+        CHAFA_SYMBOL_TAG_DOT | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25aa, /* Black small square */
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -135,7 +136,8 @@
     },
     {
         /* Black right-pointing triangle */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Has an emoji variant that may show up unbidden */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25b6,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             " X      "
@@ -163,7 +165,8 @@
     },
     {
         /* Black left-pointing triangle */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Has an emoji variant that may show up unbidden */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25c0,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "      X "
@@ -177,7 +180,8 @@
     },
     {
         /* Black diamond */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Depending on font, may exceed cell boundaries on VTE */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25c6,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -261,7 +265,9 @@
     },
     {
         /* Black Medium Square */
-        CHAFA_SYMBOL_TAG_GEOMETRIC,
+        /* Has en emoji variant that may show up unbidden. See:
+         * https://github.com/hpjansson/chafa/issues/52 */
+        CHAFA_SYMBOL_TAG_GEOMETRIC | CHAFA_SYMBOL_TAG_AMBIGUOUS,
         0x25fc,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
