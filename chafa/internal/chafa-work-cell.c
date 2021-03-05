@@ -215,13 +215,13 @@ work_cell_get_dominant_channel (ChafaWorkCell *wcell)
     for (i = 0; i < 4; i++)
         sorted_pixels [i] = work_cell_get_sorted_pixels (wcell, i);
 
-    best_range = wcell->pixels [sorted_pixels [0] [63]].col.ch [0]
+    best_range = wcell->pixels [sorted_pixels [0] [CHAFA_SYMBOL_N_PIXELS - 1]].col.ch [0]
         - wcell->pixels [sorted_pixels [0] [0]].col.ch [0];
     best_ch = 0;
 
     for (i = 1; i < 4; i++)
     {
-        gint range = wcell->pixels [sorted_pixels [i] [63]].col.ch [i]
+        gint range = wcell->pixels [sorted_pixels [i] [CHAFA_SYMBOL_N_PIXELS - 1]].col.ch [i]
             - wcell->pixels [sorted_pixels [i] [0]].col.ch [i];
 
         if (range > best_range)
@@ -254,7 +254,7 @@ work_cell_get_dominant_channels_for_symbol (ChafaWorkCell *wcell, const ChafaSym
         *fg_ch_out = -1;
         return;
     }
-    else if (sym->popcount == 64)
+    else if (sym->popcount == CHAFA_SYMBOL_N_PIXELS)
     {
         *bg_ch_out = -1;
         *fg_ch_out = work_cell_get_dominant_channel (wcell);
@@ -286,10 +286,10 @@ work_cell_get_dominant_channels_for_symbol (ChafaWorkCell *wcell, const ChafaSym
 
     for (j = 0; j < 4; j++)
     {
-        gint pen_a = sym->coverage [sorted_pixels [j] [63]];
-        max [pen_a] [j] = wcell->pixels [sorted_pixels [j] [63]].col.ch [j];
+        gint pen_a = sym->coverage [sorted_pixels [j] [CHAFA_SYMBOL_N_PIXELS - 1]];
+        max [pen_a] [j] = wcell->pixels [sorted_pixels [j] [CHAFA_SYMBOL_N_PIXELS - 1]].col.ch [j];
 
-        for (i = 62; ; i--)
+        for (i = CHAFA_SYMBOL_N_PIXELS - 2; ; i--)
         {
             gint pen_b = sym->coverage [sorted_pixels [j] [i]];
             if (pen_b != pen_a)

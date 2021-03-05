@@ -581,7 +581,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->coverage = (gchar *) bitmap_to_bytes (glyph->bitmap);
             sym->popcount = chafa_population_count_u64 (glyph->bitmap);
             sym->fg_weight = sym->popcount;
-            sym->bg_weight = 64 - sym->popcount;
+            sym->bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->popcount;
 
             g_hash_table_replace (desired_syms, GUINT_TO_POINTER (glyph->c), sym);
         }
@@ -608,7 +608,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->sym [0].coverage = (gchar *) bitmap_to_bytes (glyph->bitmap [0]);
             sym->sym [0].popcount = chafa_population_count_u64 (glyph->bitmap [0]);
             sym->sym [0].fg_weight = sym->sym [0].popcount;
-            sym->sym [0].bg_weight = 64 - sym->sym [0].popcount;
+            sym->sym [0].bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->sym [0].popcount;
 
             sym->sym [1].sc = tags;
             sym->sym [1].c = glyph->c;
@@ -616,7 +616,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->sym [1].coverage = (gchar *) bitmap_to_bytes (glyph->bitmap [1]);
             sym->sym [1].popcount = chafa_population_count_u64 (glyph->bitmap [1]);
             sym->sym [1].fg_weight = sym->sym [1].popcount;
-            sym->sym [1].bg_weight = 64 - sym->sym [1].popcount;
+            sym->sym [1].bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->sym [1].popcount;
 
             g_hash_table_replace (desired_syms_wide, GUINT_TO_POINTER (glyph->c), sym);
         }
