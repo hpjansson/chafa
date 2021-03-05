@@ -450,12 +450,30 @@ static gboolean
 char_is_selected (GArray *selectors, ChafaSymbolTags tags, gunichar c)
 {
     ChafaSymbolTags auto_exclude_tags = CHAFA_SYMBOL_TAG_BAD;
+    GUnicodeScript script;
     gboolean is_selected = FALSE;
     gint i;
 
     /* Always exclude characters that would mangle the output */
     if (!g_unichar_isprint (c) || g_unichar_iszerowidth (c)
         || c == '\t')
+        return FALSE;
+
+    /* We don't support RTL, so RTL characters will break the output.
+     *
+     * Ideally we'd exclude the R and AL bidi classes, but unfortunately we don't
+     * have a convenient API available to us to determine the bidi class of a
+     * character. So we just exclude a few scripts and hope for the best.
+     *
+     * A better implementation could extract directionality from the Unicode DB:
+     *
+     * https://www.unicode.org/reports/tr9/#Bidirectional_Character_Types
+     * https://www.unicode.org/Public/UCD/latest/ucd/extracted/DerivedBidiClass.txt */
+    script = g_unichar_get_script (c);
+    if (script == G_UNICODE_SCRIPT_ARABIC
+        || script == G_UNICODE_SCRIPT_HEBREW
+        || script == G_UNICODE_SCRIPT_THAANA
+        || script == G_UNICODE_SCRIPT_SYRIAC)
         return FALSE;
 
     for (i = 0; i < (gint) selectors->len; i++)

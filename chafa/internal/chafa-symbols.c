@@ -87,6 +87,11 @@ static const UnicharRange emoji_ranges [] =
 
 static const UnicharRange meta_ranges [] =
 {
+    /* Arabic tatweel -- RTL but it's a modifier and not formally part
+     * of a script, so can't simply be excluded on that basis in
+     * ChafaSymbolMap::char_is_selected() */
+    {  0x0640, 0x0640 },
+
     /* Ideographic description characters. These convert poorly to our
      * internal format. */
     {  0x2ff0, 0x2fff },
