@@ -420,28 +420,12 @@ chafa_get_tags_for_char (gunichar c)
 {
     gint i;
 
-    chafa_init_symbols ();
-
-    if (chafa_symbols)
+    for (i = 0; symbol_defs [i].c; i++)
     {
-        for (i = 0; chafa_symbols [i].c != 0; i++)
-        {
-            if (chafa_symbols [i].c == c)
-            {
-                return chafa_symbols [i].sc;
-            }
-        }
-    }
+        const ChafaSymbolDef *def = &symbol_defs [i];
 
-    if (chafa_symbols2)
-    {
-        for (i = 0; chafa_symbols2 [i].sym [0].c != 0; i++)
-        {
-            if (chafa_symbols2 [i].sym [0].c == c)
-            {
-                return chafa_symbols2 [i].sym [0].sc;
-            }
-        }
+        if (def->c == c)
+            return def->sc | (get_default_tags_for_char (def->c) & ~CHAFA_SYMBOL_TAG_AMBIGUOUS);
     }
 
     return get_default_tags_for_char (c);
