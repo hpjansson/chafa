@@ -99,7 +99,7 @@ ChafaPaletteColor;
 
 typedef struct
 {
-    gint16 ch [4];
+    guint16 ch [4];
 }
 ChafaColorAccum;
 
