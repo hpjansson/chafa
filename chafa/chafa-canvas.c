@@ -147,7 +147,7 @@ eval_symbol_error (ChafaCanvas *canvas, const ChafaWorkCell *wcell,
     }
     else
     {
-#ifdef HAVE_SSE41_INTRINSICS
+#ifdef HAVE_SSE41_INTRINSICSf
         if (chafa_have_sse41 ())
             error = calc_error_sse41 (wcell->pixels, &eval->colors, covp);
         else

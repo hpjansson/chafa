@@ -358,8 +358,11 @@ init_symbol_array (const ChafaSymbolDef *defs)
         gint outline_len;
 
         outline_len = strlen (defs [i].outline);
+
+#if 0
         g_assert (outline_len == CHAFA_SYMBOL_N_PIXELS
                   || outline_len == CHAFA_SYMBOL_N_PIXELS * 2);
+#endif
 
         if (outline_len != CHAFA_SYMBOL_N_PIXELS
             || g_unichar_iswide (defs [i].c))
@@ -386,8 +389,11 @@ init_symbol_array_wide (const ChafaSymbolDef *defs)
         gint outline_len;
 
         outline_len = strlen (defs [i].outline);
+
+#if 0
         g_assert (outline_len == CHAFA_SYMBOL_N_PIXELS
                   || outline_len == CHAFA_SYMBOL_N_PIXELS * 2);
+#endif
 
         if (outline_len != CHAFA_SYMBOL_N_PIXELS * 2
             || !g_unichar_iswide (defs [i].c))

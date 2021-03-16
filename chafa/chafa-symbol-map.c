@@ -53,7 +53,7 @@ Selector;
 typedef struct
 {
     gunichar c;
-    guint64 bitmap;
+    guint64 bitmap [4];
 }
 Glyph;
 
@@ -164,6 +164,20 @@ bitmap_to_bytes (guint64 bitmap)
     return cov;
 }
 
+static guint8 *
+bitmap_to_bytes_256 (guint64 *bitmap)
+{
+    guint8 *cov = g_malloc0 (CHAFA_SYMBOL_N_PIXELS);
+    gint i;
+
+    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        cov [i] = ((bitmap [i / 64]) >> ((CHAFA_SYMBOL_N_PIXELS % 64) - 1 - i)) & 1;
+    }
+
+    return cov;
+}
+
 /* Input format must always be RGBA8. old_format is just an indicator of how
  * the channel values are to be extracted. */
 static void
@@ -241,6 +255,26 @@ coverage_to_bitmap (const guint8 *cov, gint rowstride)
     return bitmap;
 }
 
+static void
+coverage_to_bitmap_256 (guint64 *bitmap, const guint8 *cov, gint rowstride)
+{
+    gint x, y;
+
+    bitmap [0] = bitmap [1] = bitmap [2] = bitmap [3] = 0;
+
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS; y++)
+    {
+        for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
+        {
+            guint64 *bm = &bitmap [((y * CHAFA_SYMBOL_WIDTH_PIXELS) + x) / 64];
+
+            *bm <<= 1;
+            if (cov [y * rowstride + x] > 127)
+                *bm |= 1;
+        }
+    }
+}
+
 G_GNUC_UNUSED static void
 dump_coverage (const guint8 *cov, gint width, gint height)
 {
@@ -266,8 +300,9 @@ dump_coverage (const guint8 *cov, gint width, gint height)
     DEBUG (g_printerr ("\n"));
 }
 
-static guint64
-glyph_to_bitmap (gint width, gint height,
+static void
+glyph_to_bitmap (guint64 *bitmap,
+                 gint width, gint height,
                  gint rowstride,
                  ChafaPixelType pixel_format,
                  gpointer pixels)
@@ -275,7 +310,7 @@ glyph_to_bitmap (gint width, gint height,
     guint8 scaled_pixels [CHAFA_SYMBOL_N_PIXELS * 4];
     guint8 cov [CHAFA_SYMBOL_N_PIXELS];
     guint8 sharpened_cov [CHAFA_SYMBOL_N_PIXELS];
-    guint64 bitmap;
+    gint i;
 
     /* Scale to cell dimensions */
 
@@ -291,9 +326,30 @@ glyph_to_bitmap (gint width, gint height,
     sharpen_coverage (cov, sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS);
     DEBUG (dump_coverage (cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS));
     DEBUG (dump_coverage (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS));
-    bitmap = coverage_to_bitmap (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS);
+    coverage_to_bitmap_256 (bitmap, sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS);
 
-    return bitmap;
+    g_printerr ("        GOOD_CHAFA_SYMBOL_OUTLINE_%uX%u (\n",
+                CHAFA_SYMBOL_WIDTH_PIXELS,
+                CHAFA_SYMBOL_HEIGHT_PIXELS);
+
+    for (i = 0; ; i++)
+    {
+        if (i % CHAFA_SYMBOL_WIDTH_PIXELS == 0)
+            g_printerr ("            \"");
+
+        if (sharpened_cov [i] == 0)
+            g_printerr (" ");
+        else
+            g_printerr ("X");
+
+        if (i == CHAFA_SYMBOL_N_PIXELS - 1)
+            break;
+
+        if (i % CHAFA_SYMBOL_WIDTH_PIXELS == CHAFA_SYMBOL_WIDTH_PIXELS - 1)
+            g_printerr ("\"\n");
+    }
+
+    g_printerr ("\")\n");
 }
 
 static void
@@ -595,9 +651,13 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
 
             sym->sc = tags;
             sym->c = glyph->c;
-            sym->bitmap = glyph->bitmap;
-            sym->coverage = (gchar *) bitmap_to_bytes (glyph->bitmap);
-            sym->popcount = chafa_population_count_u64 (glyph->bitmap);
+            sym->bitmap = glyph->bitmap [0];
+            sym->coverage = (gchar *) bitmap_to_bytes_256 (glyph->bitmap);
+            sym->popcount =
+                chafa_population_count_u64 (glyph->bitmap [0])
+                + chafa_population_count_u64 (glyph->bitmap [1])
+                + chafa_population_count_u64 (glyph->bitmap [2])
+                + chafa_population_count_u64 (glyph->bitmap [3]);
             sym->fg_weight = sym->popcount;
             sym->bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->popcount;
 
@@ -1713,7 +1773,7 @@ chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
 
         glyph = g_new (Glyph, 1);
         glyph->c = code_point;
-        glyph->bitmap = glyph_to_bitmap (width, height, rowstride, pixel_format, pixels);
+        glyph_to_bitmap (glyph->bitmap, width, height, rowstride, pixel_format, pixels);
         g_hash_table_insert (symbol_map->glyphs, GUINT_TO_POINTER (code_point), glyph);
     }
 
