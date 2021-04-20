@@ -39,13 +39,7 @@ chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n)
 {
     while (n--)
     {
-#if defined(HAVE_POPCNT64_INTRINSICS)
-        *(vc++) = _mm_popcnt_u64 (*(vv++));
-#else /* HAVE_POPCNT32_INTRINSICS */
-         __int32_t* w = (__int32_t*)vv;
-        *(vc++) = _mm_popcnt_u32(w[0]) + _mm_popcnt_u32(w[1]);
-        vv++;
-#endif
+        *(vc++) = chafa_pop_count_u64_builtin (*(vv++));
     }
 }
 
