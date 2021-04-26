@@ -208,6 +208,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *term;
     const gchar *colorterm;
     const gchar *vte_version;
+    const gchar *term_program;
     const gchar *tmux;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
@@ -223,6 +224,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     vte_version = g_environ_getenv (envp, "VTE_VERSION");
     if (!vte_version) vte_version = "";
+
+    term_program = g_environ_getenv (envp, "TERM_PROGRAM");
+    if (!term_program) term_program = "";
 
     tmux = g_environ_getenv (envp, "TMUX");
     if (!tmux) tmux = "";
@@ -253,6 +257,10 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     if (!strcmp (term, "xterm-256color")
         || !strcmp (term, "xterm-kitty"))
         color_seq_list = color_direct_list;
+
+    /* Apple Terminal sets TERM=xterm-256color, and does not support truecolor */
+    if (!g_ascii_strcasecmp (term_program, "Apple_Terminal"))
+        color_seq_list = color_256_list;
 
     /* mlterm's truecolor support seems to be broken; it looks like a color
      * allocation issue. This affects character cells, but not sixels.
