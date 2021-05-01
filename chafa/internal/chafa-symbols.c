@@ -122,7 +122,8 @@ static const UnicharRange ambiguous_ranges [] =
 static const UnicharRange emoji_ranges [] =
 {
     {  0x2600,  0x26ff },  /* Miscellaneous symbols */
-    { 0x1f000, 0x1ffff },  /* Emojis */
+    { 0x1f000, 0x1fb3b },  /* Emojis first part */
+    { 0x1fbcb, 0x1ffff },  /* Emojis second part, the gap is legacy computing */
 
     /* This symbol usually prints fine, but we don't want it randomly
      * popping up in our output anyway. So we add it to the "ugly" category,
@@ -367,6 +368,8 @@ get_default_tags_for_char (gunichar c)
         tags |= CHAFA_SYMBOL_TAG_GEOMETRIC;
     else if (c >= 0x2800 && c <= 0x28ff)
         tags |= CHAFA_SYMBOL_TAG_BRAILLE;
+    else if (c >= 0x1fb3c && c <= 0x1fbca)
+        tags |= CHAFA_SYMBOL_TAG_TELETEXT;
 
     if (g_unichar_isalpha (c))
         tags |= CHAFA_SYMBOL_TAG_ALPHA;
