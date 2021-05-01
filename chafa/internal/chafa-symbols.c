@@ -369,7 +369,7 @@ init_symbol_array (const ChafaSymbolDef *defs)
         j++;
     }
 
-    generate_braille_syms (syms, i);
+    generate_braille_syms (syms, j);
     return syms;
 }
 
