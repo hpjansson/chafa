@@ -293,22 +293,33 @@ generate_braille_syms (ChafaSymbol *syms, gint first_ofs)
 static void
 gen_sextant_sym (gchar *cov, guint8 val)
 {
-  memset (cov, 0, CHAFA_SYMBOL_N_PIXELS);
-  for (int y = 0; y < 3; y++)
-    for (int x = 0; x < 2; x++)
+    gint x, y;
+
+    memset (cov, 0, CHAFA_SYMBOL_N_PIXELS);
+
+    for (y = 0; y < 3; y++)
     {
-      int bit = y * 2 + x;
-      if (val & (1 << bit))
-      {
-        for (int v = 0; v < 3; v++)
-          for (int u = 0; u < 4; u++)
-          {
-             int row = y * 3 + v;
-             if (row > 3)
-               row --;
-             cov [(row * 8) + x * 4 + u] = 1;
-          }
-      }
+        for (x = 0; x < 2; x++)
+        {
+            gint bit = y * 2 + x;
+
+            if (val & (1 << bit))
+            {
+                gint u, v;
+
+                for (v = 0; v < 3; v++)
+                {
+                    for (u = 0; u < 4; u++)
+                    {
+                        gint row = y * 3 + v;
+                        if (row > 3)
+                            row--;
+
+                        cov [(row * 8) + x * 4 + u] = 1;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -317,27 +328,30 @@ generate_sextant_syms (ChafaSymbol *syms, gint first_ofs)
 {
     gunichar c;
     gint i = first_ofs;
-    /* teletext sextant/2x3 mosaic range */
 
-    c = 0x1Fb00;
+    /* Teletext sextant/2x3 mosaic range */
+
+    c = 0x1fb00;
 
     for (i = first_ofs; c < 0x1fb3b; c++, i++)
     {
         ChafaSymbol *sym = &syms [i];
+        gint bitmap;
 
         sym->sc = CHAFA_SYMBOL_TAG_SEXTANT;
         sym->c = c;
         sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
 
-        int bitmap = c - 0x1fb00 + 1;
-        if (bitmap > 20) bitmap ++;
-        if (bitmap > 41) bitmap ++;
+        bitmap = c - 0x1fb00 + 1;
+        if (bitmap > 20) bitmap++;
+        if (bitmap > 41) bitmap++;
 
         gen_sextant_sym (sym->coverage, bitmap);
         calc_weights (&syms [i]);
         syms [i].bitmap = coverage_to_bitmap (syms [i].coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
         syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
     }
+
     return i;
 }
 
