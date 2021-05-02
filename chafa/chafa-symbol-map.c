@@ -107,9 +107,10 @@ Glyph2;
  * @CHAFA_SYMBOL_TAG_WIDE: Characters that are two cells wide.
  * @CHAFA_SYMBOL_TAG_AMBIGUOUS: Characters of uncertain width. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_UGLY: Characters that are generally undesired or unlikely to render well. Always excluded unless specifically asked for.
+ * @CHAFA_SYMBOL_TAG_SEXTANT: Sextant 2x3 mosaics.
+ * @CHAFA_SYMBOL_TAG_TELETEXT: Teletext block shapes.
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
  * @CHAFA_SYMBOL_TAG_BAD: Joint set of ugly and ambiguous characters. Always excluded unless specifically asked for.
- * @CHAFA_SYMBOL_TAG_SEXTANT: Teletext sextants
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
  **/
 
