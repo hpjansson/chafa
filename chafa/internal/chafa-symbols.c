@@ -368,6 +368,8 @@ get_default_tags_for_char (gunichar c)
         tags |= CHAFA_SYMBOL_TAG_GEOMETRIC;
     else if (c >= 0x2800 && c <= 0x28ff)
         tags |= CHAFA_SYMBOL_TAG_BRAILLE;
+    else if (c >= 0x1fb00 && c <= 0x1fb3b)
+        tags |= CHAFA_SYMBOL_TAG_SEXTANT;
     else if (c >= 0x1fb3c && c <= 0x1fbca)
         tags |= CHAFA_SYMBOL_TAG_TELETEXT;
 
