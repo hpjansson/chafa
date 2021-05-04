@@ -77,7 +77,7 @@ test $TEST_TYPE $FILE || {
         exit 1
 }
 
-if test -z "$*"; then
+if test x$NOCONFIGURE = x && test -z "$*"; then
         ${MY_ECHO}
         ${MY_ECHO} "I am going to run ./configure with no arguments - if you wish "
         ${MY_ECHO} "to pass any to it, please specify them on the $0 command line."
@@ -102,4 +102,13 @@ ${MY_ECHO} "Running autoconf..."
 autoconf
 
 cd $ORIGDIR
-$srcdir/configure --enable-maintainer-mode "$@"
+
+conf_flags="--enable-maintainer-mode"
+
+if test x$NOCONFIGURE = x; then
+  ${MY_ECHO} Running $srcdir/configure $conf_flags "$@" ...
+  $srcdir/configure $conf_flags "$@" \
+  && ${MY_ECHO} Now type \`make\' to compile $PROJECT || exit 1
+else
+  ${MY_ECHO} Skipping configure process.
+fi
