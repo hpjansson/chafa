@@ -29,7 +29,7 @@ chafa_pop_count_u64_builtin (guint64 v)
 #if defined(HAVE_POPCNT64_INTRINSICS)
     return (gint) _mm_popcnt_u64 (v);
 #else /* HAVE_POPCNT32_INTRINSICS */
-    __int32_t* w = (__int32_t*)&v;
+    guint32* w = (guint32*)&v;
     return (gint) _mm_popcnt_u32(w[0]) + _mm_popcnt_u32(w[1]);
 #endif
 }
@@ -42,7 +42,7 @@ chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n)
 #if defined(HAVE_POPCNT64_INTRINSICS)
         *(vc++) = _mm_popcnt_u64 (*(vv++));
 #else /* HAVE_POPCNT32_INTRINSICS */
-         __int32_t* w = (__int32_t*)vv;
+         guint32* w = (guint32*)vv;
         *(vc++) = _mm_popcnt_u32(w[0]) + _mm_popcnt_u32(w[1]);
         vv++;
 #endif
@@ -66,8 +66,8 @@ chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gin
         *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
     }
 #else /* HAVE_POPCNT32_INTRINSICS */
-    __int32_t* aa = (__int32_t*)&a;
-    __int32_t* wb = (__int32_t*)vb;
+    guint32* aa = (guint32*)&a;
+    guint32* wb = (guint32*)vb;
     while (n--) {
         *(vc++) = _mm_popcnt_u32 (aa [0] ^ wb [0]) + _mm_popcnt_u32 (aa [1] ^ wb [1]);
         wb += 2;
