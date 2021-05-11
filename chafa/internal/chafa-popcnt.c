@@ -29,7 +29,7 @@ chafa_pop_count_u64_builtin (guint64 v)
 #if defined(HAVE_POPCNT64_INTRINSICS)
     return (gint) _mm_popcnt_u64 (v);
 #else /* HAVE_POPCNT32_INTRINSICS */
-    guint32* w = (guint32*)&v;
+    const guint32 *w = (const guint32 *) &v;
     return (gint) _mm_popcnt_u32(w[0]) + _mm_popcnt_u32(w[1]);
 #endif
 }
@@ -42,7 +42,7 @@ chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n)
 #if defined(HAVE_POPCNT64_INTRINSICS)
         *(vc++) = _mm_popcnt_u64 (*(vv++));
 #else /* HAVE_POPCNT32_INTRINSICS */
-         guint32* w = (guint32*)vv;
+        const guint32 *w = (const guint32 *)vv;
         *(vc++) = _mm_popcnt_u32(w[0]) + _mm_popcnt_u32(w[1]);
         vv++;
 #endif
@@ -62,13 +62,16 @@ chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gin
         *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
     }
 
-    while (n--) {
+    while (n--)
+    {
         *(vc++) = _mm_popcnt_u64 (a ^ *(vb++));
     }
 #else /* HAVE_POPCNT32_INTRINSICS */
-    guint32* aa = (guint32*)&a;
-    guint32* wb = (guint32*)vb;
-    while (n--) {
+    const guint32 *aa = (const guint32 *) &a;
+    const guint32 *wb = (const guint32 *) vb;
+
+    while (n--)
+    {
         *(vc++) = _mm_popcnt_u32 (aa [0] ^ wb [0]) + _mm_popcnt_u32 (aa [1] ^ wb [1]);
         wb += 2;
     }
@@ -93,14 +96,17 @@ chafa_hamming_distance_2_vu64_builtin (const guint64 *a, const guint64 *vb, gint
         *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
     }
 
-    while (n--) {
+    while (n--)
+    {
         *vc = _mm_popcnt_u64 (a [0] ^ *(vb++));
         *(vc++) += _mm_popcnt_u64 (a [1] ^ *(vb++));
     }
 #else /* HAVE_POPCNT32_INTRINSICS */
-    guint32 *aa = (const guint32 *) a;
-    guint32 *wb = (guint32 *) vb;
-    while (n--) {
+    const guint32 *aa = (const guint32 *) a;
+    const guint32 *wb = (const guint32 *) vb;
+
+    while (n--)
+    {
         *(vc++) = _mm_popcnt_u32 (aa [0] ^ wb [0]) + _mm_popcnt_u32 (aa [1] ^ wb [1])
             + _mm_popcnt_u32 (aa [2] ^ wb [2]) + _mm_popcnt_u32 (aa [3] ^ wb [3]);
         wb += 4;
