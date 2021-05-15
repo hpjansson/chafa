@@ -108,7 +108,7 @@ Glyph2;
  * @CHAFA_SYMBOL_TAG_AMBIGUOUS: Characters of uncertain width. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_UGLY: Characters that are generally undesired or unlikely to render well. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_SEXTANT: Sextant 2x3 mosaics.
- * @CHAFA_SYMBOL_TAG_TELETEXT: Teletext block shapes.
+ * @CHAFA_SYMBOL_TAG_WEDGE: Wedge shapes that align with sextants.
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
  * @CHAFA_SYMBOL_TAG_BAD: Joint set of ugly and ambiguous characters. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
@@ -822,7 +822,7 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "inverted", CHAFA_SYMBOL_TAG_INVERTED },
         { "braille", CHAFA_SYMBOL_TAG_BRAILLE },
         { "sextant", CHAFA_SYMBOL_TAG_SEXTANT },
-        { "teletext", CHAFA_SYMBOL_TAG_TELETEXT },
+        { "wedge", CHAFA_SYMBOL_TAG_WEDGE },
         { "technical", CHAFA_SYMBOL_TAG_TECHNICAL },
         { "geometric", CHAFA_SYMBOL_TAG_GEOMETRIC },
         { "ascii", CHAFA_SYMBOL_TAG_ASCII },

@@ -279,7 +279,7 @@ print_summary (void)
 
     "  Accepted classes for --symbols and --fill are [all, none, space, solid,\n"
     "  stipple, block, border, diagonal, dot, quad, half, hhalf, vhalf, inverted,\n"
-    "  braille, technical, geometric, ascii, sextant, teletext, wide, narrow, extra].\n"
+    "  braille, technical, geometric, ascii, sextant, wedge, wide, narrow, extra].\n"
     "  Some symbols belong to multiple classes, e.g. diagonals are also borders. You\n"
     "  can specify a list of classes separated by commas, or prefix them with + and -\n"
     "  to add or remove symbols relative to the existing set. The ordering is\n"

@@ -300,7 +300,7 @@ Allow scaling up beyond one character per pixel.
 <para>
 Accepted classes for --symbols are [all, none, space, solid, stipple, block,
 border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,
-technical, geometric, ascii, sextant, teletext, wide, narrow]. Some symbols
+technical, geometric, ascii, sextant, wedge, wide, narrow]. Some symbols
 belong to multiple classes, e.g. diagonals are also borders.
 </para>
 <para>

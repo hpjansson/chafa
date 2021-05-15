@@ -385,7 +385,7 @@ get_default_tags_for_char (gunichar c)
     else if (c >= 0x1fb00 && c <= 0x1fb3b)
         tags |= CHAFA_SYMBOL_TAG_SEXTANT;
     else if (c >= 0x1fb3c && c <= 0x1fbca)
-        tags |= CHAFA_SYMBOL_TAG_TELETEXT;
+        tags |= CHAFA_SYMBOL_TAG_WEDGE;
 
     if (g_unichar_isalpha (c))
         tags |= CHAFA_SYMBOL_TAG_ALPHA;
