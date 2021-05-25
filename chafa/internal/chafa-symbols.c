@@ -208,7 +208,7 @@ outline_to_coverage (const gchar *outline, gchar *coverage_out, gint rowstride)
         for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
         {
             guchar p = (guchar) outline [y * rowstride + x];
-            coverage_out [y * CHAFA_SYMBOL_HEIGHT_PIXELS + x] = xlate [p];
+            coverage_out [y * CHAFA_SYMBOL_WIDTH_PIXELS + x] = xlate [p];
         }
     }
 }
@@ -408,9 +408,9 @@ def_to_symbol (const ChafaSymbolDef *def, ChafaSymbol *sym, gint x_ofs, gint row
     sym->sc = def->sc | (get_default_tags_for_char (def->c) & ~CHAFA_SYMBOL_TAG_AMBIGUOUS);
 
     sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
-    outline_to_coverage (def->outline, sym->coverage + x_ofs, rowstride);
+    outline_to_coverage (def->outline, sym->coverage, rowstride);
 
-    sym->bitmap = coverage_to_bitmap (sym->coverage, rowstride);
+    sym->bitmap = coverage_to_bitmap (sym->coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
     sym->popcount = chafa_population_count_u64 (sym->bitmap);
 
     calc_weights (sym);
