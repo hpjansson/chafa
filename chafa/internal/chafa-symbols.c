@@ -408,7 +408,7 @@ def_to_symbol (const ChafaSymbolDef *def, ChafaSymbol *sym, gint x_ofs, gint row
     sym->sc = def->sc | (get_default_tags_for_char (def->c) & ~CHAFA_SYMBOL_TAG_AMBIGUOUS);
 
     sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
-    outline_to_coverage (def->outline, sym->coverage, rowstride);
+    outline_to_coverage (def->outline + x_ofs, sym->coverage, rowstride);
 
     sym->bitmap = coverage_to_bitmap (sym->coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
     sym->popcount = chafa_population_count_u64 (sym->bitmap);
