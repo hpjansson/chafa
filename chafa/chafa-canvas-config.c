@@ -118,7 +118,8 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->optimizations = CHAFA_OPTIMIZATION_ALL;
 
     chafa_symbol_map_init (&canvas_config->symbol_map);
-    chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_ALL);
+    chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
+    chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_SPACE);
     chafa_symbol_map_remove_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_WIDE);
 
     chafa_symbol_map_init (&canvas_config->fill_symbol_map);

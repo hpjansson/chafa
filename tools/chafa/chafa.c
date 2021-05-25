@@ -285,8 +285,8 @@ print_summary (void)
     "  to add or remove symbols relative to the existing set. The ordering is\n"
     "  significant.\n\n"
 
-    "  The default symbol set is all-stipple-braille-ascii+space-extra-inverted for\n"
-    "  all modes except \"none\", which uses all-stipple-braille-ascii+space-extra.\n\n"
+    "  The default symbol set is block+space-inverted for all modes except \"none\",\n"
+    "  which uses block+space (including inverse symbols).\n\n"
 
     "Examples:\n"
 
@@ -881,12 +881,7 @@ parse_options (int *argc, char **argv [])
     /* Defaults */
 
     options.symbol_map = chafa_symbol_map_new ();
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ALL);
-    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_WIDE);
-    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_STIPPLE);
-    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BRAILLE);
-    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_ASCII);
-    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_EXTRA);
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
 
     options.fill_symbol_map = chafa_symbol_map_new ();
