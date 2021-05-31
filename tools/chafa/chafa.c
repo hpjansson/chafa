@@ -314,6 +314,8 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
         options.mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
     else if (!g_ascii_strcasecmp (value, "16"))
         options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
+    else if (!g_ascii_strcasecmp (value, "8"))
+        options.mode = CHAFA_CANVAS_MODE_INDEXED_8;
     else if (!g_ascii_strcasecmp (value, "240"))
         options.mode = CHAFA_CANVAS_MODE_INDEXED_240;
     else if (!g_ascii_strcasecmp (value, "256"))

@@ -30,6 +30,7 @@
 
 /* Normalization: Percentage of pixels to discard at extremes of histogram */
 #define INDEXED_16_CROP_PCT 5
+#define INDEXED_8_CROP_PCT  10
 #define INDEXED_2_CROP_PCT  20
 
 typedef struct
@@ -460,7 +461,9 @@ prepare_pixels_1_inner (PreparePixelsBatch1 *work,
     *alpha_sum += (0xff - col->ch [3]);
 
     if (prep_ctx->preprocessing_enabled
-        && prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16)
+        && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16
+            || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8)
+        )
     {
         boost_saturation_rgb (col);
     }
@@ -589,8 +592,18 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
         for (i = 0; i < prep_ctx->n_batches_pixels; i++)
             sum_histograms (&batches [i].hist, &prep_ctx->hist);
 
-        histogram_calc_bounds (&prep_ctx->hist,
-                               prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16 ? INDEXED_16_CROP_PCT : INDEXED_2_CROP_PCT);
+        switch (prep_ctx->palette_type)
+        {
+          case CHAFA_PALETTE_TYPE_FIXED_16:
+            histogram_calc_bounds (&prep_ctx->hist, INDEXED_16_CROP_PCT);
+            break;
+          case CHAFA_PALETTE_TYPE_FIXED_8:
+            histogram_calc_bounds (&prep_ctx->hist, INDEXED_8_CROP_PCT);
+            break;
+          default:
+            histogram_calc_bounds (&prep_ctx->hist, INDEXED_2_CROP_PCT);
+            break;
+        }
     }
 
     g_free (batches);
@@ -618,6 +631,7 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
 {
     if (prep_ctx->preprocessing_enabled
         && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16
+            ||prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8
             || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_FGBG))
         normalize_rgb (prep_ctx->dest_pixels, &prep_ctx->hist, prep_ctx->dest_width,
                        work->first_row, work->n_rows);
@@ -679,6 +693,7 @@ need_pass_2 (PrepareContext *prep_ctx)
 {
     if ((prep_ctx->preprocessing_enabled
          && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16
+             || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8
              || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_FGBG))
         || prep_ctx->have_alpha_int
         || prep_ctx->color_space == CHAFA_COLOR_SPACE_DIN99D

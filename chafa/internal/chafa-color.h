@@ -154,6 +154,9 @@ void chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space,
 /* Takes values 0-255 for r, g, b and returns a universal palette index 0-15 */
 void chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
 
+/* Takes values 0-255 for r, g, b and returns a universal palette index 0-7 */
+void chafa_pick_color_8 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
+
 /* Takes values 0-255 for r, g, b and returns CHAFA_PALETTE_INDEX_FG or CHAFA_PALETTE_INDEX_BG */
 void chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
                             const ChafaColor *fg_color, const ChafaColor *bg_color,

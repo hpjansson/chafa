@@ -56,6 +56,7 @@
 
 /* Dithering */
 #define DITHER_BASE_INTENSITY_FGBG 1.0
+#define DITHER_BASE_INTENSITY_8C   0.5
 #define DITHER_BASE_INTENSITY_16C  0.25
 #define DITHER_BASE_INTENSITY_256C 0.1
 
@@ -484,7 +485,8 @@ apply_fill (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *ce
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
              || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
-             || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16)
+             || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+             || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_8)
     {
         chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space,
                                       &mean, &ccand);
@@ -577,6 +579,7 @@ update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cel
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_8
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
     {
         chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_FG], &ccand);
@@ -625,6 +628,7 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_8
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
     {
         chafa_palette_lookup_nearest (&canvas->palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_FG], &ccand);
@@ -818,6 +822,10 @@ setup_palette (ChafaCanvas *canvas)
             pal_type = CHAFA_PALETTE_TYPE_FIXED_16;
             break;
 
+        case CHAFA_CANVAS_MODE_INDEXED_8:
+            pal_type = CHAFA_PALETTE_TYPE_FIXED_8;
+            break;
+
         case CHAFA_CANVAS_MODE_FGBG_BGFG:
         case CHAFA_CANVAS_MODE_FGBG:
             pal_type = CHAFA_PALETTE_TYPE_FIXED_FGBG;
@@ -921,6 +929,9 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
                 break;
             case CHAFA_CANVAS_MODE_INDEXED_16:
                 dither_intensity = DITHER_BASE_INTENSITY_16C;
+                break;
+            case CHAFA_CANVAS_MODE_INDEXED_8:
+                dither_intensity = DITHER_BASE_INTENSITY_8C;
                 break;
             case CHAFA_CANVAS_MODE_FGBG:
             case CHAFA_CANVAS_MODE_FGBG_BGFG:

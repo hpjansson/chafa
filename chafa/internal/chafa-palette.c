@@ -489,6 +489,7 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         palette_out->colors [i].col [CHAFA_COLOR_SPACE_DIN99D] = *chafa_get_palette_color_256 (i, CHAFA_COLOR_SPACE_DIN99D);
     }
 
+
     palette_out->transparent_index = CHAFA_PALETTE_INDEX_TRANSPARENT;
 
     palette_out->first_color = 0;
@@ -502,6 +503,10 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
     else if (type == CHAFA_PALETTE_TYPE_FIXED_16)
     {
         palette_out->n_colors = 16;
+    }
+    else if (type == CHAFA_PALETTE_TYPE_FIXED_8)
+    {
+        palette_out->n_colors = 8;
     }
     else if (type == CHAFA_PALETTE_TYPE_FIXED_FGBG)
     {
@@ -651,6 +656,8 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
             chafa_pick_color_240 (color, color_space, candidates);
         else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_16)
             chafa_pick_color_16 (color, color_space, candidates);
+        else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_8)
+            chafa_pick_color_8 (color, color_space, candidates);
         else /* CHAFA_PALETTE_TYPE_FIXED_FGBG */
             chafa_pick_color_fgbg (color, color_space,
                                    &palette->colors [CHAFA_PALETTE_INDEX_FG].col [color_space],

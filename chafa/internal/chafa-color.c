@@ -466,6 +466,32 @@ chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, Chafa
     pick_color_16 (color, color_space, candidates);
 }
 
+
+static void
+pick_color_8 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    gint i;
+
+    for (i = 0; i < 8; i++)
+    {
+        update_candidates_with_color_index_diff (candidates, color_space, color, i);
+    }
+#if 0
+    /* Try transparency */
+
+    update_candidates_with_color_index_diff (candidates, color_space, color,
+                                             CHAFA_PALETTE_INDEX_TRANSPARENT);
+#endif
+}
+
+void
+chafa_pick_color_8 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
+{
+    init_candidates (candidates);
+    pick_color_8 (color, color_space, candidates);
+}
+
+
 void
 chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates)
 {

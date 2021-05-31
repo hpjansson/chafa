@@ -587,6 +587,9 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
             case CHAFA_CANVAS_MODE_INDEXED_16:
                 out = emit_ansi_16 (&ctx, out, i, i_next);
                 break;
+            case CHAFA_CANVAS_MODE_INDEXED_8:
+                out = emit_ansi_16 (&ctx, out, i, i_next);
+                break;
             case CHAFA_CANVAS_MODE_FGBG_BGFG:
                 out = emit_ansi_fgbg_bgfg (&ctx, out, i, i_next);
                 break;
