@@ -1,6 +1,7 @@
 SUBDIRS = chafa docs libnsgif tests tools
 
 EXTRA_DIST = \
+	HACKING \
 	README.md \
 	autogen.sh \
 	chafa.pc.in

@@ -1,0 +1,87 @@
+How to hack on Chafa
+====================
+
+Code formatting and structure
+-----------------------------
+
+The code is mostly C99 with limited use of extensions. It should compile with
+most standards-compliant C compilers released in the last couple of years.
+
+GLib is our primary support library, and the code is in general very GLib-y.
+We use only the base library, no GObject or GIO.
+
+Formatting is done with spaces (no tabs) and four-space indenting stops.
+
+The directory layout is as follows:
+
+* Top level ............ Build scripts, README, etc.
+  |- chafa ............. The Chafa library. All exported APIs are here.
+  |  `- internal ....... Chafa library internals. Internal APIs.
+  |     `- smolscale ... Private copy of a pixmap scaling library.
+  |- docs .............. Built documentation (API and man pages).
+  |- libnsgif .......... Private copy of a GIF library, used by tools.
+  `- tools ............. Command-line tools.
+     |- chafa .......... The Chafa command-line graphics viewer.
+     `- fontgen ........ Experimental font generator.
+
+Making source releases
+----------------------
+
+Releases are made as compressed, signed tar archives ("tarballs"). We use
+semantic versioning.
+
+The following can be done multiple times and at any time during development,
+always on the master branch:
+
+1) Write/edit NEWS section with a (TBA) placeholder for release date.
+
+Then right before the release, still on the master branch:
+
+2) Update the soversion in chafa/Makefile.am (-version-info c:r:a):
+   - If the library source code has changed at all since the last update,
+     then increment revision (‘c:r:a’ becomes ‘c:r+1:a’).
+   - If any interfaces have been added, removed, or changed since the last
+     update, increment current, and set revision to 0.
+   - If any interfaces have been added since the last public release, then
+     increment age.
+   - If any interfaces have been removed or changed since the last public
+     release, then set age to 0. 
+
+3) If this is a minor (x.y.0) release, bump package to the next even version
+   in configure.ac.
+
+4) Make sure 'make distcheck' passes. Correct any issues.
+
+5) Commit and push above changes. Wait for green CI and correct any issues.
+
+6) Edit NEWS and replace (TBA) with today's date.
+
+7) If this is a minor (x.y.0) release, edit README.md and update the CI links.
+   They should reference master and the latest stable branch.
+
+8) If this is a micro (x.y.z) release, switch to that release's maintenance
+   branch (x.y) and cherry-pick all changes from the previous steps into it,
+   then increment the micro version in configure.ac.
+
+9) Commit above changes.
+
+10) Tag and sign the release: 'git tag -s x.y.z'. Annotate with the appropriate
+    NEWS item, without the --- underline for the heading.
+
+11) If this is a minor (x.y.0) release, make a maintenance branch for it,
+    rooted at the tag: 'git branch x.y'. But keep working on master.
+
+12) Build tarball: 'make distcheck'.
+
+13) Sign tarball: 'gpg --sign --detach --armor chafa-x.y.z.tar.xz'.
+
+14) If this was a minor (x.y.0) release, bump package to the next odd version.
+
+15) Commit the post-release version bump.
+
+16) Push changes. Make sure to push tags and branches too.
+
+17) Upload the tarball and signature to GitHub, and copy the NEWS item there.
+    Add markdown formatting.
+
+That should do it.
