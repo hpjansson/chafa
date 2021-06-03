@@ -1,6 +1,23 @@
 Chafa releases
 ==============
 
+1.6.1 (TBA)
+-----------
+
+This is a bugfix release.
+
+* Add NOCONFIGURE variable to autogen.sh to skip configure (Biswapriyo Nath).
+
+* Bug fixes:
+  github#50  SIGBUS while loading huge GIFs (reported by Grzegorz Koperwas).
+  github#52  Produces small glitches in output with some images (reported by
+             Sami Farin).
+  github#54  Haiku port fails on 32bit (Luc Schrijvers).
+  [unfiled]  Exclude RTL code points that could break the output.
+  [unfiled]  Apple Terminal lacks truecolor support, so make it default to 256
+             colors (reported by Behdad Esfahbod).
+  [unfiled]  Fix typo affecting middle dot symbol.
+
 1.6.0 (2021-01-15)
 ------------------
 
