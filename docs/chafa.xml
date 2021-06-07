@@ -70,7 +70,7 @@ Clear screen before processing each file.
 <varlistentry>
 <term><option>-c <replaceable>mode</replaceable>, --colors <replaceable>mode</replaceable></option></term>
 <listitem><para>
-Set output color mode; one of [none, 2, 16, 240, 256, full]. Defaults to full
+Set output color mode; one of [none, 2, 8, 16, 240, 256, full]. Defaults to full
 (24-bit). The 240-color mode is recommended over the 256-color one, since the
 lower 16 colors are unreliable and tend to differ between terminals. 16-color
 mode will use aixterm extensions to produce 16 foreground and background

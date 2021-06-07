@@ -489,7 +489,6 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         palette_out->colors [i].col [CHAFA_COLOR_SPACE_DIN99D] = *chafa_get_palette_color_256 (i, CHAFA_COLOR_SPACE_DIN99D);
     }
 
-
     palette_out->transparent_index = CHAFA_PALETTE_INDEX_TRANSPARENT;
 
     palette_out->first_color = 0;

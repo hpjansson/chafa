@@ -225,7 +225,7 @@ print_summary (void)
 
     "      --bg=COLOR     Background color of display (color name or hex).\n"
     "      --clear        Clear screen before processing each file.\n"
-    "  -c, --colors=MODE  Set output color mode; one of [none, 2, 16, 240, 256,\n"
+    "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16, 240, 256,\n"
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-extractor=EXTR  Method for extracting color from an area\n"
     "                     [average, median]. Median is the default.\n"
