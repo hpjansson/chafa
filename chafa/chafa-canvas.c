@@ -1394,6 +1394,7 @@ chafa_canvas_get_colors_at (ChafaCanvas *canvas, gint x, gint y,
         case CHAFA_CANVAS_MODE_INDEXED_256:
         case CHAFA_CANVAS_MODE_INDEXED_240:
         case CHAFA_CANVAS_MODE_INDEXED_16:
+        case CHAFA_CANVAS_MODE_INDEXED_8:
         case CHAFA_CANVAS_MODE_FGBG_BGFG:
         case CHAFA_CANVAS_MODE_FGBG:
             if (cell->fg_color == CHAFA_PALETTE_INDEX_BG
@@ -1442,6 +1443,7 @@ chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
         case CHAFA_CANVAS_MODE_INDEXED_256:
         case CHAFA_CANVAS_MODE_INDEXED_240:
         case CHAFA_CANVAS_MODE_INDEXED_16:
+        case CHAFA_CANVAS_MODE_INDEXED_8:
             cell->fg_color = packed_rgb_to_index (&canvas->palette, canvas->config.color_space, fg);
             cell->bg_color = packed_rgb_to_index (&canvas->palette, canvas->config.color_space, bg);
             break;
@@ -1481,6 +1483,7 @@ chafa_canvas_get_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
         case CHAFA_CANVAS_MODE_INDEXED_256:
         case CHAFA_CANVAS_MODE_INDEXED_240:
         case CHAFA_CANVAS_MODE_INDEXED_16:
+        case CHAFA_CANVAS_MODE_INDEXED_8:
             fg = cell->fg_color < 256 ? (gint) cell->fg_color : -1;
             bg = cell->bg_color < 256 ? (gint) cell->bg_color : -1;
             break;
@@ -1525,6 +1528,7 @@ chafa_canvas_set_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
         case CHAFA_CANVAS_MODE_INDEXED_256:
         case CHAFA_CANVAS_MODE_INDEXED_240:
         case CHAFA_CANVAS_MODE_INDEXED_16:
+        case CHAFA_CANVAS_MODE_INDEXED_8:
             cell->fg_color = fg >= 0 ? fg : CHAFA_PALETTE_INDEX_TRANSPARENT;
             cell->bg_color = bg >= 0 ? bg : CHAFA_PALETTE_INDEX_TRANSPARENT;
             break;
