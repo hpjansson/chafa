@@ -34,6 +34,7 @@ detect_canvas_mode (void)
     return COLORS >= (1 << 24) ? CHAFA_CANVAS_MODE_TRUECOLOR
         : COLORS >= (1 << 8) ? CHAFA_CANVAS_MODE_INDEXED_240
         : COLORS >= (1 << 4) ? CHAFA_CANVAS_MODE_INDEXED_16
+        : COLORS >= (1 << 3) ? CHAFA_CANVAS_MODE_INDEXED_8
         : CHAFA_CANVAS_MODE_FGBG;
 }
 
