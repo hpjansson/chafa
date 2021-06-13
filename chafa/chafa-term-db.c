@@ -210,6 +210,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *vte_version;
     const gchar *term_program;
     const gchar *tmux;
+    const gchar *ctx_backend;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
     const SeqStr *rep_seqs_local = NULL;
@@ -231,6 +232,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     tmux = g_environ_getenv (envp, "TMUX");
     if (!tmux) tmux = "";
 
+    ctx_backend = g_environ_getenv (envp, "CTX_BACKEND");
+    if (!ctx_backend) ctx_backend = "";
+
     /* Some terminals set COLORTERM=truecolor. However, this env var can
      * make its way into environments where truecolor is not desired
      * (e.g. screen sessions), so check it early on and override it later. */
@@ -250,6 +254,10 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
             && !strcmp (term, "xterm-256color"))
             rep_seqs_local = rep_seqs;
     }
+
+    /* The ctx terminal (https://ctx.graphics/) understands REP */
+    if (strlen (ctx_backend) > 0)
+        rep_seqs_local = rep_seqs;
 
     /* Terminals that advertise 256 colors usually support truecolor too,
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
