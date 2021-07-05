@@ -792,6 +792,21 @@ update_cells_row (ChafaCanvas *canvas, gint row)
         {
             apply_fill (canvas, wcell, &cells [cx]);
         }
+
+        /* If cell is still featureless after fill, use blank_char consistently */
+
+        if (cells [cx].c != 0 && (cells [cx].c == ' '
+                                  || cells [cx].fg_color == cells [cx].bg_color))
+        {
+            cells [cx].c = canvas->blank_char;
+
+            /* Copy FG color from previous cell in order to avoid emitting
+             * unnecessary control sequences changing it, but only if we're 100%
+             * sure the "blank" char has no foreground features. It's safest to
+             * permit this optimization only with ASCII space. */
+            if (canvas->blank_char == ' ' && cx > 0)
+                cells [cx].fg_color = cells [cx - 1].fg_color;
+        }
     }
 }
 
@@ -922,6 +937,45 @@ setup_palette (ChafaCanvas *canvas)
     chafa_palette_set_transparent_index (&canvas->palette, CHAFA_PALETTE_INDEX_TRANSPARENT);
 }
 
+static gunichar
+find_best_blank_char (ChafaCanvas *canvas)
+{
+    ChafaCandidate candidates [N_CANDIDATES_MAX];
+    gint n_candidates;
+    gunichar best_char = 0x20;
+
+    /* Try space (0x20) first */
+    if (chafa_symbol_map_has_symbol (&canvas->config.symbol_map, 0x20)
+        || chafa_symbol_map_has_symbol (&canvas->config.fill_symbol_map, 0x20))
+        return 0x20;
+
+    n_candidates = N_CANDIDATES_MAX;
+    chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map,
+                                           0,
+                                           FALSE,
+                                           candidates,
+                                           &n_candidates);
+    if (n_candidates > 0)
+    {
+        best_char = canvas->config.fill_symbol_map.symbols [candidates [0].symbol_index].c;
+    }
+    else
+    {
+        n_candidates = N_CANDIDATES_MAX;
+        chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
+                                          0,
+                                          FALSE,
+                                          candidates,
+                                          &n_candidates);
+        if (n_candidates > 0)
+        {
+            best_char = canvas->config.symbol_map.symbols [candidates [0].symbol_index].c;
+        }
+    }
+
+    return best_char;
+}
+
 /**
  * chafa_canvas_new:
  * @config: Configuration to use or %NULL for hardcoded defaults
@@ -981,6 +1035,8 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
 
     chafa_symbol_map_prepare (&canvas->config.symbol_map);
     chafa_symbol_map_prepare (&canvas->config.fill_symbol_map);
+
+    canvas->blank_char = find_best_blank_char (canvas);
 
     /* In truecolor mode we don't support any fancy color spaces for now, since
      * we'd have to convert back to RGB space when emitting control codes, and

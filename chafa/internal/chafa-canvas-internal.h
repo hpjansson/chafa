@@ -48,6 +48,10 @@ struct ChafaCanvas
     ChafaColorPair default_colors;
     guint work_factor_int;
 
+    /* Character to use in cells where fg color == bg color. Typically
+     * space, but could be something else depending on the symbol map. */
+    gunichar blank_char;
+
     ChafaCanvasConfig config;
 
     /* Used when setting pixel data */
