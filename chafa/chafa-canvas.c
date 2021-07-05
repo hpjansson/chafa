@@ -615,11 +615,15 @@ apply_fill (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *ce
                                            &sym_cand, &n_sym_cands);
 
     /* If we end up with a featureless symbol (space or fill), make
-     * FG color equal to BG. */
-    if (best_i == 0)
-        ccand.index [1] = ccand.index [0];
-    else if (best_i == 64)
-        ccand.index [0] = ccand.index [1];
+     * FG color equal to BG. Don't do this in FGBG mode, as it does not permit
+     * color manipulation. */
+    if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+    {
+        if (best_i == 0)
+            ccand.index [1] = ccand.index [0];
+        else if (best_i == 64)
+            ccand.index [0] = ccand.index [1];
+    }
 
     if (sym_cand.is_inverted)
     {
