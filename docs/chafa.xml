@@ -309,8 +309,8 @@ and - to add or remove symbols relative to the existing set. The ordering is
 significant.
 </para>
 <para>
-The default symbol set is block+space-inverted for all modes except "none",
-which uses block+space (including inverse symbols).
+The default symbol set is block+border+space-wide-inverted for all modes
+except "none", which uses block+border+space-wide (including inverse symbols).
 </para>
 </refsect1>
 

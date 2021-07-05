@@ -285,8 +285,8 @@ print_summary (void)
     "  to add or remove symbols relative to the existing set. The ordering is\n"
     "  significant.\n\n"
 
-    "  The default symbol set is block+space-inverted for all modes except \"none\",\n"
-    "  which uses block+space (including inverse symbols).\n\n"
+    "  The default symbol set is block+border+space-wide-inverted for all modes\n"
+    "  except \"none\", which uses block+border+space-wide (including inverse symbols).\n\n"
 
     "Examples:\n"
 
@@ -884,7 +884,9 @@ parse_options (int *argc, char **argv [])
 
     options.symbol_map = chafa_symbol_map_new ();
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BORDER);
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
+    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_WIDE);
 
     options.fill_symbol_map = chafa_symbol_map_new ();
 
