@@ -8,8 +8,10 @@
 Makefile
 Makefile.in
 aclocal.m4
+ar-lib
 autom4te.cache
 chafa.pc
+chafa/chafa-term-seq-doc.h
 chafa/chafaconfig.h
 chafa/chafaconfig-stamp
 compile
@@ -22,13 +24,16 @@ config.sub
 configure
 depcomp
 docs/html
+docs/version.xml
 docs/xml
+gtk-doc.make
 install-sh
 libtool
 ltmain.sh
 m4
 missing
 stamp-h1
+tests/term-info-test
 tools/chafa/chafa
 
 test
