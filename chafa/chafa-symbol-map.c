@@ -107,6 +107,7 @@ Glyph2;
  * @CHAFA_SYMBOL_TAG_WIDE: Characters that are two cells wide.
  * @CHAFA_SYMBOL_TAG_AMBIGUOUS: Characters of uncertain width. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_UGLY: Characters that are generally undesired or unlikely to render well. Always excluded unless specifically asked for.
+ * @CHAFA_SYMBOL_TAG_LEGACY: Legacy computer symbols, including sextants, wedges and more.
  * @CHAFA_SYMBOL_TAG_SEXTANT: Sextant 2x3 mosaics.
  * @CHAFA_SYMBOL_TAG_WEDGE: Wedge shapes that align with sextants.
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
@@ -835,6 +836,7 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "extra", CHAFA_SYMBOL_TAG_EXTRA },
         { "alnum", CHAFA_SYMBOL_TAG_ALNUM },
         { "bad", CHAFA_SYMBOL_TAG_BAD },
+        { "legacy", CHAFA_SYMBOL_TAG_LEGACY },
 
         { NULL, 0 }
     };

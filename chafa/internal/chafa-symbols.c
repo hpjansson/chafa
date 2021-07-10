@@ -338,7 +338,7 @@ generate_sextant_syms (ChafaSymbol *syms, gint first_ofs)
         ChafaSymbol *sym = &syms [i];
         gint bitmap;
 
-        sym->sc = CHAFA_SYMBOL_TAG_SEXTANT;
+        sym->sc = CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_SEXTANT;
         sym->c = c;
         sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
 
