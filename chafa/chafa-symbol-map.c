@@ -397,8 +397,6 @@ compile_symbols (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
     symbol_map->packed_bitmaps = g_new (guint64, symbol_map->n_symbols);
     for (i = 0; i < symbol_map->n_symbols; i++)
         symbol_map->packed_bitmaps [i] = symbol_map->symbols [i].bitmap;
-
-    symbol_map->need_rebuild = FALSE;
 }
 
 static void
@@ -445,8 +443,6 @@ compile_symbols_wide (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
         symbol_map->packed_bitmaps2 [i * 2] = symbol_map->symbols2 [i].sym [0].bitmap;
         symbol_map->packed_bitmaps2 [i * 2 + 1] = symbol_map->symbols2 [i].sym [1].bitmap;
     }
-
-    symbol_map->need_rebuild = FALSE;
 }
 
 static gboolean
@@ -645,6 +641,8 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
 
     compile_symbols_wide (symbol_map, desired_syms_wide);
     g_hash_table_destroy (desired_syms_wide);
+
+    symbol_map->need_rebuild = FALSE;
 }
 
 static GHashTable *
