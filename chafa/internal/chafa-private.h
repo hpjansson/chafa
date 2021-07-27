@@ -166,7 +166,9 @@ gint *chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude);
 
 #ifdef HAVE_MMX_INTRINSICS
 void calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov);
-void leave_mmx (void);
+void chafa_leave_mmx (void);
+#else
+# define chafa_leave_mmx()
 #endif
 
 #ifdef HAVE_SSE41_INTRINSICS

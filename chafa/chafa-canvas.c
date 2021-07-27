@@ -324,11 +324,7 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
     for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
         eval_symbol (canvas, wcell, i, &best_symbol, &best_eval);
 
-#ifdef HAVE_MMX_INTRINSICS
-    /* Make FPU happy again */
-    if (chafa_have_mmx ())
-        leave_mmx ();
-#endif
+    chafa_leave_mmx ();  /* Make FPU happy again */
 
     /* Output */
 
@@ -361,11 +357,7 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
     for (i = 0; canvas->config.symbol_map.symbols2 [i].sym [0].c != 0; i++)
         eval_symbol_wide (canvas, wcell_a, wcell_b, i, &best_symbol, &best_eval);
 
-#ifdef HAVE_MMX_INTRINSICS
-    /* Make FPU happy again */
-    if (chafa_have_mmx ())
-        leave_mmx ();
-#endif
+    chafa_leave_mmx ();  /* Make FPU happy again */
 
     /* Output */
 
@@ -426,11 +418,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
     for (i = 0; i < n_candidates; i++)
         eval_symbol (canvas, wcell, candidates [i].symbol_index, &best_symbol, &best_eval);
 
-#ifdef HAVE_MMX_INTRINSICS
-    /* Make FPU happy again */
-    if (chafa_have_mmx ())
-        leave_mmx ();
-#endif
+    chafa_leave_mmx ();  /* Make FPU happy again */
 
     /* Output */
 
@@ -499,11 +487,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
         eval_symbol_wide (canvas, wcell_a, wcell_b, candidates [i].symbol_index,
                           &best_symbol, &best_eval);
 
-#ifdef HAVE_MMX_INTRINSICS
-    /* Make FPU happy again */
-    if (chafa_have_mmx ())
-        leave_mmx ();
-#endif
+    chafa_leave_mmx ();  /* Make FPU happy again */
 
     /* Output */
 

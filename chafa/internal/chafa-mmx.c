@@ -54,7 +54,10 @@ calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const gu
 }
 
 void
-leave_mmx (void)
+chafa_leave_mmx (void)
 {
-    _mm_empty ();
+#ifdef HAVE_MMX_INTRINSICS
+    if (chafa_have_mmx ())
+        _mm_empty ();
+#endif
 }
