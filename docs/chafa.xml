@@ -90,7 +90,7 @@ colors (see --fg and --bg).
 <listitem><para>
 Method for extracting color from an area; one of [average, median]. Median
 normally produces crisper output, while average may perform better on noisy images.
-Defaults to median.
+Defaults to average.
 </para></listitem>
 </varlistentry>
 

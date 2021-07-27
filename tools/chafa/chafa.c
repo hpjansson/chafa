@@ -228,7 +228,7 @@ print_summary (void)
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16, 240, 256,\n"
     "                     full]. Defaults to full (24-bit).\n"
     "      --color-extractor=EXTR  Method for extracting color from an area\n"
-    "                     [average, median]. Median is the default.\n"
+    "                     [average, median]. Average is the default.\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
     "      --dither=DITHER  Set output dither mode; one of [none, ordered,\n"
