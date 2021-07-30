@@ -129,9 +129,10 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        if ((ctx->cur_inverted && !inverted)
-            || (ctx->cur_fg_direct.ch [3] != 0 && fg.ch [3] == 0)
-            || (ctx->cur_bg_direct.ch [3] != 0 && bg.ch [3] == 0))
+        if (!ctx->canvas->config.hold_bg
+            && ((ctx->cur_inverted && !inverted)
+                || (ctx->cur_fg_direct.ch [3] != 0 && fg.ch [3] == 0)
+                || (ctx->cur_bg_direct.ch [3] != 0 && bg.ch [3] == 0)))
         {
             out = flush_chars (ctx, out);
             out = reset_attributes (ctx, out);
@@ -238,24 +239,36 @@ emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 }
 
 static gchar *
+handle_inverted_with_reuse (PrintCtx *ctx, gchar *out,
+                            guint32 fg, guint32 bg, gboolean inverted)
+{
+    /* We must check hold_bg because we can run into the situation where fg is set
+     * to transparent. */
+    if (!ctx->canvas->config.hold_bg
+        && ((ctx->cur_inverted && !inverted)
+            || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
+            || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)))
+    {
+        out = flush_chars (ctx, out);
+        out = reset_attributes (ctx, out);
+    }
+
+    if (!ctx->cur_inverted && inverted)
+    {
+        out = flush_chars (ctx, out);
+        out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
+    }
+
+    return out;
+}
+
+static gchar *
 emit_attributes_256 (PrintCtx *ctx, gchar *out,
                      guint32 fg, guint32 bg, gboolean inverted)
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        if ((ctx->cur_inverted && !inverted)
-            || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
-            || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
-        {
-            out = flush_chars (ctx, out);
-            out = reset_attributes (ctx, out);
-        }
-
-        if (!ctx->cur_inverted && inverted)
-        {
-            out = flush_chars (ctx, out);
-            out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
-        }
+        handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
 
         if (fg != ctx->cur_fg)
         {
@@ -347,19 +360,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        if ((ctx->cur_inverted && !inverted)
-            || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
-            || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
-        {
-            out = flush_chars (ctx, out);
-            out = reset_attributes (ctx, out);
-        }
-
-        if (!ctx->cur_inverted && inverted)
-        {
-            out = flush_chars (ctx, out);
-            out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
-        }
+        handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
 
         if (fg != ctx->cur_fg)
         {
@@ -571,9 +572,14 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
         prealloc_string (gs, i_step);
         out = gs->str + gs->len;
 
-        /* Avoid control codes in FGBG mode */
-        if (i == 0 && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+        /* Avoid control codes in FGBG mode. Don't reset attributes when BG
+         * is held, to preserve any BG color set previously. */
+        if (i == 0
+            && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
+            && !canvas->config.hold_bg)
+        {
             out = reset_attributes (&ctx, out);
+        }
 
         switch (canvas->config.canvas_mode)
         {
@@ -603,9 +609,13 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 
         out = flush_chars (&ctx, out);
 
-        /* Avoid control codes in FGBG mode */
-        if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+        /* Avoid control codes in FGBG mode. Don't reset attributes when BG
+         * is held, to preserve any BG color set previously. */
+        if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
+            && !canvas->config.hold_bg)
+        {
             out = reset_attributes (&ctx, out);
+        }
 
         /* Last line should not end in newline */
         if (i_next < i_max)

@@ -202,6 +202,11 @@ ChafaOptimizations chafa_canvas_config_get_optimizations (const ChafaCanvasConfi
 CHAFA_AVAILABLE_IN_1_6
 void chafa_canvas_config_set_optimizations (ChafaCanvasConfig *config, ChafaOptimizations optimizations);
 
+CHAFA_AVAILABLE_IN_1_8
+gboolean chafa_canvas_config_get_hold_bg (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_8
+void chafa_canvas_config_set_hold_bg (ChafaCanvasConfig *config, gboolean hold_bg);
+
 G_END_DECLS
 
 #endif /* __CHAFA_CANVAS_CONFIG_H__ */

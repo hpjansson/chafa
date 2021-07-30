@@ -189,6 +189,15 @@ specified multiple times.
 </varlistentry>
 
 <varlistentry>
+<term><option>--hold-bg</option></term>
+<listitem><para>
+Leave the background color untouched. This produces character-cell output
+using foreground colors only, and will avoid resetting or inverting the
+colors.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-h, --help</option></term>
 <listitem><para>
 Show a brief help text.

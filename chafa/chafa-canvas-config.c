@@ -117,6 +117,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->work_factor = 0.5;
     canvas_config->preprocessing_enabled = TRUE;
     canvas_config->optimizations = CHAFA_OPTIMIZATION_ALL;
+    canvas_config->hold_bg = FALSE;
 
     chafa_symbol_map_init (&canvas_config->symbol_map);
     chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
@@ -885,4 +886,51 @@ chafa_canvas_config_set_optimizations (ChafaCanvasConfig *config, ChafaOptimizat
     g_return_if_fail (config->refs > 0);
 
     config->optimizations = optimizations;
+}
+
+/**
+ * chafa_canvas_config_get_hold_bg:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Queries whether the background color should be "held", or left unmodified,
+ * in the canvas output. This is relevant only when the #ChafaPixelMode is set
+ * to #CHAFA_PIXEL_MODE_SYMBOLS.
+ *
+ * When this is set, the canvas will emit escape codes to set the foreground
+ * color only.
+ *
+ * Returns: %TRUE if the background color will be held, %FALSE otherwise.
+ *
+ * Since: 1.8
+ **/
+gboolean
+chafa_canvas_config_get_hold_bg (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, CHAFA_OPTIMIZATION_NONE);
+    g_return_val_if_fail (config->refs > 0, CHAFA_OPTIMIZATION_NONE);
+
+    return config->hold_bg;
+}
+
+/**
+ * chafa_canvas_config_set_hold_bg:
+ * @config: A #ChafaCanvasConfig
+ * @hold_bg: Whether the background color should be held
+ *
+ * Indicates whether the background color should be "held", or left unmodified,
+ * in the canvas output. This is relevant only when the #ChafaPixelMode is set
+ * to #CHAFA_PIXEL_MODE_SYMBOLS.
+ *
+ * When this is set, the canvas will emit escape codes to set the foreground
+ * color only.
+ *
+ * Since: 1.8
+ **/
+void
+chafa_canvas_config_set_hold_bg (ChafaCanvasConfig *config, gboolean hold_bg)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    config->hold_bg = hold_bg;
 }
