@@ -2694,14 +2694,6 @@
             "XXXXXXXX"
             "XXXXXXXX")
     },
-
-
-
-
-
-
-
-
     {
         CHAFA_SYMBOL_TAG_LEGACY,
         0x1fba0,
