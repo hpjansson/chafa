@@ -21,7 +21,6 @@ Minor Features/UX
   - Avoid using transparent foreground due to XFCE Terminal (other terminals?)
     weird handling with background picture set?
     - Except in FGBG modes.
-- Optionally use FG colors only, no BG or inverse.
 - Test with more terminals.
   - iTerm?
   - Other OSX terminals?
@@ -51,8 +50,6 @@ Major features
   - Optimization: Keep a rect or region of changed area.
   - Multiply previous symbol's new error with weight to increase or decrease
     stability (prevent flicker)?
-- Allow getting and setting character cells (individual cells and rects).
-  - Raw mode (indexed/etc) and RGB conversion mode.
 - Drawing context with clip rect/region, etc.
   - Potentially a context stack.
   - Getting into NCurses territory...
