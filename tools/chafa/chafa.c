@@ -1281,6 +1281,12 @@ interruptible_usleep (gint us)
     }
 }
 
+static gboolean
+write_to_stdout (gpointer buf, gsize len)
+{
+   return fwrite (buf, 1, len, stdout) == len ? TRUE : FALSE;
+}
+
 /* FIXME: This function is ripe for refactoring, probably to something with
  * a heap-allocated context. */
 static gboolean
@@ -1471,14 +1477,20 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
             if (is_first_frame && !options.clear && !is_first_file)
                 *(p0++) = '\n';
 
-            fwrite (buf, sizeof (gchar), p0 - buf, stdout);
-            fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
+            if (!write_to_stdout (buf, p0 - buf))
+                goto out;
+            if (!write_to_stdout (frame->gs->str, frame->gs->len))
+                goto out;
 
             /* No linefeed after frame in sixel mode */
             if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
-                fputc ('\n', stdout);
+            {
+                if (!write_to_stdout ("\n", 1))
+                    goto out;
+            }
 
-            fflush (stdout);
+            if (fflush (stdout) != 0)
+                goto out;
 
             if (is_animation)
             {
@@ -1623,14 +1635,20 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
             if (is_first_frame && !options.clear && !is_first_file)
                 *(p0++) = '\n';
 
-            fwrite (buf, sizeof (gchar), p0 - buf, stdout);
-            fwrite (frame->gs->str, sizeof (gchar), frame->gs->len, stdout);
+            if (!write_to_stdout (buf, p0 - buf))
+                goto out;
+            if (!write_to_stdout (frame->gs->str, frame->gs->len))
+                goto out;
 
             /* No linefeed after frame in sixel mode */
             if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
-                fputc ('\n', stdout);
+            {
+                if (!write_to_stdout ("\n", 1))
+                    goto out;
+            }
 
-            fflush (stdout);
+            if (fflush (stdout) != 0)
+                goto out;
 
             if (is_animation)
             {
