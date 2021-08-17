@@ -52,7 +52,7 @@ threshold_alpha (ChafaColor col, gint alpha_threshold)
     return col;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 flush_chars (PrintCtx *ctx, gchar *out)
 {
     gchar buf [8];
@@ -90,7 +90,7 @@ flush_chars (PrintCtx *ctx, gchar *out)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 queue_char (PrintCtx *ctx, gchar *out, gunichar c)
 {
     if (ctx->cur_char == c)
@@ -109,7 +109,7 @@ queue_char (PrintCtx *ctx, gchar *out, gunichar c)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 reset_attributes (PrintCtx *ctx, gchar *out)
 {
     out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
@@ -123,7 +123,7 @@ reset_attributes (PrintCtx *ctx, gchar *out)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
                            ChafaColor fg, ChafaColor bg, gboolean inverted)
 {
@@ -201,7 +201,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 {
     for ( ; i < i_max; i++)
@@ -238,7 +238,7 @@ emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 handle_inverted_with_reuse (PrintCtx *ctx, gchar *out,
                             guint32 fg, guint32 bg, gboolean inverted)
 {
@@ -262,7 +262,7 @@ handle_inverted_with_reuse (PrintCtx *ctx, gchar *out,
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_attributes_256 (PrintCtx *ctx, gchar *out,
                      guint32 fg, guint32 bg, gboolean inverted)
 {
@@ -319,7 +319,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_ansi_256 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 {
     for ( ; i < i_max; i++)
@@ -354,7 +354,7 @@ emit_ansi_256 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_attributes_16 (PrintCtx *ctx, gchar *out,
                     guint32 fg, guint32 bg, gboolean inverted)
 {
@@ -412,7 +412,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
 }
 
 /* Uses aixterm control codes for bright colors */
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_ansi_16 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 {
     for ( ; i < i_max; i++)
@@ -447,7 +447,7 @@ emit_ansi_16 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 {
     gunichar blank_symbol = 0;
@@ -515,7 +515,7 @@ emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
     return out;
 }
 
-static gchar *
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 emit_ansi_fgbg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 {
     for ( ; i < i_max; i++)
