@@ -268,7 +268,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
+        out = handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
 
         if (fg != ctx->cur_fg)
         {
@@ -360,7 +360,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
+        out = handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
 
         if (fg != ctx->cur_fg)
         {
