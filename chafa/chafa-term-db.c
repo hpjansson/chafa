@@ -264,7 +264,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
      * regardless. */
     if (!strcmp (term, "xterm-256color")
         || !strcmp (term, "xterm-kitty")
-	|| !strcmp (term, "st-256color"))
+        || !strcmp (term, "st-256color"))
         color_seq_list = color_direct_list;
 
     /* Apple Terminal sets TERM=xterm-256color, and does not support truecolor */
