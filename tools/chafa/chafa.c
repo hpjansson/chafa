@@ -247,8 +247,9 @@ print_summary (void)
     "                     Defaults to none. See below for full usage.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
-    "  -f, --format=FORMAT  Set output format; one of [sixels, symbols]. Sixels\n"
-    "                     yield much better quality but are rarely supported.\n"
+    "  -f, --format=FORMAT  Set output format; one of [kitty, sixels, symbols].\n"
+    "                     Kitty and sixels yield much better quality but enjoy\n"
+    "                     limited support.\n"
     "      --glyph-file=FILE  Load glyph information from FILE, which can be any\n"
     "                     font file supported by FreeType (TTF, PCF, etc).\n"
     "      --hold-bg      Leave the background color untouched. This produces\n"
@@ -467,10 +468,14 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     {
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
     }
+    else if (!strcasecmp (value, "kitty"))
+    {
+        pixel_mode = CHAFA_PIXEL_MODE_KITTY;
+    }
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Output format given as '%s'. Must be one of [symbols, sixels].",
+                     "Output format given as '%s'. Must be one of [kitty, sixels, symbols].",
                      value);
         result = FALSE;
     }
@@ -813,8 +818,10 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, Chafa
     else
         mode = CHAFA_CANVAS_MODE_FGBG;
 
-    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS))
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE))
+        pixel_mode = CHAFA_PIXEL_MODE_KITTY;
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
+             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS))
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
     else
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
@@ -837,6 +844,7 @@ parse_options (int *argc, char **argv [])
 {
     GError *error = NULL;
     GOptionContext *context;
+    gint detected_width;
     gboolean result = TRUE;
     const GOptionEntry option_entries [] =
     {
@@ -856,7 +864,7 @@ parse_options (int *argc, char **argv [])
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
-        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (ansi or sixels)", NULL },
+        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "hold-bg",     '\0', 0, G_OPTION_ARG_NONE,     &options.hold_bg,      "Hold background", NULL },
@@ -919,6 +927,8 @@ parse_options (int *argc, char **argv [])
     options.anim_speed_multiplier = 1.0;
     get_tty_size ();
 
+    detected_width = options.width;
+
     if (!g_option_context_parse (context, argc, argv, &error))
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
@@ -942,7 +952,7 @@ parse_options (int *argc, char **argv [])
     }
     else
     {
-        /* Sixel defaults */
+        /* Kitty/sixel defaults */
 
         if (options.mode == CHAFA_CANVAS_MODE_MAX)
             options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
@@ -953,6 +963,22 @@ parse_options (int *argc, char **argv [])
         if (options.font_ratio < 0.0)
             options.font_ratio = 1.0;
     }
+
+    /* Kitty leaves the cursor in the column trailing the last row of the
+     * image. However, if the image is as wide as the terminal, the cursor
+     * will wrap to the first column of the following row, making us lose
+     * track of its position.
+     *
+     * This is not a problem when instructed to clear the terminal, as we
+     * use absolute positioning then.
+     *
+     * If needed, trim one column from the image to make the cursor position
+     * predictable. */
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        && !options.clear
+        && options.width > 1
+        && options.width == detected_width)
+        options.width -= 1;
 
     if (options.work_factor < 1 || options.work_factor > 9)
     {
@@ -1483,7 +1509,8 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
                 goto out;
 
             /* No linefeed after frame in sixel mode */
-            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
             {
                 if (!write_to_stdout ("\n", 1))
                     goto out;
@@ -1641,7 +1668,8 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
                 goto out;
 
             /* No linefeed after frame in sixel mode */
-            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
             {
                 if (!write_to_stdout ("\n", 1))
                     goto out;

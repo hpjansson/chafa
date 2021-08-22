@@ -170,9 +170,12 @@ fraction. Defaults to 1/2.
 <varlistentry>
 <term><option>-f, --format <replaceable>format</replaceable></option></term>
 <listitem><para>
-Set output format; one of [sixels, symbols]. The default is sixels if there
-is a sixel-capable terminal connected, otherwise symbols will be used. Sixels
-yield much better quality, but support for it is fairly rare.
+Set output format; one of [kitty, sixels, symbols]. The default is kitty if
+the connected terminal supports Kitty terminal graphics, sixels if there is
+sixel support, or symbols if neither is detected.
+
+Kitty and sixels yield much better quality, but support for these protocols
+is fairly rare.
 </para></listitem>
 </varlistentry>
 
