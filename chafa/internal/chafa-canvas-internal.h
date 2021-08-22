@@ -57,8 +57,8 @@ struct ChafaCanvas
     /* Used when setting pixel data */
     ChafaDither dither;
 
-    /* Set if we're in sixel mode */
-    ChafaSixelCanvas *sixel_canvas;
+    /* Set if we're in sixel (ChafaSixelCanvas *) or Kitty (ChafaKittyCanvas *) mode */
+    gpointer pixel_canvas;
 
     /* Our palette. Kind of a big structure, so it goes last. */
     ChafaPalette palette;
