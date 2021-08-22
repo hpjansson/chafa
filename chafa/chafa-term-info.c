@@ -83,6 +83,10 @@
  * @CHAFA_TERM_SEQ_BEGIN_SIXELS: Begin sixel image data.
  * @CHAFA_TERM_SEQ_END_SIXELS: End sixel image data.
  * @CHAFA_TERM_SEQ_REPEAT_CHAR: Repeat previous character N times.
+ * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE: Begin upload of Kitty image for immediate display at cursor.
+ * @CHAFA_TERM_SEQ_END_KITTY_IMAGE: End of Kitty image upload.
+ * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK: Begin Kitty image data chunk.
+ * @CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK: End Kitty image data chunk.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
