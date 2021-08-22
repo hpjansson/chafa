@@ -250,7 +250,7 @@ out:
             copy_bytes (out, &seq_str [ofs], seq_args [i].pre_len);     \
             out += seq_args [i].pre_len;                                \
             ofs += seq_args [i].pre_len;                                \
-            out = chafa_format_dec_uint_0_to_9999 (out, args [seq_args [i].arg_index]); \
+            out = intformatter (out, args [seq_args [i].arg_index]); \
         }                                                               \
                                                                         \
         copy_bytes (out, &seq_str [ofs], seq_args [i].pre_len);         \
