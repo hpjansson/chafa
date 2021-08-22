@@ -9,6 +9,8 @@ libchafa_internal_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
 libchafa_internal_la_LIBADD = $(GLIB_LIBS) smolscale/libsmolscale.la -lm
 
 libchafa_internal_la_SOURCES = \
+	chafa-base64.c \
+	chafa-base64.h \
 	chafa-batch.c \
 	chafa-batch.h \
 	chafa-bitfield.h \
