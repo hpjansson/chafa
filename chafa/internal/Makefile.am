@@ -27,6 +27,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-dither.h \
 	chafa-indexed-image.c \
 	chafa-indexed-image.h \
+	chafa-iterm2-canvas.c \
+	chafa-iterm2-canvas.h \
 	chafa-kitty-canvas.c \
 	chafa-kitty-canvas.h \
 	chafa-palette.c \
