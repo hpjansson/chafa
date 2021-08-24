@@ -78,6 +78,7 @@
  * @CHAFA_PIXEL_MODE_SYMBOLS: Pixel data is approximated using character symbols ("ANSI art").
  * @CHAFA_PIXEL_MODE_SIXELS: Pixel data is encoded as sixels.
  * @CHAFA_PIXEL_MODE_KITTY: Pixel data is encoded using the Kitty terminal protocol.
+ * @CHAFA_PIXEL_MODE_ITERM2: Pixel data is encoded using the iTerm2 terminal protocol.
  * @CHAFA_PIXEL_MODE_MAX: Last supported pixel mode plus one.
  **/
 

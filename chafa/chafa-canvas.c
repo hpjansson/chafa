@@ -1159,9 +1159,8 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
          * bottom cell. */
         canvas->height_pixels -= canvas->height_pixels % 6;
     }
-    else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY) */
+    else  /* CHAFA_PIXEL_MODE_KITTY or CHAFA_PIXEL_MODE_ITERM2 */
     {
-        /* Kitty */
         canvas->width_pixels = canvas->config.width * canvas->config.cell_width;
         canvas->height_pixels = canvas->config.height * canvas->config.cell_height;
     }
@@ -1185,6 +1184,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
      * There is also no reason to dither in truecolor mode, _unless_ we're
      * producing sixels, which quantize to a dynamic palette. */
     if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        || canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2
         || (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR
             && canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS))
     {
@@ -1285,6 +1285,8 @@ destroy_pixel_canvas (ChafaCanvas *canvas)
             chafa_sixel_canvas_destroy (canvas->pixel_canvas);
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
             chafa_kitty_canvas_destroy (canvas->pixel_canvas);
+        else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+            chafa_iterm2_canvas_destroy (canvas->pixel_canvas);
 
         canvas->pixel_canvas = NULL;
     }
@@ -1416,7 +1418,7 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
                                             src_width, src_height,
                                             src_rowstride);
     }
-    else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY) */
+    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
         /* Kitty mode */
 
@@ -1428,6 +1430,19 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
                                             src_pixels,
                                             src_width, src_height,
                                             src_rowstride);
+    }
+    else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2) */
+    {
+        /* iTerm2 mode */
+
+        canvas->palette.alpha_threshold = canvas->config.alpha_threshold;
+        canvas->pixel_canvas = chafa_iterm2_canvas_new (canvas->width_pixels,
+                                                        canvas->height_pixels);
+        chafa_iterm2_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                             src_pixel_type,
+                                             src_pixels,
+                                             src_width, src_height,
+                                             src_rowstride);
     }
 }
 
@@ -1539,6 +1554,14 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
 
         str = g_string_new ("");
         chafa_kitty_canvas_build_ansi (canvas->pixel_canvas, term_info, str);
+    }
+    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+    {
+        /* iTerm2 mode */
+
+        str = g_string_new ("");
+        chafa_iterm2_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
+                                        canvas->config.width, canvas->config.height);
     }
     else
     {
