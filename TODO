@@ -28,7 +28,6 @@ Minor Features/UX
     - Windows 7 fonts support half, solid, some borders.
   - Terminology.
     - Emulate tycat.
-  - Kitty (https://sw.kovidgoyal.net/kitty/graphics-protocol.html).
   - Emacs ansi-term.
   - Emacs shell (TERM=dumb).
   - Come up with some kind of support matrix.
