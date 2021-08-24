@@ -930,6 +930,47 @@ CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, vo
  **/
 CHAFA_TERM_SEQ_DEF(end_kitty_image_chunk, END_KITTY_IMAGE_CHUNK, 0, none, void)
 
+/**
+ * chafa_term_info_emit_begin_iterm2_image:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @width: Image width in character cells
+ * @height: Image height in character cells
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_ITERM2_IMAGE_IMMEDITATE.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * This sequence must be followed by base64-encoded image file data. The image
+ * can be any format supported by MacOS, e.g. PNG, JPEG, TIFF, GIF. When the
+ * image data has been transferred, #CHAFA_TERM_SEQ_END_ITERM2_IMAGE must be
+ * emitted.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.8
+ **/
+CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint width, guint height)
+
+/**
+ * chafa_term_info_emit_end_iterm2_image:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_END_ITERM2_IMAGE.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.8
+ **/
+CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, void)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

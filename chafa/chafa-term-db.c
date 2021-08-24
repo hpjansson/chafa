@@ -174,6 +174,14 @@ static const SeqStr kitty_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
+static const SeqStr iterm2_seqs [] =
+{
+    { CHAFA_TERM_SEQ_BEGIN_ITERM2_IMAGE, "\033]1337;File=inline=1;width=%1;height=%2;preserveAspectRatio=0:" },
+    { CHAFA_TERM_SEQ_END_ITERM2_IMAGE, "\a" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
 static const SeqStr *fallback_list [] =
 {
     vt220_seqs,
@@ -182,6 +190,7 @@ static const SeqStr *fallback_list [] =
     color_16_seqs,
     sixel_seqs,
     kitty_seqs,
+    iterm2_seqs,
     NULL
 };
 
@@ -222,6 +231,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *term_program;
     const gchar *tmux;
     const gchar *ctx_backend;
+    const gchar *lc_terminal;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
     const SeqStr *rep_seqs_local = NULL;
@@ -245,6 +255,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     ctx_backend = g_environ_getenv (envp, "CTX_BACKEND");
     if (!ctx_backend) ctx_backend = "";
+
+    lc_terminal = g_environ_getenv (envp, "LC_TERMINAL");
+    if (!lc_terminal) lc_terminal = "";
 
     /* Some terminals set COLORTERM=truecolor. However, this env var can
      * make its way into environments where truecolor is not desired
@@ -281,6 +294,14 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     /* Kitty has a unique graphics protocol */
     if (!strcmp (term, "xterm-kitty"))
         gfx_seqs = kitty_seqs;
+
+    /* iTerm2 supports truecolor and has a unique graphics protocol */
+    if (!strcasecmp (lc_terminal, "iTerm2")
+        || !strcasecmp (term_program, "iTerm.app"))
+    {
+        color_seq_list = color_direct_list;
+        gfx_seqs = iterm2_seqs;
+    }
 
     /* Apple Terminal sets TERM=xterm-256color, and does not support truecolor */
     if (!g_ascii_strcasecmp (term_program, "Apple_Terminal"))

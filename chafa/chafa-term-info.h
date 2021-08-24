@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define CHAFA_TERM_SEQ_LENGTH_MAX 48
+#define CHAFA_TERM_SEQ_LENGTH_MAX 96
 
 #ifndef __GTK_DOC_IGNORE__
 /* This declares the enum for CHAFA_TERM_SEQ_*. See chafa-term-seq-def.h

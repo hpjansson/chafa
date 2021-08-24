@@ -87,6 +87,8 @@
  * @CHAFA_TERM_SEQ_END_KITTY_IMAGE: End of Kitty image upload.
  * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK: Begin Kitty image data chunk.
  * @CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK: End Kitty image data chunk.
+ * @CHAFA_TERM_SEQ_BEGIN_ITERM2_IMAGE: Begin iTerm2 image data.
+ * @CHAFA_TERM_SEQ_END_ITERM2_IMAGE: End of iTerm2 image data.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
