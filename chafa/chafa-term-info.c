@@ -521,7 +521,7 @@ gboolean
 chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar *str,
                          GError **error)
 {
-    gchar seq_str [CHAFA_TERM_SEQ_MAX];
+    gchar seq_str [CHAFA_TERM_SEQ_LENGTH_MAX];
     SeqArgInfo seq_args [CHAFA_TERM_SEQ_ARGS_MAX];
     gboolean result = FALSE;
 
@@ -548,7 +548,7 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
         if (result == TRUE)
         {
             memcpy (&term_info->seq_str [seq] [0], &seq_str [0],
-                    CHAFA_TERM_SEQ_MAX);
+                    CHAFA_TERM_SEQ_LENGTH_MAX);
             memcpy (&term_info->seq_args [seq] [0], &seq_args [0],
                     CHAFA_TERM_SEQ_ARGS_MAX * sizeof (SeqArgInfo));
 
@@ -584,7 +584,7 @@ chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source)
         {
             term_info->unparsed_str [i] = g_strdup (source->unparsed_str [i]);
             memcpy (&term_info->seq_str [i] [0], &source->seq_str [i] [0],
-                    CHAFA_TERM_SEQ_MAX);
+                    CHAFA_TERM_SEQ_LENGTH_MAX);
             memcpy (&term_info->seq_args [i] [0], &source->seq_args [i] [0],
                     CHAFA_TERM_SEQ_ARGS_MAX * sizeof (SeqArgInfo));
         }
