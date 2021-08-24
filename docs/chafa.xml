@@ -170,12 +170,9 @@ fraction. Defaults to 1/2.
 <varlistentry>
 <term><option>-f, --format <replaceable>format</replaceable></option></term>
 <listitem><para>
-Set output format; one of [kitty, sixels, symbols]. The default is kitty if
-the connected terminal supports Kitty terminal graphics, sixels if there is
-sixel support, or symbols if neither is detected.
-
-Kitty and sixels yield much better quality, but support for these protocols
-is fairly rare.
+Set output format; one of [iterm, kitty, sixels, symbols]. The default is
+iterm, kitty or sixels if the connected terminal supports one of these,
+falling back to symbols ("ANSI art") otherwise.
 </para></listitem>
 </varlistentry>
 

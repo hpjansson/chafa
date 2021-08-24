@@ -247,9 +247,9 @@ print_summary (void)
     "                     Defaults to none. See below for full usage.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
-    "  -f, --format=FORMAT  Set output format; one of [kitty, sixels, symbols].\n"
-    "                     Kitty and sixels yield much better quality but enjoy\n"
-    "                     limited support.\n"
+    "  -f, --format=FORMAT  Set output format; one of [iterm, kitty, sixels, symbols].\n"
+    "                     Iterm, kitty and sixels yield much higher quality but enjoy\n"
+    "                     limited support. Symbols mode yields beautiful ANSI art.\n"
     "      --glyph-file=FILE  Load glyph information from FILE, which can be any\n"
     "                     font file supported by FreeType (TTF, PCF, etc).\n"
     "      --hold-bg      Leave the background color untouched. This produces\n"
@@ -472,10 +472,15 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     {
         pixel_mode = CHAFA_PIXEL_MODE_KITTY;
     }
+    else if (!strcasecmp (value, "iterm")
+             || !strcasecmp (value, "iterm2"))
+    {
+        pixel_mode = CHAFA_PIXEL_MODE_ITERM2;
+    }
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Output format given as '%s'. Must be one of [kitty, sixels, symbols].",
+                     "Output format given as '%s'. Must be one of [iterm, kitty, sixels, symbols].",
                      value);
         result = FALSE;
     }
@@ -864,7 +869,7 @@ parse_options (int *argc, char **argv [])
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
-        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (kitty, sixels or symbols)", NULL },
+        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "hold-bg",     '\0', 0, G_OPTION_ARG_NONE,     &options.hold_bg,      "Hold background", NULL },
@@ -952,7 +957,7 @@ parse_options (int *argc, char **argv [])
     }
     else
     {
-        /* Kitty/sixel defaults */
+        /* iTerm2/Kitty/sixel defaults */
 
         if (options.mode == CHAFA_CANVAS_MODE_MAX)
             options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
@@ -1510,7 +1515,8 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
 
             /* No linefeed after frame in sixel mode */
             if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
-                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
+                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+                || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
             {
                 if (!write_to_stdout ("\n", 1))
                     goto out;
@@ -1669,7 +1675,8 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
 
             /* No linefeed after frame in sixel mode */
             if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
-                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
+                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+                || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
             {
                 if (!write_to_stdout ("\n", 1))
                     goto out;
