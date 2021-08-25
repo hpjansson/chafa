@@ -322,6 +322,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = sixel_seqs;
     }
 
+    if (!strcmp(term, "foot") || !strcmp(term, "foot-direct"))
+        gfx_seqs = sixel_seqs;
+
     /* rxvt 256-color really is 256 colors only */
     if (!strcmp (term, "rxvt-unicode-256color"))
         color_seq_list = color_256_list;
