@@ -129,7 +129,7 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *te
     *chafa_term_info_emit_begin_kitty_immediate_image (term_info, seq,
                                                        32,
                                                        kitty_canvas->width,
-                                                       kitty_canvas->height) = 0;
+                                                       kitty_canvas->height) = '\0';
     g_string_append (out_str, seq);
 
     last = kitty_canvas->rgba_image + kitty_canvas->width * kitty_canvas->height * sizeof (guint32);
@@ -142,17 +142,17 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *te
         if (end > last)
             end = last;
 
-        *chafa_term_info_emit_begin_kitty_image_chunk (term_info, seq) = 0;
+        *chafa_term_info_emit_begin_kitty_image_chunk (term_info, seq) = '\0';
         g_string_append (out_str, seq);
 
         encode_chunk (out_str, p, end);
 
-        *chafa_term_info_emit_end_kitty_image_chunk (term_info, seq) = 0;
+        *chafa_term_info_emit_end_kitty_image_chunk (term_info, seq) = '\0';
         g_string_append (out_str, seq);
 
         p = end;
     }
 
-    *chafa_term_info_emit_end_kitty_image (term_info, seq) = 0;
+    *chafa_term_info_emit_end_kitty_image (term_info, seq) = '\0';
     g_string_append (out_str, seq);
 }
