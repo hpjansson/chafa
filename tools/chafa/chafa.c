@@ -240,7 +240,7 @@ print_summary (void)
     "                     Defaults to 1.0.\n"
     "  -d, --duration=SECONDS  The time to show each file. If showing a single file,\n"
     "                     defaults to zero for a still image and infinite for an\n"
-    "                     animation. For multiple files, defaults to 3.0. Animations\n"
+    "                     animation. For multiple files, defaults to zero. Animations\n"
     "                     will always be played through at least once.\n"
     "      --fg=COLOR     Foreground color of display (color name or hex).\n"
     "      --fill=SYMS    Specify character symbols to use for fill/gradients.\n"
