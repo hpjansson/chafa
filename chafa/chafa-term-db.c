@@ -287,6 +287,10 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
      * regardless. */
     if (!strcmp (term, "xterm-256color")
+        || !strcmp (term, "xterm-direct")
+        || !strcmp (term, "xterm-direct2")
+        || !strcmp (term, "xterm-direct16")
+        || !strcmp (term, "xterm-direct256")
         || !strcmp (term, "xterm-kitty")
         || !strcmp (term, "st-256color"))
         color_seq_list = color_direct_list;
