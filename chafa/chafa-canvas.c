@@ -271,7 +271,7 @@ eval_symbol (ChafaCanvas *canvas, ChafaWorkCell *wcell, gint sym_index,
     sym = &canvas->config.symbol_map.symbols [sym_index];
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-        || canvas->config.hold_bg)
+        || canvas->config.fg_only_enabled)
     {
         eval.colors = canvas->default_colors;
     }
@@ -299,7 +299,7 @@ eval_symbol_wide (ChafaCanvas *canvas, ChafaWorkCell *wcell_a, ChafaWorkCell *wc
     sym2 = &canvas->config.symbol_map.symbols2 [sym_index];
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-        || canvas->config.hold_bg)
+        || canvas->config.fg_only_enabled)
     {
         eval.colors = canvas->default_colors;
     }
@@ -346,7 +346,7 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.hold_bg)
+    if (canvas->config.fg_only_enabled)
         eval_symbol_colors (canvas, wcell, &canvas->config.symbol_map.symbols [best_symbol], &best_eval);
 
     *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
@@ -382,7 +382,7 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.hold_bg)
+    if (canvas->config.fg_only_enabled)
         eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [0],
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [1],
@@ -416,7 +416,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
-        || canvas->config.hold_bg)
+        || canvas->config.fg_only_enabled)
     {
         color_pair = canvas->default_colors;
     }
@@ -431,7 +431,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
     chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
                                       bitmap,
                                       canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                      || canvas->config.hold_bg
+                                      || canvas->config.fg_only_enabled
                                       ? FALSE : TRUE,  /* Consider inverted? */
                                       candidates, &n_candidates);
 
@@ -451,7 +451,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.hold_bg)
+    if (canvas->config.fg_only_enabled)
         eval_symbol_colors (canvas, wcell, &canvas->config.symbol_map.symbols [best_symbol], &best_eval);
 
     *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
@@ -503,7 +503,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
     chafa_symbol_map_find_wide_candidates (&canvas->config.symbol_map,
                                            bitmaps,
                                            canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                           || canvas->config.hold_bg
+                                           || canvas->config.fg_only_enabled
                                            ? FALSE : TRUE,  /* Consider inverted? */
                                            candidates, &n_candidates);
 
@@ -524,7 +524,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.hold_bg)
+    if (canvas->config.fg_only_enabled)
         eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [0],
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [1],
@@ -559,7 +559,7 @@ get_palette_color (ChafaCanvas *canvas, gint index)
 }
 
 static void
-apply_fill_hold_bg (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *cell)
+apply_fill_fg_only (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *cell)
 {
     ChafaColor mean;
     ChafaColorCandidates ccand;
@@ -684,7 +684,7 @@ apply_fill (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *ce
 
     chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map, best_i,
                                            canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                           || canvas->config.hold_bg
+                                           || canvas->config.fg_only_enabled
                                            ? FALSE : TRUE,  /* Consider inverted? */
                                            &sym_cand, &n_sym_cands);
 
@@ -749,7 +749,7 @@ update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cel
         cell_out->bg_color = chafa_pack_color (&color_pair.colors [CHAFA_COLOR_PAIR_BG]);
     }
 
-    if (canvas->config.hold_bg)
+    if (canvas->config.fg_only_enabled)
         cell_out->bg_color = transparent_cell_color (canvas->config.canvas_mode);
 
     /* FIXME: It would probably be better to do the fgbg/bgfg blank symbol check
@@ -801,7 +801,7 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
         cell_a_out->bg_color = cell_b_out->bg_color = chafa_pack_color (&color_pair.colors [CHAFA_COLOR_PAIR_BG]);
     }
 
-    if (canvas->config.hold_bg)
+    if (canvas->config.fg_only_enabled)
         cell_a_out->bg_color = cell_b_out->bg_color = transparent_cell_color (canvas->config.canvas_mode);
 }
 
@@ -874,9 +874,9 @@ update_cells_row (ChafaCanvas *canvas, gint row)
         if (cells [cx].c != 0 && (cells [cx].c == ' ' || cells [cx].c == 0x2588
                                   || cells [cx].fg_color == cells [cx].bg_color))
         {
-            if (canvas->config.hold_bg)
+            if (canvas->config.fg_only_enabled)
             {
-                apply_fill_hold_bg (canvas, wcell, &cells [cx]);
+                apply_fill_fg_only (canvas, wcell, &cells [cx]);
                 cells [cx].bg_color = transparent_cell_color (canvas->config.canvas_mode);
             }
             else
@@ -982,7 +982,7 @@ update_display_colors (ChafaCanvas *canvas)
      * We don't need to do this for monochrome modes, as they use the
      * FG/BG colors directly. */
 
-    if (canvas->config.hold_bg
+    if (canvas->config.fg_only_enabled
         && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
         && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG_BGFG)
     {

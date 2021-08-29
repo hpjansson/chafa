@@ -111,7 +111,7 @@ struct ChafaCanvasConfig
     ChafaSymbolMap symbol_map;
     ChafaSymbolMap fill_symbol_map;
     guint preprocessing_enabled : 1;
-    guint hold_bg : 1;
+    guint fg_only_enabled : 1;
     ChafaOptimizations optimizations;
 };
 

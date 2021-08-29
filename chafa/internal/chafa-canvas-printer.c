@@ -129,7 +129,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        if (!ctx->canvas->config.hold_bg
+        if (!ctx->canvas->config.fg_only_enabled
             && ((ctx->cur_inverted && !inverted)
                 || (ctx->cur_fg_direct.ch [3] != 0 && fg.ch [3] == 0)
                 || (ctx->cur_bg_direct.ch [3] != 0 && bg.ch [3] == 0)))
@@ -242,9 +242,9 @@ G_GNUC_WARN_UNUSED_RESULT static gchar *
 handle_inverted_with_reuse (PrintCtx *ctx, gchar *out,
                             guint32 fg, guint32 bg, gboolean inverted)
 {
-    /* We must check hold_bg because we can run into the situation where fg is set
-     * to transparent. */
-    if (!ctx->canvas->config.hold_bg
+    /* We must check fg_only_enabled because we can run into the situation where
+     * fg is set to transparent. */
+    if (!ctx->canvas->config.fg_only_enabled
         && ((ctx->cur_inverted && !inverted)
             || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
             || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)))
@@ -576,7 +576,7 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
          * is held, to preserve any BG color set previously. */
         if (i == 0
             && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
-            && !canvas->config.hold_bg)
+            && !canvas->config.fg_only_enabled)
         {
             out = reset_attributes (&ctx, out);
         }
@@ -612,7 +612,7 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
         /* Avoid control codes in FGBG mode. Don't reset attributes when BG
          * is held, to preserve any BG color set previously. */
         if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
-            && !canvas->config.hold_bg)
+            && !canvas->config.fg_only_enabled)
         {
             out = reset_attributes (&ctx, out);
         }

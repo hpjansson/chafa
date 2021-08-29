@@ -119,7 +119,7 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->work_factor = 0.5;
     canvas_config->preprocessing_enabled = TRUE;
     canvas_config->optimizations = CHAFA_OPTIMIZATION_ALL;
-    canvas_config->hold_bg = FALSE;
+    canvas_config->fg_only_enabled = FALSE;
 
     chafa_symbol_map_init (&canvas_config->symbol_map);
     chafa_symbol_map_add_by_tags (&canvas_config->symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
@@ -891,37 +891,37 @@ chafa_canvas_config_set_optimizations (ChafaCanvasConfig *config, ChafaOptimizat
 }
 
 /**
- * chafa_canvas_config_get_hold_bg:
+ * chafa_canvas_config_get_fg_only_enabled:
  * @config: A #ChafaCanvasConfig
  *
- * Queries whether the background color should be "held", or left unmodified,
- * in the canvas output. This is relevant only when the #ChafaPixelMode is set
- * to #CHAFA_PIXEL_MODE_SYMBOLS.
+ * Queries whether to use foreground colors only, leaving the background
+ * unmodified in the canvas output. This is relevant only when the
+ * #ChafaPixelMode is set to #CHAFA_PIXEL_MODE_SYMBOLS.
  *
  * When this is set, the canvas will emit escape codes to set the foreground
  * color only.
  *
- * Returns: %TRUE if the background color will be held, %FALSE otherwise.
+ * Returns: %TRUE if using foreground colors only, %FALSE otherwise.
  *
  * Since: 1.8
  **/
 gboolean
-chafa_canvas_config_get_hold_bg (const ChafaCanvasConfig *config)
+chafa_canvas_config_get_fg_only_enabled (const ChafaCanvasConfig *config)
 {
     g_return_val_if_fail (config != NULL, CHAFA_OPTIMIZATION_NONE);
     g_return_val_if_fail (config->refs > 0, CHAFA_OPTIMIZATION_NONE);
 
-    return config->hold_bg;
+    return config->fg_only_enabled;
 }
 
 /**
- * chafa_canvas_config_set_hold_bg:
+ * chafa_canvas_config_set_fg_only_enabled:
  * @config: A #ChafaCanvasConfig
- * @hold_bg: Whether the background color should be held
+ * @fg_only_enabled: Whether to use foreground colors only
  *
- * Indicates whether the background color should be "held", or left unmodified,
- * in the canvas output. This is relevant only when the #ChafaPixelMode is set
- * to #CHAFA_PIXEL_MODE_SYMBOLS.
+ * Indicates whether to use foreground colors only, leaving the background
+ * unmodified in the canvas output. This is relevant only when the
+ * #ChafaPixelMode is set to #CHAFA_PIXEL_MODE_SYMBOLS.
  *
  * When this is set, the canvas will emit escape codes to set the foreground
  * color only.
@@ -929,10 +929,10 @@ chafa_canvas_config_get_hold_bg (const ChafaCanvasConfig *config)
  * Since: 1.8
  **/
 void
-chafa_canvas_config_set_hold_bg (ChafaCanvasConfig *config, gboolean hold_bg)
+chafa_canvas_config_set_fg_only_enabled (ChafaCanvasConfig *config, gboolean fg_only_enabled)
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
 
-    config->hold_bg = hold_bg;
+    config->fg_only_enabled = fg_only_enabled;
 }

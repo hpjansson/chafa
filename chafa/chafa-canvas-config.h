@@ -205,9 +205,9 @@ CHAFA_AVAILABLE_IN_1_6
 void chafa_canvas_config_set_optimizations (ChafaCanvasConfig *config, ChafaOptimizations optimizations);
 
 CHAFA_AVAILABLE_IN_1_8
-gboolean chafa_canvas_config_get_hold_bg (const ChafaCanvasConfig *config);
+gboolean chafa_canvas_config_get_fg_only_enabled (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_1_8
-void chafa_canvas_config_set_hold_bg (ChafaCanvasConfig *config, gboolean hold_bg);
+void chafa_canvas_config_set_fg_only_enabled (ChafaCanvasConfig *config, gboolean fg_only_enabled);
 
 G_END_DECLS
 

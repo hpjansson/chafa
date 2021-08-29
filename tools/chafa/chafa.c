@@ -72,7 +72,7 @@ typedef struct
     gboolean stretch;
     gboolean zoom;
     gboolean watch;
-    gboolean hold_bg;
+    gboolean fg_only;
     gint width, height;
     gint cell_width, cell_height;
     gdouble font_ratio;
@@ -243,6 +243,8 @@ print_summary (void)
     "                     animation. For multiple files, defaults to zero. Animations\n"
     "                     will always be played through at least once.\n"
     "      --fg=COLOR     Foreground color of display (color name or hex).\n"
+    "      --fg-only      Leave the background color untouched. This produces\n"
+    "                     character-cell output using foreground colors only.\n"
     "      --fill=SYMS    Specify character symbols to use for fill/gradients.\n"
     "                     Defaults to none. See below for full usage.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
@@ -252,8 +254,6 @@ print_summary (void)
     "                     limited support. Symbols mode yields beautiful ANSI art.\n"
     "      --glyph-file=FILE  Load glyph information from FILE, which can be any\n"
     "                     font file supported by FreeType (TTF, PCF, etc).\n"
-    "      --hold-bg      Leave the background color untouched. This produces\n"
-    "                     character-cell output using foreground colors only.\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
     "  -O, --optimize=NUM  Compress the output by using control sequences\n"
@@ -868,11 +868,11 @@ parse_options (int *argc, char **argv [])
         { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
+        { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
         { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
-        { "hold-bg",     '\0', 0, G_OPTION_ARG_NONE,     &options.hold_bg,      "Hold background", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
@@ -916,7 +916,7 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
     options.preprocess = TRUE;
-    options.hold_bg = FALSE;
+    options.fg_only = FALSE;
     options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
     options.width = 80;
@@ -1148,7 +1148,7 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_fg_color (config, options.fg_color);
     chafa_canvas_config_set_bg_color (config, options.bg_color);
     chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
-    chafa_canvas_config_set_hold_bg (config, options.hold_bg);
+    chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
 
     if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);

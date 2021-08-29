@@ -152,6 +152,15 @@ white.
 </varlistentry>
 
 <varlistentry>
+<term><option>--fg-only</option></term>
+<listitem><para>
+Leave the background color untouched. This produces character-cell output
+using foreground colors only, and will avoid resetting or inverting the
+colors.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--fill <replaceable>symbols</replaceable></option></term>
 <listitem><para>
 Specify character symbols to use for fill/gradients. Defaults to none.
@@ -185,15 +194,6 @@ outlines, including builtins. Useful in symbol mode for custom font
 support or for improving quality with a specific font. Note that this only
 makes sense if the output terminal is using a matching font. Can be
 specified multiple times.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--hold-bg</option></term>
-<listitem><para>
-Leave the background color untouched. This produces character-cell output
-using foreground colors only, and will avoid resetting or inverting the
-colors.
 </para></listitem>
 </varlistentry>
 
