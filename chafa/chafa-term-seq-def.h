@@ -850,12 +850,14 @@ CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, CHAFA_TERM_SEQ_ARGS
 #define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_8
 
 /**
- * chafa_term_info_emit_begin_kitty_immediate_image:
+ * chafa_term_info_emit_begin_kitty_immediate_image_v1:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  * @bpp: Bits per pixel
- * @width: Image width in pixels
- * @height: Image height in pixels
+ * @width_pixels: Image width in pixels
+ * @height_pixels: Image height in pixels
+ * @width_cells: Target width in cells
+ * @height_cells: Target height in cells
  *
  * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_IMMEDITATE.
  *
@@ -877,7 +879,7 @@ CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_image, BEGIN_KITTY_IMMEDIATE_IMAGE, 3, none, guint, CHAFA_TERM_SEQ_ARGS guint bpp, guint width, guint height)
+CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_image_v1, BEGIN_KITTY_IMMEDIATE_IMAGE_V1, 5, none, guint, CHAFA_TERM_SEQ_ARGS guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells)
 
 /**
  * chafa_term_info_emit_end_kitty_image:

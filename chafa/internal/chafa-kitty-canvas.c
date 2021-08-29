@@ -121,15 +121,18 @@ encode_chunk (GString *gs, const guint8 *start, const guint8 *end)
 }
 
 void
-chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str)
+chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
+                               gint width_cells, gint height_cells)
 {
     const guint8 *p, *last;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
-    *chafa_term_info_emit_begin_kitty_immediate_image (term_info, seq,
-                                                       32,
-                                                       kitty_canvas->width,
-                                                       kitty_canvas->height) = '\0';
+    *chafa_term_info_emit_begin_kitty_immediate_image_v1 (term_info, seq,
+                                                          32,
+                                                          kitty_canvas->width,
+                                                          kitty_canvas->height,
+                                                          width_cells,
+                                                          height_cells) = '\0';
     g_string_append (out_str, seq);
 
     last = kitty_canvas->rgba_image + kitty_canvas->width * kitty_canvas->height * sizeof (guint32);

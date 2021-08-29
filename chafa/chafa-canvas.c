@@ -1548,12 +1548,13 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
         g_string_append (str, buf);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-             && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE))
+             && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
     {
         /* Kitty mode */
 
         str = g_string_new ("");
-        chafa_kitty_canvas_build_ansi (canvas->pixel_canvas, term_info, str);
+        chafa_kitty_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
+                                       canvas->config.width, canvas->config.height);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
     {

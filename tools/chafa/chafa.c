@@ -823,7 +823,7 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, Chafa
     else
         mode = CHAFA_CANVAS_MODE_FGBG;
 
-    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE))
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
         pixel_mode = CHAFA_PIXEL_MODE_KITTY;
     else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
              && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS))

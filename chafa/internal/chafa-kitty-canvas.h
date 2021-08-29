@@ -37,7 +37,8 @@ void chafa_kitty_canvas_destroy (ChafaKittyCanvas *kitty_canvas);
 void chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelType src_pixel_type,
                                          gconstpointer src_pixels,
                                          gint src_width, gint src_height, gint src_rowstride);
-void chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str);
+void chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
+                                    gint width_cells, gint height_cells);
 
 G_END_DECLS
 
