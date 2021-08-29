@@ -966,7 +966,7 @@ parse_options (int *argc, char **argv [])
         if (options.dither_grain_height < 0)
             options.dither_grain_height = 1;
         if (options.font_ratio < 0.0)
-            options.font_ratio = 1.0;
+            options.font_ratio = 1.0 / 2.0;
     }
 
     /* Kitty leaves the cursor in the column trailing the last row of the
