@@ -743,8 +743,32 @@ static void
 get_tty_size (void)
 {
     struct winsize w;
+    gboolean have_winsz = FALSE;
 
-    if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) < 0)
+    if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) >= 0
+        || ioctl (STDERR_FILENO, TIOCGWINSZ, &w) >= 0
+        || ioctl (STDIN_FILENO, TIOCGWINSZ, &w) >= 0)
+        have_winsz = TRUE;
+
+    if (!have_winsz)
+    {
+        const gchar *term_path;
+        gint fd = -1;
+
+        term_path = ctermid (NULL);
+        if (term_path)
+            fd = open (term_path, O_RDONLY);
+
+        if (fd >= 0)
+        {
+            if (ioctl (fd, TIOCGWINSZ, &w) >= 0)
+                have_winsz = TRUE;
+
+            close (fd);
+        }
+    }
+
+    if (!have_winsz)
         return;
 
     if (w.ws_col > 0)
