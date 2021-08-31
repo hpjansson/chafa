@@ -10,8 +10,8 @@ m4_define([chafa_micro_version], [0])
 
 m4_define([chafa_version], [chafa_major_version.chafa_minor_version.chafa_micro_version])
 
-AC_PREREQ(2.59)
-AC_INIT([chafa], chafa_version, [hpj@hpjansson.org])
+AC_PREREQ([2.69])
+AC_INIT([chafa],[chafa_version],[hpj@hpjansson.org])
 AM_INIT_AUTOMAKE([1.9 foreign dist-xz no-dist-gzip -Wall])
 
 AC_CONFIG_SRCDIR([chafa.pc.in])
@@ -165,11 +165,9 @@ AC_ARG_ENABLE(Bsymbolic,
                AC_MSG_CHECKING([for -Bsymbolic linker flag])
                LDFLAGS=-Wl,-Bsymbolic
                LIBS=
-               AC_TRY_LINK([], [return 0],
-                           AC_MSG_RESULT(yes)
-                           enable_Bsymbolic=yes,
-                           AC_MSG_RESULT(no)
-                           enable_Bsymbolic=no)
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])],[AC_MSG_RESULT(yes)
+                              enable_Bsymbolic=yes],[AC_MSG_RESULT(no)
+                              enable_Bsymbolic=no])
                LDFLAGS="${SAVED_LDFLAGS}" LIBS="${SAVED_LIBS}"])
 
 if test "x${enable_Bsymbolic}" = "xyes"; then
@@ -296,11 +294,9 @@ case "$host" in
     SAVED_CFLAGS="${CFLAGS}"
     CFLAGS="-fvisibility=hidden"
     AC_MSG_CHECKING([for -fvisibility=hidden compiler flag])
-    AC_TRY_COMPILE([], [return 0],
-                   AC_MSG_RESULT(yes)
-                   enable_fvisibility_hidden=yes,
-                   AC_MSG_RESULT(no)
-                   enable_fvisibility_hidden=no)
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])],[AC_MSG_RESULT(yes)
+                      enable_fvisibility_hidden=yes],[AC_MSG_RESULT(no)
+                      enable_fvisibility_hidden=no])
     CFLAGS="${SAVED_CFLAGS}"
 
     AS_IF([test "${enable_fvisibility_hidden}" = "yes"], [
@@ -408,19 +404,20 @@ AM_CONDITIONAL(ENABLE_RPATH, test "$enable_rpath" == yes)
 
 dnl --- Output ---
 
-AC_OUTPUT(Makefile
-          chafa/Makefile
-          chafa/chafaconfig.h
-          chafa/internal/Makefile
-          chafa/internal/smolscale/Makefile
-          libnsgif/Makefile
-          chafa.pc
-          docs/Makefile
-          docs/version.xml
-          tests/Makefile
-          tools/Makefile
-          tools/chafa/Makefile
-          tools/fontgen/Makefile)
+AC_CONFIG_FILES([Makefile
+                 chafa/Makefile
+                 chafa/chafaconfig.h
+                 chafa/internal/Makefile
+                 chafa/internal/smolscale/Makefile
+                 libnsgif/Makefile
+                 chafa.pc
+                 docs/Makefile
+                 docs/version.xml
+                 tests/Makefile
+                 tools/Makefile
+                 tools/chafa/Makefile
+                 tools/fontgen/Makefile])
+AC_OUTPUT
 
 echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
