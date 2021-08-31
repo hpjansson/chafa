@@ -11,7 +11,7 @@
 <a href="https://travis-ci.com/hpjansson/chafa/branches" rel="nofollow">
 <img src="https://img.shields.io/travis/com/hpjansson/chafa/master.svg?label=master&style=for-the-badge" alt="Master Build Status" />
 &emsp;
-<img src="https://img.shields.io/travis/com/hpjansson/chafa/1.6.svg?label=1.6&style=for-the-badge" alt="1.6 Build Status" />
+<img src="https://img.shields.io/travis/com/hpjansson/chafa/1.8.svg?label=1.8&style=for-the-badge" alt="1.8 Build Status" />
 </a>
 &emsp;
 <a href="https://hpjansson.org/chafa/download/">
