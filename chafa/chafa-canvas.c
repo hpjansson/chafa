@@ -1614,6 +1614,16 @@ chafa_canvas_set_char_at (ChafaCanvas *canvas, gint x, gint y, gunichar c)
         cell [1].bg_color = cell [0].bg_color;
     }
 
+    /* If we're overwriting the rightmost half of a wide character,
+     * clear its leftmost half */
+
+    if (x > 0)
+    {
+        if (cell [-1].c != 0
+            && g_unichar_iswide (cell [-1].c))
+            cell [-1].c = canvas->blank_char;
+    }
+
     return cwidth;
 }
 
@@ -1704,6 +1714,20 @@ chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
             g_assert_not_reached ();
             break;
     }
+
+    /* If setting the color of half a wide char, set it for the other half too */
+
+    if (x > 0 && cell->c == 0)
+    {
+        cell [-1].fg_color = cell->fg_color;
+        cell [-1].bg_color = cell->bg_color;
+    }
+
+    if (x < canvas->config.width - 1 && cell [1].c == 0)
+    {
+        cell [1].fg_color = cell->fg_color;
+        cell [1].bg_color = cell->bg_color;
+    }
 }
 
 void
@@ -1788,5 +1812,19 @@ chafa_canvas_set_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
         case CHAFA_CANVAS_MODE_MAX:
             g_assert_not_reached ();
             break;
+    }
+
+    /* If setting the color of half a wide char, set it for the other half too */
+
+    if (x > 0 && cell->c == 0)
+    {
+        cell [-1].fg_color = cell->fg_color;
+        cell [-1].bg_color = cell->bg_color;
+    }
+
+    if (x < canvas->config.width - 1 && cell [1].c == 0)
+    {
+        cell [1].fg_color = cell->fg_color;
+        cell [1].bg_color = cell->bg_color;
     }
 }
