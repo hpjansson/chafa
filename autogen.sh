@@ -107,8 +107,7 @@ conf_flags="--enable-maintainer-mode"
 
 if test x$NOCONFIGURE = x; then
   ${MY_ECHO} Running $srcdir/configure $conf_flags "$@" ...
-  $srcdir/configure $conf_flags "$@" \
-  && ${MY_ECHO} Now type \`make\' to compile $PROJECT || exit 1
+  $srcdir/configure $conf_flags "$@" || exit 1
 else
   ${MY_ECHO} Skipping configure process.
 fi
