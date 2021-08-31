@@ -1573,6 +1573,20 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
     return str;
 }
 
+/**
+ * chafa_canvas_get_char_at:
+ * @canvas: The canvas to inspect
+ * @x: Column of character cell to inspect
+ * @y: Row of character cell to inspect
+ *
+ * Returns the character at cell (x, y). The coordinates are zero-indexed. For
+ * double-width characters, the leftmost cell will contain the character
+ * and the rightmost cell will contain 0.
+ *
+ * Returns: The character at (x, y)
+ *
+ * Since: 1.8
+ **/
 gunichar
 chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y)
 {
@@ -1584,6 +1598,24 @@ chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y)
     return canvas->cells [y * canvas->config.width + x].c;
 }
 
+/**
+ * chafa_canvas_set_char_at:
+ * @canvas: The canvas to manipulate
+ * @x: Column of character cell to manipulate
+ * @y: Row of character cell to manipulate
+ * @c: The character value to store
+ *
+ * Sets the character at cell (x, y). The coordinates are zero-indexed. For
+ * double-width characters, the leftmost cell must contain the character
+ * and the rightmost cell must contain 0.
+ *
+ * If the character is a nonprintable or zero-width, no change will be
+ * made.
+ *
+ * Returns: The number of cells output (0, 1 or 2)
+ *
+ * Since: 1.8
+ **/
 gint
 chafa_canvas_set_char_at (ChafaCanvas *canvas, gint x, gint y, gunichar c)
 {
@@ -1627,6 +1659,25 @@ chafa_canvas_set_char_at (ChafaCanvas *canvas, gint x, gint y, gunichar c)
     return cwidth;
 }
 
+/**
+ * chafa_canvas_get_colors_at:
+ * @canvas: The canvas to inspect
+ * @x: Column of character cell to inspect
+ * @y: Row of character cell to inspect
+ * @fg_out: Storage for foreground color
+ * @bg_out: Storage for background color
+ *
+ * Gets the colors at cell (x, y). The coordinates are zero-indexed. For
+ * double-width characters, both cells will contain the same colors.
+ *
+ * The colors will be -1 for transparency, packed 8bpc RGB otherwise,
+ * i.e. 0x00RRGGBB hex.
+ *
+ * If the canvas is in an indexed mode, palette lookups will be made
+ * for you.
+ *
+ * Since: 1.8
+ **/
 void
 chafa_canvas_get_colors_at (ChafaCanvas *canvas, gint x, gint y,
                             gint *fg_out, gint *bg_out)
@@ -1677,6 +1728,25 @@ chafa_canvas_get_colors_at (ChafaCanvas *canvas, gint x, gint y,
     *bg_out = bg;
 }
 
+/**
+ * chafa_canvas_set_colors_at:
+ * @canvas: The canvas to manipulate
+ * @x: Column of character cell to manipulate
+ * @y: Row of character cell to manipulate
+ * @fg: Foreground color
+ * @bg: Background color
+ *
+ * Sets the colors at cell (x, y). The coordinates are zero-indexed. For
+ * double-width characters, both cells will be set to the same color.
+ *
+ * The colors must be -1 for transparency, packed 8bpc RGB otherwise,
+ * i.e. 0x00RRGGBB hex.
+ *
+ * If the canvas is in an indexed mode, palette lookups will be made
+ * for you.
+ *
+ * Since: 1.8
+ **/
 void
 chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
                             gint fg, gint bg)
@@ -1730,6 +1800,26 @@ chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
     }
 }
 
+/**
+ * chafa_canvas_get_raw_colors_at:
+ * @canvas: The canvas to inspect
+ * @x: Column of character cell to inspect
+ * @y: Row of character cell to inspect
+ * @fg_out: Storage for foreground color
+ * @bg_out: Storage for background color
+ *
+ * Gets the colors at cell (x, y). The coordinates are zero-indexed. For
+ * double-width characters, both cells will contain the same colors.
+ *
+ * The colors will be -1 for transparency, packed 8bpc RGB, i.e.
+ * 0x00RRGGBB hex in truecolor mode, or the raw pen value (0-255) in
+ * indexed modes.
+ *
+ * It's the caller's responsibility to handle the color values correctly
+ * according to the canvas mode (truecolor or indexed).
+ *
+ * Since: 1.8
+ **/
 void
 chafa_canvas_get_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
                                 gint *fg_out, gint *bg_out)
@@ -1776,6 +1866,26 @@ chafa_canvas_get_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
         *bg_out = bg;
 }
 
+/**
+ * chafa_canvas_set_raw_colors_at:
+ * @canvas: The canvas to manipulate
+ * @x: Column of character cell to manipulate
+ * @y: Row of character cell to manipulate
+ * @fg: Foreground color
+ * @bg: Background color
+ *
+ * Sets the colors at cell (x, y). The coordinates are zero-indexed. For
+ * double-width characters, both cells will be set to the same color.
+ *
+ * The colors must be -1 for transparency, packed 8bpc RGB, i.e.
+ * 0x00RRGGBB hex in truecolor mode, or the raw pen value (0-255) in
+ * indexed modes.
+ *
+ * It's the caller's responsibility to handle the color values correctly
+ * according to the canvas mode (truecolor or indexed).
+ *
+ * Since: 1.8
+ **/
 void
 chafa_canvas_set_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
                                 gint fg, gint bg)
