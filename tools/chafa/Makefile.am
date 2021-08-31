@@ -16,9 +16,11 @@ chafa_SOURCES = \
 	xwd-loader.c \
 	xwd-loader.h
 
-# We must pass -rpath so the binary knows where to find libchafa.so when
+# We can pass -rpath so the binary knows where to find libchafa.so when
 # installed outside /usr (e.g. the default /usr/local). This affects Ubuntu.
-# See Github issue #32.
+# Resolved by running ldconfig. See Github issue #32.
+#
+# This is disabled by default.
 
 chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
