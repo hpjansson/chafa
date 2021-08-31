@@ -1,6 +1,66 @@
 Chafa releases
 ==============
 
+1.8.0 (2021-08-31)
+------------------
+
+This is a major feature release.
+
+* Added basic support for the Kitty and iTerm2 graphics protocols. These are
+  enabled automatically when corresponding terminal support is detected, or
+  manually with '-f kitty' or '-f iterm'.
+
+* Implemented an 8-color mode, selectable with '-c 8' (Øyvind Kolås).
+
+* Implemented a foreground-only switch, '--fg-only'. This produces character
+  art using foreground colors only, and will avoid modifying or resetting
+  the background color. Looks best with non-contiguous symbols (e.g. ascii).
+
+* Added builtins for Japanese kana fullwidth symbols. These can now be used
+  without loading any external fonts (try '-c none --symbols wide').
+
+* Added builtins for legacy computer symbols (mainly wedges and sextant
+  blocks). These were widely used in PETSCII and Teletext, and can be enabled
+  using --symbols or --fill with their respective tags: legacy, wedge and
+  sextant (Øyvind Kolås).
+
+* Since there is a growing number of builtin symbols that may not be available
+  everywhere, the default selection has been restricted to the widely supported
+  block and border sets.
+
+* If possible, we now select a visually blank character from the specified
+  symbol/fill sets instead of hardcoding ASCII space for featureless cells.
+  One practical upshot of this is that the constant-width braille range can
+  be used to produce consistent images even in contexts with variable-width
+  fonts. U+2800 (BRAILLE PATTERN BLANK) will then be used in blank cells.
+
+* Improved terminal size detection when used with pipelines and redirection.
+  This should now produce an image properly sized for your terminal:
+
+  $ curl https://i.imgur.com/WFDEFVg.jpeg | chafa - | tee out
+
+* ChafaCanvas gained API functions for programmatically getting and setting
+  character cell contents. These are used in a new example in tests/ncurses.c
+  demonstrating ncurses integration.
+
+* Made --disable-rpath the default in order to simplify packaging.
+
+* Added a HACKING file featuring a much needed release checklist.
+
+* Improved terminal support:
+  - Ctx will now use optimizing REP sequences at high -O levels.
+  - foot now defaults to sixels (Daniel Eklöf).
+  - iTerm2 now defaults to the iTerm2 protocol.
+  - Kitty now defaults to the Kitty protocol.
+  - st now defaults to truecolor symbols (Roman Wagner).
+
+* Bug fixes:
+  github#44  Missing error handling on stdout writes (reported by Markus
+             Elfring).
+  [unfiled]  Solid symbols erroneously replaced by fill in FGBG mode.
+  [unfiled]  Integer formatter was not using fast path for 8-bit values.
+  [unfiled]  Wrong default cell aspect used for sixel graphics.
+
 1.6.1 (2021-06-03)
 ------------------
 
