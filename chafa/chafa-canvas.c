@@ -1607,7 +1607,7 @@ chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y)
  *
  * Sets the character at cell (x, y). The coordinates are zero-indexed. For
  * double-width characters, the leftmost cell must contain the character
- * and the rightmost cell must contain 0.
+ * and the cell to the right of it will automatically be set to 0.
  *
  * If the character is a nonprintable or zero-width, no change will be
  * made.
