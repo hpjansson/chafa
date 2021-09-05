@@ -307,6 +307,11 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = iterm2_seqs;
     }
 
+    if (!strcasecmp (term_program, "WezTerm"))
+    {
+        gfx_seqs = sixel_seqs;
+    }
+
     /* Apple Terminal sets TERM=xterm-256color, and does not support truecolor */
     if (!g_ascii_strcasecmp (term_program, "Apple_Terminal"))
         color_seq_list = color_256_list;
