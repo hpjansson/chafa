@@ -1062,9 +1062,13 @@ parse_options (int *argc, char **argv [])
         options.fg_color = temp_color;
     }
 
-    if (options.file_duration_s == G_MAXDOUBLE && options.args && options.args->next)
+    if (options.file_duration_s == G_MAXDOUBLE
+        && (!options.is_interactive
+            || (options.args && options.args->next)))
     {
-        /* The default duration when we have multiple files */
+        /* Apply a zero default duration when we have multiple files or it looks
+         * like we're part of a pipe; we don't want to get stuck if the user is
+         * trying to e.g. batch convert files */
         options.file_duration_s = FILE_DURATION_DEFAULT;
     }
 
@@ -1572,7 +1576,7 @@ run_magickwand (const gchar *filename, gboolean is_first_file, gboolean is_first
 
         loop_n++;
     }
-    while (options.is_interactive && is_animation && !interrupted_by_user
+    while (is_animation && !interrupted_by_user
            && !options.watch && anim_elapsed_s < options.file_duration_s);
 
 out:
@@ -1732,7 +1736,7 @@ run_gif (const gchar *filename, gboolean is_first_file, gboolean is_first_frame,
 
         loop_n++;
     }
-    while (options.is_interactive && is_animation && !interrupted_by_user
+    while (is_animation && !interrupted_by_user
            && !options.watch && anim_elapsed_s < options.file_duration_s);
 
 out:
