@@ -10,6 +10,7 @@ override_dh_autoreconf:
 	touch gtk-doc.make
 	echo "EXTRA_DIST =" >> gtk-doc.make
 	echo "CLEANFILES =" >> gtk-doc.make
+	mkdir m4 # needed by autoconf 2.70+
 	gtkdocize
 	dh_autoreconf
 

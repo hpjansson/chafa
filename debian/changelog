@@ -1,8 +1,13 @@
-chafa (1.7.0-0) unstable; urgency=medium
+chafa (1.8.0-1) unstable; urgency=medium
 
-  * Track upstream version 1.7.0 (development, unofficial).
+  [ Boyuan Yang ]
+  * Manually create m4 directory prior to configure to fix FTBFS
+    with autoconf 2.70+. (Closes: #978781)
 
- -- Hans Petter Jansson <hpj@hpjansson.org>  Mon, 18 Jan 2021 00:39:46 +0100
+  [ Mo Zhou ]
+  * New upstream version 1.8.0
+
+ -- Mo Zhou <lumin@debian.org>  Sun, 05 Sep 2021 16:22:16 -0400
 
 chafa (1.6.0-1) unstable; urgency=medium
 
