@@ -17,7 +17,7 @@ AM_INIT_AUTOMAKE([1.9 foreign dist-xz no-dist-gzip -Wall])
 AC_CONFIG_SRCDIR([chafa.pc.in])
 
 AC_CONFIG_MACRO_DIRS([m4])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 CHAFA_MAJOR_VERSION=chafa_major_version
 CHAFA_MINOR_VERSION=chafa_minor_version
