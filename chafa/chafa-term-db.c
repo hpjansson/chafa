@@ -229,6 +229,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *colorterm;
     const gchar *vte_version;
     const gchar *term_program;
+    const gchar *term_name;
     const gchar *tmux;
     const gchar *ctx_backend;
     const gchar *lc_terminal;
@@ -249,6 +250,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     term_program = g_environ_getenv (envp, "TERM_PROGRAM");
     if (!term_program) term_program = "";
+
+    term_name = g_environ_getenv (envp, "TERMINAL_NAME");
+    if (!term_name) term_name = "";
 
     tmux = g_environ_getenv (envp, "TMUX");
     if (!tmux) tmux = "";
@@ -312,7 +316,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = sixel_seqs;
     }
 
-    if (strcasecmp (term_program, "contour"))
+    if (!strcasecmp (term_name, "contour"))
     {
         gfx_seqs = sixel_seqs;
     }
