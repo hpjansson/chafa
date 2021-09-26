@@ -1033,13 +1033,22 @@ parse_options (int *argc, char **argv [])
         return TRUE;
     }
 
-    if (*argc < 2)
+    if (*argc > 1)
+    {
+        options.args = collect_variable_arguments (argc, argv, 1);
+    }
+    else if (!isatty (STDIN_FILENO))
+    {
+        /* Receiving data through a pipe, and no file arguments. Act as if
+         * invoked with "chafa -". */
+
+        options.args = g_list_append (NULL, g_strdup ("-"));
+    }
+    else
     {
         print_summary ();
         return FALSE;
     }
-
-    options.args = collect_variable_arguments (argc, argv, 1);
 
     if (options.show_help)
     {
