@@ -745,6 +745,9 @@ get_tty_size (void)
     struct winsize w;
     gboolean have_winsz = FALSE;
 
+    /* FIXME: Use tcgetwinsize() when it becomes more widely available.
+     * See: https://www.austingroupbugs.net/view.php?id=1151#c3856 */
+
     if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) >= 0
         || ioctl (STDERR_FILENO, TIOCGWINSZ, &w) >= 0
         || ioctl (STDIN_FILENO, TIOCGWINSZ, &w) >= 0)
