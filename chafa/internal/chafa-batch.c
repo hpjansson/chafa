@@ -19,13 +19,15 @@
 
 #include "config.h"
 
+#include "chafa.h"
 #include "internal/chafa-batch.h"
 
 void
 chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_rows, gint n_batches, gint batch_unit)
 {
-    GThreadPool *thread_pool;
+    GThreadPool *thread_pool = NULL;
     ChafaBatchInfo *batches;
+    gint n_threads;
     gint n_units;
     gfloat units_per_batch;
     gfloat ofs [2] = { .0, .0 };
@@ -37,15 +39,23 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
     if (n_rows < 1)
         return;
 
+    n_threads = chafa_get_n_threads ();
+    if (n_threads < 0)
+        n_threads = g_get_num_processors ();
+    if (n_threads <= 0)
+        n_threads = 1;
+
     n_units = (n_rows + batch_unit - 1) / batch_unit;
     units_per_batch = (gfloat) n_units / (gfloat) n_batches;
 
     batches = g_new0 (ChafaBatchInfo, n_batches);
-    thread_pool = g_thread_pool_new (batch_func,
-                                     (gpointer) ctx,
-                                     g_get_num_processors (),
-                                     FALSE,
-                                     NULL);
+
+    if (n_threads >= 2)
+        thread_pool = g_thread_pool_new (batch_func,
+                                         (gpointer) ctx,
+                                         n_threads,
+                                         FALSE,
+                                         NULL);
 
     /* Divide work up into batches that are multiples of batch_unit, except
      * for the last one (if n_rows is not itself a multiple) */
@@ -84,13 +94,23 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
         g_printerr ("Batch %d: %04d rows\n", i, batch->n_rows);
 #endif
 
-        g_thread_pool_push (thread_pool, batch, NULL);
+        if (n_threads >= 2)
+        {
+            g_thread_pool_push (thread_pool, batch, NULL);
+        }
+        else
+        {
+            batch_func (batch, ctx);
+        }
 
         ofs [0] = ofs [1];
     }
 
-    /* Wait for threads to finish */
-    g_thread_pool_free (thread_pool, FALSE, TRUE);
+    if (n_threads >= 2)
+    {
+        /* Wait for threads to finish */
+        g_thread_pool_free (thread_pool, FALSE, TRUE);
+    }
 
     if (post_func)
     {

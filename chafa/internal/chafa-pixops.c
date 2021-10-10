@@ -546,8 +546,10 @@ prepare_pixels_1_worker_smooth (PreparePixelsBatch1 *work, PrepareContext *prep_
 static void
 prepare_pixels_pass_1 (PrepareContext *prep_ctx)
 {
-    GThreadPool *thread_pool;
+    GThreadPool *thread_pool = NULL;
     PreparePixelsBatch1 *batches;
+    GFunc batch_func;
+    gint n_threads;
     gint cy;
     gint i;
 
@@ -560,16 +562,25 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
      * - Figure out if we have alpha transparency
      */
 
+    n_threads = chafa_get_n_threads ();
+    if (n_threads < 0)
+        n_threads = g_get_num_processors ();
+    if (n_threads <= 0)
+        n_threads = 1;
+
+    batch_func = (GFunc) ((prep_ctx->work_factor_int < 3
+                           && prep_ctx->src_pixel_type == CHAFA_PIXEL_RGBA8_UNASSOCIATED)
+                          ? prepare_pixels_1_worker_nearest
+                          : prepare_pixels_1_worker_smooth);
+
     batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
 
-    thread_pool = g_thread_pool_new ((GFunc) ((prep_ctx->work_factor_int < 3
-                                               && prep_ctx->src_pixel_type == CHAFA_PIXEL_RGBA8_UNASSOCIATED)
-                                              ? prepare_pixels_1_worker_nearest
-                                              : prepare_pixels_1_worker_smooth),
-                                     prep_ctx,
-                                     g_get_num_processors (),
-                                     FALSE,
-                                     NULL);
+    if (n_threads >= 2)
+        thread_pool = g_thread_pool_new (batch_func,
+                                         prep_ctx,
+                                         n_threads,
+                                         FALSE,
+                                         NULL);
 
     for (cy = 0, i = 0;
          cy < prep_ctx->dest_height;
@@ -580,11 +591,21 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
         batch->first_row = cy;
         batch->n_rows = MIN (prep_ctx->dest_height - cy, prep_ctx->n_rows_per_batch_pixels);
 
-        g_thread_pool_push (thread_pool, batch, NULL);
+        if (n_threads >= 2)
+        {
+            g_thread_pool_push (thread_pool, batch, NULL);
+        }
+        else
+        {
+             batch_func (batch, prep_ctx);
+        }
     }
 
-    /* Wait for threads to finish */
-    g_thread_pool_free (thread_pool, FALSE, TRUE);
+    if (n_threads >= 2)
+    {
+        /* Wait for threads to finish */
+        g_thread_pool_free (thread_pool, FALSE, TRUE);
+    }
 
     /* Generate final histogram */
     if (prep_ctx->preprocessing_enabled)
@@ -706,8 +727,9 @@ need_pass_2 (PrepareContext *prep_ctx)
 static void
 prepare_pixels_pass_2 (PrepareContext *prep_ctx)
 {
-    GThreadPool *thread_pool;
-    PreparePixelsBatch1 *batches;
+    GThreadPool *thread_pool = NULL;
+    PreparePixelsBatch2 *batches;
+    gint n_threads;
     gint cy;
     gint i;
 
@@ -722,28 +744,45 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
     if (!need_pass_2 (prep_ctx))
         return;
 
-    batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
+    n_threads = chafa_get_n_threads ();
+    if (n_threads < 0)
+        n_threads = g_get_num_processors ();
+    if (n_threads <= 0)
+        n_threads = 1;
 
-    thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_2_worker,
-                                     prep_ctx,
-                                     g_get_num_processors (),
-                                     FALSE,
-                                     NULL);
+    batches = g_new0 (PreparePixelsBatch2, prep_ctx->n_batches_pixels);
+
+    if (n_threads >= 2)
+        thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_2_worker,
+                                         prep_ctx,
+                                         n_threads,
+                                         FALSE,
+                                         NULL);
 
     for (cy = 0, i = 0;
          cy < prep_ctx->dest_height;
          cy += prep_ctx->n_rows_per_batch_pixels, i++)
     {
-        PreparePixelsBatch1 *batch = &batches [i];
+        PreparePixelsBatch2 *batch = &batches [i];
 
         batch->first_row = cy;
         batch->n_rows = MIN (prep_ctx->dest_height - cy, prep_ctx->n_rows_per_batch_pixels);
 
-        g_thread_pool_push (thread_pool, batch, NULL);
+        if (n_threads >= 2)
+        {
+            g_thread_pool_push (thread_pool, batch, NULL);
+        }
+        else
+        {
+            prepare_pixels_2_worker (batch, prep_ctx);
+        }
     }
 
-    /* Wait for threads to finish */
-    g_thread_pool_free (thread_pool, FALSE, TRUE);
+    if (n_threads >= 2)
+    {
+        /* Wait for threads to finish */
+        g_thread_pool_free (thread_pool, FALSE, TRUE);
+    }
 
     g_free (batches);
 }

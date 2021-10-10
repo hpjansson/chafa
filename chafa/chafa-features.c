@@ -46,6 +46,8 @@ static gboolean have_mmx;
 static gboolean have_sse41;
 static gboolean have_popcnt;
 
+static gint n_threads = -1;
+
 static void
 init_features (void)
 {
@@ -179,4 +181,35 @@ chafa_describe_features (ChafaFeatures features)
         g_string_truncate (features_gstr, features_gstr->len - 1);
 
     return g_string_free (features_gstr, FALSE);
+}
+
+/**
+ * chafa_get_n_threads:
+ *
+ * Queries the maximum number of worker threads to use for parallel processing.
+ *
+ * Returns: The number of threads, or -1 if determined automatically
+ **/
+gint
+chafa_get_n_threads (void)
+{
+    return g_atomic_int_get (&n_threads);
+}
+
+/**
+ * chafa_set_n_threads:
+ * @n: Number of threads
+ *
+ * Sets the maximum number of worker threads to use for parallel processing,
+ * or -1 to determine this automatically. The default is -1.
+ *
+ * Setting this to 0 or 1 will avoid using thread pools and instead perform
+ * all processing in the main thread.
+ **/
+void
+chafa_set_n_threads (gint n)
+{
+    g_return_if_fail (n >= -1);
+
+    return g_atomic_int_set (&n_threads, n);
 }

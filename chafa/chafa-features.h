@@ -43,6 +43,11 @@ ChafaFeatures chafa_get_supported_features (void);
 CHAFA_AVAILABLE_IN_ALL
 gchar *chafa_describe_features (ChafaFeatures features);
 
+CHAFA_AVAILABLE_IN_1_10
+gint chafa_get_n_threads (void);
+CHAFA_AVAILABLE_IN_1_10
+void chafa_set_n_threads (gint n);
+
 G_END_DECLS
 
 #endif /* __CHAFA_FEATURES_H__ */
