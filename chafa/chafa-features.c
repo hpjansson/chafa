@@ -213,3 +213,25 @@ chafa_set_n_threads (gint n)
 
     return g_atomic_int_set (&n_threads, n);
 }
+
+/**
+ * chafa_get_n_actual_threads:
+ *
+ * Queries the number of worker threads that will actually be used for
+ * parallel processing.
+ *
+ * Returns: Number of threads, always >= 1
+ **/
+gint
+chafa_get_n_actual_threads (void)
+{
+    gint n_threads;
+
+    n_threads = chafa_get_n_threads ();
+    if (n_threads < 0)
+        n_threads = g_get_num_processors ();
+    if (n_threads <= 0)
+        n_threads = 1;
+
+    return n_threads;
+}
