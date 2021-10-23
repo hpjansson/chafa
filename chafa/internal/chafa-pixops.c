@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include "internal/chafa-batch.h"
 #include "internal/chafa-pixops.h"
 #include "internal/smolscale/smolscale.h"
 
@@ -78,18 +79,9 @@ PrepareContext;
 
 typedef struct
 {
-    gint first_row;
-    gint n_rows;
     Histogram hist;
 }
-PreparePixelsBatch1;
-
-typedef struct
-{
-    gint first_row;
-    gint n_rows;
-}
-PreparePixelsBatch2;
+PreparePixelsBatch1Ret;
 
 static gint
 rgb_to_intensity_fast (const ChafaColor *color)
@@ -445,7 +437,7 @@ fs_and_convert_rgb_to_din99d (const ChafaDither *dither, const ChafaPalette *pal
 }
 
 static void
-prepare_pixels_1_inner (PreparePixelsBatch1 *work,
+prepare_pixels_1_inner (PreparePixelsBatch1Ret *ret,
                         PrepareContext *prep_ctx,
                         const guint8 *data_p,
                         ChafaPixel *pixel_out,
@@ -472,13 +464,13 @@ prepare_pixels_1_inner (PreparePixelsBatch1 *work,
     if (col->ch [3] > 127)
     {
         gint v = rgb_to_intensity_fast (col);
-        work->hist.c [v]++;
-        work->hist.n_samples++;
+        ret->hist.c [v]++;
+        ret->hist.n_samples++;
     }
 }
 
 static void
-prepare_pixels_1_worker_nearest (PreparePixelsBatch1 *work, PrepareContext *prep_ctx)
+prepare_pixels_1_worker_nearest (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 {
     ChafaPixel *pixel;
     gint dest_y;
@@ -488,10 +480,14 @@ prepare_pixels_1_worker_nearest (PreparePixelsBatch1 *work, PrepareContext *prep
     const guint8 *data;
     gint n_rows;
     gint rowstride;
+    PreparePixelsBatch1Ret *ret;
 
-    dest_y = work->first_row;
+    ret = g_new (PreparePixelsBatch1Ret, 1);
+    batch->ret_p = ret;
+
+    dest_y = batch->first_row;
     data = prep_ctx->src_pixels;
-    n_rows = work->n_rows;
+    n_rows = batch->n_rows;
     rowstride = prep_ctx->src_rowstride;
 
     x_inc = (prep_ctx->src_width * FIXED_MULT) / (prep_ctx->dest_width);
@@ -508,7 +504,7 @@ prepare_pixels_1_worker_nearest (PreparePixelsBatch1 *work, PrepareContext *prep
         for (px = 0; px < prep_ctx->dest_width; px++)
         {
             const guint8 *data_p = data_row_p + ((px * x_inc) / FIXED_MULT) * 4;
-            prepare_pixels_1_inner (work, prep_ctx, data_p, pixel++, &alpha_sum);
+            prepare_pixels_1_inner (ret, prep_ctx, data_p, pixel++, &alpha_sum);
         }
     }
 
@@ -517,23 +513,27 @@ prepare_pixels_1_worker_nearest (PreparePixelsBatch1 *work, PrepareContext *prep
 }
 
 static void
-prepare_pixels_1_worker_smooth (PreparePixelsBatch1 *work, PrepareContext *prep_ctx)
+prepare_pixels_1_worker_smooth (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 {
     ChafaPixel *pixel, *pixel_max;
     gint alpha_sum = 0;
     guint8 *scaled_data;
     const guint8 *data_p;
+    PreparePixelsBatch1Ret *ret;
 
-    scaled_data = g_malloc (prep_ctx->dest_width * work->n_rows * sizeof (guint32));
-    smol_scale_batch_full (prep_ctx->scale_ctx, scaled_data, work->first_row, work->n_rows);
+    ret = g_new0 (PreparePixelsBatch1Ret, 1);
+    batch->ret_p = ret;
+
+    scaled_data = g_malloc (prep_ctx->dest_width * batch->n_rows * sizeof (guint32));
+    smol_scale_batch_full (prep_ctx->scale_ctx, scaled_data, batch->first_row, batch->n_rows);
 
     data_p = scaled_data;
-    pixel = prep_ctx->dest_pixels + work->first_row * prep_ctx->dest_width;
-    pixel_max = pixel + work->n_rows * prep_ctx->dest_width;
+    pixel = prep_ctx->dest_pixels + batch->first_row * prep_ctx->dest_width;
+    pixel_max = pixel + batch->n_rows * prep_ctx->dest_width;
 
     while (pixel < pixel_max)
     {
-        prepare_pixels_1_inner (work, prep_ctx, data_p, pixel++, &alpha_sum);
+        prepare_pixels_1_inner (ret, prep_ctx, data_p, pixel++, &alpha_sum);
         data_p += 4;
     }
 
@@ -544,14 +544,22 @@ prepare_pixels_1_worker_smooth (PreparePixelsBatch1 *work, PrepareContext *prep_
 }
 
 static void
+pass_1_post (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
+{
+    PreparePixelsBatch1Ret *ret = batch->ret_p;
+
+    if (prep_ctx->preprocessing_enabled)
+    {
+        sum_histograms (&ret->hist, &prep_ctx->hist);
+    }
+
+    g_free (ret);
+}
+
+static void
 prepare_pixels_pass_1 (PrepareContext *prep_ctx)
 {
-    GThreadPool *thread_pool = NULL;
-    PreparePixelsBatch1 *batches;
     GFunc batch_func;
-    gint n_threads;
-    gint cy;
-    gint i;
 
     /* First pass
      * ----------
@@ -562,57 +570,21 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
      * - Figure out if we have alpha transparency
      */
 
-    n_threads = chafa_get_n_threads ();
-    if (n_threads < 0)
-        n_threads = g_get_num_processors ();
-    if (n_threads <= 0)
-        n_threads = 1;
-
     batch_func = (GFunc) ((prep_ctx->work_factor_int < 3
                            && prep_ctx->src_pixel_type == CHAFA_PIXEL_RGBA8_UNASSOCIATED)
                           ? prepare_pixels_1_worker_nearest
                           : prepare_pixels_1_worker_smooth);
 
-    batches = g_new0 (PreparePixelsBatch1, prep_ctx->n_batches_pixels);
-
-    if (n_threads >= 2)
-        thread_pool = g_thread_pool_new (batch_func,
-                                         prep_ctx,
-                                         n_threads,
-                                         FALSE,
-                                         NULL);
-
-    for (cy = 0, i = 0;
-         cy < prep_ctx->dest_height;
-         cy += prep_ctx->n_rows_per_batch_pixels, i++)
-    {
-        PreparePixelsBatch1 *batch = &batches [i];
-
-        batch->first_row = cy;
-        batch->n_rows = MIN (prep_ctx->dest_height - cy, prep_ctx->n_rows_per_batch_pixels);
-
-        if (n_threads >= 2)
-        {
-            g_thread_pool_push (thread_pool, batch, NULL);
-        }
-        else
-        {
-             batch_func (batch, prep_ctx);
-        }
-    }
-
-    if (n_threads >= 2)
-    {
-        /* Wait for threads to finish */
-        g_thread_pool_free (thread_pool, FALSE, TRUE);
-    }
+    chafa_process_batches (prep_ctx,
+                           (GFunc) batch_func,
+                           (GFunc) pass_1_post,
+                           prep_ctx->dest_height,
+                           chafa_get_n_actual_threads (),
+                           1);
 
     /* Generate final histogram */
     if (prep_ctx->preprocessing_enabled)
     {
-        for (i = 0; i < prep_ctx->n_batches_pixels; i++)
-            sum_histograms (&batches [i].hist, &prep_ctx->hist);
-
         switch (prep_ctx->palette_type)
         {
           case CHAFA_PALETTE_TYPE_FIXED_16:
@@ -626,8 +598,6 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
             break;
         }
     }
-
-    g_free (batches);
 }
 
 static void
@@ -648,19 +618,19 @@ composite_alpha_on_bg (ChafaColor bg_color,
 }
 
 static void
-prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
+prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 {
     if (prep_ctx->preprocessing_enabled
         && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16
             ||prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8
             || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_FGBG))
         normalize_rgb (prep_ctx->dest_pixels, &prep_ctx->hist, prep_ctx->dest_width,
-                       work->first_row, work->n_rows);
+                       batch->first_row, batch->n_rows);
 
     if (prep_ctx->have_alpha_int)
         composite_alpha_on_bg (prep_ctx->bg_color_rgb,
                                prep_ctx->dest_pixels, prep_ctx->dest_width,
-                               work->first_row, work->n_rows);
+                               batch->first_row, batch->n_rows);
 
     if (prep_ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
     {
@@ -669,8 +639,8 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
             bayer_and_convert_rgb_to_din99d (prep_ctx->dither,
                                              prep_ctx->dest_pixels,
                                              prep_ctx->dest_width,
-                                             work->first_row,
-                                             work->n_rows);
+                                             batch->first_row,
+                                             batch->n_rows);
         }
         else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_DIFFUSION)
         {
@@ -678,15 +648,15 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
                                           prep_ctx->palette,
                                           prep_ctx->dest_pixels,
                                           prep_ctx->dest_width,
-                                          work->first_row,
-                                          work->n_rows);
+                                          batch->first_row,
+                                          batch->n_rows);
         }
         else
         {
             convert_rgb_to_din99d (prep_ctx->dest_pixels,
                                    prep_ctx->dest_width,
-                                   work->first_row,
-                                   work->n_rows);
+                                   batch->first_row,
+                                   batch->n_rows);
         }
     }
     else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_ORDERED)
@@ -694,8 +664,8 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
         bayer_dither (prep_ctx->dither,
                       prep_ctx->dest_pixels,
                       prep_ctx->dest_width,
-                      work->first_row,
-                      work->n_rows);
+                      batch->first_row,
+                      batch->n_rows);
     }
     else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_DIFFUSION)
     {
@@ -704,8 +674,8 @@ prepare_pixels_2_worker (PreparePixelsBatch2 *work, PrepareContext *prep_ctx)
                    prep_ctx->color_space,
                    prep_ctx->dest_pixels,
                    prep_ctx->dest_width,
-                   work->first_row,
-                   work->n_rows);
+                   batch->first_row,
+                   batch->n_rows);
     }
 }
 
@@ -727,12 +697,6 @@ need_pass_2 (PrepareContext *prep_ctx)
 static void
 prepare_pixels_pass_2 (PrepareContext *prep_ctx)
 {
-    GThreadPool *thread_pool = NULL;
-    PreparePixelsBatch2 *batches;
-    gint n_threads;
-    gint cy;
-    gint i;
-
     /* Second pass
      * -----------
      *
@@ -744,47 +708,12 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
     if (!need_pass_2 (prep_ctx))
         return;
 
-    n_threads = chafa_get_n_threads ();
-    if (n_threads < 0)
-        n_threads = g_get_num_processors ();
-    if (n_threads <= 0)
-        n_threads = 1;
-
-    batches = g_new0 (PreparePixelsBatch2, prep_ctx->n_batches_pixels);
-
-    if (n_threads >= 2)
-        thread_pool = g_thread_pool_new ((GFunc) prepare_pixels_2_worker,
-                                         prep_ctx,
-                                         n_threads,
-                                         FALSE,
-                                         NULL);
-
-    for (cy = 0, i = 0;
-         cy < prep_ctx->dest_height;
-         cy += prep_ctx->n_rows_per_batch_pixels, i++)
-    {
-        PreparePixelsBatch2 *batch = &batches [i];
-
-        batch->first_row = cy;
-        batch->n_rows = MIN (prep_ctx->dest_height - cy, prep_ctx->n_rows_per_batch_pixels);
-
-        if (n_threads >= 2)
-        {
-            g_thread_pool_push (thread_pool, batch, NULL);
-        }
-        else
-        {
-            prepare_pixels_2_worker (batch, prep_ctx);
-        }
-    }
-
-    if (n_threads >= 2)
-    {
-        /* Wait for threads to finish */
-        g_thread_pool_free (thread_pool, FALSE, TRUE);
-    }
-
-    g_free (batches);
+    chafa_process_batches (prep_ctx,
+                           (GFunc) prepare_pixels_2_worker,
+                           NULL,  /* _post */
+                           prep_ctx->dest_height,
+                           chafa_get_n_actual_threads (),
+                           1);
 }
 
 void

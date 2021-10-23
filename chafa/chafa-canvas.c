@@ -23,6 +23,7 @@
 #include <string.h>
 #include <glib.h>
 #include "chafa.h"
+#include "internal/chafa-batch.h"
 #include "internal/chafa-canvas-internal.h"
 #include "internal/chafa-canvas-printer.h"
 #include "internal/chafa-private.h"
@@ -902,59 +903,26 @@ update_cells_row (ChafaCanvas *canvas, gint row)
     }
 }
 
-typedef struct
-{
-    gint row;
-}
-CellBuildWork;
-
 static void
-cell_build_worker (CellBuildWork *work, ChafaCanvas *canvas)
+cell_build_worker (ChafaBatchInfo *batch, ChafaCanvas *canvas)
 {
-    update_cells_row (canvas, work->row);
-    g_slice_free (CellBuildWork, work);
+    gint i;
+
+    for (i = 0; i < batch->n_rows; i++)
+    {
+        update_cells_row (canvas, batch->first_row + i);
+    }
 }
 
 static void
 update_cells (ChafaCanvas *canvas)
 {
-    GThreadPool *thread_pool = NULL;
-    gint n_threads;
-    gint cy;
-
-    n_threads = chafa_get_n_threads ();
-    if (n_threads < 0)
-        n_threads = g_get_num_processors ();
-    if (n_threads <= 0)
-        n_threads = 1;
-
-    if (n_threads >= 2)
-        thread_pool = g_thread_pool_new ((GFunc) cell_build_worker,
-                                         canvas,
-                                         n_threads,
-                                         FALSE,
-                                         NULL);
-
-    for (cy = 0; cy < canvas->config.height; cy++)
-    {
-        CellBuildWork *work = g_slice_new (CellBuildWork);
-        work->row = cy;
-
-        if (n_threads >= 2)
-        {
-            g_thread_pool_push (thread_pool, work, NULL);
-        }
-        else
-        {
-            cell_build_worker (work, canvas);
-        }
-    }
-
-    if (n_threads >= 2)
-    {
-        /* Wait for threads to finish */
-        g_thread_pool_free (thread_pool, FALSE, TRUE);
-    }
+    chafa_process_batches (canvas,
+                           (GFunc) cell_build_worker,
+                           NULL,  /* _post */
+                           canvas->config.height,
+                           chafa_get_n_actual_threads (),
+                           1);
 }
 
 static void
