@@ -458,6 +458,6 @@ chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, GString *out_str)
                            (GFunc) build_sixel_row_worker,
                            (GFunc) build_sixel_row_post,
                            sixel_canvas->image->height,
-                           g_get_num_processors (),
+                           chafa_get_n_actual_threads (),
                            SIXEL_CELL_HEIGHT);
 }

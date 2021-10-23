@@ -105,7 +105,7 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                            (GFunc) draw_pixels_worker,
                            NULL,
                            kitty_canvas->height,
-                           g_get_num_processors (),
+                           chafa_get_n_actual_threads (),
                            1);
 }
 
