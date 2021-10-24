@@ -167,7 +167,7 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                            (GFunc) draw_pixels_worker,
                            NULL,
                            iterm2_canvas->height,
-                           g_get_num_processors (),
+                           chafa_get_n_actual_threads (),
                            1);
 }
 

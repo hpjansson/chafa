@@ -368,7 +368,7 @@ draw_pixels (DrawPixelsCtx *ctx)
                            (GFunc) draw_pixels_pass_1_worker,
                            NULL,
                            ctx->dest_height,
-                           g_get_num_processors (),
+                           chafa_get_n_actual_threads (),
                            1);
 
     chafa_palette_generate (&ctx->indexed_image->palette,
@@ -381,7 +381,7 @@ draw_pixels (DrawPixelsCtx *ctx)
                            NULL,
                            ctx->dest_height,
                            ctx->indexed_image->dither.mode == CHAFA_DITHER_MODE_DIFFUSION
-                             ? 1 : g_get_num_processors (),
+                             ? 1 : chafa_get_n_actual_threads (),
                            1);
 }
 
