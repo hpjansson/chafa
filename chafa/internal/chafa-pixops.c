@@ -70,9 +70,6 @@ typedef struct
     gint have_alpha_int;
 
     Histogram hist;
-    gint n_batches_pixels;
-    gint n_rows_per_batch_pixels;
-
     SmolScaleCtx *scale_ctx;
 }
 PrepareContext;
@@ -732,9 +729,6 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                       gint dest_height)
 {
     PrepareContext prep_ctx = { 0 };
-    guint n_cpus;
-
-    n_cpus = g_get_num_processors ();
 
     prep_ctx.palette = palette;
     prep_ctx.dither = dither;
@@ -756,9 +750,6 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
     prep_ctx.dest_pixels = dest_pixels;
     prep_ctx.dest_width = dest_width;
     prep_ctx.dest_height = dest_height;
-
-    prep_ctx.n_batches_pixels = (prep_ctx.dest_height + n_cpus - 1) / n_cpus;
-    prep_ctx.n_rows_per_batch_pixels = (prep_ctx.dest_height + prep_ctx.n_batches_pixels - 1) / prep_ctx.n_batches_pixels;
 
     prep_ctx.scale_ctx = smol_scale_new ((SmolPixelType) prep_ctx.src_pixel_type,
                                          (const guint32 *) prep_ctx.src_pixels,
