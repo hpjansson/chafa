@@ -431,9 +431,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
                                       bitmap,
-                                      canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                      || canvas->config.fg_only_enabled
-                                      ? FALSE : TRUE,  /* Consider inverted? */
+                                      canvas->consider_inverted,
                                       candidates, &n_candidates);
 
     g_assert (n_candidates > 0);
@@ -503,9 +501,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
 
     chafa_symbol_map_find_wide_candidates (&canvas->config.symbol_map,
                                            bitmaps,
-                                           canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                           || canvas->config.fg_only_enabled
-                                           ? FALSE : TRUE,  /* Consider inverted? */
+                                           canvas->consider_inverted,
                                            candidates, &n_candidates);
 
     g_assert (n_candidates > 0);
@@ -677,9 +673,7 @@ apply_fill (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *ce
     }
 
     chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map, best_i,
-                                           canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-                                           || canvas->config.fg_only_enabled
-                                           ? FALSE : TRUE,  /* Consider inverted? */
+                                           canvas->consider_inverted,
                                            &sym_cand, &n_sym_cands);
 
     /* If we end up with a featureless symbol (space or fill), make
@@ -1153,6 +1147,9 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5;
     canvas->needs_clear = TRUE;
     canvas->have_alpha = FALSE;
+
+    canvas->consider_inverted = !(canvas->config.fg_only_enabled
+                                  || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG);
 
     chafa_symbol_map_prepare (&canvas->config.symbol_map);
     chafa_symbol_map_prepare (&canvas->config.fill_symbol_map);

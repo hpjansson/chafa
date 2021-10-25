@@ -45,6 +45,10 @@ struct ChafaCanvas
     ChafaCanvasCell *cells;
     guint have_alpha : 1;
     guint needs_clear : 1;
+
+    /* Whether to consider inverted symbols; FALSE if using FG only */
+    guint consider_inverted : 1;
+
     ChafaColorPair default_colors;
     guint work_factor_int;
 
