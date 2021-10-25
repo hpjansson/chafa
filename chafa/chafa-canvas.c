@@ -1144,7 +1144,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
 
     canvas->pixels = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
-    canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5;
+    canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5f;
     canvas->needs_clear = TRUE;
     canvas->have_alpha = FALSE;
 
