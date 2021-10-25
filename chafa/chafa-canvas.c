@@ -543,14 +543,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
 static const ChafaColor *
 get_palette_color_with_color_space (ChafaCanvas *canvas, gint index, ChafaColorSpace cs)
 {
-    if (index == CHAFA_PALETTE_INDEX_FG)
-        return &canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG];
-    if (index == CHAFA_PALETTE_INDEX_BG)
-        return &canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG];
-    if (index == CHAFA_PALETTE_INDEX_TRANSPARENT)
-        return &canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG];
-
-    return chafa_get_palette_color_256 (index, cs);
+    return chafa_palette_get_color (&canvas->palette, cs, index);
 }
 
 static const ChafaColor *
