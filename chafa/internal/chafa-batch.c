@@ -39,7 +39,7 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
     if (n_rows < 1)
         return;
 
-    n_threads = chafa_get_n_actual_threads ();
+    n_threads = MIN (chafa_get_n_actual_threads (), n_batches);
     n_units = (n_rows + batch_unit - 1) / batch_unit;
     units_per_batch = (gfloat) n_units / (gfloat) n_batches;
 
