@@ -694,6 +694,9 @@ need_pass_2 (PrepareContext *prep_ctx)
 static void
 prepare_pixels_pass_2 (PrepareContext *prep_ctx)
 {
+    gint n_threads;
+    gint batch_unit = 1;
+
     /* Second pass
      * -----------
      *
@@ -705,12 +708,23 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
     if (!need_pass_2 (prep_ctx))
         return;
 
+    n_threads = chafa_get_n_actual_threads ();
+
+    /* Floyd-Steinberg diffusion needs the batch size to be a multiple of the
+     * grain height. It also needs to run in a single thread to propagate the
+     * quantization error correctly. */
+    if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_DIFFUSION)
+    {
+        n_threads = 1;
+        batch_unit = 1 << prep_ctx->dither->grain_height_shift;
+    }
+
     chafa_process_batches (prep_ctx,
                            (GFunc) prepare_pixels_2_worker,
                            NULL,  /* _post */
                            prep_ctx->dest_height,
-                           chafa_get_n_actual_threads (),
-                           1);
+                           n_threads,
+                           batch_unit);
 }
 
 void
