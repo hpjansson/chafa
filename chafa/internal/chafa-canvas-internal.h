@@ -49,6 +49,9 @@ struct ChafaCanvas
     /* Whether to consider inverted symbols; FALSE if using FG only */
     guint consider_inverted : 1;
 
+    /* Whether to extract symbol colors; FALSE if using default colors */
+    guint extract_colors : 1;
+
     ChafaColorPair default_colors;
     guint work_factor_int;
 
