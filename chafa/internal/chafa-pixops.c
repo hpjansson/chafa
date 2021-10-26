@@ -370,7 +370,7 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
         else
         {
             /* Backwards pass */
-            pixel = pixels + (y << dither->grain_height_shift) * (width + 1) - grain_width;
+            pixel = pixels + (y << dither->grain_height_shift) * width + width - grain_width;
 
             fs_dither_grain (dither, palette, color_space, pixel, width,
                              error_row [0] + width_grains - 1,
