@@ -413,15 +413,13 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     /* Generate short list of candidates */
 
-    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
-        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
-        || canvas->config.fg_only_enabled)
+    if (canvas->extract_colors && !canvas->config.fg_only_enabled)
     {
-        color_pair = canvas->default_colors;
+        chafa_work_cell_get_contrasting_color_pair (wcell, &color_pair);
     }
     else
     {
-        chafa_work_cell_get_contrasting_color_pair (wcell, &color_pair);
+        color_pair = canvas->default_colors;
     }
 
     bitmap = chafa_work_cell_to_bitmap (wcell, &color_pair);
