@@ -345,7 +345,7 @@ pick_symbol_and_colors_slow (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.fg_only_enabled)
+    if (canvas->extract_colors && canvas->config.fg_only_enabled)
         eval_symbol_colors (canvas, wcell, &canvas->config.symbol_map.symbols [best_symbol], &best_eval);
 
     *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
@@ -381,7 +381,7 @@ pick_symbol_and_colors_wide_slow (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.fg_only_enabled)
+    if (canvas->extract_colors && canvas->config.fg_only_enabled)
         eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [0],
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [1],
@@ -446,7 +446,7 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.fg_only_enabled)
+    if (canvas->extract_colors && canvas->config.fg_only_enabled)
         eval_symbol_colors (canvas, wcell, &canvas->config.symbol_map.symbols [best_symbol], &best_eval);
 
     *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
@@ -517,7 +517,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
 
     g_assert (best_symbol >= 0);
 
-    if (canvas->config.fg_only_enabled)
+    if (canvas->extract_colors && canvas->config.fg_only_enabled)
         eval_symbol_colors_wide (canvas, wcell_a, wcell_b,
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [0],
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [1],
