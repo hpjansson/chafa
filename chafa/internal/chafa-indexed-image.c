@@ -84,13 +84,14 @@ draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 }
 
 static gint
-quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor color)
+quantize_pixel (const ChafaPalette *palette, ChafaColorSpace color_space,
+                ChafaColorHash *color_hash, ChafaColor color)
 {
     ChafaColor cached_color;
     gint index;
 
-    if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
-        return chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
+    if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (palette))
+        return chafa_palette_get_transparent_index (palette);
 
     /* Sixel color resolution is only slightly less than 7 bits per channel,
      * so eliminate the low-order bits to get better hash performance. Also
@@ -101,17 +102,17 @@ quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor
 
     if (index < 0)
     {
-        if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
+        if (color_space == CHAFA_COLOR_SPACE_DIN99D)
             chafa_color_rgb_to_din99d (&color, &color);
 
-        index = chafa_palette_lookup_nearest (&ctx->indexed_image->palette,
-                                              ctx->color_space,
+        index = chafa_palette_lookup_nearest (palette,
+                                              color_space,
                                               &color,
                                               NULL)
-          - chafa_palette_get_first_color (&ctx->indexed_image->palette);
+          - chafa_palette_get_first_color (palette);
 
         /* Don't insert transparent pixels, since color hash does not store transparency */
-        if (index != chafa_palette_get_transparent_index (&ctx->indexed_image->palette))
+        if (index != chafa_palette_get_transparent_index (palette))
             chafa_color_hash_replace (color_hash, CHAFA_COLOR8_U32 (cached_color), index);
     }
 
@@ -119,11 +120,12 @@ quantize_pixel (const DrawPixelsCtx *ctx, ChafaColorHash *color_hash, ChafaColor
 }
 
 static gint
-quantize_pixel_with_error (const DrawPixelsCtx *ctx, ChafaColor color, ChafaColorAccum *error_inout)
+quantize_pixel_with_error (const ChafaPalette *palette, ChafaColorSpace color_space,
+                           ChafaColor color, ChafaColorAccum *error_inout)
 {
     gint index;
 
-    if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (&ctx->indexed_image->palette))
+    if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (palette))
     {
         gint i;
 
@@ -131,17 +133,17 @@ quantize_pixel_with_error (const DrawPixelsCtx *ctx, ChafaColor color, ChafaColo
         for (i = 0; i < 4; i++)
             error_inout->ch [i] = 0;
 
-        return chafa_palette_get_transparent_index (&ctx->indexed_image->palette);
+        return chafa_palette_get_transparent_index (palette);
     }
 
-    if (ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
+    if (color_space == CHAFA_COLOR_SPACE_DIN99D)
         chafa_color_rgb_to_din99d (&color, &color);
 
-    index = chafa_palette_lookup_with_error (&ctx->indexed_image->palette,
-                                             ctx->color_space,
+    index = chafa_palette_lookup_with_error (palette,
+                                             color_space,
                                              color,
                                              error_inout)
-      - chafa_palette_get_first_color (&ctx->indexed_image->palette);
+      - chafa_palette_get_first_color (palette);
 
     return index;
 }
@@ -163,7 +165,7 @@ draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
         gint index;
 
         col = chafa_color8_fetch_from_rgba8 (src_p);
-        index = quantize_pixel (ctx, chash, col);
+        index = quantize_pixel (&ctx->indexed_image->palette, ctx->color_space, chash, col);
         *dest_p = index;
     }
 }
@@ -190,7 +192,7 @@ draw_pixels_pass_2_bayer (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 
         col = chafa_color8_fetch_from_rgba8 (src_p);
         col = chafa_dither_color_ordered (&ctx->indexed_image->dither, col, x, y);
-        index = quantize_pixel (ctx, chash, col);
+        index = quantize_pixel (&ctx->indexed_image->palette, ctx->color_space, chash, col);
         *dest_p = index;
 
         if (++x >= ctx->dest_width)
@@ -229,7 +231,7 @@ fs_dither_pixel (const DrawPixelsCtx *ctx, G_GNUC_UNUSED ChafaColorHash *chash,
     ChafaColor col = chafa_color8_fetch_from_rgba8 (inpixel_p);
     guint8 index;
 
-    index = quantize_pixel_with_error (ctx, col, &error_in);
+    index = quantize_pixel_with_error (&ctx->indexed_image->palette, ctx->color_space, col, &error_in);
     distribute_error (error_in,
                       error_out_0, error_out_1, error_out_2, error_out_3,
                       ctx->indexed_image->dither.intensity);
