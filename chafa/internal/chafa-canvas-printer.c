@@ -39,6 +39,221 @@ typedef struct
 }
 PrintCtx;
 
+#define CODE_POINT_MAX 0x100000
+
+typedef struct
+{
+    gunichar c;
+    gint count;
+}
+CharStat;
+
+static gint
+compare_char_stats (gconstpointer a, gconstpointer b)
+{
+    const CharStat *acs = a;
+    const CharStat *bcs = b;
+
+    return acs->count - bcs->count;
+}
+
+static gboolean
+find_symbol (const ChafaSymbolMap *symbol_map, gunichar c,
+             const ChafaSymbol **sym_out, const ChafaSymbol2 **sym2_out)
+{
+    gint i;
+
+    *sym_out = NULL;
+    *sym2_out = NULL;
+
+    for (i = 0; i < symbol_map->n_symbols; i++)
+    {
+        const ChafaSymbol *sym = &symbol_map->symbols [i];
+
+        if (sym->c == c)
+        {
+            *sym_out = sym;
+            return TRUE;
+        }
+    }
+
+    for (i = 0; i < symbol_map->n_symbols2; i++)
+    {
+        const ChafaSymbol2 *sym = &symbol_map->symbols2 [i];
+
+        if (sym->sym [0].c == c)
+        {
+            *sym2_out = sym;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static void
+dump_coverage (const ChafaSymbol *sym)
+{
+    gint i;
+
+    g_printerr ("        CHAFA_SYMBOL_OUTLINE_%uX%u (\n",
+                CHAFA_SYMBOL_WIDTH_PIXELS,
+                CHAFA_SYMBOL_HEIGHT_PIXELS);
+
+    for (i = 0; ; i++)
+    {
+        if (i % CHAFA_SYMBOL_WIDTH_PIXELS == 0)
+            g_printerr ("            \"");
+
+        if (sym->coverage [i] == 0)
+            g_printerr (" ");
+        else
+            g_printerr ("X");
+
+        if (i == CHAFA_SYMBOL_N_PIXELS - 1)
+            break;
+
+        if (i % CHAFA_SYMBOL_WIDTH_PIXELS == CHAFA_SYMBOL_WIDTH_PIXELS - 1)
+            g_printerr ("\"\n");
+    }
+
+    g_printerr ("\")\n");
+}
+
+static void
+dump_coverage2 (const ChafaSymbol2 *sym)
+{
+    gint i;
+
+    g_printerr ("        CHAFA_SYMBOL_OUTLINE_16X8 (\n");
+
+    for (i = 0; ; i++)
+    {
+        if (i % 16 == 0)
+            g_printerr ("            \"");
+
+        if (i % 16 < 8)
+        {
+            if (sym->sym [0].coverage [((i / 16) * 8) + (i % 16)] == 0)
+                g_printerr (" ");
+            else
+                g_printerr ("X");
+        }
+        else
+        {
+            if (sym->sym [1].coverage [((i / 16) * 8) + (i % 16) - 8] == 0)
+                g_printerr (" ");
+            else
+                g_printerr ("X");
+        }
+
+        if (i == 127)
+            break;
+
+        if (i % 16 == 15)
+            g_printerr ("\"\n");
+    }
+
+    g_printerr ("\")\n");
+}
+
+static void
+dump_symbol (ChafaCanvas *canvas, const CharStat *stat)
+{
+    const ChafaSymbol *sym;
+    const ChafaSymbol2 *sym2;
+    gchar buf [8];
+    gint len;
+
+    if (!find_symbol (&canvas->config.symbol_map, stat->c, &sym, &sym2))
+        return;
+
+    len = g_unichar_to_utf8 (stat->c, buf);
+    if (!len)
+        return;
+    buf [len] = '\0';
+
+    g_printerr (
+        "    {\n"
+        "        /* [%s] freq=%d */\n"
+        "        CHAFA_SYMBOL_TAG_NONE,\n"
+        "        0x%x,\n",
+        buf, stat->count,
+        stat->c);
+
+    if (sym)
+    {
+        dump_coverage (sym);
+    }
+    else if (sym2)
+    {
+        dump_coverage2 (sym2);
+    }
+
+    g_printerr ("    },\n");
+}
+
+static void
+dump_stats (ChafaCanvas *canvas)
+{
+    CharStat *stats;
+    gint i, i_max;
+
+    stats = g_new (CharStat, CODE_POINT_MAX);
+
+    for (i = 0; i < CODE_POINT_MAX; i++)
+    {
+        stats [i].c = i;
+        stats [i].count = 0;
+    }
+
+    i_max = canvas->config.width * canvas->config.height;
+
+    for (i = 0; i < i_max; i++)
+    {
+        ChafaCanvasCell *cell = &canvas->cells [i];
+
+        /* Wide symbols have a zero code point in the rightmost cell */
+        if (cell->c == 0)
+            continue;
+
+        if (cell->c >= CODE_POINT_MAX)
+            continue;
+
+        stats [cell->c].count++;
+    }
+
+#if 0
+    qsort (stats, CODE_POINT_MAX, sizeof (CharStat), compare_char_stats);
+
+    for (i = 0; i < CODE_POINT_MAX; i++)
+    {
+        CharStat *stat = &stats [i];
+
+        if (stat->count < 1)
+            continue;
+
+        dump_symbol (canvas, stat);
+    }
+#elif 0
+    for (i = 0x30a0; i < 0x30ff; i++)
+    {
+        CharStat *stat = &stats [i];
+
+        dump_symbol (canvas, stat);
+    }
+#elif 0
+    for (i = 0xff65; i < 0xffa0; i++)
+    {
+        CharStat *stat = &stats [i];
+
+        dump_symbol (canvas, stat);
+    }
+#endif
+
+    g_free (stats);
+}
+
 static gint
 cmp_colors (ChafaColor a, ChafaColor b)
 {
@@ -633,6 +848,10 @@ chafa_canvas_print_symbols (ChafaCanvas *canvas, ChafaTermInfo *ti)
 {
     g_assert (canvas != NULL);
     g_assert (ti != NULL);
+
+#if 1
+    dump_stats (canvas);
+#endif
 
     return build_ansi_gstring (canvas, ti);
 }

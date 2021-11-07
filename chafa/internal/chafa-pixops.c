@@ -820,3 +820,17 @@ chafa_sort_pixel_index_by_channel (guint8 *index, const ChafaPixel *pixels, gint
             break;
     }
 }
+
+#define N_DIRECTIONS 8
+#define N_WEIGHT_FIELDS 4
+
+typedef struct
+{
+    guint16 score [N_DIRECTIONS] [N_WEIGHT_FIELDS];
+}
+ChafaTrace;
+
+static void
+bitmap_to_trace (guint64 bitmap, ChafaTrace *trace)
+{
+}

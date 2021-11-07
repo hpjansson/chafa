@@ -11,7 +11,7 @@ Minor Features/UX
 - Symbols: Math.
 - Accept image on standard input.
 - Accept -o, --output to write to file.
-- Verbose output. Show file names.
+- Verbose output. Show file names. Call it --annotate.
 - Add a --test option to print a test page.
 - Add a --show-symbols op to print matching symbols.
 - Add a --ping-pong option for animations.
@@ -22,8 +22,6 @@ Minor Features/UX
     weird handling with background picture set?
     - Except in FGBG modes.
 - Test with more terminals.
-  - iTerm?
-  - Other OSX terminals?
   - PuTTY on Windows 8, 10?
     - Windows 7 fonts support half, solid, some borders.
   - Terminology.
@@ -33,6 +31,9 @@ Minor Features/UX
   - Come up with some kind of support matrix.
 - More symbol aliases
   - CP437
+- Control sequences
+  - Screen buffer: CSI ?1047l (normal) and CSI ?1047h (alternate). Or use
+    CSI ?47l and CSI ?47h ?
 
 Major features
 --------------
