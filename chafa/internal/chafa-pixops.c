@@ -213,10 +213,10 @@ fs_dither_grain (const ChafaDither *dither,
     gint grain_shift = dither->grain_width_shift + dither->grain_height_shift;
     ChafaColorAccum next_error = { 0 };
     ChafaColorAccum accum = { 0 };
-    ChafaColorCandidates cand = { 0 };
     ChafaPixel *p;
     ChafaColor acol;
     const ChafaColor *col;
+    gint index;
     gint x, y, i;
 
     p = pixel;
@@ -258,8 +258,8 @@ fs_dither_grain (const ChafaDither *dither,
     /* Don't try to dither alpha */
     acol.ch [3] = 0xff;
 
-    chafa_palette_lookup_nearest (palette, color_space, &acol, &cand);
-    col = chafa_palette_get_color (palette, color_space, cand.index [0]);
+    index = chafa_palette_lookup_nearest (palette, color_space, &acol, NULL);
+    col = chafa_palette_get_color (palette, color_space, index);
 
     for (i = 0; i < 3; i++)
     {
