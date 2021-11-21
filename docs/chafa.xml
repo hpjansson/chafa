@@ -263,6 +263,14 @@ and a list of symbol classes.
 </varlistentry>
 
 <varlistentry>
+<term><option>--threads <replaceable>num</replaceable></option></term>
+<listitem><para>
+Maximum number of CPU threads to use. If left unspecified or negative,
+this will equal available CPU cores.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-t <replaceable>threshold</replaceable>, --threshold
 <replaceable>threshold</replaceable></option></term>
 <listitem><para>

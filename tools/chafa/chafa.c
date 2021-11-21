@@ -78,6 +78,7 @@ typedef struct
     gdouble font_ratio;
     gint work_factor;
     gint optimization_level;
+    gint n_threads;
     ChafaOptimizations optimizations;
     guint32 fg_color;
     gboolean fg_color_set;
@@ -272,6 +273,8 @@ print_summary (void)
     "                     Implies --zoom.\n"
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
+    "      --threads=NUM  Maximum number of CPU threads to use. If left unspecified\n"
+    "                     or negative, this will equal available CPU cores.\n"
     "  -t, --threshold=NUM  Threshold above which full transparency will be used\n"
     "                     [0.0 - 1.0].\n"
     "      --watch        Watch a single input file, redisplaying it whenever its\n"
@@ -908,6 +911,7 @@ parse_options (int *argc, char **argv [])
         { "speed",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_anim_speed_arg,  "Animation speed", NULL },
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
+        { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
@@ -951,6 +955,7 @@ parse_options (int *argc, char **argv [])
     options.font_ratio = -1.0;  /* Unset */
     options.work_factor = 5;
     options.optimization_level = G_MININT;  /* Unset */
+    options.n_threads = -1;
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
     options.transparency_threshold = G_MAXDOUBLE;  /* Unset */
@@ -1113,6 +1118,8 @@ parse_options (int *argc, char **argv [])
         options.optimizations |= CHAFA_OPTIMIZATION_REPEAT_CELLS;
     if (options.optimization_level >= 7)
         options.optimizations |= CHAFA_OPTIMIZATION_SKIP_CELLS;
+
+    chafa_set_n_threads (options.n_threads);
 
     g_option_context_free (context);
 
