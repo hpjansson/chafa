@@ -22,13 +22,11 @@
 
 <p align="center"><a href="https://hpjansson.org/chafa/">About</a> • <a href="https://hpjansson.org/chafa/gallery/">Gallery</a> • <a href="https://hpjansson.org/chafa/download/">Packages</a> • <a href="https://hpjansson.org/chafa/development/">Development</a></p>
 
-Chafa is a command-line utility that converts all kinds of images, including
-animated GIFs, into sixel or ANSI/Unicode character output that can be
-displayed in a terminal.
-
-It is highly configurable, with support for alpha transparency and multiple
-color modes and color spaces, combining selectable ranges of Unicode
-characters to produce the desired output.
+Chafa is a command-line utility that converts image data, including
+animated GIFs, into graphics formats or ANSI/Unicode character art suitable
+for display in a terminal. It has broad feature support, allowing it to be
+used on devices ranging from historical teleprinters to modern terminal
+emulators and everything in between.
 
 The core functionality is provided by a C library with a public,
 well-documented API.

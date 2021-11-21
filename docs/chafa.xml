@@ -35,11 +35,11 @@
 
 <refsect1><title>Description</title>
 <para>
-<command>chafa</command> is a utility that converts all kinds of images,
-including animated GIFs, into (potentially animated) ANSI/Unicode character
-output that can be displayed in a terminal. It supports alpha transparency
-and multiple color modes and color spaces, and combines a range of Unicode
-characters for optimal output.
+<command>chafa</command> is a command-line utility that converts image data,
+including animated GIFs, into graphics formats or ANSI/Unicode character art
+suitable for display in a terminal. It has broad feature support, allowing it to
+be used on devices ranging from historical teleprinters to modern terminal
+emulators and everything in between.
 </para>
 <para>
 You can specify one or more input files, but the default behavior is slightly

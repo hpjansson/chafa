@@ -217,7 +217,7 @@ static void
 print_summary (void)
 {
     const gchar *summary =
-    "  Chafa (Character Art Facsimile) image-to-text converter.\n\n"
+    "  Chafa (Character Art Facsimile) terminal graphics and character art generator.\n\n"
 
     "Options:\n"
 
