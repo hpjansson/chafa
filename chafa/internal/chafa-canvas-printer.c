@@ -849,7 +849,7 @@ chafa_canvas_print_symbols (ChafaCanvas *canvas, ChafaTermInfo *ti)
     g_assert (canvas != NULL);
     g_assert (ti != NULL);
 
-#if 1
+#if 0
     dump_stats (canvas);
 #endif
 
