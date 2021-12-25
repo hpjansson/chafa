@@ -340,7 +340,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = sixel_seqs;
     }
 
-    if (!strcmp(term, "foot") || !strcmp(term, "foot-direct"))
+    if (!strcmp (term, "foot") || !strncmp (term, "foot-", 5))
         gfx_seqs = sixel_seqs;
 
     /* rxvt 256-color really is 256 colors only */
