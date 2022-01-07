@@ -15,4 +15,6 @@ all-local:
 	@echo --- Success! You can now run tools/chafa/chafa, or install everything
 	@echo --- using "make install" or "sudo make install".
 	@echo ---
+	@echo -e '--- \e[0;91mNOTE:\e[0m You may have to run \e[0;93msudo ldconfig\e[0m after installing.'
+	@echo ---
 	@echo
