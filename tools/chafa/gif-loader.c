@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2021 Hans Petter Jansson
+/* Copyright (C) 2018-2022 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <chafa.h>
 #include <libnsgif.h>
 #include "gif-loader.h"
 
@@ -44,16 +45,30 @@ struct GifLoader
     gint current_frame_index;
     guint gif_is_initialized : 1;
     guint frame_is_decoded : 1;
+    guint frame_is_success : 1;
 };
 
 static void *
 bitmap_create (int width, int height)
 {
-    /* ensure a stupidly large bitmap is not created */
-    if (((long long) width * (long long) height) > (MAX_IMAGE_BYTES/BYTES_PER_PIXEL))
+    if ((width * (gint64) height) > (MAX_IMAGE_BYTES / BYTES_PER_PIXEL))
         return NULL;
 
     return g_malloc0 (width * height * BYTES_PER_PIXEL);
+}
+
+static gboolean
+maybe_decode_frame (GifLoader *loader)
+{
+    gif_result code;
+
+    if (loader->frame_is_decoded)
+        return loader->frame_is_success;
+
+    code = gif_decode_frame (&loader->gif, loader->current_frame_index);
+    loader->frame_is_success = (code == GIF_OK ? TRUE : FALSE);
+
+    return loader->frame_is_success;
 }
 
 static void
@@ -169,47 +184,63 @@ gif_loader_destroy (GifLoader *loader)
     g_free (loader);
 }
 
-void
-gif_loader_get_geometry (GifLoader *loader, gint *width_out, gint *height_out)
-{
-    g_return_if_fail (loader != NULL);
-    g_return_if_fail (loader->gif_is_initialized);
-
-    *width_out = loader->gif.width;
-    *height_out = loader->gif.height;
-}
-
-gint
-gif_loader_get_n_frames (GifLoader *loader)
+gboolean
+gif_loader_get_is_animation (GifLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, 0);
     g_return_val_if_fail (loader->gif_is_initialized, 0);
 
-    return loader->gif.frame_count;
+    return loader->gif.frame_count > 1 ? TRUE : FALSE;
 }
 
-const guint8 *
-gif_loader_get_frame_data (GifLoader *loader, gint *post_frame_delay_hs_out)
+gconstpointer *
+gif_loader_get_frame_data (GifLoader *loader, ChafaPixelType *pixel_type_out,
+                           gint *width_out, gint *height_out, gint *rowstride_out)
 {
     g_return_val_if_fail (loader != NULL, NULL);
     g_return_val_if_fail (loader->gif_is_initialized, NULL);
 
-    if (!loader->frame_is_decoded)
-    {
-        gif_result code = gif_decode_frame (&loader->gif, loader->current_frame_index);
-        if (code != GIF_OK)
-            return NULL;
-    }
+    if (!maybe_decode_frame (loader))
+        return NULL;
 
-    loader->frame_is_decoded = TRUE;
+    if (width_out)
+        *width_out = loader->gif.width;
+    if (height_out)
+        *height_out = loader->gif.height;
+    if (pixel_type_out)
+        *pixel_type_out = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+    if (rowstride_out)
+        *rowstride_out = loader->gif.width * 4;
 
-    if (post_frame_delay_hs_out)
-        *post_frame_delay_hs_out = loader->gif.frames [loader->current_frame_index].frame_delay;
     return loader->gif.frame_image;
 }
 
+gint
+gif_loader_get_frame_delay (GifLoader *loader)
+{
+    gint frame_delay_ms;
+
+    g_return_val_if_fail (loader != NULL, 0);
+    g_return_val_if_fail (loader->gif_is_initialized, 0);
+
+    if (!maybe_decode_frame (loader))
+        return 0;
+
+    frame_delay_ms = loader->gif.frames [loader->current_frame_index].frame_delay;
+
+    /* Convert from centiseconds to milliseconds */
+    frame_delay_ms *= 10;
+
+    /* It's common for GIF animations to omit the frame delays. If it looks like that's
+     * what's happening, go with a 20fps default. */
+    if (frame_delay_ms == 0)
+        frame_delay_ms = 50;
+
+    return frame_delay_ms;
+}
+
 void
-gif_loader_first_frame (GifLoader *loader)
+gif_loader_goto_first_frame (GifLoader *loader)
 {
     g_return_if_fail (loader != NULL);
     g_return_if_fail (loader->gif_is_initialized);
@@ -219,10 +250,11 @@ gif_loader_first_frame (GifLoader *loader)
 
     loader->current_frame_index = 0;
     loader->frame_is_decoded = FALSE;
+    loader->frame_is_success = FALSE;
 }
 
 gboolean
-gif_loader_next_frame (GifLoader *loader)
+gif_loader_goto_next_frame (GifLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, FALSE);
     g_return_val_if_fail (loader->gif_is_initialized, FALSE);

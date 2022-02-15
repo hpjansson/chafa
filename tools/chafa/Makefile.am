@@ -11,6 +11,10 @@ chafa_SOURCES = \
 	font-loader.h \
 	gif-loader.c \
 	gif-loader.h \
+	im-loader.c \
+	im-loader.h \
+	media-loader.c \
+	media-loader.h \
 	named-colors.c \
 	named-colors.h \
 	xwd-loader.c \

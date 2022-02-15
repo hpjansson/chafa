@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2022 Hans Petter Jansson
+/* Copyright (C) 2022 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -17,28 +17,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __XWD_LOADER_H__
-#define __XWD_LOADER_H__
+#ifndef __IM_LOADER_H__
+#define __IM_LOADER_H__
 
 #include <glib.h>
-#include "file-mapping.h"
 
 G_BEGIN_DECLS
 
-typedef struct XwdLoader XwdLoader;
+typedef struct ImLoader ImLoader;
 
-XwdLoader *xwd_loader_new_from_mapping (FileMapping *mapping);
-void xwd_loader_destroy (XwdLoader *loader);
+ImLoader *im_loader_new (const gchar *path);
+void im_loader_destroy (ImLoader *loader);
 
-gboolean xwd_loader_get_is_animation (XwdLoader *loader);
+gboolean im_loader_get_is_animation (ImLoader *loader);
 
-gconstpointer xwd_loader_get_frame_data (XwdLoader *loader, ChafaPixelType *pixel_type_out,
-                                         gint *width_out, gint *height_out, gint *rowstride_out);
-gint xwd_loader_get_frame_delay (XwdLoader *loader);
+gconstpointer im_loader_get_frame_data (ImLoader *loader, ChafaPixelType *pixel_type_out,
+                                        gint *width_out, gint *height_out, gint *rowstride_out);
+gint im_loader_get_frame_delay (ImLoader *loader);
 
-void xwd_loader_goto_first_frame (XwdLoader *loader);
-gboolean xwd_loader_goto_next_frame (XwdLoader *loader);
+void im_loader_goto_first_frame (ImLoader *loader);
+gboolean im_loader_goto_next_frame (ImLoader *loader);
 
 G_END_DECLS
 
-#endif /* __XWD_LOADER_H__ */
+#endif /* __IM_LOADER_H__ */

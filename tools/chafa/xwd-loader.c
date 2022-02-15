@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2021 Hans Petter Jansson
+/* Copyright (C) 2018-2022 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -262,8 +262,14 @@ xwd_loader_destroy (XwdLoader *loader)
     g_free (loader);
 }
 
+gboolean
+xwd_loader_get_is_animation (G_GNUC_UNUSED XwdLoader *loader)
+{
+    return FALSE;
+}
+
 gconstpointer
-xwd_loader_get_image_data (XwdLoader *loader, ChafaPixelType *pixel_type_out,
+xwd_loader_get_frame_data (XwdLoader *loader, ChafaPixelType *pixel_type_out,
                            gint *width_out, gint *height_out, gint *rowstride_out)
 {
     g_return_val_if_fail (loader != NULL, NULL);
@@ -279,3 +285,21 @@ xwd_loader_get_image_data (XwdLoader *loader, ChafaPixelType *pixel_type_out,
 
     return loader->image_data;
 }
+
+gint
+xwd_loader_get_frame_delay (G_GNUC_UNUSED XwdLoader *loader)
+{
+    return 0;
+}
+
+void
+xwd_loader_goto_first_frame (G_GNUC_UNUSED XwdLoader *loader)
+{
+}
+
+gboolean
+xwd_loader_goto_next_frame (G_GNUC_UNUSED XwdLoader *loader)
+{
+    return FALSE;
+}
+

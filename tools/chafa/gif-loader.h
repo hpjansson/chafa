@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2021 Hans Petter Jansson
+/* Copyright (C) 2018-2022 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -30,13 +30,14 @@ typedef struct GifLoader GifLoader;
 GifLoader *gif_loader_new_from_mapping (FileMapping *mapping);
 void gif_loader_destroy (GifLoader *loader);
 
-void gif_loader_get_geometry (GifLoader *loader, gint *width_out, gint *height_out);
-gint gif_loader_get_n_frames (GifLoader *loader);
+gboolean gif_loader_get_is_animation (GifLoader *loader);
 
-const guint8 *gif_loader_get_frame_data (GifLoader *loader, gint *post_frame_delay_hs_out);
+gconstpointer *gif_loader_get_frame_data (GifLoader *loader, ChafaPixelType *pixel_type_out,
+                                          gint *width_out, gint *height_out, gint *rowstride_out);
+gint gif_loader_get_frame_delay (GifLoader *loader);
 
-void gif_loader_first_frame (GifLoader *loader);
-gboolean gif_loader_next_frame (GifLoader *loader);
+void gif_loader_goto_first_frame (GifLoader *loader);
+gboolean gif_loader_goto_next_frame (GifLoader *loader);
 
 G_END_DECLS
 
