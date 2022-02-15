@@ -132,7 +132,8 @@ gif_loader_new_from_mapping (FileMapping *mapping)
 
     g_return_val_if_fail (mapping != NULL, NULL);
 
-    if (!file_mapping_has_magic (mapping, 0, "GIF89a", 6))
+    if (!file_mapping_has_magic (mapping, 0, "GIF89a", 6)
+        && !file_mapping_has_magic (mapping, 0, "GIF87a", 6))
         goto out;
 
     loader = gif_loader_new ();
