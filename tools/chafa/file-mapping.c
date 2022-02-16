@@ -236,6 +236,12 @@ file_mapping_destroy (FileMapping *file_mapping)
     g_free (file_mapping);
 }
 
+const gchar *
+file_mapping_get_path (FileMapping *file_mapping)
+{
+    return file_mapping->path;
+}
+
 gconstpointer
 file_mapping_get_data (FileMapping *file_mapping, gsize *length_out)
 {

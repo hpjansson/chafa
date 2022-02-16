@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2019-2021 Hans Petter Jansson
+/* Copyright (C) 2018-2022 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -17,26 +17,28 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef __FILE_MAPPING_H__
-#define __FILE_MAPPING_H__
+#ifndef __PNG_LOADER_H__
+#define __PNG_LOADER_H__
 
 #include <glib.h>
+#include "file-mapping.h"
 
 G_BEGIN_DECLS
 
-typedef struct FileMapping FileMapping;
+typedef struct PngLoader PngLoader;
 
-FileMapping *file_mapping_new (const gchar *path);
-void file_mapping_destroy (FileMapping *file_mapping);
+PngLoader *png_loader_new_from_mapping (FileMapping *mapping);
+void png_loader_destroy (PngLoader *loader);
 
-const gchar *file_mapping_get_path (FileMapping *file_mapping);
+gboolean png_loader_get_is_animation (PngLoader *loader);
 
-gboolean file_mapping_taste (FileMapping *file_mapping, gpointer out, goffset ofs, gsize length);
-gconstpointer file_mapping_get_data (FileMapping *file_mapping, gsize *length_out);
+gconstpointer *png_loader_get_frame_data (PngLoader *loader, ChafaPixelType *pixel_type_out,
+                                          gint *width_out, gint *height_out, gint *rowstride_out);
+gint png_loader_get_frame_delay (PngLoader *loader);
 
-gboolean file_mapping_has_magic (FileMapping *file_mapping, goffset ofs,
-                                 gconstpointer data, gsize length);
+void png_loader_goto_first_frame (PngLoader *loader);
+gboolean png_loader_goto_next_frame (PngLoader *loader);
 
 G_END_DECLS
 
-#endif /* __FILE_MAPPING_H__ */
+#endif /* __PNG_LOADER_H__ */

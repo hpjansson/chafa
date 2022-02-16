@@ -383,11 +383,23 @@ LDFLAGS=$SAVED_LDFLAGS
 
 dnl --- Set compiler flags ---
 
+dnl Disable some LodePNG features. In particular, the CRC feature, which would
+dnl sometimes cause valid images to not load because of issues in the
+dnl encoding software.
+
+LODEPNG_FEATURES="\
+-DLODEPNG_NO_COMPILE_ENCODER \
+-DLODEPNG_NO_COMPILE_DISK \
+-DLODEPNG_NO_COMPILE_CPP \
+-DLODEPNG_NO_COMPILE_CRC"
+
 LIBCHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_VISIBILITY_CFLAGS"
 LIBCHAFA_LDFLAGS="$CHAFA_BDYNAMIC_FLAGS"
 
-CHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_VISIBILITY_CFLAGS"
+CHAFA_CFLAGS="$BASE_CFLAGS $CHAFA_VISIBILITY_CFLAGS $LODEPNG_FEATURES"
 CHAFA_LDFLAGS="$CHAFA_BDYNAMIC_FLAGS"
+
+AC_SUBST(LODEPNG_FEATURES)
 
 AC_SUBST(LIBCHAFA_CFLAGS)
 AC_SUBST(LIBCHAFA_LDFLAGS)
@@ -409,6 +421,7 @@ AC_CONFIG_FILES([Makefile
                  chafa/internal/Makefile
                  chafa/internal/smolscale/Makefile
                  libnsgif/Makefile
+                 lodepng/Makefile
                  chafa.pc
                  docs/Makefile
                  docs/version.xml

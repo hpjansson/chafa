@@ -15,6 +15,8 @@ chafa_SOURCES = \
 	im-loader.h \
 	media-loader.c \
 	media-loader.h \
+	png-loader.c \
+	png-loader.h \
 	named-colors.c \
 	named-colors.h \
 	xwd-loader.c \
@@ -30,7 +32,7 @@ chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(FREETYPE_CF
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
 
 endif
 
@@ -41,4 +43,5 @@ endif
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/chafa \
 	-I$(top_builddir)/chafa \
-	-I$(top_srcdir)/libnsgif
+	-I$(top_srcdir)/libnsgif \
+	-I$(top_srcdir)/lodepng

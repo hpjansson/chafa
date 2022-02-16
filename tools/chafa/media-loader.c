@@ -34,10 +34,12 @@
 #include "im-loader.h"
 #include "xwd-loader.h"
 #include "media-loader.h"
+#include "png-loader.h"
 
 typedef enum
 {
     LOADER_TYPE_GIF,
+    LOADER_TYPE_PNG,
     LOADER_TYPE_XWD,
     LOADER_TYPE_IMAGEMAGICK,
 
@@ -64,6 +66,15 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) gif_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) gif_loader_get_frame_data,
         (gint (*) (gpointer)) gif_loader_get_frame_delay
+    },
+    [LOADER_TYPE_PNG] =
+    {
+        (void (*)(gpointer)) png_loader_destroy,
+        (gboolean (*)(gpointer)) png_loader_get_is_animation,
+        (void (*)(gpointer)) png_loader_goto_first_frame,
+        (gboolean (*)(gpointer)) png_loader_goto_next_frame,
+        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) png_loader_get_frame_data,
+        (gint (*) (gpointer)) png_loader_get_frame_delay
     },
     [LOADER_TYPE_XWD] =
     {
@@ -108,6 +119,14 @@ media_loader_new (const gchar *path)
 
         loader->loader_type = LOADER_TYPE_GIF;
         loader->loader = gif_loader_new_from_mapping (mapping);
+
+        /* PNG */
+
+        if (!loader->loader)
+        {
+            loader->loader_type = LOADER_TYPE_PNG;
+            loader->loader = png_loader_new_from_mapping (mapping);
+        }
 
         /* XWD */
 
