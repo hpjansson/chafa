@@ -208,7 +208,11 @@ load_header (XwdLoader *loader) // gconstpointer in, gsize in_max_len, XwdHeader
     ASSERT_HEADER (h->header_size >= sizeof (XwdHeader));
     ASSERT_HEADER (h->file_version == 7);
     ASSERT_HEADER (h->pixmap_depth == 24);
-    ASSERT_HEADER (h->bits_per_rgb == 8);
+
+    /* Xvfb sets bits_per_rgb to 8, but 'convert' uses 24 for the same image data. One
+     * of them is likely misunderstanding. Let's be lenient and accept either. */
+    ASSERT_HEADER (h->bits_per_rgb == 8 || h->bits_per_rgb == 24);
+
     ASSERT_HEADER (h->bytes_per_line >= h->pixmap_width * (h->bits_per_pixel / 8));
     ASSERT_HEADER (compute_pixel_type (loader) < CHAFA_PIXEL_MAX);
 
