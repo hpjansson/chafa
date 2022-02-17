@@ -68,16 +68,10 @@ png_loader_new_from_mapping (FileMapping *mapping)
     if (!loader->file_data)
         goto out;
 
-    g_printerr ("Using lodepng\n");
-
     /* Decodes to RGBA8 */
     if ((lode_error = lodepng_decode32 (&loader->frame_data, &loader->width, &loader->height,
                                         loader->file_data, loader->file_data_len)) != 0)
-    {
-        g_printerr ("Error loading '%s': %s\n",
-                    file_mapping_get_path (loader->mapping),
-                    lodepng_error_text (lode_error));
-    }
+        goto out;
 
     success = TRUE;
 
