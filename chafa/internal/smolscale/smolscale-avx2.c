@@ -1741,13 +1741,13 @@ interp_horizontal_copy_128bpp (const SmolScaleCtx *scale_ctx,
 
 static void
 scale_horizontal (const SmolScaleCtx *scale_ctx,
+                  SmolVerticalCtx *vertical_ctx,
                   const uint32_t *row_in,
                   uint64_t *row_parts_out)
 {
     uint64_t * SMOL_RESTRICT unpacked_in;
 
-    /* FIXME: Allocate less for 64bpp */
-    unpacked_in = smol_alloca_aligned (scale_ctx->width_in * sizeof (uint64_t) * 2);
+    unpacked_in = vertical_ctx->parts_row [3];
 
     scale_ctx->unpack_row_func (row_in,
                                 unpacked_in,
@@ -1776,15 +1776,18 @@ update_vertical_ctx_bilinear (const SmolScaleCtx *scale_ctx,
         vertical_ctx->parts_row [1] = t;
 
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, new_in_ofs + 1),
                           vertical_ctx->parts_row [1]);
     }
     else
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, new_in_ofs),
                           vertical_ctx->parts_row [0]);
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, new_in_ofs + 1),
                           vertical_ctx->parts_row [1]);
     }
@@ -2271,6 +2274,7 @@ update_vertical_ctx_box_64bpp (const SmolScaleCtx *scale_ctx,
     else
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, ofs_y),
                           vertical_ctx->parts_row [0]);
         weight_edge_row_64bpp (vertical_ctx->parts_row [0], w1, scale_ctx->width_out);
@@ -2281,6 +2285,7 @@ update_vertical_ctx_box_64bpp (const SmolScaleCtx *scale_ctx,
     if (w2 || ofs_y_max < scale_ctx->height_in)
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, ofs_y_max),
                           vertical_ctx->parts_row [1]);
     }
@@ -2326,6 +2331,7 @@ scale_outrow_box_64bpp (const SmolScaleCtx *scale_ctx,
     while (ofs_y < ofs_y_max)
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, ofs_y),
                           vertical_ctx->parts_row [0]);
         add_parts (vertical_ctx->parts_row [0],
@@ -2394,6 +2400,7 @@ scale_outrow_box_128bpp (const SmolScaleCtx *scale_ctx,
     /* Scale the first inrow and store it */
 
     scale_horizontal (scale_ctx,
+                      vertical_ctx,
                       inrow_ofs_to_pointer (scale_ctx, ofs_y),
                       vertical_ctx->parts_row [0]);
     weight_row_128bpp (vertical_ctx->parts_row [0],
@@ -2406,6 +2413,7 @@ scale_outrow_box_128bpp (const SmolScaleCtx *scale_ctx,
     while (ofs_y < ofs_y_max)
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, ofs_y),
                           vertical_ctx->parts_row [1]);
         add_parts (vertical_ctx->parts_row [1],
@@ -2421,6 +2429,7 @@ scale_outrow_box_128bpp (const SmolScaleCtx *scale_ctx,
     if (w > 0)
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, ofs_y),
                           vertical_ctx->parts_row [1]);
         weight_row_128bpp (vertical_ctx->parts_row [1],
@@ -2451,6 +2460,7 @@ scale_outrow_one_64bpp (const SmolScaleCtx *scale_ctx,
     if (vertical_ctx->in_ofs != 0)
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, 0),
                           vertical_ctx->parts_row [0]);
         vertical_ctx->in_ofs = 0;
@@ -2472,6 +2482,7 @@ scale_outrow_one_128bpp (const SmolScaleCtx *scale_ctx,
     if (vertical_ctx->in_ofs != 0)
     {
         scale_horizontal (scale_ctx,
+                          vertical_ctx,
                           inrow_ofs_to_pointer (scale_ctx, 0),
                           vertical_ctx->parts_row [0]);
         vertical_ctx->in_ofs = 0;
@@ -2487,6 +2498,7 @@ scale_outrow_copy (const SmolScaleCtx *scale_ctx,
                    uint32_t *row_out)
 {
     scale_horizontal (scale_ctx,
+                      vertical_ctx,
                       inrow_ofs_to_pointer (scale_ctx, row_index),
                       vertical_ctx->parts_row [0]);
 
