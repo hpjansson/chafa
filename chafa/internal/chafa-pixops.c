@@ -326,7 +326,7 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
     dest_y >>= dither->grain_height_shift;
     n_rows >>= dither->grain_height_shift;
 
-    error_rows = alloca (width_grains * 2 * sizeof (ChafaColorAccum));
+    error_rows = g_malloc (width_grains * 2 * sizeof (ChafaColorAccum));
     error_row [0] = error_rows;
     error_row [1] = error_rows + width_grains;
 
@@ -404,6 +404,8 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
         error_row [0] = error_row [1];
         error_row [1] = pp;
     }
+
+    g_free (error_rows);
 }
 
 static void

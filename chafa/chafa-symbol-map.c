@@ -642,6 +642,10 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
     compile_symbols_wide (symbol_map, desired_syms_wide);
     g_hash_table_destroy (desired_syms_wide);
 
+    if (symbol_map->ham_dist_array)
+        g_free (symbol_map->ham_dist_array);
+    symbol_map->ham_dist_array = g_new (gint, MAX (symbol_map->n_symbols, symbol_map->n_symbols2) + 1);
+
     symbol_map->need_rebuild = FALSE;
 }
 
@@ -996,6 +1000,7 @@ chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map)
     g_free (symbol_map->symbols2);
     g_free (symbol_map->packed_bitmaps);
     g_free (symbol_map->packed_bitmaps2);
+    g_free (symbol_map->ham_dist_array);
 }
 
 void
@@ -1013,6 +1018,7 @@ chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src)
     dest->symbols2 = NULL;
     dest->packed_bitmaps = NULL;
     dest->packed_bitmaps2 = NULL;
+    dest->ham_dist_array = NULL;
     dest->need_rebuild = TRUE;
     dest->refs = 1;
 }
@@ -1098,7 +1104,7 @@ chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map, guint64 bitm
 
     g_return_if_fail (symbol_map != NULL);
 
-    ham_dist = g_alloca (sizeof (gint) * (symbol_map->n_symbols + 1));
+    ham_dist = symbol_map->ham_dist_array;
 
     chafa_hamming_distance_vu64 (bitmap, symbol_map->packed_bitmaps, ham_dist, symbol_map->n_symbols);
 
@@ -1175,7 +1181,7 @@ chafa_symbol_map_find_wide_candidates (const ChafaSymbolMap *symbol_map, const g
 
     g_return_if_fail (symbol_map != NULL);
 
-    ham_dist = g_alloca (sizeof (gint) * (symbol_map->n_symbols2 + 1));
+    ham_dist = symbol_map->ham_dist_array;
 
     chafa_hamming_distance_2_vu64 (bitmaps, symbol_map->packed_bitmaps2, ham_dist, symbol_map->n_symbols2);
 

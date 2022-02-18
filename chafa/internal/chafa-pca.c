@@ -117,7 +117,7 @@ chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
     gfloat eigenvalue;
     gint i;
 
-    v = alloca (n_vecs * sizeof (ChafaVec3f32));
+    v = g_malloc (n_vecs * sizeof (ChafaVec3f32));
     memcpy (v, vecs_in, n_vecs * sizeof (ChafaVec3f32));
 
     /* Calculate average */
@@ -156,4 +156,6 @@ chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
 
     if (average_out)
         chafa_vec3f32_copy (average_out, &average);
+
+    g_free (v);
 }

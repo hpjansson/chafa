@@ -308,8 +308,8 @@ draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
     guint8 *dest_end_p, *dest_p;
     gint y;
 
-    error_row [0] = alloca (ctx->dest_width * sizeof (ChafaColorAccum));
-    error_row [1] = alloca (ctx->dest_width * sizeof (ChafaColorAccum));
+    error_row [0] = g_malloc (ctx->dest_width * sizeof (ChafaColorAccum));
+    error_row [1] = g_malloc (ctx->dest_width * sizeof (ChafaColorAccum));
 
     src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
     dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
@@ -332,6 +332,9 @@ draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
         error_row [0] = error_row [1];
         error_row [1] = error_row_temp;
     }
+
+    g_free (error_row [1]);
+    g_free (error_row [0]);
 }
 
 static void
