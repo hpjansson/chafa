@@ -68,8 +68,6 @@ struct ChafaSymbolMap
 
     /* Remaining fields are populated by chafa_symbol_map_prepare () */
 
-    gint *ham_dist_array;
-
     /* Narrow symbols */
     ChafaSymbol *symbols;
     gint n_symbols;
