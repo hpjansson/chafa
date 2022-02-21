@@ -227,6 +227,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 {
     const gchar *term;
     const gchar *colorterm;
+    const gchar *konsole_version;
     const gchar *vte_version;
     const gchar *term_program;
     const gchar *term_name;
@@ -244,6 +245,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     colorterm = g_environ_getenv (envp, "COLORTERM");
     if (!colorterm) colorterm = "";
+
+    konsole_version = g_environ_getenv (envp, "KONSOLE_VERSION");
+    if (!konsole_version) konsole_version = "";
 
     vte_version = g_environ_getenv (envp, "VTE_VERSION");
     if (!vte_version) vte_version = "";
@@ -281,6 +285,13 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         if (g_ascii_strtoull (vte_version, NULL, 10) >= 5202
             && !strcmp (term, "xterm-256color"))
             rep_seqs_local = rep_seqs;
+    }
+
+    /* Konsole exports KONSOLE_VERSION */
+    if (strtoul (konsole_version, NULL, 10) >= 220370)
+    {
+        /* Konsole version 22.03.70+ supports sixel graphics */
+        gfx_seqs = sixel_seqs;
     }
 
     /* The ctx terminal (https://ctx.graphics/) understands REP */
