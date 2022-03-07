@@ -115,7 +115,7 @@ png_loader_get_frame_data (PngLoader *loader, ChafaPixelType *pixel_type_out,
     g_return_val_if_fail (loader != NULL, NULL);
 
     if (pixel_type_out)
-        *pixel_type_out = CHAFA_PIXEL_RGBA8_PREMULTIPLIED;
+        *pixel_type_out = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
     if (width_out)
         *width_out = loader->width;
     if (height_out)
