@@ -979,7 +979,7 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_width = 4;
         if (options.dither_grain_height < 0)
             options.dither_grain_height = 4;
-        if (options.font_ratio < 0.0)
+        if (options.font_ratio <= 0.0)
             options.font_ratio = 1.0 / 2.0;
     }
     else
@@ -992,7 +992,7 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_width = 1;
         if (options.dither_grain_height < 0)
             options.dither_grain_height = 1;
-        if (options.font_ratio < 0.0)
+        if (options.font_ratio <= 0.0)
             options.font_ratio = 1.0 / 2.0;
     }
 
