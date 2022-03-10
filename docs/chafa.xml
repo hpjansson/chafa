@@ -222,6 +222,15 @@ for when used with "-c none", where it defaults to 0.
 </varlistentry>
 
 <varlistentry>
+<term><option>--polite <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Polite mode [on, off]. Defaults to on. Turning this off may enhance output and
+prevent interference from other programs, but risks leaving the terminal in an
+undesirable state.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-p <replaceable>bool</replaceable>, --preprocess <replaceable>bool</replaceable></option></term>
 <listitem><para>
 Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off

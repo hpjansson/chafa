@@ -62,6 +62,7 @@ typedef struct
     gboolean verbose;
     gboolean invert;
     gboolean preprocess;
+    gboolean polite;
     gboolean stretch;
     gboolean zoom;
     gboolean watch;
@@ -256,6 +257,10 @@ print_summary (void)
     "                     intelligently [0-9]. 0 disables, 9 enables every\n"
     "                     available optimization. Defaults to 5, except for when\n"
     "                     used with \"-c none\", where it defaults to 0.\n"
+    "      --polite=BOOL  Polite mode [on, off]. Defaults to on. Turning this off\n"
+    "                     may enhance output and prevent interference from other\n"
+    "                     programs, but risks leaving the terminal in an undesirable\n"
+    "                     state.\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
     "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
@@ -627,26 +632,53 @@ out:
 }
 
 static gboolean
-parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+parse_boolean_token (const gchar *token, gboolean *value_out)
 {
-    gboolean result = TRUE;
+    gboolean success = FALSE;
 
-    if (!g_ascii_strcasecmp (value, "on")
-        || !g_ascii_strcasecmp (value, "yes"))
+    if (!g_ascii_strcasecmp (token, "on")
+        || !g_ascii_strcasecmp (token, "yes"))
     {
-        options.preprocess = TRUE;
+        *value_out = TRUE;
     }
-    else if (!g_ascii_strcasecmp (value, "off")
-             || !g_ascii_strcasecmp (value, "no"))
+    else if (!g_ascii_strcasecmp (token, "off")
+             || !g_ascii_strcasecmp (token, "no"))
     {
-        options.preprocess = FALSE;
+        *value_out = FALSE;
     }
     else
     {
+        goto out;
+    }
+
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
+parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_boolean_token (value, &options.preprocess);
+    if (!result)
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Preprocessing must be one of [on, off].");
-        result = FALSE;
-    }
+
+    return result;
+}
+
+static gboolean
+parse_polite_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_boolean_token (value, &options.polite);
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Polite mode must be one of [on, off].");
 
     return result;
 }
@@ -900,6 +932,7 @@ parse_options (int *argc, char **argv [])
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
+        { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
@@ -941,6 +974,7 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_width = -1;  /* Unset */
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
+    options.polite = TRUE;
     options.preprocess = TRUE;
     options.fg_only = FALSE;
     options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
