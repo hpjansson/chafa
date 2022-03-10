@@ -213,6 +213,23 @@ none. Swaps --fg and --bg.
 </varlistentry>
 
 <varlistentry>
+<term><option>--margin-bottom <replaceable>num</replaceable></option></term>
+<listitem><para>
+When terminal size is detected, reserve at least this many rows at the bottom
+as a safety margin. Can be used to prevent images from scrolling out.
+Defaults to 1.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--margin-right <replaceable>num</replaceable></option></term>
+<listitem><para>
+When terminal size is detected, reserve at least this many rows on the
+right-hand side as a safety margin. Defaults to 0.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-O <replaceable>num</replaceable>, --optimize <replaceable>num</replaceable></option></term>
 <listitem><para>
 Compress the output by using control sequences intelligently [0-9]. 0

@@ -69,6 +69,7 @@ typedef struct
     gboolean fg_only;
     gint width, height;
     gint cell_width, cell_height;
+    gint margin_bottom, margin_right;
     gdouble font_ratio;
     gint work_factor;
     gint optimization_level;
@@ -88,9 +89,20 @@ typedef struct
      * eliminate interframe delay altogether. */
     gdouble anim_speed_multiplier;
 
+    /* Automatically set if terminal size is detected and there is
+     * zero bottom margin. */
+    gboolean have_parking_row;
+
     ChafaTermInfo *term_info;
 }
 GlobalOptions;
+
+typedef struct
+{
+    gint width_cells, height_cells;
+    gint width_pixels, height_pixels;
+}
+TermSize;
 
 static GlobalOptions options;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
@@ -253,6 +265,12 @@ print_summary (void)
     "                     font file supported by FreeType (TTF, PCF, etc).\n"
     "      --invert       Invert video. For display with bright backgrounds in\n"
     "                     color modes 2 and none. Swaps --fg and --bg.\n"
+    "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
+    "                     rows at the bottom as a safety margin. Can be used to\n"
+    "                     prevent images from scrolling out. Defaults to 1.\n"
+    "      --margin-right=NUM  When terminal size is detected, reserve at least NUM\n"
+    "                     rows on the right-hand side as a safety margin. Defaults\n"
+    "                     to 0.\n"
     "  -O, --optimize=NUM  Compress the output by using control sequences\n"
     "                     intelligently [0-9]. 0 disables, 9 enables every\n"
     "                     available optimization. Defaults to 5, except for when\n"
@@ -770,10 +788,16 @@ parse_bg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, 
 }
 
 static void
-get_tty_size (void)
+get_tty_size (TermSize *term_size_out)
 {
     struct winsize w;
     gboolean have_winsz = FALSE;
+
+    term_size_out->width_cells
+        = term_size_out->height_cells
+        = term_size_out->width_pixels
+        = term_size_out->height_pixels
+        = -1;
 
     /* FIXME: Use tcgetwinsize() when it becomes more widely available.
      * See: https://www.austingroupbugs.net/view.php?id=1151#c3856 */
@@ -805,11 +829,10 @@ get_tty_size (void)
         return;
 
     if (w.ws_col > 0)
-        options.width = w.ws_col;
+        term_size_out->width_cells = w.ws_col;
 
-    /* We subtract one line for the user's prompt */
     if (w.ws_row > 2)
-        options.height = w.ws_row - 1;
+        term_size_out->height_cells = w.ws_row;
 
     /* If .ws_xpixel and .ws_ypixel are filled out, we can calculate
      * aspect information for the font used. Sixel-capable terminals
@@ -817,11 +840,8 @@ get_tty_size (void)
 
     if (w.ws_xpixel > 0 && w.ws_ypixel > 0)
     {
-        options.cell_width = w.ws_xpixel / w.ws_col;
-        options.cell_height = w.ws_ypixel / w.ws_row;
-
-        if (options.cell_width > 0 && options.cell_height > 0)
-            options.font_ratio = (gfloat) options.cell_width / (gfloat) options.cell_height;
+        term_size_out->width_pixels = w.ws_xpixel;
+        term_size_out->height_pixels = w.ws_ypixel;
     }
 }
 
@@ -906,7 +926,6 @@ parse_options (int *argc, char **argv [])
 {
     GError *error = NULL;
     GOptionContext *context;
-    gint detected_width;
     gboolean result = TRUE;
     const GOptionEntry option_entries [] =
     {
@@ -931,6 +950,8 @@ parse_options (int *argc, char **argv [])
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
+        { "margin-bottom", '\0', 0, G_OPTION_ARG_INT,    &options.margin_bottom,  "Bottom margin", NULL },
+        { "margin-right", '\0', 0, G_OPTION_ARG_INT,     &options.margin_right,  "Right margin", NULL },
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
         { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
@@ -947,6 +968,8 @@ parse_options (int *argc, char **argv [])
     };
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
+    TermSize detected_term_size;
+    gboolean using_detected_size = FALSE;
 
     memset (&options, 0, sizeof (options));
 
@@ -979,9 +1002,11 @@ parse_options (int *argc, char **argv [])
     options.fg_only = FALSE;
     options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
-    options.width = 80;
-    options.height = 25;
+    options.width = -1;  /* Unset */
+    options.height = -1;  /* Unset */
     options.font_ratio = -1.0;  /* Unset */
+    options.margin_bottom = -1;  /* Unset */
+    options.margin_right = -1;  /* Unset */
     options.work_factor = 5;
     options.optimization_level = G_MININT;  /* Unset */
     options.n_threads = -1;
@@ -991,15 +1016,92 @@ parse_options (int *argc, char **argv [])
     options.file_duration_s = G_MAXDOUBLE;
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
-    get_tty_size ();
-
-    detected_width = options.width;
 
     if (!g_option_context_parse (context, argc, argv, &error))
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
         return FALSE;
     }
+
+    /* Detect terminal geometry */
+
+    get_tty_size (&detected_term_size);
+
+    if (detected_term_size.width_cells > 0
+        && detected_term_size.height_cells > 0
+        && detected_term_size.width_pixels > 0
+        && detected_term_size.height_pixels > 0)
+    {
+        options.cell_width = detected_term_size.width_pixels / detected_term_size.width_cells;
+        options.cell_height = detected_term_size.height_pixels / detected_term_size.height_cells;
+
+        if (options.font_ratio <= 0.0
+            && options.cell_width > 0
+            && options.cell_height > 0)
+        {
+            options.font_ratio = (gfloat) options.cell_width / (gfloat) options.cell_height;
+        }
+    }
+
+    /* Assign detected or default dimensions if none specified */
+
+    if (options.width < 0 && options.height < 0)
+    {
+        using_detected_size = TRUE;
+    }
+
+    if (options.margin_bottom < 0)
+    {
+        options.margin_bottom = 1;  /* Default */
+    }
+
+    /* Sixel output always leaves the cursor below the image, so force a bottom
+     * margin of at least one even if the user wanted less. */
+    if (options.margin_bottom < 1
+        && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+        options.margin_bottom = 1;
+
+    if (options.margin_right < 0)
+    {
+        options.margin_right = 0;  /* Default */
+
+        /* Kitty leaves the cursor in the column trailing the last row of the
+         * image. However, if the image is as wide as the terminal, the cursor
+         * will wrap to the first column of the following row, making us lose
+         * track of its position.
+         *
+         * This is not a problem when instructed to clear the terminal, as we
+         * use absolute positioning then.
+         *
+         * If needed, trim one column from the image to make the cursor position
+         * predictable. */
+        if (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+            && using_detected_size
+            && !(options.clear && options.margin_bottom >= 2))
+        {
+            options.margin_right = 1;
+        }
+    }
+
+    if (using_detected_size)
+    {
+        options.width = detected_term_size.width_cells;
+        options.height = detected_term_size.height_cells;
+
+        if (options.width < 0 && options.height < 0)
+        {
+            options.width = 80;
+            options.height = 25;
+        }
+
+        options.width = (options.width > options.margin_right)
+            ? options.width - options.margin_right : 1;
+
+        options.height = (options.height > options.margin_bottom)
+            ? options.height - options.margin_bottom : 1;
+    }
+
+    options.have_parking_row = (using_detected_size && options.margin_bottom == 0) ? FALSE : TRUE;
 
     /* Now we've established the pixel mode, apply dependent defaults */
 
@@ -1029,22 +1131,6 @@ parse_options (int *argc, char **argv [])
         if (options.font_ratio <= 0.0)
             options.font_ratio = 1.0 / 2.0;
     }
-
-    /* Kitty leaves the cursor in the column trailing the last row of the
-     * image. However, if the image is as wide as the terminal, the cursor
-     * will wrap to the first column of the following row, making us lose
-     * track of its position.
-     *
-     * This is not a problem when instructed to clear the terminal, as we
-     * use absolute positioning then.
-     *
-     * If needed, trim one column from the image to make the cursor position
-     * predictable. */
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-        && !options.clear
-        && options.width > 1
-        && options.width == detected_width)
-        options.width -= 1;
 
     if (options.work_factor < 1 || options.work_factor > 9)
     {
@@ -1227,7 +1313,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     GTimer *timer;
     gint loop_n = 0;
     MediaLoader *media_loader;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
     GString *gs;
     gchar *p0;
 
@@ -1313,12 +1399,18 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             else if (!is_first_frame)
             {
                 /* Cursor up N steps */
-                p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height);
+                if (!options.have_parking_row)
+                    *(p0++) = '\r';
+                p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height - (options.have_parking_row ? 0 : 1));
             }
 
             /* Put a blank line between files in non-clear mode */
             if (is_first_frame && !options.clear && !is_first_file)
+            {
+                if (!options.have_parking_row)
+                    *(p0++) = '\n';
                 *(p0++) = '\n';
+            }
 
             if (!write_to_stdout (buf, p0 - buf))
                 goto out;
@@ -1328,9 +1420,10 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             g_string_free (gs, TRUE);
 
             /* No linefeed after frame in sixel mode */
-            if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
-                || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-                || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+            if (options.have_parking_row
+                && (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+                    || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+                    || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2))
             {
                 if (!write_to_stdout ("\n", 1))
                     goto out;
@@ -1440,6 +1533,10 @@ run_all (GList *filenames)
             interruptible_usleep (options.file_duration_s * 1000000.0);
         }
     }
+
+    /* Emit linefeed after last image when cursor was not in parking row */
+    if (!options.have_parking_row)
+        write_to_stdout ("\n", 1);
 
     tty_options_deinit ();
     return 0;
