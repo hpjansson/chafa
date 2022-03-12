@@ -52,6 +52,14 @@ when there is more than one input file.
 <variablelist>
 
 <varlistentry>
+<term><option>--animate <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Whether to allow animation [on, off]. Defaults to on. When off, will show a
+still frame from each animation.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--bg <replaceable>color</replaceable></option></term>
 <listitem><para>
 Background color of display (color name or hex). Partially transparent input

@@ -67,6 +67,7 @@ typedef struct
     gboolean zoom;
     gboolean watch;
     gboolean fg_only;
+    gboolean animate;
     gint width, height;
     gint cell_width, cell_height;
     gint margin_bottom, margin_right;
@@ -232,6 +233,8 @@ print_summary (void)
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
+    "      --animate=BOOL  Whether to allow animation [on, off]. Defaults to on.\n"
+    "                     When off, will show a still frame from each animation.\n"
     "      --bg=COLOR     Background color of display (color name or hex).\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16, 240, 256,\n"
@@ -676,6 +679,19 @@ out:
 }
 
 static gboolean
+parse_animate_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_boolean_token (value, &options.animate);
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Animate mode must be one of [on, off].");
+
+    return result;
+}
+
+static gboolean
 parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result;
@@ -934,6 +950,7 @@ parse_options (int *argc, char **argv [])
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
+        { "animate",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_animate_arg,     "Animate", NULL },
         { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
@@ -997,6 +1014,7 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_width = -1;  /* Unset */
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
+    options.animate = TRUE;
     options.polite = TRUE;
     options.preprocess = TRUE;
     options.fg_only = FALSE;
@@ -1332,7 +1350,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     if (interrupted_by_user)
         goto out;
 
-    is_animation = media_loader_get_is_animation (media_loader);
+    is_animation = options.animate ? media_loader_get_is_animation (media_loader) : FALSE;
 
     do
     {
@@ -1343,7 +1361,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
         media_loader_goto_first_frame (media_loader);
 
         for (have_frame = TRUE;
-             have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
+             (is_first_frame || is_animation)
+             && have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
              have_frame = media_loader_goto_next_frame (media_loader))
         {
             gdouble elapsed_ms, remain_ms;
