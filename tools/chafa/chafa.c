@@ -211,14 +211,23 @@ print_version (void)
     gchar *builtin_features_str = chafa_describe_features (chafa_get_builtin_features ());
     gchar *supported_features_str = chafa_describe_features (chafa_get_supported_features ());
 
-    g_printerr ("Chafa version %s\n\nFeatures: %s\nApplying: %s\n\n%s\n",
-                CHAFA_VERSION,
-                chafa_get_builtin_features () ? builtin_features_str : "none",
-                chafa_get_supported_features () ? supported_features_str : "none",
-                copyright_notice);
+    g_print ("Chafa version %s\n\nFeatures: %s\nApplying: %s\n\n%s\n",
+             CHAFA_VERSION,
+             chafa_get_builtin_features () ? builtin_features_str : "none",
+             chafa_get_supported_features () ? supported_features_str : "none",
+             copyright_notice);
 
     g_free (builtin_features_str);
     g_free (supported_features_str);
+}
+
+static void
+print_brief_summary (void)
+{
+    g_printerr ("%s: You must specify input files as arguments or pipe a file to stdin.\n"
+                "Try '%s --help' for more information.\n",
+                options.executable_name,
+                options.executable_name);
 }
 
 static void
@@ -326,9 +335,9 @@ print_summary (void)
     "  solid block symbol:\n\n"
     "  $ chafa -c none --symbols block+border-solid in.png\n";
 
-    g_printerr ("Usage:\n  %s [OPTION...] [FILE...]\n\n%s\n",
-                options.executable_name,
-                summary);
+    g_print ("Usage:\n  %s [OPTION...] [FILE...]\n\n%s\n",
+             options.executable_name,
+             summary);
 }
 
 static gboolean
@@ -1182,16 +1191,19 @@ parse_options (int *argc, char **argv [])
 
         options.args = g_list_append (NULL, g_strdup ("-"));
     }
-    else
+    else if (!options.show_help)
     {
-        print_summary ();
+        /* No arguments, no pipe, and no cry for help. */
+        print_brief_summary ();
         return FALSE;
     }
 
+    /* This is outside the if-else ladder above because we want it to happen even if
+     * there are other arguments. */
     if (options.show_help)
     {
         print_summary ();
-        return FALSE;
+        return TRUE;
     }
 
     if (options.watch && g_list_length (options.args) != 1)
