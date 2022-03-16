@@ -114,6 +114,26 @@ sigint_handler (G_GNUC_UNUSED int sig)
     interrupted_by_user = TRUE;
 }
 
+static void
+interruptible_usleep (gint us)
+{
+    while (us > 0 && !interrupted_by_user)
+    {
+        gint sleep_us = MIN (us, 50000);
+        g_usleep (sleep_us);
+        us -= sleep_us;
+    }
+}
+
+static gboolean
+write_to_stdout (gpointer buf, gsize len)
+{
+    if (len == 0)
+        return TRUE;
+
+   return fwrite (buf, 1, len, stdout) == len ? TRUE : FALSE;
+}
+
 static guchar
 get_hex_byte (const gchar *str)
 {
@@ -288,9 +308,9 @@ print_summary (void)
     "                     available optimization. Defaults to 5, except for when\n"
     "                     used with \"-c none\", where it defaults to 0.\n"
     "      --polite=BOOL  Polite mode [on, off]. Defaults to on. Turning this off\n"
-    "                     may enhance output and prevent interference from other\n"
-    "                     programs, but risks leaving the terminal in an undesirable\n"
-    "                     state.\n"
+    "                     may enhance presentation and prevent interference from\n"
+    "                     other programs, but risks leaving the terminal in an\n"
+    "                     altered state (rude).\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
     "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
@@ -875,24 +895,56 @@ static struct termios saved_termios;
 static void
 tty_options_init (void)
 {
-    struct termios t;
+    if (!options.polite)
+    {
+        gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
+        gchar *p0;
 
-    if (!options.is_interactive)
-        return;
+        if (options.is_interactive)
+        {
+            struct termios t;
 
-    tcgetattr (STDIN_FILENO, &saved_termios);
-    t = saved_termios;
-    t.c_lflag &= ~ECHO;
-    tcsetattr (STDIN_FILENO, TCSANOW, &t);
+            tcgetattr (STDIN_FILENO, &saved_termios);
+            t = saved_termios;
+            t.c_lflag &= ~ECHO;
+            tcsetattr (STDIN_FILENO, TCSANOW, &t);
+        }
+
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG)
+        {
+            p0 = chafa_term_info_emit_disable_cursor (options.term_info, buf);
+            write_to_stdout (buf, p0 - buf);
+        }
+
+        /* Most terminals should have sixel scrolling enabled by default, so we're
+         * not going to disable it again later. */
+        if (options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+        {
+            p0 = chafa_term_info_emit_enable_sixel_scrolling (options.term_info, buf);
+            write_to_stdout (buf, p0 - buf);
+        }
+    }
 }
 
 static void
 tty_options_deinit (void)
 {
-    if (!options.is_interactive)
-        return;
+    if (!options.polite)
+    {
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG)
+        {
+            gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
+            gchar *p0;
 
-    tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
+            p0 = chafa_term_info_emit_enable_cursor (options.term_info, buf);
+            write_to_stdout (buf, p0 - buf);
+        }
+
+        if (options.is_interactive)
+        {
+            tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
+        }
+    }
 }
 
 static void
@@ -1316,23 +1368,6 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_unref (canvas);
     chafa_canvas_config_unref (config);
     return gs;
-}
-
-static void
-interruptible_usleep (gint us)
-{
-    while (us > 0 && !interrupted_by_user)
-    {
-        gint sleep_us = MIN (us, 50000);
-        g_usleep (sleep_us);
-        us -= sleep_us;
-    }
-}
-
-static gboolean
-write_to_stdout (gpointer buf, gsize len)
-{
-   return fwrite (buf, 1, len, stdout) == len ? TRUE : FALSE;
 }
 
 static gboolean
