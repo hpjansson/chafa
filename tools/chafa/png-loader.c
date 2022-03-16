@@ -54,6 +54,8 @@ png_loader_new_from_mapping (FileMapping *mapping)
 {
     PngLoader *loader = NULL;
     gboolean success = FALSE;
+    guint width, height;
+    unsigned char *frame_data;
     gint lode_error;
 
     g_return_val_if_fail (mapping != NULL, NULL);
@@ -69,9 +71,16 @@ png_loader_new_from_mapping (FileMapping *mapping)
         goto out;
 
     /* Decodes to RGBA8 */
-    if ((lode_error = lodepng_decode32 (&loader->frame_data, &loader->width, &loader->height,
+    if ((lode_error = lodepng_decode32 (&frame_data, &width, &height,
                                         loader->file_data, loader->file_data_len)) != 0)
         goto out;
+
+    if (width > (1 << 30) || height > (1 << 30))
+        goto out;
+
+    loader->frame_data = frame_data;
+    loader->width = (gint) width;
+    loader->height = (gint) height;
 
     success = TRUE;
 
