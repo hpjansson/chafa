@@ -249,9 +249,9 @@ for when used with "-c none", where it defaults to 0.
 <varlistentry>
 <term><option>--polite <replaceable>bool</replaceable></option></term>
 <listitem><para>
-Polite mode [on, off]. Defaults to on. Turning this off may enhance output and
-prevent interference from other programs, but risks leaving the terminal in an
-undesirable state.
+Polite mode [on, off]. Defaults to on. Turning this off may enhance presentation
+and prevent interference from other programs, but risks leaving the terminal in
+an altered state (rude).
 </para></listitem>
 </varlistentry>
 
