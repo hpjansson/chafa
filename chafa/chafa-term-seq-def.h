@@ -973,6 +973,40 @@ CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, CHAFA
  **/
 CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, void)
 
+/**
+ * chafa_term_info_emit_enable_sixel_scrolling:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_SIXEL_SCROLLING.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.10
+ **/
+CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, void)
+
+/**
+ * chafa_term_info_emit_disable_sixel_scrolling:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DISABLE_SIXEL_SCROLLING.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.10
+ **/
+CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, void)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

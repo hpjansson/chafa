@@ -94,6 +94,8 @@ static const SeqStr sixel_seqs [] =
 {
     { CHAFA_TERM_SEQ_BEGIN_SIXELS, "\033P%1;%2;%3q" },
     { CHAFA_TERM_SEQ_END_SIXELS, "\033\\" },
+    { CHAFA_TERM_SEQ_ENABLE_SIXEL_SCROLLING, "\033[?80l" },
+    { CHAFA_TERM_SEQ_DISABLE_SIXEL_SCROLLING, "\033[?80h" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
