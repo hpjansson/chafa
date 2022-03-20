@@ -973,6 +973,11 @@ CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, CHAFA
  **/
 CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, void)
 
+/* --- Available in 1.10+ --- */
+
+#undef CHAFA_TERM_SEQ_AVAILABILITY
+#define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_10
+
 /**
  * chafa_term_info_emit_enable_sixel_scrolling:
  * @term_info: A #ChafaTermInfo
