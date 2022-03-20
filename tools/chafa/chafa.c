@@ -107,6 +107,7 @@ typedef struct
 TermSize;
 
 static GlobalOptions options;
+static TermSize detected_term_size;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
 
 static void
@@ -1062,7 +1063,6 @@ parse_options (int *argc, char **argv [])
     };
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
-    TermSize detected_term_size;
     gboolean using_detected_size = FALSE;
 
     memset (&options, 0, sizeof (options));
@@ -1364,7 +1364,7 @@ write_image (const gchar *data, gsize len, gint dest_width)
     gint left_space;
     gboolean result = FALSE;
 
-    left_space = options.center ? (options.width - dest_width) / 2 : 0;
+    left_space = options.center ? (detected_term_size.width_cells - dest_width) / 2 : 0;
 
     /* Indent top left corner: Common for all modes */
     if (left_space > 0)
