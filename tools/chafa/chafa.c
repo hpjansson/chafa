@@ -68,6 +68,7 @@ typedef struct
     gboolean watch;
     gboolean fg_only;
     gboolean animate;
+    gboolean center;
     gint width, height;
     gint cell_width, cell_height;
     gint margin_bottom, margin_right;
@@ -126,7 +127,7 @@ interruptible_usleep (gint us)
 }
 
 static gboolean
-write_to_stdout (gpointer buf, gsize len)
+write_to_stdout (gconstpointer buf, gsize len)
 {
     if (len == 0)
         return TRUE;
@@ -265,6 +266,7 @@ print_summary (void)
     "      --animate=BOOL  Whether to allow animation [on, off]. Defaults to on.\n"
     "                     When off, will show a still frame from each animation.\n"
     "      --bg=COLOR     Background color of display (color name or hex).\n"
+    "  -C, --center=BOOL  Center images [on, off]. Defaults to off.\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16, 240, 256,\n"
     "                     full]. Defaults to full (24-bit).\n"
@@ -721,6 +723,19 @@ parse_animate_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 }
 
 static gboolean
+parse_center_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_boolean_token (value, &options.center);
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Centering mode must be one of [on, off].");
+
+    return result;
+}
+
+static gboolean
 parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result;
@@ -1013,6 +1028,7 @@ parse_options (int *argc, char **argv [])
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
         { "animate",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_animate_arg,     "Animate", NULL },
         { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
+        { "center",      'C',  0, G_OPTION_ARG_CALLBACK, parse_center_arg,      "Center", NULL },
         { "clear",       '\0', 0, G_OPTION_ARG_NONE,     &options.clear,        "Clear", NULL },
         { "colors",      'c',  0, G_OPTION_ARG_CALLBACK, parse_colors_arg,      "Colors (none, 2, 16, 256, 240 or full)", NULL },
         { "color-extractor", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_extractor_arg, "Color extractor (average or median)", NULL },
@@ -1076,6 +1092,7 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
     options.animate = TRUE;
+    options.center = FALSE;
     options.polite = TRUE;
     options.preprocess = TRUE;
     options.fg_only = FALSE;
@@ -1323,6 +1340,72 @@ parse_options (int *argc, char **argv [])
     return result;
 }
 
+#define PAD_SPACES_MAX 4096
+
+static gboolean
+write_pad_spaces (gint n)
+{
+    gchar buf [PAD_SPACES_MAX];
+    gint i;
+
+    g_assert (n >= 0);
+
+    n = MIN (n, PAD_SPACES_MAX);
+    for (i = 0; i < n; i++)
+        buf [i] = ' ';
+
+    return write_to_stdout (buf, n);
+}
+
+/* Write out the image data, possibly centering it */
+static gboolean
+write_image (const gchar *data, gsize len, gint dest_width)
+{
+    gint left_space;
+    gboolean result = FALSE;
+
+    left_space = options.center ? (options.width - dest_width) / 2 : 0;
+
+    /* Indent top left corner: Common for all modes */
+    if (left_space > 0)
+    {
+        if (!write_pad_spaces (left_space))
+            goto out;
+    }
+
+    if (left_space <= 0 || options.pixel_mode != CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        if (!write_to_stdout (data, len))
+            goto out;
+    }
+    else
+    {
+        const gchar *end, *p0, *p1;
+
+        /* Indent subsequent rows: Symbols mode only */
+
+        for (p0 = data, end = data + len; p0 < end; p0 = p1)
+        {
+            p1 = memchr (p0, '\n', end - p0);
+            p1 = p1 ? (p1 + 1) : end;
+
+            if (!write_to_stdout (p0, p1 - p0))
+                goto out;
+
+            if (p1 != end)
+            {
+                if (!write_pad_spaces (left_space))
+                    goto out;
+            }
+        }
+    }
+
+    result = TRUE;
+
+out:
+    return result;
+}
+
 static GString *
 build_string (ChafaPixelType pixel_type, const guint8 *pixels,
               gint src_width, gint src_height, gint src_rowstride,
@@ -1464,9 +1547,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             }
             else if (!is_first_frame)
             {
-                /* Cursor up N steps */
-                if (!options.have_parking_row)
-                    *(p0++) = '\r';
+                /* Cursor to col 0 and up N steps */
+                *(p0++) = '\r';
                 p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height - (options.have_parking_row ? 0 : 1));
             }
 
@@ -1480,7 +1562,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
             if (!write_to_stdout (buf, p0 - buf))
                 goto out;
-            if (!write_to_stdout (gs->str, gs->len))
+
+            if (!write_image (gs->str, gs->len, dest_width))
                 goto out;
 
             g_string_free (gs, TRUE);
@@ -1492,6 +1575,13 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                     || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2))
             {
                 if (!write_to_stdout ("\n", 1))
+                    goto out;
+            }
+            else if (options.center && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+            {
+                /* If image was centered in sixel mode, cursor must be brought
+                 * back to left margin manually */
+                if (!write_to_stdout ("\r", 1))
                     goto out;
             }
 

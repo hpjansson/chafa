@@ -69,6 +69,13 @@ X.Org. Defaults to black.
 </varlistentry>
 
 <varlistentry>
+<term><option>-C <replaceable>bool</replaceable>, --center <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Center images [on, off]. Defaults to off.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--clear</option></term>
 <listitem><para>
 Clear screen before processing each file.
