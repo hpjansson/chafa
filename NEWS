@@ -1,6 +1,16 @@
 Chafa releases
 ==============
 
+1.10.1 (2022-04-04)
+-------------------
+
+This release brings one small but important fix and a few minor corrections
+to the documentation.
+
+* Bug fixes:
+  github#87  Garbled last row of pixels on some images (found by @hydrargyrum).
+  [unfiled]  Correctly label new functions since 1.10.
+
 1.10.0 (2022-03-20)
 -------------------
 
