@@ -690,12 +690,14 @@ parse_boolean_token (const gchar *token, gboolean *value_out)
     gboolean success = FALSE;
 
     if (!g_ascii_strcasecmp (token, "on")
-        || !g_ascii_strcasecmp (token, "yes"))
+        || !g_ascii_strcasecmp (token, "yes")
+        || !g_ascii_strcasecmp (token, "true"))
     {
         *value_out = TRUE;
     }
     else if (!g_ascii_strcasecmp (token, "off")
-             || !g_ascii_strcasecmp (token, "no"))
+             || !g_ascii_strcasecmp (token, "no")
+             || !g_ascii_strcasecmp (token, "false"))
     {
         *value_out = FALSE;
     }
