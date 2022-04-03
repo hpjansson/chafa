@@ -239,7 +239,7 @@ Defaults to 1.
 <varlistentry>
 <term><option>--margin-right <replaceable>num</replaceable></option></term>
 <listitem><para>
-When terminal size is detected, reserve at least this many rows on the
+When terminal size is detected, reserve at least this many columns on the
 right-hand side as a safety margin. Defaults to 0.
 </para></listitem>
 </varlistentry>

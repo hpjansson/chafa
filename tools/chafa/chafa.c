@@ -304,7 +304,7 @@ print_summary (void)
     "                     rows at the bottom as a safety margin. Can be used to\n"
     "                     prevent images from scrolling out. Defaults to 1.\n"
     "      --margin-right=NUM  When terminal size is detected, reserve at least NUM\n"
-    "                     rows on the right-hand side as a safety margin. Defaults\n"
+    "                     columns on the right-hand side as a safety margin. Defaults\n"
     "                     to 0.\n"
     "  -O, --optimize=NUM  Compress the output by using control sequences\n"
     "                     intelligently [0-9]. 0 disables, 9 enables every\n"
