@@ -72,7 +72,7 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
         row_ofs [0] *= batch_unit;
         row_ofs [1] *= batch_unit;
 
-        if (row_ofs [1] > n_rows)
+        if (row_ofs [1] > n_rows || i == n_batches - 1)
         {
             ofs [1] = n_rows + 0.5;
             row_ofs [1] = n_rows;
