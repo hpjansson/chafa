@@ -83,7 +83,7 @@ AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" = "yes"])
 AS_IF([test "$with_tools" != no], [
   PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
     [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on debian) to build command-line tools, or pass --without-tools to build without.])])
-  PKG_CHECK_MODULES(LIBJPEG, [libjpeg >= 2.0.0],,
+  PKG_CHECK_MODULES(LIBJPEG, [libjpeg],,
     [AC_MSG_ERROR([You need libjpeg-devel (or libjpeg-dev on debian) to build command-line tools, or pass --without-tools to build without.])])
   PKG_CHECK_MODULES(FREETYPE, [freetype2 >= 2.0.0],,
     [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on debian) to build command-line tools, or pass --without-tools to build without.])])])
