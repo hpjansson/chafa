@@ -24,6 +24,8 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_MMAP
 # include <sys/mman.h>

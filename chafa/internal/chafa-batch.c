@@ -19,6 +19,9 @@
 
 #include "config.h"
 
+#include <string.h>
+#include <glib.h>
+
 #include "chafa.h"
 #include "internal/chafa-batch.h"
 

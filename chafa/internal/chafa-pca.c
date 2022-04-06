@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <string.h>  /* memcpy */
 #include "internal/chafa-pca.h"
 
 #define PCA_POWER_MAX_ITERATIONS 1000

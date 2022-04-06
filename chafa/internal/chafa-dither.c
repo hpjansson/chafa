@@ -18,6 +18,10 @@
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "config.h"
+
+#include <string.h>
+#include <glib.h>
+
 #include "chafa.h"
 #include "internal/chafa-dither.h"
 #include "internal/chafa-private.h"

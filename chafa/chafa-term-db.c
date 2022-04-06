@@ -19,6 +19,8 @@
 
 #include "config.h"
 #include "chafa.h"
+#include <stdlib.h>  /* strtoul */
+#include <string.h>  /* strlen, strncmp, strcmp, memcpy */
 
 /**
  * SECTION:chafa-term-db
@@ -317,19 +319,19 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = kitty_seqs;
 
     /* iTerm2 supports truecolor and has a unique graphics protocol */
-    if (!strcasecmp (lc_terminal, "iTerm2")
-        || !strcasecmp (term_program, "iTerm.app"))
+    if (!g_ascii_strcasecmp (lc_terminal, "iTerm2")
+        || !g_ascii_strcasecmp (term_program, "iTerm.app"))
     {
         color_seq_list = color_direct_list;
         gfx_seqs = iterm2_seqs;
     }
 
-    if (!strcasecmp (term_program, "WezTerm"))
+    if (!g_ascii_strcasecmp (term_program, "WezTerm"))
     {
         gfx_seqs = sixel_seqs;
     }
 
-    if (!strcasecmp (term_name, "contour"))
+    if (!g_ascii_strcasecmp (term_name, "contour"))
     {
         gfx_seqs = sixel_seqs;
     }

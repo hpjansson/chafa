@@ -20,6 +20,9 @@
 #ifndef __CHAFA_BITFIELD_H__
 #define __CHAFA_BITFIELD_H__
 
+#include <string.h>
+#include <glib.h>
+
 G_BEGIN_DECLS
 
 typedef struct

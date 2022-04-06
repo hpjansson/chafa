@@ -19,7 +19,12 @@
 
 #include "config.h"
 
+#include <stdlib.h>
+#include <string.h>
+#include <glib.h>
+
 #include "chafa.h"
+
 #include "internal/chafa-color-table.h"
 #include "internal/chafa-pca.h"
 

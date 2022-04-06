@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <stdlib.h>  /* abs */
+#include <string.h>  /* memcpy, memset */
 #include <math.h>  /* pow, cbrt, log, sqrt, atan2, cos, sin */
 #include "chafa.h"
 #include "internal/chafa-private.h"
