@@ -33,6 +33,7 @@
 #include "gif-loader.h"
 #include "im-loader.h"
 #include "xwd-loader.h"
+#include "jpeg-loader.h"
 #include "media-loader.h"
 #include "png-loader.h"
 
@@ -41,6 +42,7 @@ typedef enum
     LOADER_TYPE_GIF,
     LOADER_TYPE_PNG,
     LOADER_TYPE_XWD,
+    LOADER_TYPE_JPEG,
     LOADER_TYPE_IMAGEMAGICK,
 
     LOADER_TYPE_LAST
@@ -84,6 +86,15 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) xwd_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) xwd_loader_get_frame_data,
         (gint (*) (gpointer)) xwd_loader_get_frame_delay
+    },
+    [LOADER_TYPE_JPEG] =
+    {
+        (void (*)(gpointer)) jpeg_loader_destroy,
+        (gboolean (*)(gpointer)) jpeg_loader_get_is_animation,
+        (void (*)(gpointer)) jpeg_loader_goto_first_frame,
+        (gboolean (*)(gpointer)) jpeg_loader_goto_next_frame,
+        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) jpeg_loader_get_frame_data,
+        (gint (*) (gpointer)) jpeg_loader_get_frame_delay
     },
     [LOADER_TYPE_IMAGEMAGICK] =
     {
@@ -134,6 +145,14 @@ media_loader_new (const gchar *path)
         {
             loader->loader_type = LOADER_TYPE_XWD;
             loader->loader = xwd_loader_new_from_mapping (mapping);
+        }
+
+        /* JPEG */
+
+        if (!loader->loader)
+        {
+            loader->loader_type = LOADER_TYPE_JPEG;
+            loader->loader = jpeg_loader_new_from_mapping (mapping);
         }
 
         /* Format loader will take ownership of mapping. On failure, we

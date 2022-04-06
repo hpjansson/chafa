@@ -13,6 +13,8 @@ chafa_SOURCES = \
 	gif-loader.h \
 	im-loader.c \
 	im-loader.h \
+	jpeg-loader.c \
+	jpeg-loader.h \
 	media-loader.c \
 	media-loader.h \
 	png-loader.c \
@@ -28,11 +30,11 @@ chafa_SOURCES = \
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(LIBJPEG_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(LIBJPEG_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
 
 endif
 
