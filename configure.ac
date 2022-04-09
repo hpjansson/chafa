@@ -80,13 +80,25 @@ AC_ARG_WITH(tools,
   ,
   with_tools=yes)
 AS_IF([test "$with_tools" != no], [
+  dnl ImageMagick/MagickWand (required)
   PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
     [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
-  PKG_CHECK_MODULES(LIBJPEG, [libjpeg],,
-    [AC_MSG_ERROR([You need libjpeg-devel (or libjpeg-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
+
+  dnl FreeType (required)
   PKG_CHECK_MODULES(FREETYPE, [freetype2 >= 2.0.0],,
     [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
 
+  dnl libjpeg (optional)
+  AC_ARG_WITH(jpeg,
+    [AS_HELP_STRING([--without-jpeg], [don't build Jpeg loader [default=on]])],
+    ,
+    with_jpeg=yes)
+  AS_IF([test "$with_jpeg" != no], [
+    PKG_CHECK_MODULES(JPEG, [libjpeg],,
+      [AC_MSG_ERROR([You need libjpeg-devel (or libjpeg-dev on Debian) for optional JPEG support, or pass --without-jpeg to build without.])])])
+  AS_IF([test "$with_jpeg" != no], [AC_DEFINE([HAVE_JPEG], [1], [Define if we have JPEG support.])])
+
+  dnl libwebp (optional)
   AC_ARG_WITH(webp,
     [AS_HELP_STRING([--without-webp], [don't build WebP loader [default=on]])],
     ,
@@ -99,6 +111,7 @@ AS_IF([test "$with_tools" != no], [
 ])
 
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
+AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 
 # Used by gtk-doc's fixxref.

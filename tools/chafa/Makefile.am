@@ -13,8 +13,6 @@ chafa_SOURCES = \
 	gif-loader.h \
 	im-loader.c \
 	im-loader.h \
-	jpeg-loader.c \
-	jpeg-loader.h \
 	media-loader.c \
 	media-loader.h \
 	png-loader.c \
@@ -23,6 +21,12 @@ chafa_SOURCES = \
 	named-colors.h \
 	xwd-loader.c \
 	xwd-loader.h
+
+if HAVE_JPEG
+chafa_SOURCES += \
+	jpeg-loader.c \
+	jpeg-loader.h
+endif
 
 if HAVE_WEBP
 chafa_SOURCES += \
@@ -36,11 +40,11 @@ endif
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(LIBJPEG_CFLAGS) $(WEBP_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(JPEG_CFLAGS) $(WEBP_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(LIBJPEG_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
 
 endif
 

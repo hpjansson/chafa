@@ -97,6 +97,7 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) xwd_loader_get_frame_data,
         (gint (*) (gpointer)) xwd_loader_get_frame_delay
     },
+#ifdef HAVE_JPEG
     [LOADER_TYPE_JPEG] =
     {
         (gpointer (*)(gpointer)) jpeg_loader_new_from_mapping,
@@ -108,6 +109,7 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) jpeg_loader_get_frame_data,
         (gint (*) (gpointer)) jpeg_loader_get_frame_delay
     },
+#endif
 #ifdef HAVE_WEBP
     [LOADER_TYPE_WEBP] =
     {
