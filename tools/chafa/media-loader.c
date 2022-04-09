@@ -44,9 +44,7 @@ typedef enum
     LOADER_TYPE_PNG,
     LOADER_TYPE_XWD,
     LOADER_TYPE_JPEG,
-#ifdef HAVE_WEBP
     LOADER_TYPE_WEBP,
-#endif
     LOADER_TYPE_IMAGEMAGICK,
 
     LOADER_TYPE_LAST
@@ -55,6 +53,8 @@ LoaderType;
 
 struct
 {
+    gpointer (*new_from_mapping) (gpointer);
+    gpointer (*new_from_path) (gconstpointer);
     void (*destroy) (gpointer);
     gboolean (*get_is_animation) (gpointer);
     void (*goto_first_frame) (gpointer);
@@ -66,6 +66,8 @@ loader_vtable [LOADER_TYPE_LAST] =
 {
     [LOADER_TYPE_GIF] =
     {
+        (gpointer (*)(gpointer)) gif_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) gif_loader_destroy,
         (gboolean (*)(gpointer)) gif_loader_get_is_animation,
         (void (*)(gpointer)) gif_loader_goto_first_frame,
@@ -75,6 +77,8 @@ loader_vtable [LOADER_TYPE_LAST] =
     },
     [LOADER_TYPE_PNG] =
     {
+        (gpointer (*)(gpointer)) png_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) png_loader_destroy,
         (gboolean (*)(gpointer)) png_loader_get_is_animation,
         (void (*)(gpointer)) png_loader_goto_first_frame,
@@ -84,6 +88,8 @@ loader_vtable [LOADER_TYPE_LAST] =
     },
     [LOADER_TYPE_XWD] =
     {
+        (gpointer (*)(gpointer)) xwd_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) xwd_loader_destroy,
         (gboolean (*)(gpointer)) xwd_loader_get_is_animation,
         (void (*)(gpointer)) xwd_loader_goto_first_frame,
@@ -93,6 +99,8 @@ loader_vtable [LOADER_TYPE_LAST] =
     },
     [LOADER_TYPE_JPEG] =
     {
+        (gpointer (*)(gpointer)) jpeg_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) jpeg_loader_destroy,
         (gboolean (*)(gpointer)) jpeg_loader_get_is_animation,
         (void (*)(gpointer)) jpeg_loader_goto_first_frame,
@@ -103,6 +111,8 @@ loader_vtable [LOADER_TYPE_LAST] =
 #ifdef HAVE_WEBP
     [LOADER_TYPE_WEBP] =
     {
+        (gpointer (*)(gpointer)) webp_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) webp_loader_destroy,
         (gboolean (*)(gpointer)) webp_loader_get_is_animation,
         (void (*)(gpointer)) webp_loader_goto_first_frame,
@@ -113,6 +123,8 @@ loader_vtable [LOADER_TYPE_LAST] =
 #endif
     [LOADER_TYPE_IMAGEMAGICK] =
     {
+        (gpointer (*)(gpointer)) NULL,
+        (gpointer (*)(gconstpointer)) im_loader_new,
         (void (*)(gpointer)) im_loader_destroy,
         (gboolean (*)(gpointer)) im_loader_get_is_animation,
         (void (*)(gpointer)) im_loader_goto_first_frame,
@@ -132,83 +144,49 @@ MediaLoader *
 media_loader_new (const gchar *path)
 {
     MediaLoader *loader;
-    FileMapping *mapping;
+    FileMapping *mapping = NULL;
     gboolean success = FALSE;
+    gint i;
 
     g_return_val_if_fail (path != NULL, NULL);
 
     loader = g_new0 (MediaLoader, 1);
     mapping = file_mapping_new (path);
-    if (mapping)
+
+    for (i = 0; i < LOADER_TYPE_LAST && !loader->loader; i++)
     {
-        /* GIF */
+        loader->loader_type = i;
 
-        loader->loader_type = LOADER_TYPE_GIF;
-        loader->loader = gif_loader_new_from_mapping (mapping);
-
-        /* PNG */
-
-        if (!loader->loader)
+        if (mapping && loader_vtable [i].new_from_mapping)
         {
-            loader->loader_type = LOADER_TYPE_PNG;
-            loader->loader = png_loader_new_from_mapping (mapping);
+            loader->loader = loader_vtable [i].new_from_mapping (mapping);
+        }
+        else if (loader_vtable [i].new_from_path)
+        {
+            loader->loader = loader_vtable [i].new_from_path (path);
+            if (loader->loader)
+                file_mapping_destroy (mapping);
         }
 
-        /* XWD */
-
-        if (!loader->loader)
+        if (loader->loader)
         {
-            loader->loader_type = LOADER_TYPE_XWD;
-            loader->loader = xwd_loader_new_from_mapping (mapping);
-        }
-
-        /* JPEG */
-
-        if (!loader->loader)
-        {
-            loader->loader_type = LOADER_TYPE_JPEG;
-            loader->loader = jpeg_loader_new_from_mapping (mapping);
-        }
-
-#ifdef HAVE_WEBP
-        /* WebP */
-
-        if (!loader->loader)
-        {
-            loader->loader_type = LOADER_TYPE_WEBP;
-            loader->loader = webp_loader_new_from_mapping (mapping);
-        }
-#endif
-
-        /* Format loader will take ownership of mapping. On failure, we
-         * have to destroy it manually. */
-
-        if (!loader->loader)
-        {
-            file_mapping_destroy (mapping);
+            /* Mapping was either transferred to the loader or destroyed by us above */
             mapping = NULL;
+            break;
         }
     }
 
-    /* Any via ImageMagick */
-
     if (!loader->loader)
-    {
-        loader->loader_type = LOADER_TYPE_IMAGEMAGICK;
-        loader->loader = im_loader_new (path);
-    }
-
-    if (!loader->loader)
-    {
-        loader->loader_type = LOADER_TYPE_LAST;
         goto out;
-    }
 
     success = TRUE;
 
 out:
     if (!success)
     {
+        if (mapping)
+            file_mapping_destroy (mapping);
+
         media_loader_destroy (loader);
         loader = NULL;
     }
