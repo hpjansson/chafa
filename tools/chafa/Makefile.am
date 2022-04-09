@@ -24,17 +24,23 @@ chafa_SOURCES = \
 	xwd-loader.c \
 	xwd-loader.h
 
+if HAVE_WEBP
+chafa_SOURCES += \
+	webp-loader.c \
+	webp-loader.h
+endif
+
 # We can pass -rpath so the binary knows where to find libchafa.so when
 # installed outside /usr (e.g. the default /usr/local). This affects Ubuntu.
 # Resolved by running ldconfig. See Github issue #32.
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(LIBJPEG_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(LIBJPEG_CFLAGS) $(LIBWEBPDECODER_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(LIBJPEG_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(LIBJPEG_LIBS) $(LIBWEBPDECODER_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
 
 endif
 

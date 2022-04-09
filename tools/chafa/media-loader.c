@@ -36,6 +36,7 @@
 #include "jpeg-loader.h"
 #include "media-loader.h"
 #include "png-loader.h"
+#include "webp-loader.h"
 
 typedef enum
 {
@@ -43,6 +44,9 @@ typedef enum
     LOADER_TYPE_PNG,
     LOADER_TYPE_XWD,
     LOADER_TYPE_JPEG,
+#ifdef HAVE_WEBP
+    LOADER_TYPE_WEBP,
+#endif
     LOADER_TYPE_IMAGEMAGICK,
 
     LOADER_TYPE_LAST
@@ -96,6 +100,17 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) jpeg_loader_get_frame_data,
         (gint (*) (gpointer)) jpeg_loader_get_frame_delay
     },
+#ifdef HAVE_WEBP
+    [LOADER_TYPE_WEBP] =
+    {
+        (void (*)(gpointer)) webp_loader_destroy,
+        (gboolean (*)(gpointer)) webp_loader_get_is_animation,
+        (void (*)(gpointer)) webp_loader_goto_first_frame,
+        (gboolean (*)(gpointer)) webp_loader_goto_next_frame,
+        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) webp_loader_get_frame_data,
+        (gint (*) (gpointer)) webp_loader_get_frame_delay
+    },
+#endif
     [LOADER_TYPE_IMAGEMAGICK] =
     {
         (void (*)(gpointer)) im_loader_destroy,
@@ -154,6 +169,16 @@ media_loader_new (const gchar *path)
             loader->loader_type = LOADER_TYPE_JPEG;
             loader->loader = jpeg_loader_new_from_mapping (mapping);
         }
+
+#ifdef HAVE_WEBP
+        /* WebP */
+
+        if (!loader->loader)
+        {
+            loader->loader_type = LOADER_TYPE_WEBP;
+            loader->loader = webp_loader_new_from_mapping (mapping);
+        }
+#endif
 
         /* Format loader will take ownership of mapping. On failure, we
          * have to destroy it manually. */
