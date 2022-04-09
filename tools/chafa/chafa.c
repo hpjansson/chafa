@@ -28,6 +28,7 @@
 #include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
 #include <signal.h>  /* sigaction */
+#include <stdlib.h>  /* exit */
 #include <termios.h>  /* tcgetattr, tcsetattr */
 
 #include <chafa.h>
