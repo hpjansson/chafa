@@ -92,9 +92,12 @@ AC_ARG_WITH(webp,
   [AS_HELP_STRING([--without-webp], [don't build WebP loader [default=on]])],
   ,
   with_webp=yes)
+
 AS_IF([test "$with_webp" != no], [
-  PKG_CHECK_MODULES(LIBWEBPDECODER, [libwebpdecoder],,
-    [AC_MSG_ERROR([You need libwebp-devel (or libwebp-dev on Debian) for optional WebP support, or pass --without-webp to build without.])])])
+  PKG_CHECK_MODULES(WEBP, [libwebpdecoder],,
+    [PKG_CHECK_MODULES(WEBP, [libwebp],,
+      [AC_MSG_ERROR([You need libwebp-devel (or libwebp-dev on Debian) for optional WebP support, or pass --without-webp to build without.])])])])
+
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_webp" != "no"])
 AS_IF([test "$with_webp" != "no"], [AC_DEFINE([HAVE_WEBP], [1], [Define if we have WebP support.])])
 
