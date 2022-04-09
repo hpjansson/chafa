@@ -79,27 +79,27 @@ AC_ARG_WITH(tools,
   [AS_HELP_STRING([--without-tools], [don't build command-line tools [default=on]])],
   ,
   with_tools=yes)
-AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" = "yes"])
 AS_IF([test "$with_tools" != no], [
   PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
     [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
   PKG_CHECK_MODULES(LIBJPEG, [libjpeg],,
     [AC_MSG_ERROR([You need libjpeg-devel (or libjpeg-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
   PKG_CHECK_MODULES(FREETYPE, [freetype2 >= 2.0.0],,
-    [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])])
+    [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
 
-AC_ARG_WITH(webp,
-  [AS_HELP_STRING([--without-webp], [don't build WebP loader [default=on]])],
-  ,
-  with_webp=yes)
+  AC_ARG_WITH(webp,
+    [AS_HELP_STRING([--without-webp], [don't build WebP loader [default=on]])],
+    ,
+    with_webp=yes)
+  AS_IF([test "$with_webp" != no], [
+    PKG_CHECK_MODULES(WEBP, [libwebpdecoder],,
+      [PKG_CHECK_MODULES(WEBP, [libwebp],,
+        [AC_MSG_ERROR([You need libwebp-devel (or libwebp-dev on Debian) for optional WebP support, or pass --without-webp to build without.])])])])
+  AS_IF([test "$with_webp" != no], [AC_DEFINE([HAVE_WEBP], [1], [Define if we have WebP support.])])
+])
 
-AS_IF([test "$with_webp" != no], [
-  PKG_CHECK_MODULES(WEBP, [libwebpdecoder],,
-    [PKG_CHECK_MODULES(WEBP, [libwebp],,
-      [AC_MSG_ERROR([You need libwebp-devel (or libwebp-dev on Debian) for optional WebP support, or pass --without-webp to build without.])])])])
-
-AM_CONDITIONAL([HAVE_WEBP], [test "$with_webp" != "no"])
-AS_IF([test "$with_webp" != "no"], [AC_DEFINE([HAVE_WEBP], [1], [Define if we have WebP support.])])
+AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
+AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 
 # Used by gtk-doc's fixxref.
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
