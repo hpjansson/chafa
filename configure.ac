@@ -460,7 +460,6 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 echo >&AS_MESSAGE_FD
-echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
 echo >&AS_MESSAGE_FD "Build man page .............. $enable_man"
 echo >&AS_MESSAGE_FD "Rebuild API documentation ... ${enable_gtk_doc:-no} (--enable-gtk-doc)"
 echo >&AS_MESSAGE_FD "Support MMX ................. $ac_cv_mmx_intrinsics"
@@ -469,5 +468,17 @@ echo >&AS_MESSAGE_FD "Support AVX2 ................ $ac_cv_avx2_intrinsics"
 echo >&AS_MESSAGE_FD "Support popcount32 .......... $ac_cv_popcnt32_intrinsics"
 echo >&AS_MESSAGE_FD "Support popcount64 .......... $ac_cv_popcnt64_intrinsics"
 echo >&AS_MESSAGE_FD "Install prefix .............. $prefix"
+echo >&AS_MESSAGE_FD
+echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
+
+if test "x$with_tools" != xno; then
+echo >&AS_MESSAGE_FD "With GIF loader ............. yes (internal)"
+echo >&AS_MESSAGE_FD "With JPEG loader ............ $with_jpeg"
+echo >&AS_MESSAGE_FD "With MagickWand loader ...... yes (always)"
+echo >&AS_MESSAGE_FD "With PNG loader ............. yes (internal)"
+echo >&AS_MESSAGE_FD "With WebP loader ............ $with_webp"
+echo >&AS_MESSAGE_FD "With XWD loader ............. yes (internal)"
+fi
+
 echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "You can now type \"gmake\" or \"make\" to build the project."
