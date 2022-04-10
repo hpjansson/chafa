@@ -48,7 +48,12 @@ build the latest and greatest yourself, read on.
 You will need GCC, make, Autoconf, Automake, Libtool and the GLib
 development package installed to compile Chafa from its git repository. If
 you want to build the command-line tool `chafa` and not just the library,
-you will additionally need the ImageMagick development packages.
+you will additionally need development packages for:
+
+* FreeType2. Often packaged as `libfreetype6-dev` or `freetype2-devel`.
+* ImageMagick. Look for `libmagickwand-dev` or `ImageMagick-devel`.
+* libjpeg (optional). Look for `libjpeg-dev`, `libjpeg62-devel` or `libjpeg8-devel`.
+* libwebp (optional). Look for `libwebp-dev` or `libwebp-devel`.
 
 If you want to build documentation, you will also need gtk-doc.
 
