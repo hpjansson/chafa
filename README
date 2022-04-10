@@ -29,8 +29,9 @@ FreeBSD ....... pkg install chafa
 Gentoo ........ emerge media-gfx/chafa
 Guix .......... guix install chafa
 Kali Linux .... apt install chafa
+MacPorts ...... port install chafa
 OpenBSD ....... pkg_add chafa
-openSUSE ...... zypper ar -f obs://graphics graphics && zypper in chafa
+openSUSE ...... zypper in chafa
 Ubuntu ........ apt install chafa
 
 See https://hpjansson.org/chafa/download/ for more.
