@@ -80,13 +80,19 @@ AC_ARG_WITH(tools,
   ,
   with_tools=yes)
 AS_IF([test "$with_tools" != no], [
-  dnl ImageMagick/MagickWand (required)
-  PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
-    [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
-
   dnl FreeType (required)
   PKG_CHECK_MODULES(FREETYPE, [freetype2 >= 2.0.0],,
     [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
+
+  dnl ImageMagick/MagickWand (optional)
+  AC_ARG_WITH(imagemagick,
+    [AS_HELP_STRING([--without-imagemagick], [don't build ImageMagick loader [default=on]])],
+    ,
+    with_imagemagick=yes)
+  AS_IF([test "$with_imagemagick" != no], [
+    PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
+      [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on Debian) for optional ImageMagick support, or pass --without-imagemagick to build without.])])])
+  AS_IF([test "$with_imagemagick" != no], [AC_DEFINE([HAVE_MAGICKWAND], [1], [Define if we have ImageMagick support.])])
 
   dnl libjpeg (optional)
   AC_ARG_WITH(jpeg,
@@ -111,6 +117,7 @@ AS_IF([test "$with_tools" != no], [
 ])
 
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
+AM_CONDITIONAL([HAVE_MAGICKWAND], [test "$with_tools" != no -a "$with_imagemagick" != no])
 AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 
@@ -473,8 +480,8 @@ echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
 
 if test "x$with_tools" != xno; then
 echo >&AS_MESSAGE_FD "With GIF loader ............. yes (internal)"
+echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $with_imagemagick"
 echo >&AS_MESSAGE_FD "With JPEG loader ............ $with_jpeg"
-echo >&AS_MESSAGE_FD "With MagickWand loader ...... yes (always)"
 echo >&AS_MESSAGE_FD "With PNG loader ............. yes (internal)"
 echo >&AS_MESSAGE_FD "With WebP loader ............ $with_webp"
 echo >&AS_MESSAGE_FD "With XWD loader ............. yes (internal)"

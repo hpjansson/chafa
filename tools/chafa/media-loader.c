@@ -123,6 +123,7 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gint (*) (gpointer)) webp_loader_get_frame_delay
     },
 #endif
+#ifdef HAVE_MAGICKWAND
     [LOADER_TYPE_IMAGEMAGICK] =
     {
         (gpointer (*)(gpointer)) NULL,
@@ -133,7 +134,8 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) im_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) im_loader_get_frame_data,
         (gint (*) (gpointer)) im_loader_get_frame_delay
-    }
+    },
+#endif
 };
 
 struct MediaLoader

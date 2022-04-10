@@ -11,8 +11,6 @@ chafa_SOURCES = \
 	font-loader.h \
 	gif-loader.c \
 	gif-loader.h \
-	im-loader.c \
-	im-loader.h \
 	media-loader.c \
 	media-loader.h \
 	png-loader.c \
@@ -21,6 +19,12 @@ chafa_SOURCES = \
 	named-colors.h \
 	xwd-loader.c \
 	xwd-loader.h
+
+if HAVE_MAGICKWAND
+chafa_SOURCES += \
+	im-loader.c \
+	im-loader.h
+endif
 
 if HAVE_JPEG
 chafa_SOURCES += \
