@@ -36,6 +36,7 @@
 #include "jpeg-loader.h"
 #include "media-loader.h"
 #include "png-loader.h"
+#include "tiff-loader.h"
 #include "webp-loader.h"
 
 typedef enum
@@ -44,6 +45,7 @@ typedef enum
     LOADER_TYPE_PNG,
     LOADER_TYPE_XWD,
     LOADER_TYPE_JPEG,
+    LOADER_TYPE_TIFF,
     LOADER_TYPE_WEBP,
     LOADER_TYPE_IMAGEMAGICK,
 
@@ -108,6 +110,19 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) jpeg_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) jpeg_loader_get_frame_data,
         (gint (*) (gpointer)) jpeg_loader_get_frame_delay
+    },
+#endif
+#ifdef HAVE_TIFF
+    [LOADER_TYPE_TIFF] =
+    {
+        (gpointer (*)(gpointer)) tiff_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
+        (void (*)(gpointer)) tiff_loader_destroy,
+        (gboolean (*)(gpointer)) tiff_loader_get_is_animation,
+        (void (*)(gpointer)) tiff_loader_goto_first_frame,
+        (gboolean (*)(gpointer)) tiff_loader_goto_next_frame,
+        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) tiff_loader_get_frame_data,
+        (gint (*) (gpointer)) tiff_loader_get_frame_delay
     },
 #endif
 #ifdef HAVE_WEBP

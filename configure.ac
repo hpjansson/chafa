@@ -104,6 +104,16 @@ AS_IF([test "$with_tools" != no], [
       [AC_MSG_ERROR([You need libjpeg-devel (or libjpeg-dev on Debian) for optional JPEG support, or pass --without-jpeg to build without.])])])
   AS_IF([test "$with_jpeg" != no], [AC_DEFINE([HAVE_JPEG], [1], [Define if we have JPEG support.])])
 
+  dnl libtiff (optional)
+  AC_ARG_WITH(tiff,
+    [AS_HELP_STRING([--without-tiff], [don't build TIFF loader [default=on]])],
+    ,
+    with_tiff=yes)
+  AS_IF([test "$with_tiff" != no], [
+    PKG_CHECK_MODULES(TIFF, [libtiff-4],,
+      [AC_MSG_ERROR([You need libtiff-devel (or libtiff-dev on Debian) for optional TIFF support, or pass --without-tiff to build without.])])])
+  AS_IF([test "$with_tiff" != no], [AC_DEFINE([HAVE_TIFF], [1], [Define if we have TIFF support.])])
+
   dnl libwebp (optional)
   AC_ARG_WITH(webp,
     [AS_HELP_STRING([--without-webp], [don't build WebP loader [default=on]])],
@@ -119,6 +129,7 @@ AS_IF([test "$with_tools" != no], [
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
 AM_CONDITIONAL([HAVE_MAGICKWAND], [test "$with_tools" != no -a "$with_imagemagick" != no])
 AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
+AM_CONDITIONAL([HAVE_TIFF], [test "$with_tools" != no -a "$with_tiff" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 
 # Used by gtk-doc's fixxref.
@@ -483,6 +494,7 @@ echo >&AS_MESSAGE_FD "With GIF loader ............. yes (internal)"
 echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $with_imagemagick"
 echo >&AS_MESSAGE_FD "With JPEG loader ............ $with_jpeg"
 echo >&AS_MESSAGE_FD "With PNG loader ............. yes (internal)"
+echo >&AS_MESSAGE_FD "With TIFF loader ............ $with_tiff"
 echo >&AS_MESSAGE_FD "With WebP loader ............ $with_webp"
 echo >&AS_MESSAGE_FD "With XWD loader ............. yes (internal)"
 fi
