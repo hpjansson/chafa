@@ -129,7 +129,7 @@ my_tiff_map (thandle_t obj, void **base, toff_t *len)
 }
 
 static void
-my_tiff_unmap (thandle_t, void *, toff_t)
+my_tiff_unmap (G_GNUC_UNUSED thandle_t obj, G_GNUC_UNUSED void *base, G_GNUC_UNUSED toff_t len)
 {
 }
 
