@@ -96,7 +96,7 @@ AS_IF([test "$with_tools" != no], [
 
   dnl libjpeg (optional)
   AC_ARG_WITH(jpeg,
-    [AS_HELP_STRING([--without-jpeg], [don't build Jpeg loader [default=on]])],
+    [AS_HELP_STRING([--without-jpeg], [don't build JPEG loader [default=on]])],
     ,
     with_jpeg=yes)
   AS_IF([test "$with_jpeg" != no], [
