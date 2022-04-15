@@ -567,7 +567,7 @@ echo >&AS_MESSAGE_FD "You can now type ${blue}gmake${normal} or ${blue}make${nor
 
 dnl --- Warn about missing dependencies ---
 
-dnl Remove leading spaces
+dnl Remove leading spaces.
 missing_rpms=$(echo $missing_rpms | sed 's/^ *//')
 missing_debs=$(echo $missing_debs | sed 's/^ *//')
 
