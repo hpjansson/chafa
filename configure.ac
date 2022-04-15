@@ -482,37 +482,104 @@ AC_CONFIG_FILES([Makefile
                  tools/fontgen/Makefile])
 AC_OUTPUT
 
+dnl --- Print a neatly colorized summary ---
+
+colorize_vars="
+  enable_man
+  ac_cv_mmx_intrinsics
+  ac_cv_sse41_intrinsics
+  ac_cv_avx2_intrinsics
+  ac_cv_popcnt32_intrinsics
+  ac_cv_popcnt64_intrinsics
+  with_tools
+  with_imagemagick
+  with_jpeg
+  with_tiff
+  with_webp
+"
+
+dnl Only use colors if the terminal supports the aixterm-style bright ones (16 total).
+
+cols=$(tput colors 2>/dev/null)
+
+if test ${cols:--1} -ge 16; then
+  normal=$(tput sgr0)
+  red=$(tput setaf 9)
+  green=$(tput setaf 10)
+  yellow=$(tput setaf 11)
+  blue=$(tput setaf 12)
+
+  pyes=${green}yes${normal}
+  pno=${red}no${normal}
+  pyno=${yellow}no${normal}
+else
+  normal=
+  red=
+  green=
+  yellow=
+  blue=
+
+  pyes=yes
+  pno=no
+  pyno=no
+fi
+
+dnl Gross. At least make sure eval arguments are sanitized.
+for i in $colorize_vars; do
+  eval state=\$$i
+  if test x$state != xno; then state=yes; fi
+  eval p$i=\$p$state
+done
+
+dnl gtk-doc needs special handling; since docs come pregenerated in the tarball, "no"
+dnl here is less critical, so use a different color. Also, enable_gtk_doc can be empty.
+if test x$enable_gtk_doc = xyes; then
+  penable_gtk_doc=$pyes
+else
+  penable_gtk_doc=$pyno
+fi
+
+echo >&AS_MESSAGE_FD $normal
+echo >&AS_MESSAGE_FD "Build man page .............. $penable_man"
+echo >&AS_MESSAGE_FD "Rebuild API documentation ... $penable_gtk_doc (--enable-gtk-doc)"
+echo >&AS_MESSAGE_FD "Support MMX ................. $pac_cv_mmx_intrinsics"
+echo >&AS_MESSAGE_FD "Support SSE 4.1 ............. $pac_cv_sse41_intrinsics"
+echo >&AS_MESSAGE_FD "Support AVX2 ................ $pac_cv_avx2_intrinsics"
+echo >&AS_MESSAGE_FD "Support popcount32 .......... $pac_cv_popcnt32_intrinsics"
+echo >&AS_MESSAGE_FD "Support popcount64 .......... $pac_cv_popcnt64_intrinsics"
 echo >&AS_MESSAGE_FD
-echo >&AS_MESSAGE_FD "Build man page .............. $enable_man"
-echo >&AS_MESSAGE_FD "Rebuild API documentation ... ${enable_gtk_doc:-no} (--enable-gtk-doc)"
-echo >&AS_MESSAGE_FD "Support MMX ................. $ac_cv_mmx_intrinsics"
-echo >&AS_MESSAGE_FD "Support SSE 4.1 ............. $ac_cv_sse41_intrinsics"
-echo >&AS_MESSAGE_FD "Support AVX2 ................ $ac_cv_avx2_intrinsics"
-echo >&AS_MESSAGE_FD "Support popcount32 .......... $ac_cv_popcnt32_intrinsics"
-echo >&AS_MESSAGE_FD "Support popcount64 .......... $ac_cv_popcnt64_intrinsics"
-echo >&AS_MESSAGE_FD "Install prefix .............. $prefix"
-echo >&AS_MESSAGE_FD
-echo >&AS_MESSAGE_FD "Build command-line tool ..... $with_tools"
+echo >&AS_MESSAGE_FD "Build command-line tool ..... $pwith_tools"
 
 if test "x$with_tools" != xno; then
-echo >&AS_MESSAGE_FD "With GIF loader ............. yes (internal)"
-echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $with_imagemagick"
-echo >&AS_MESSAGE_FD "With JPEG loader ............ $with_jpeg"
-echo >&AS_MESSAGE_FD "With PNG loader ............. yes (internal)"
-echo >&AS_MESSAGE_FD "With TIFF loader ............ $with_tiff"
-echo >&AS_MESSAGE_FD "With WebP loader ............ $with_webp"
-echo >&AS_MESSAGE_FD "With XWD loader ............. yes (internal)"
+echo >&AS_MESSAGE_FD "With GIF loader ............. $pyes (internal)"
+echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $pwith_imagemagick"
+echo >&AS_MESSAGE_FD "With JPEG loader ............ $pwith_jpeg"
+echo >&AS_MESSAGE_FD "With PNG loader ............. $pyes (internal)"
+echo >&AS_MESSAGE_FD "With TIFF loader ............ $pwith_tiff"
+echo >&AS_MESSAGE_FD "With WebP loader ............ $pwith_webp"
+echo >&AS_MESSAGE_FD "With XWD loader ............. $pyes (internal)"
 fi
 
 echo >&AS_MESSAGE_FD
-echo >&AS_MESSAGE_FD "You can now type \"gmake\" or \"make\" to build the project."
+echo >&AS_MESSAGE_FD "Install prefix .............. $blue$prefix$normal"
+echo >&AS_MESSAGE_FD
+echo >&AS_MESSAGE_FD "You can now type ${blue}gmake${normal} or ${blue}make${normal} to build the project."
+
+dnl --- Warn about missing dependencies ---
+
+dnl Remove leading spaces
+missing_rpms=$(echo $missing_rpms | sed 's/^ *//')
+missing_debs=$(echo $missing_debs | sed 's/^ *//')
 
 if test "x$missing_rpms" != x; then
 echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "Some optional libraries were not found. You may want to install these and"
 echo >&AS_MESSAGE_FD "run configure again (package names may be different on your system)."
 echo >&AS_MESSAGE_FD
-echo >&AS_MESSAGE_FD "On Fedora, openSUSE or similar:$missing_rpms"
-echo >&AS_MESSAGE_FD "On Debian, Ubuntu or similar:$missing_debs"
+echo >&AS_MESSAGE_FD "On Fedora, openSUSE or similar:"
+echo >&AS_MESSAGE_FD "${blue}${missing_rpms}${normal}"
+echo >&AS_MESSAGE_FD 
+echo >&AS_MESSAGE_FD "On Debian, Ubuntu or similar:"
+echo >&AS_MESSAGE_FD "${blue}${missing_debs}${normal}"
 echo >&AS_MESSAGE_FD
 fi
