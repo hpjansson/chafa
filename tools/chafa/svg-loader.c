@@ -61,13 +61,23 @@ svg_loader_new (void)
 static void
 calc_dimensions (RsvgHandle *rsvg, guint *width_out, guint *height_out)
 {
+#if !LIBRSVG_CHECK_VERSION(2, 52, 0)
+    RsvgDimensionData dim = { 0 };
+#endif
     gdouble width, height;
 
     rsvg_handle_set_dpi (rsvg, 150.0);
+
+#if LIBRSVG_CHECK_VERSION(2, 52, 0)
     if (!rsvg_handle_get_intrinsic_size_in_pixels (rsvg, &width, &height))
     {
         width = height = (gdouble) DIMENSION_MAX;
     }
+#else
+    rsvg_handle_get_dimensions (rsvg, &dim);
+    width = dim.width;
+    height = dim.height;
+#endif
 
     /* FIXME: It would've been nice to know the size of the final viewport;
      * that is, the terminal's dimensions in pixels. We could pass this in
@@ -98,7 +108,9 @@ svg_loader_new_from_mapping (FileMapping *mapping)
     gboolean success = FALSE;
     RsvgHandle *rsvg = NULL;
     cairo_t *cr = NULL;
+#if LIBRSVG_CHECK_VERSION(2, 46, 0)
     RsvgRectangle viewport = { 0 };
+#endif
     guint width, height;
 
     g_return_val_if_fail (mapping != NULL, NULL);
@@ -146,10 +158,15 @@ svg_loader_new_from_mapping (FileMapping *mapping)
 
     cr = cairo_create (loader->surface);
 
+#if LIBRSVG_CHECK_VERSION(2, 46, 0)
     viewport.width = width;
     viewport.height = height;
     if (!rsvg_handle_render_document (rsvg, cr, &viewport, NULL))
         goto out;
+#else
+    if (!rsvg_handle_render_cairo (rsvg, cr))
+        goto out;
+#endif
 
     success = TRUE;
 
