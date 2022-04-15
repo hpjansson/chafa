@@ -274,6 +274,21 @@ file_mapping_taste (FileMapping *file_mapping, gpointer out, goffset ofs, gsize 
     return TRUE;
 }
 
+gssize
+file_mapping_read (FileMapping *file_mapping, gpointer out, goffset ofs, gssize length)
+{
+    if (file_mapping->fd < 0)
+        file_mapping->fd = open_file (file_mapping);
+
+    if (file_mapping->fd < 0)
+        return -1;
+
+    if (lseek (file_mapping->fd, ofs, SEEK_SET) != ofs)
+        return -1;
+
+    return safe_read (file_mapping->fd, out, length);
+}
+
 gboolean
 file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer data, gsize length)
 {

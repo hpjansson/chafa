@@ -106,6 +106,17 @@ AS_IF([test "$with_tools" != no], [
     with_jpeg=no)])
   AS_IF([test "$with_jpeg" != no], [AC_DEFINE([HAVE_JPEG], [1], [Define if we have JPEG support.])])
 
+  dnl librsvg (optional)
+  AC_ARG_WITH(svg,
+    [AS_HELP_STRING([--without-svg], [don't build SVG loader [default=on]])],
+    ,
+    with_svg=yes)
+  AS_IF([test "$with_svg" != no], [PKG_CHECK_MODULES(SVG, [librsvg-2.0],,
+    missing_rpms="$missing_rpms librsvg-devel"
+    missing_debs="$missing_debs librsvg2-dev"
+    with_svg=no)])
+  AS_IF([test "$with_svg" != no], [AC_DEFINE([HAVE_SVG], [1], [Define if we have SVG support.])])
+
   dnl libtiff (optional)
   AC_ARG_WITH(tiff,
     [AS_HELP_STRING([--without-tiff], [don't build TIFF loader [default=on]])],
@@ -134,6 +145,7 @@ AS_IF([test "$with_tools" != no], [
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
 AM_CONDITIONAL([HAVE_MAGICKWAND], [test "$with_tools" != no -a "$with_imagemagick" != no])
 AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
+AM_CONDITIONAL([HAVE_SVG], [test "$with_tools" != no -a "$with_svg" != no])
 AM_CONDITIONAL([HAVE_TIFF], [test "$with_tools" != no -a "$with_tiff" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 
@@ -494,6 +506,7 @@ colorize_vars="
   with_tools
   with_imagemagick
   with_jpeg
+  with_svg
   with_tiff
   with_webp
 "
@@ -555,6 +568,7 @@ echo >&AS_MESSAGE_FD "With GIF loader ............. $pyes (internal)"
 echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $pwith_imagemagick"
 echo >&AS_MESSAGE_FD "With JPEG loader ............ $pwith_jpeg"
 echo >&AS_MESSAGE_FD "With PNG loader ............. $pyes (internal)"
+echo >&AS_MESSAGE_FD "With SVG loader ............. $pwith_svg"
 echo >&AS_MESSAGE_FD "With TIFF loader ............ $pwith_tiff"
 echo >&AS_MESSAGE_FD "With WebP loader ............ $pwith_webp"
 echo >&AS_MESSAGE_FD "With XWD loader ............. $pyes (internal)"

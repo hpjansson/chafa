@@ -38,6 +38,12 @@ chafa_SOURCES += \
 	tiff-loader.h
 endif
 
+if HAVE_SVG
+chafa_SOURCES += \
+	svg-loader.c \
+	svg-loader.h
+endif
+
 if HAVE_WEBP
 chafa_SOURCES += \
 	webp-loader.c \
@@ -50,11 +56,11 @@ endif
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(JPEG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
 
 endif
 
