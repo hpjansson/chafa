@@ -257,7 +257,7 @@ CFLAGS="${CFLAGS} -mmmx"
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
                 [[#include <mmintrin.h>]],
-                [[_mm_empty ();]])],
+                [[__m64 t [2] = { 0 }; t [0] = _mm_setzero_si64 ();]])],
         [AC_DEFINE([HAVE_MMX_INTRINSICS], [1], [Define if MMX intrinsics work.])
          ac_cv_mmx_intrinsics=yes],
         [ac_cv_mmx_intrinsics=no])
