@@ -89,9 +89,10 @@ AS_IF([test "$with_tools" != no], [
     [AS_HELP_STRING([--without-imagemagick], [don't build ImageMagick loader [default=on]])],
     ,
     with_imagemagick=yes)
-  AS_IF([test "$with_imagemagick" != no], [
-    PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
-      [AC_MSG_ERROR([You need ImageMagick-devel (or libmagickwand-dev on Debian) for optional ImageMagick support, or pass --without-imagemagick to build without.])])])
+  AS_IF([test "$with_imagemagick" != no], [PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
+    missing_rpms="$missing_rpms ImageMagick-devel"
+    missing_debs="$missing_debs libmagickwand-dev"
+    with_imagemagick=no)])
   AS_IF([test "$with_imagemagick" != no], [AC_DEFINE([HAVE_MAGICKWAND], [1], [Define if we have ImageMagick support.])])
 
   dnl libjpeg (optional)
@@ -99,9 +100,10 @@ AS_IF([test "$with_tools" != no], [
     [AS_HELP_STRING([--without-jpeg], [don't build JPEG loader [default=on]])],
     ,
     with_jpeg=yes)
-  AS_IF([test "$with_jpeg" != no], [
-    PKG_CHECK_MODULES(JPEG, [libjpeg],,
-      [AC_MSG_ERROR([You need libjpeg-devel (or libjpeg-dev on Debian) for optional JPEG support, or pass --without-jpeg to build without.])])])
+  AS_IF([test "$with_jpeg" != no], [PKG_CHECK_MODULES(JPEG, [libjpeg],,
+    missing_rpms="$missing_rpms libjpeg-devel"
+    missing_debs="$missing_debs libjpeg-dev"
+    with_jpeg=no)])
   AS_IF([test "$with_jpeg" != no], [AC_DEFINE([HAVE_JPEG], [1], [Define if we have JPEG support.])])
 
   dnl libtiff (optional)
@@ -109,9 +111,10 @@ AS_IF([test "$with_tools" != no], [
     [AS_HELP_STRING([--without-tiff], [don't build TIFF loader [default=on]])],
     ,
     with_tiff=yes)
-  AS_IF([test "$with_tiff" != no], [
-    PKG_CHECK_MODULES(TIFF, [libtiff-4],,
-      [AC_MSG_ERROR([You need libtiff-devel (or libtiff-dev on Debian) for optional TIFF support, or pass --without-tiff to build without.])])])
+  AS_IF([test "$with_tiff" != no], [PKG_CHECK_MODULES(TIFF, [libtiff-4],,
+    missing_rpms="$missing_rpms libtiff-devel"
+    missing_debs="$missing_debs libtiff-dev"
+    with_tiff=no)])
   AS_IF([test "$with_tiff" != no], [AC_DEFINE([HAVE_TIFF], [1], [Define if we have TIFF support.])])
 
   dnl libwebp (optional)
@@ -122,7 +125,9 @@ AS_IF([test "$with_tools" != no], [
   AS_IF([test "$with_webp" != no], [
     PKG_CHECK_MODULES(WEBP, [libwebpdecoder],,
       [PKG_CHECK_MODULES(WEBP, [libwebp],,
-        [AC_MSG_ERROR([You need libwebp-devel (or libwebp-dev on Debian) for optional WebP support, or pass --without-webp to build without.])])])])
+        missing_rpms="$missing_rpms libwebp-devel"
+        missing_debs="$missing_debs libwebp-dev"
+        with_webp=no)])])
   AS_IF([test "$with_webp" != no], [AC_DEFINE([HAVE_WEBP], [1], [Define if we have WebP support.])])
 ])
 
@@ -501,3 +506,13 @@ fi
 
 echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "You can now type \"gmake\" or \"make\" to build the project."
+
+if test "x$missing_rpms" != x; then
+echo >&AS_MESSAGE_FD
+echo >&AS_MESSAGE_FD "Some optional libraries were not found. You may want to install these and"
+echo >&AS_MESSAGE_FD "run configure again (package names may be different on your system)."
+echo >&AS_MESSAGE_FD
+echo >&AS_MESSAGE_FD "On Fedora, openSUSE or similar:$missing_rpms"
+echo >&AS_MESSAGE_FD "On Debian, Ubuntu or similar:$missing_debs"
+echo >&AS_MESSAGE_FD
+fi
