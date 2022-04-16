@@ -55,8 +55,9 @@ typedef enum
 }
 LoaderType;
 
-struct
+const struct
 {
+    const gchar * const name;
     gpointer (*new_from_mapping) (gpointer);
     gpointer (*new_from_path) (gconstpointer);
     void (*destroy) (gpointer);
@@ -70,6 +71,7 @@ loader_vtable [LOADER_TYPE_LAST] =
 {
     [LOADER_TYPE_GIF] =
     {
+        "GIF",
         (gpointer (*)(gpointer)) gif_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) gif_loader_destroy,
@@ -81,6 +83,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     },
     [LOADER_TYPE_PNG] =
     {
+        "PNG",
         (gpointer (*)(gpointer)) png_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) png_loader_destroy,
@@ -92,6 +95,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     },
     [LOADER_TYPE_XWD] =
     {
+        "XWD",
         (gpointer (*)(gpointer)) xwd_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) xwd_loader_destroy,
@@ -104,6 +108,7 @@ loader_vtable [LOADER_TYPE_LAST] =
 #ifdef HAVE_JPEG
     [LOADER_TYPE_JPEG] =
     {
+        "JPEG",
         (gpointer (*)(gpointer)) jpeg_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) jpeg_loader_destroy,
@@ -117,6 +122,7 @@ loader_vtable [LOADER_TYPE_LAST] =
 #ifdef HAVE_SVG
     [LOADER_TYPE_SVG] =
     {
+        "SVG",
         (gpointer (*)(gpointer)) svg_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) svg_loader_destroy,
@@ -130,6 +136,7 @@ loader_vtable [LOADER_TYPE_LAST] =
 #ifdef HAVE_TIFF
     [LOADER_TYPE_TIFF] =
     {
+        "TIFF",
         (gpointer (*)(gpointer)) tiff_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) tiff_loader_destroy,
@@ -143,6 +150,7 @@ loader_vtable [LOADER_TYPE_LAST] =
 #ifdef HAVE_WEBP
     [LOADER_TYPE_WEBP] =
     {
+        "WebP",
         (gpointer (*)(gpointer)) webp_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) webp_loader_destroy,
@@ -156,6 +164,7 @@ loader_vtable [LOADER_TYPE_LAST] =
 #ifdef HAVE_MAGICKWAND
     [LOADER_TYPE_IMAGEMAGICK] =
     {
+        "ImageMagick",
         (gpointer (*)(gpointer)) NULL,
         (gpointer (*)(gconstpointer)) im_loader_new,
         (void (*)(gpointer)) im_loader_destroy,
@@ -270,4 +279,23 @@ gint
 media_loader_get_frame_delay (MediaLoader *loader)
 {
     return loader_vtable [loader->loader_type].get_frame_delay (loader->loader);
+}
+
+gchar **
+get_loader_names (void)
+{
+    gchar **strv;
+    gint i, j;
+
+    strv = g_new0 (gchar *, LOADER_TYPE_LAST + 1);
+
+    for (i = 0, j = 0; i < LOADER_TYPE_LAST; i++)
+    {
+        if (loader_vtable [i].name == NULL)
+            continue;
+
+        strv [j++] = g_strdup (loader_vtable [i].name);
+    }
+
+    return strv;
 }

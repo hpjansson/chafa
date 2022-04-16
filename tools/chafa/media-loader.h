@@ -38,6 +38,8 @@ gconstpointer media_loader_get_frame_data (MediaLoader *loader, ChafaPixelType *
                                            gint *width_out, gint *height_out, gint *rowstride_out);
 gint media_loader_get_frame_delay (MediaLoader *loader);
 
+gchar **get_loader_names (void);
+
 G_END_DECLS
 
 #endif /* __MEDIA_LOADER_H__ */

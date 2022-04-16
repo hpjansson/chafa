@@ -233,15 +233,20 @@ print_version (void)
 {
     gchar *builtin_features_str = chafa_describe_features (chafa_get_builtin_features ());
     gchar *supported_features_str = chafa_describe_features (chafa_get_supported_features ());
+    gchar **loaders = get_loader_names ();
+    gchar *loaders_joined = g_strjoinv (" ", loaders);
 
-    g_print ("Chafa version %s\n\nFeatures: %s\nApplying: %s\n\n%s\n",
+    g_print ("Chafa version %s\n\nLoaders:  %s\nFeatures: %s\nApplying: %s\n\n%s\n",
              CHAFA_VERSION,
+             loaders_joined,
              chafa_get_builtin_features () ? builtin_features_str : "none",
              chafa_get_supported_features () ? supported_features_str : "none",
              copyright_notice);
 
     g_free (builtin_features_str);
     g_free (supported_features_str);
+    g_strfreev (loaders);
+    g_free (loaders_joined);
 }
 
 static void
