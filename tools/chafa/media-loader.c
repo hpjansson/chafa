@@ -183,6 +183,14 @@ struct MediaLoader
     gpointer loader;
 };
 
+static int
+ascii_strcasecmp_ptrs (const void *a, const void *b)
+{
+    gchar * const *sa = a, * const *sb = b;
+
+    return g_ascii_strcasecmp (*sa, *sb);
+}
+
 MediaLoader *
 media_loader_new (const gchar *path)
 {
@@ -296,6 +304,8 @@ get_loader_names (void)
 
         strv [j++] = g_strdup (loader_vtable [i].name);
     }
+
+    qsort (strv, j, sizeof (gchar *), ascii_strcasecmp_ptrs);
 
     return strv;
 }
