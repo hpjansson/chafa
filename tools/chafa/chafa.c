@@ -1027,7 +1027,7 @@ parse_options (int *argc, char **argv [])
 {
     GError *error = NULL;
     GOptionContext *context;
-    gboolean result = TRUE;
+    gboolean result = FALSE;
     const GOptionEntry option_entries [] =
     {
         /* Note: The descriptive blurbs here are never shown to the user */
@@ -1124,7 +1124,7 @@ parse_options (int *argc, char **argv [])
     if (!g_option_context_parse (context, argc, argv, &error))
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
-        return FALSE;
+        goto out;
     }
 
     /* Detect terminal geometry */
@@ -1239,7 +1239,7 @@ parse_options (int *argc, char **argv [])
     if (options.work_factor < 1 || options.work_factor > 9)
     {
         g_printerr ("%s: Work factor must be in the range [1-9].\n", options.executable_name);
-        return FALSE;
+        goto out;
     }
 
     if (options.transparency_threshold == G_MAXDOUBLE)
@@ -1248,13 +1248,14 @@ parse_options (int *argc, char **argv [])
     if (options.transparency_threshold < 0.0 || options.transparency_threshold > 1.0)
     {
         g_printerr ("%s: Transparency threshold %.1lf is not in the range [0.0-1.0].\n", options.executable_name, options.transparency_threshold);
-        return FALSE;
+        goto out;
     }
 
     if (options.show_version)
     {
         print_version ();
-        return TRUE;
+        result = TRUE;
+        goto out;
     }
 
     if (*argc > 1)
@@ -1272,7 +1273,7 @@ parse_options (int *argc, char **argv [])
     {
         /* No arguments, no pipe, and no cry for help. */
         print_brief_summary ();
-        return FALSE;
+        goto out;
     }
 
     /* This is outside the if-else ladder above because we want it to happen even if
@@ -1280,13 +1281,14 @@ parse_options (int *argc, char **argv [])
     if (options.show_help)
     {
         print_summary ();
-        return TRUE;
+        result = TRUE;
+        goto out;
     }
 
     if (options.watch && g_list_length (options.args) != 1)
     {
         g_printerr ("%s: Can only use --watch with exactly one file.\n", options.executable_name);
-        return FALSE;
+        goto out;
     }
 
     /* --stretch implies --zoom */
@@ -1327,7 +1329,7 @@ parse_options (int *argc, char **argv [])
     {
         g_printerr ("%s: Optimization level %d is not in the range [0-9].\n",
                     options.executable_name, options.optimization_level);
-        return FALSE;
+        goto out;
     }
 
     /* Translate optimization level to flags */
@@ -1343,6 +1345,9 @@ parse_options (int *argc, char **argv [])
 
     chafa_set_n_threads (options.n_threads);
 
+    result = TRUE;
+
+out:
     g_option_context_free (context);
 
     return result;
