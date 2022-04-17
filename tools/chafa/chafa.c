@@ -166,6 +166,20 @@ get_hex_byte (const gchar *str)
     return b;
 }
 
+static gint
+count_dash_strings (GList *l)
+{
+    gint n = 0;
+
+    for ( ; l; l = g_list_next (l))
+    {
+        if (!strcmp (l->data, "-"))
+            n++;
+    }
+
+    return n;
+}
+
 static gboolean
 parse_color (const gchar *str, guint32 *col_out, GError **error)
 {
@@ -1267,6 +1281,8 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
+    /* Collect filenames and validate count and correct usage of stdin */
+
     if (*argc > 1)
     {
         options.args = collect_variable_arguments (argc, argv, 1);
@@ -1285,10 +1301,26 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
-    if (options.watch && g_list_length (options.args) != 1)
+    if (count_dash_strings (options.args) > 1)
     {
-        g_printerr ("%s: Can only use --watch with exactly one file.\n", options.executable_name);
+        g_printerr ("%s: Dash '-' to pipe from standard input can be used at most once.\n",
+                    options.executable_name);
         goto out;
+    }
+
+    if (options.watch)
+    {
+        if (g_list_length (options.args) != 1)
+        {
+            g_printerr ("%s: Can only use --watch with exactly one file.\n", options.executable_name);
+            goto out;
+        }
+
+        if (!strcmp (options.args->data, "-"))
+        {
+            g_printerr ("%s: Can only use --watch with a filename, not a pipe.\n", options.executable_name);
+            goto out;
+        }
     }
 
     /* --stretch implies --zoom */
