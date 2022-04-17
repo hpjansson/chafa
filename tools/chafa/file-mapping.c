@@ -243,7 +243,7 @@ open_temp_file_in_path (const gchar *base_path)
                                   get_random_u64 ());
 
     /* Create the file and unlink it, so it goes away when we exit */
-    fd = open (cache_path, O_CREAT | O_RDWR);
+    fd = open (cache_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd >= 0)
         unlink (cache_path);
 
