@@ -1127,6 +1127,22 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
+    /* If help or version info was requested, print it and bail out */
+
+    if (options.show_help)
+    {
+        print_summary ();
+        result = TRUE;
+        goto out;
+    }
+
+    if (options.show_version)
+    {
+        print_version ();
+        result = TRUE;
+        goto out;
+    }
+
     /* Detect terminal geometry */
 
     get_tty_size (&detected_term_size);
@@ -1251,13 +1267,6 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
-    if (options.show_version)
-    {
-        print_version ();
-        result = TRUE;
-        goto out;
-    }
-
     if (*argc > 1)
     {
         options.args = collect_variable_arguments (argc, argv, 1);
@@ -1269,19 +1278,10 @@ parse_options (int *argc, char **argv [])
 
         options.args = g_list_append (NULL, g_strdup ("-"));
     }
-    else if (!options.show_help)
+    else
     {
         /* No arguments, no pipe, and no cry for help. */
         print_brief_summary ();
-        goto out;
-    }
-
-    /* This is outside the if-else ladder above because we want it to happen even if
-     * there are other arguments. */
-    if (options.show_help)
-    {
-        print_summary ();
-        result = TRUE;
         goto out;
     }
 
