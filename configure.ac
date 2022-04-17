@@ -214,7 +214,7 @@ AS_IF([ test "$enable_man" != no ], [
 
 dnl --- Specific checks ---
 
-AC_CHECK_FUNCS(mmap)
+AC_CHECK_FUNCS(mmap getrandom)
 
 dnl
 dnl Check for -Bsymbolic-functions linker flag used to avoid

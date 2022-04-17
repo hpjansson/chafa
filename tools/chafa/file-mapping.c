@@ -26,9 +26,14 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #ifdef HAVE_MMAP
 # include <sys/mman.h>
+#endif
+
+#ifdef HAVE_GETRANDOM
+# include <sys/random.h>
 #endif
 
 #include "file-mapping.h"
@@ -40,12 +45,19 @@
 # endif
 #endif
 
+/* Streams bigger than this must be cached in a file */
+#define FILE_MEMORY_CACHE_MAX (4 * 1024 * 1024)
+
+/* Size of buffer used for copying stdin to file */
+#define COPY_BUFFER_SIZE 8192
+
 struct FileMapping
 {
     gchar *path;
     gpointer data;
     gsize length;
     gint fd;
+    guint failed : 1;
     guint is_mmapped : 1;
 };
 
@@ -102,6 +114,65 @@ safe_read (gint fd, void *buf, gsize len)
    return ntotal; /* len == 0 */
 }
 
+static gboolean
+safe_write (gint fd, gconstpointer buf, gsize len)
+{
+    gsize ntotal = 0;
+    const guint8 *buffer = buf;
+    gboolean success = FALSE;
+
+    while (len > 0)
+    {
+       guint to_write;
+       gint n_written;
+
+       if (len > INT_MAX)
+           to_write = INT_MAX;
+       else
+           to_write = (unsigned int) len;
+
+       n_written = write (fd, buffer, to_write);
+
+       if (n_written == -1)
+       {
+           if (errno != EINTR)
+               goto out;
+       }
+       else if (n_written < 0)
+       {
+           /* Not a valid 'write' result */
+           goto out;
+       }
+       else if (n_written > 0)
+       {
+           /* Continue writing until permanent failure or entire buffer written */
+           buffer += n_written;
+           len -= (unsigned int) n_written;
+           ntotal += (unsigned int) n_written;
+       }
+    }
+
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
+safe_copy (gint src_fd, gint dest_fd)
+{
+    guint8 buf [COPY_BUFFER_SIZE];
+    gsize n_read;
+
+    while ((n_read = safe_read (src_fd, buf, COPY_BUFFER_SIZE)) > 0)
+    {
+        if (!safe_write (dest_fd, buf, n_read))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void
 free_file_data (FileMapping *file_mapping)
 {
@@ -123,9 +194,142 @@ free_file_data (FileMapping *file_mapping)
     file_mapping->is_mmapped = FALSE;
 }
 
+static guint64
+get_random_u64 (void)
+{
+    guint64 u64 = 0;
+    guint32 *u32p = (guint32 *) &u64;
+    GTimeVal tv;
+
+#ifdef HAVE_GETRANDOM
+    getrandom ((void *) &u64, sizeof (guint64), GRND_NONBLOCK);
+#endif
+
+    if (!u64)
+    {
+        gpointer p;
+
+        /* FIXME: Not paranoid enough */
+
+        /* FIXME: g_get_current_time() was deprecated in GLib 2.62. Switch to
+         * g_get_real_time () sometime, and require GLib >= 2.28.  */
+
+        g_get_current_time (&tv);
+        g_random_set_seed (tv.tv_sec ^ tv.tv_usec);
+        u32p [0] ^= g_random_int ();
+        g_get_current_time (&tv);
+        g_random_set_seed (tv.tv_sec ^ tv.tv_usec);
+        u32p [1] ^= g_random_int ();
+
+        p = g_thread_self ();
+        u64 ^= (guint64) p;
+    }
+
+    return u64;
+}
+
+static gint
+open_temp_file_in_path (const gchar *base_path)
+{
+    gchar *cache_path;
+    gint fd;
+
+    if (!base_path)
+        return -1;
+
+    cache_path = g_strdup_printf ("%s%schafa-%016" G_GINT64_MODIFIER "x",
+                                  base_path,
+                                  G_DIR_SEPARATOR_S,
+                                  get_random_u64 ());
+
+    /* Create the file and unlink it, so it goes away when we exit */
+    fd = open (cache_path, O_CREAT | O_RDWR);
+    if (fd >= 0)
+        unlink (cache_path);
+
+    g_free (cache_path);
+
+    return fd;
+}
+
+static gint
+open_temp_file (void)
+{
+    gint fd;
+
+    fd = open_temp_file_in_path (g_get_user_cache_dir ());
+    if (fd < 0)
+        fd = open_temp_file_in_path (g_get_tmp_dir ());
+
+    return fd;
+}
+
+static gint
+cache_stdin (FileMapping *file_mapping)
+{
+    gpointer buf = NULL;
+    gint stdin_fd = fileno (stdin);  /* Can't use STDIN_FILENO on Windows */
+    size_t n_read;
+    gint cache_fd = -1;
+    gint success = FALSE;
+
+    if (stdin_fd < 0)
+        goto out;
+
+    /* Read from stdin */
+
+    buf = g_malloc (FILE_MEMORY_CACHE_MAX);
+    n_read = safe_read (stdin_fd, buf, FILE_MEMORY_CACHE_MAX);
+    if (n_read < 1)
+        goto out;
+
+    /* If the stream didn't fit in memory, save it all to a file instead.
+     * We can mmap it later. Or read it back in, ha ha. */
+
+    if (n_read == FILE_MEMORY_CACHE_MAX)
+    {
+        cache_fd = open_temp_file ();
+        if (cache_fd >= 0)
+        {
+            if (!safe_write (cache_fd, buf, n_read))
+                goto out;
+            g_free (buf);
+            buf = NULL;
+
+            if (!safe_copy (stdin_fd, cache_fd))
+                goto out;
+        }
+    }
+    else
+    {
+        file_mapping->data = g_realloc (buf, n_read);
+        file_mapping->length = n_read;
+        buf = NULL;
+    }
+
+    success = TRUE;
+
+out:
+    if (!success)
+    {
+        if (cache_fd >= 0)
+            close (cache_fd);
+        cache_fd = -1;
+        g_free (buf);
+    }
+
+    return cache_fd;
+}
+
 static gint
 open_file (FileMapping *file_mapping)
 {
+    if (file_mapping->path [0] == '-'
+        && file_mapping->path [1] == '\0')
+    {
+        return cache_stdin (file_mapping);
+    }
+
     return open (file_mapping->path, O_RDONLY);
 }
 
@@ -174,39 +378,46 @@ map_or_read_file (FileMapping *file_mapping)
     struct stat sbuf;
     gint t;
 
+    if (file_mapping->failed)
+        return FALSE;
     if (file_mapping->data)
         return TRUE;
 
     if (file_mapping->fd < 0)
         file_mapping->fd = open_file (file_mapping);
 
-    if (file_mapping->fd < 0)
-        goto out;
-
-    t = fstat (file_mapping->fd, &sbuf);
-
-    if (!t)
+    /* If the data arrived over a pipe and was reasonably small, open_file () will
+     * populate the data fields instead of the fd. */
+    if (!file_mapping->data)
     {
-        file_mapping->length = sbuf.st_size;
+        if (file_mapping->fd < 0)
+            goto out;
+
+        t = fstat (file_mapping->fd, &sbuf);
+
+        if (!t)
+        {
+            file_mapping->length = sbuf.st_size;
 #ifdef HAVE_MMAP
-        /* Try memory mapping first */
-        file_mapping->data = mmap (NULL,
-                                   file_mapping->length,
-                                   PROT_READ,
-                                   MAP_SHARED | MAP_NORESERVE,
-                                   file_mapping->fd,
-                                   0);
+            /* Try memory mapping first */
+            file_mapping->data = mmap (NULL,
+                                       file_mapping->length,
+                                       PROT_READ,
+                                       MAP_SHARED | MAP_NORESERVE,
+                                       file_mapping->fd,
+                                       0);
 #endif
-    }
+        }
 
-    if (file_mapping->data)
-    {
-        file_mapping->is_mmapped = TRUE;
-    }
-    else
-    {
-        file_mapping->data = read_file (file_mapping->fd, &file_mapping->length);
-        file_mapping->is_mmapped = FALSE;
+        if (file_mapping->data)
+        {
+            file_mapping->is_mmapped = TRUE;
+        }
+        else
+        {
+            file_mapping->data = read_file (file_mapping->fd, &file_mapping->length);
+            file_mapping->is_mmapped = FALSE;
+        }
     }
 
     if (!file_mapping->data)
@@ -215,6 +426,12 @@ map_or_read_file (FileMapping *file_mapping)
     result = TRUE;
 
 out:
+
+    if (!result)
+    {
+        file_mapping->failed = TRUE;
+    }
+
     return result;
 }
 
