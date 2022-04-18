@@ -7,9 +7,6 @@ or maybe just prod me a little.
 Minor Features/UX
 -----------------
 
-- HTML output.
-- Symbols: Math.
-- Accept image on standard input.
 - Accept -o, --output to write to file.
 - Verbose output. Show file names. Call it --annotate.
 - Add a --test option to print a test page.
@@ -29,15 +26,35 @@ Minor Features/UX
   - Emacs ansi-term.
   - Emacs shell (TERM=dumb).
   - Come up with some kind of support matrix.
-- More symbol aliases
-  - CP437
-- Control sequences
+- More symbols/symbol aliases:
+  - CP437.
+  - Latin (mainly ASCII + diacritics, i.e. ISO 8859-15).
+- Control sequences:
   - Screen buffer: CSI ?1047l (normal) and CSI ?1047h (alternate). Or use
     CSI ?47l and CSI ?47h ?
+- Output to retro art formats:
+  - RexPaint.
+  - lvllvl.com.
+  - CharPad/CharPad Pro.
+  - PabloDraw.
+  - Verify ANSILove compatibility.
+  - Others?
+- More image loaders:
+  - BMP. The GIMP has a fairly complete decoder.
+  - XPM. https://en.wikipedia.org/wiki/X_PixMap
+  - PBM, PGM, PPM. https://en.wikipedia.org/wiki/Netpbm
+- Run image decoders (and Chafa backend?) in sandboxed subprocess.
+- "Auto" modes for ChafaCanvasMode and ChafaPixelMode.
 
 Major features
 --------------
 
+- Selection from multiple internal named font bitmap sets (IBM, C64, etc).
+- Custom palettes.
+  - External (e.g. in GIMP format, or extract from image) or named internal.
+  - Using different palettes for BG and FG allows for retro modes like the
+    C64's Extended Color Character Mode (ECM).
+- Pixmap export (raw image buffer from backend, PNG or TIFF export in frontend).
 - Lossy/lossless intra-frame compression. Data rate regulated:
   - By desired output size.
   - By maximum desired per-cell error.
@@ -73,11 +90,14 @@ The Fine Material
   - Rate-controlled playback with e.g. cat input.txt | pv -qL 100k
   - Playback with awk + proper inter-frame delay.
   - X11 applications in terminal
-    1) Xvfb :99 -ac -fbdir t -screen 0 1440x900x24 &
-    2) DISPLAY=:99 lament -root &
-    3) chafa --watch t/Xvfb_screen0
+    $ Xvfb :99 -ac -fbdir t -screen 0 1440x900x24 &
+    $ DISPLAY=:99 lament -root &
+    $ chafa --watch t/Xvfb_screen0
   - gnome-shell in terminal
-    - XDG_SESSION_TYPE=x11 DISPLAY=:99 gnome-shell
+    $ XDG_SESSION_TYPE=x11 DISPLAY=:99 gnome-shell
     - Run as different user.
   - Using (unreleased) ffmpeg driver:
-    - ./ffmpeg -i movie.mkv -pix_fmt rgba -f chafa -color 16 -symbols vhalf,space -fill ascii -
+    $ ./ffmpeg -i movie.mkv -pix_fmt rgba -f chafa -color 16 -symbols vhalf,space -fill ascii -
+  - Compact listing of icons:
+    $ montage -tile 6x -background none -geometry 64x64+1+1 /usr/share/icons/Mint-X/*/16/*.png - \
+      | chafa -s 80
