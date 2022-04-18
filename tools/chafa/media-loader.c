@@ -55,7 +55,7 @@ typedef enum
 }
 LoaderType;
 
-const struct
+static const struct
 {
     const gchar * const name;
     gpointer (*new_from_mapping) (gpointer);
