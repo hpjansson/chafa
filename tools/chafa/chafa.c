@@ -45,6 +45,7 @@ typedef struct
 
     gboolean show_help;
     gboolean show_version;
+    gboolean skip_processing;
 
     GList *args;
     ChafaCanvasMode mode;
@@ -704,6 +705,113 @@ out:
     return result;
 }
 
+static void
+dump_glyph (gunichar c, const guint8 *pix, gint width, gint height, gint rowstride)
+{
+    gint x, y;
+    const guint8 *p;
+    gchar buf [16];
+    gint len;
+
+    len = g_unichar_to_utf8 (c, buf);
+    g_assert (len >= 1 && len < 16);
+    buf [len] = '\0';
+    fprintf (stdout,
+             "    {\n"
+             "        /* [%s] */\n"
+             "        CHAFA_SYMBOL_TAG_,\n"
+             "        0x%x,\n"
+             "        CHAFA_SYMBOL_OUTLINE_%s (",
+             buf,
+             c,
+             (width == 8 && height == 8) ? "8X8" :
+             (width == 16 && height == 8) ? "16X8" :
+             "STRANGE_SIZE");
+
+    for (y = 0; y < height; y++)
+    {
+        p = pix + y * rowstride;
+
+        fputs ("\n            \"", stdout);
+
+        for (x = 0; x < width; x++)
+        {
+            fputc (*p < 0x80 ? ' ' : 'X' , stdout);
+            p += 4;
+        }
+
+        fputs ("\"", stdout);
+    }
+
+    fputs (")\n    },\n", stdout);
+}
+
+/* Undocumented functionality; dumps a font file so the glyphs can be tweaked and turned
+ * into builtins. */
+static gboolean
+parse_dump_glyph_file_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = FALSE;
+    FileMapping *file_mapping;
+    FontLoader *font_loader;
+    ChafaSymbolMap *temp_map = NULL;
+    gunichar c;
+    gpointer c_bitmap;
+    gint width, height, rowstride;
+
+    options.skip_processing = TRUE;
+
+    file_mapping = file_mapping_new (value);
+    if (!file_mapping)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unable to open glyph file '%s'.", value);
+        goto out;
+    }
+
+    font_loader = font_loader_new_from_mapping (file_mapping);
+    file_mapping = NULL;  /* Font loader owns it now */
+
+    if (!font_loader)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Unable to load glyph file '%s'.", value);
+        goto out;
+    }
+
+    temp_map = chafa_symbol_map_new ();
+
+    while (font_loader_get_next_glyph (font_loader, &c, &c_bitmap, &width, &height))
+    {
+        gpointer pix;
+
+        /* By adding and then querying the glyph, we get the benefit of Chafa's
+         * internal scaling and postprocessing. */
+
+        chafa_symbol_map_add_glyph (temp_map, c,
+                                    CHAFA_PIXEL_RGBA8_PREMULTIPLIED, c_bitmap,
+                                    width, height, width * 4);
+        g_free (c_bitmap);
+
+        chafa_symbol_map_get_glyph (temp_map, c,
+                                    CHAFA_PIXEL_RGBA8_PREMULTIPLIED, &pix,
+                                    &width, &height, &rowstride);
+        dump_glyph (c, pix, width, height, rowstride);
+        g_free (pix);
+    }
+
+    font_loader_destroy (font_loader);
+
+    result = TRUE;
+
+out:
+    if (file_mapping)
+        file_mapping_destroy (file_mapping);
+    if (temp_map)
+        chafa_symbol_map_unref (temp_map);
+    return result;
+}
+
 static gboolean
 parse_boolean_token (const gchar *token, gboolean *value_out)
 {
@@ -1059,6 +1167,7 @@ parse_options (int *argc, char **argv [])
         { "dither",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_arg,      "Dither", NULL },
         { "dither-grain",'\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_grain_arg, "Dither grain", NULL },
         { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
+        { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
@@ -1146,13 +1255,19 @@ parse_options (int *argc, char **argv [])
     if (options.show_help)
     {
         print_summary ();
-        result = TRUE;
-        goto out;
+        options.skip_processing = TRUE;
     }
 
     if (options.show_version)
     {
         print_version ();
+        options.skip_processing = TRUE;
+    }
+
+    /* Some options preclude normal arg processing */
+
+    if (options.skip_processing)
+    {
         result = TRUE;
         goto out;
     }
