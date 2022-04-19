@@ -244,6 +244,28 @@ coverage_to_bitmap (const guint8 *cov, gint rowstride)
     return bitmap;
 }
 
+static void
+bitmap_to_argb (guint64 bitmap, guint8 *argb, gint rowstride)
+{
+    guint8 *p;
+    gint x, y;
+
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS; y++)
+    {
+        p = argb + y * rowstride;
+
+        for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
+        {
+            guint32 *p32 = (guint32 *) p;
+
+            /* Set = 0xffffffff, clear = 0x00000000 */
+            *p32 = (-(guint32) ((bitmap >> 63) & 1));
+            p += 4;
+            bitmap <<= 1;
+        }
+    }
+}
+
 G_GNUC_UNUSED static void
 dump_coverage (const guint8 *cov, gint width, gint height)
 {
@@ -1726,4 +1748,112 @@ chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
     }
 
     symbol_map->need_rebuild = TRUE;
+}
+
+/**
+ * chafa_symbol_map_get_glyph:
+ * @symbol_map: A symbol map
+ * @code_point: A Unicode code point
+ * @pixel_format: Desired pixel format of @pixels_out
+ * @pixels_out: Storage for a pointer to exported glyph data
+ * @width_out: Storage for width of glyph, in pixels
+ * @height_out: Storage for height of glyph, in pixels
+ * @rowstride_out: Storage for offset from start of one row to the next, in bytes
+ *
+ * Returns data for the glyph corresponding to @code_point stored in @symbol_map.
+ * Any of @pixels_out, @width_out, @height_out and @rowstride_out can be NULL,
+ * in which case the corresponding data is not retrieved.
+ *
+ * If @pixels_out is not NULL, a pointer to freshly allocated memory containing
+ * height * rowstride bytes in the pixel format specified by @pixel_format
+ * will be stored at this address. It must be freed using g_free() when you're
+ * done with it.
+ *
+ * Monochrome glyphs (the only kind currently supported) will be rendered as
+ * opaque white on a transparent black background (0xffffffff for inked
+ * pixels and 0x00000000 for uninked).
+ *
+ * Since: 1.12
+ **/
+gboolean
+chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
+                            gunichar code_point,
+                            ChafaPixelType pixel_format,
+                            gpointer *pixels_out,
+                            gint *width_out, gint *height_out,
+                            gint *rowstride_out)
+{
+    gboolean success = FALSE;
+    gint width, height, rowstride;
+
+    g_return_val_if_fail (symbol_map != NULL, FALSE);
+
+    if (g_unichar_iswide (code_point))
+    {
+        Glyph2 *glyph2;
+
+        glyph2 = g_hash_table_lookup (symbol_map->glyphs2, GUINT_TO_POINTER (code_point));
+        if (!glyph2)
+            goto out;
+
+        g_assert (glyph2->c == code_point);
+
+        if (pixels_out)
+        {
+            *pixels_out = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4 * 2);
+            bitmap_to_argb (glyph2->bitmap [0], *pixels_out,
+                            CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
+            bitmap_to_argb (glyph2->bitmap [1], (*pixels_out) + CHAFA_SYMBOL_WIDTH_PIXELS * 4,
+                            CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
+        }
+
+        width = CHAFA_SYMBOL_WIDTH_PIXELS * 2;        
+        height = CHAFA_SYMBOL_HEIGHT_PIXELS;
+        rowstride = CHAFA_SYMBOL_WIDTH_PIXELS * 2 * 4;
+    }
+    else
+    {
+        Glyph *glyph;
+
+        glyph = g_hash_table_lookup (symbol_map->glyphs, GUINT_TO_POINTER (code_point));
+        if (!glyph)
+            goto out;
+
+        g_assert (glyph->c == code_point);
+
+        if (pixels_out)
+        {
+            *pixels_out = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4);
+            bitmap_to_argb (glyph->bitmap, *pixels_out, CHAFA_SYMBOL_WIDTH_PIXELS * 4);
+        }
+
+        width = CHAFA_SYMBOL_WIDTH_PIXELS;
+        height = CHAFA_SYMBOL_HEIGHT_PIXELS;
+        rowstride = CHAFA_SYMBOL_WIDTH_PIXELS * 4;
+    }
+
+    if (width_out)
+        *width_out = width;
+    if (height_out)
+        *height_out = height;
+    if (rowstride_out)
+        *rowstride_out = rowstride;
+
+    if (pixels_out && pixel_format != CHAFA_PIXEL_ARGB8_PREMULTIPLIED)
+    {
+        gpointer temp_pixels = g_malloc (width * CHAFA_SYMBOL_HEIGHT_PIXELS * 4);
+
+        /* Convert to desired pixel format */
+        smol_scale_simple (SMOL_PIXEL_ARGB8_PREMULTIPLIED, *pixels_out,
+                           width, height, rowstride,
+                           (SmolPixelType) pixel_format, temp_pixels,
+                           width, height, rowstride);
+        g_free (*pixels_out);
+        *pixels_out = temp_pixels;
+    }
+
+    success = TRUE;
+
+out:
+    return success;
 }

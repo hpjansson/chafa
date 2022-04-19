@@ -110,6 +110,14 @@ void chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
                                  gint width, gint height,
                                  gint rowstride);
 
+CHAFA_AVAILABLE_IN_1_12
+gboolean chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
+                                     gunichar code_point,
+                                     ChafaPixelType pixel_format,
+                                     gpointer *pixels_out,
+                                     gint *width_out, gint *height_out,
+                                     gint *rowstride_out);
+
 G_END_DECLS
 
 #endif /* __CHAFA_SYMBOL_MAP_H__ */
