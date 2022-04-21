@@ -3,6 +3,7 @@ SUBDIRS = chafa docs libnsgif lodepng tests tools
 EXTRA_DIST = \
 	HACKING \
 	README.md \
+	SECURITY.md \
 	autogen.sh \
 	chafa.pc.in
 
