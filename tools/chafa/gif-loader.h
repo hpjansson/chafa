@@ -32,8 +32,8 @@ void gif_loader_destroy (GifLoader *loader);
 
 gboolean gif_loader_get_is_animation (GifLoader *loader);
 
-gconstpointer *gif_loader_get_frame_data (GifLoader *loader, ChafaPixelType *pixel_type_out,
-                                          gint *width_out, gint *height_out, gint *rowstride_out);
+gconstpointer gif_loader_get_frame_data (GifLoader *loader, ChafaPixelType *pixel_type_out,
+                                         gint *width_out, gint *height_out, gint *rowstride_out);
 gint gif_loader_get_frame_delay (GifLoader *loader);
 
 void gif_loader_goto_first_frame (GifLoader *loader);

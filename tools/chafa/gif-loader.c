@@ -194,7 +194,7 @@ gif_loader_get_is_animation (GifLoader *loader)
     return loader->gif.frame_count > 1 ? TRUE : FALSE;
 }
 
-gconstpointer *
+gconstpointer
 gif_loader_get_frame_data (GifLoader *loader, ChafaPixelType *pixel_type_out,
                            gint *width_out, gint *height_out, gint *rowstride_out)
 {

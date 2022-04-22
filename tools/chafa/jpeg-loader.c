@@ -561,7 +561,7 @@ jpeg_loader_get_is_animation (JpegLoader *loader)
     return FALSE;
 }
 
-gconstpointer *
+gconstpointer
 jpeg_loader_get_frame_data (JpegLoader *loader, ChafaPixelType *pixel_type_out,
                             gint *width_out, gint *height_out, gint *rowstride_out)
 {

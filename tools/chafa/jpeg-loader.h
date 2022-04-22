@@ -32,7 +32,7 @@ void jpeg_loader_destroy (JpegLoader *loader);
 
 gboolean jpeg_loader_get_is_animation (JpegLoader *loader);
 
-gconstpointer *jpeg_loader_get_frame_data (JpegLoader *loader, ChafaPixelType *pixel_type_out,
+gconstpointer jpeg_loader_get_frame_data (JpegLoader *loader, ChafaPixelType *pixel_type_out,
                                           gint *width_out, gint *height_out, gint *rowstride_out);
 gint jpeg_loader_get_frame_delay (JpegLoader *loader);
 

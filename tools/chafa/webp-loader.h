@@ -32,8 +32,8 @@ void webp_loader_destroy (WebpLoader *loader);
 
 gboolean webp_loader_get_is_animation (WebpLoader *loader);
 
-gconstpointer *webp_loader_get_frame_data (WebpLoader *loader, ChafaPixelType *pixel_type_out,
-                                           gint *width_out, gint *height_out, gint *rowstride_out);
+gconstpointer webp_loader_get_frame_data (WebpLoader *loader, ChafaPixelType *pixel_type_out,
+                                          gint *width_out, gint *height_out, gint *rowstride_out);
 gint webp_loader_get_frame_delay (WebpLoader *loader);
 
 void webp_loader_goto_first_frame (WebpLoader *loader);

@@ -133,7 +133,7 @@ webp_loader_get_is_animation (WebpLoader *loader)
     return FALSE;
 }
 
-gconstpointer *
+gconstpointer
 webp_loader_get_frame_data (WebpLoader *loader, ChafaPixelType *pixel_type_out,
                             gint *width_out, gint *height_out, gint *rowstride_out)
 {
