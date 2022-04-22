@@ -196,6 +196,8 @@ tiff_loader_new_from_mapping (FileMapping *mapping)
         goto out;
     if (!TIFFGetField (tiff, TIFFTAG_IMAGELENGTH, &height))
         goto out;
+    if (!TIFFGetField (tiff, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel))
+        goto out;
 
     if (width < 1 || width > (1 << 30)
         || height < 1 || height > (1 << 30))
@@ -211,14 +213,13 @@ tiff_loader_new_from_mapping (FileMapping *mapping)
 
     loader->pixel_type = CHAFA_PIXEL_RGBA8_PREMULTIPLIED;
 
-    TIFFGetField (tiff, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel);
     if (samples_per_pixel == 2 || samples_per_pixel >= 4)
     {
-        const uint16_t *extra_samples;
-        uint16_t n_extra_samples;
+        const uint16_t *extra_samples = NULL;
+        uint16_t n_extra_samples = 0;
 
-        TIFFGetField (tiff, TIFFTAG_EXTRASAMPLES, &n_extra_samples, &extra_samples);
-        if (n_extra_samples < 1 || extra_samples [0] != EXTRASAMPLE_ASSOCALPHA)
+        if (TIFFGetField (tiff, TIFFTAG_EXTRASAMPLES, &n_extra_samples, &extra_samples)
+            && n_extra_samples >= 1 && extra_samples && extra_samples [0] != EXTRASAMPLE_ASSOCALPHA)
             loader->pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
     }
 
