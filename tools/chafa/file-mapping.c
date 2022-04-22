@@ -514,7 +514,7 @@ file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer da
     if (file_mapping->data)
     {
         if (ofs + length <= file_mapping->length
-            && !memcmp ((const guint8 *) data + ofs, data, length))
+            && !memcmp ((const guint8 *) file_mapping->data + ofs, data, length))
             return TRUE;
 
         return FALSE;
