@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2021 Hans Petter Jansson
+/* Copyright (C) 2018-2022 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that turns images into character art.
  *
@@ -20,41 +20,14 @@
 /* This is meant to be #included in the symbol definition table of
  * chafa-symbols.c. It's kept in a separate file due to its size.
  *
- * The symbol bitmaps are derived from https://github.com/dhepper/font8x8 by
- * Daniel Hepper <daniel@hepper.net>. Excerpt from the accompanying README:
- *
- * 8x8 monochrome bitmap font for rendering
- * ========================================
- *
- * A collection of header files containing a 8x8 bitmap font.
- *
- * [...]
- * 
- * Author: Daniel Hepper <daniel@hepper.net>
- * License: Public Domain
- *
- * Credits
- * =======
- *
- * These header files are directly derived from an assembler file fetched from:
- * http://dimensionalrift.homelinux.net/combuster/mos3/?p=viewsource&file=/modules/gfx/font8_8.asm
- *
- * Original header:
- *
- * ; Summary: font8_8.asm
- * ; 8x8 monochrome bitmap fonts for rendering
- * ;
- * ; Author:
- * ;     Marcel Sondaar
- * ;     International Business Machines (public domain VGA fonts)
- * ;
- * ; License:
- * ;     Public Domain
+ * These are 7-bit ASCII symbols. The bitmaps are a close match to the
+ * Terminus font (specifically ter-x14n.pcf).
  */
 
     {
+        /* [ ] */
         CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_SPACE,
-        ' ',
+        0x20,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
@@ -66,24 +39,26 @@
             "        ")
     },
     {
+        /* [!] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '!',
+        0x21,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XX   "
-            "  XXXX  "
-            "  XXXX  "
-            "   XX   "
-            "   XX   "
             "        "
-            "   XX   "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "        "
+            "   X    "
             "        ")
     },
     {
+        /* ["] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '"',
+        0x22,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XX XX  "
-            " XX XX  "
+            "  X  X  "
+            "  X  X  "
             "        "
             "        "
             "        "
@@ -92,64 +67,69 @@
             "        ")
     },
     {
+        /* [#] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '#',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XX XX  "
-            " XX XX  "
-            "XXXXXXX "
-            " XX XX  "
-            "XXXXXXX "
-            " XX XX  "
-            " XX XX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '$',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XX    "
-            " XXXXX  "
-            "XX      "
-            " XXXX   "
-            "    XX  "
-            "XXXXX   "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '%',
+        0x23,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
-            "XX   XX "
-            "XX  XX  "
-            "   XX   "
-            "  XX    "
+            "  X  X  "
+            "  X  X  "
             " XX  XX "
-            "XX   XX "
+            " XX  XX "
+            "  X  X  "
+            "  X  X  "
             "        ")
     },
     {
+        /* [$] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '&',
+        0x24,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XXX   "
-            " XX XX  "
-            "  XXX   "
-            " XXX XX "
-            "XX XXX  "
-            "XX  XX  "
-            " XXX XX "
+            "   X    "
+            "   X    "
+            " XXXXX  "
+            "X  X    "
+            " XXXXXX "
+            "   X  X "
+            " XXXXX  "
+            "   X    ")
+    },
+    {
+        /* [%] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x25,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XX  X  "
+            " XX X   "
+            "   XX   "
+            "  XX    "
+            "  X XX  "
+            " X  XX  "
             "        ")
     },
     {
+        /* [&] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x26,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   XX   "
+            "  X  X  "
+            "  XXX   "
+            " X  X X "
+            " X   X  "
+            "  XXX X "
+            "        ")
+    },
+    {
+        /* ['] */
         CHAFA_SYMBOL_TAG_ASCII,
         0x27,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XX     "
-            " XX     "
-            "XX      "
+            "   X    "
+            "   X    "
+            "        "
             "        "
             "        "
             "        "
@@ -157,1129 +137,1216 @@
             "        ")
     },
     {
+        /* [(] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '(',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XX   "
-            "  XX    "
-            " XX     "
-            " XX     "
-            " XX     "
-            "  XX    "
-            "   XX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        ')',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XX     "
-            "  XX    "
-            "   XX   "
-            "   XX   "
-            "   XX   "
-            "  XX    "
-            " XX     "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '*',
+        0x28,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
-            " XX  XX "
+            "   XX   "
+            "  X     "
+            "  X     "
+            "  X     "
+            "  X     "
+            "   XX   "
+            "        ")
+    },
+    {
+        /* [)] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x29,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XX    "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "  XX    "
+            "        ")
+    },
+    {
+        /* [*] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x2a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
             "  XXXX  "
-            "XXXXXXXX"
-            "  XXXX  "
-            " XX  XX "
+            " XXXXXX "
+            "  X  X  "
             "        "
             "        ")
     },
     {
+        /* [+] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '+',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "  XX    "
-            "  XX    "
-            "XXXXXX  "
-            "  XX    "
-            "  XX    "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        ',',
+        0x2b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
             "        "
-            "        "
-            "        "
-            "  XX    "
-            "  XX    "
-            " XX     ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '-',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "XXXXXX  "
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '.',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "  XX    "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '/',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "     XX "
-            "    XX  "
-            "   XX   "
-            "  XX    "
-            " XX     "
-            "XX      "
-            "X       "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '0',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "   X    "
             " XXXXX  "
-            "XX   XX "
-            "XX  XXX "
-            "XX XXXX "
-            "XXXX XX "
-            "XXX  XX "
-            " XXXXX  "
+            "   X    "
+            "        "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '1',
+        /* [,] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x2c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XX    "
-            " XXX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "XXXXXX  "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "   X    "
+            "  X     ")
+    },
+    {
+        /* [-] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x2d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            "        "
+            "        "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '2',
+        /* [.] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x2e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "    XX  "
-            "  XXX   "
-            " XX     "
-            "XX  XX  "
-            "XXXXXX  "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "   X    "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '3',
+        /* [/] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x2f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "    XX  "
-            "  XXX   "
-            "    XX  "
-            "XX  XX  "
-            " XXXX   "
+            "        "
+            "     X  "
+            "    X   "
+            "   XX   "
+            "  XX    "
+            "  X     "
+            " X      "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '4',
+        /* [0] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x30,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XXX  "
+            "        "
             "  XXXX  "
-            " XX XX  "
-            "XX  XX  "
-            "XXXXXXX "
-            "    XX  "
-            "   XXXX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '5',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            "XX      "
-            "XXXXX   "
-            "    XX  "
-            "    XX  "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '6',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XXX   "
-            " XX     "
-            "XX      "
-            "XXXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '7',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            "XX  XX  "
-            "    XX  "
-            "   XX   "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '8',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_DIGIT,
-        '9',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXXX  "
-            "    XX  "
-            "   XX   "
-            " XXX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        ':',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "  XX    "
-            "  XX    "
-            "        "
-            "        "
-            "  XX    "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        ';',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "  XX    "
-            "  XX    "
-            "        "
-            "        "
-            "  XX    "
-            "  XX    "
-            " XX     ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '<',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XX   "
-            "  XX    "
-            " XX     "
-            "XX      "
-            " XX     "
-            "  XX    "
-            "   XX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '=',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XXXXXX  "
-            "        "
-            "        "
-            "XXXXXX  "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '>',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XX     "
-            "  XX    "
-            "   XX   "
-            "    XX  "
-            "   XX   "
-            "  XX    "
-            " XX     "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '?',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "    XX  "
-            "   XX   "
-            "  XX    "
-            "        "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '@',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXXX  "
-            "XX   XX "
-            "XX XXXX "
-            "XX XXXX "
-            "XX XXXX "
-            "XX      "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'A',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XX    "
-            " XXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            "XXXXXX  "
-            "XX  XX  "
-            "XX  XX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'B',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            " XX  XX "
-            " XX  XX "
-            " XXXXX  "
-            " XX  XX "
-            " XX  XX "
-            "XXXXXX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'C',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XXXX  "
-            " XX  XX "
-            "XX      "
-            "XX      "
-            "XX      "
-            " XX  XX "
+            " X    X "
+            " X  XXX "
+            " XXX  X "
+            " X    X "
             "  XXXX  "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'D',
+        /* [1] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x31,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXX   "
-            " XX XX  "
-            " XX  XX "
-            " XX  XX "
-            " XX  XX "
-            " XX XX  "
-            "XXXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'E',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXX "
-            " XX   X "
-            " XX X   "
-            " XXXX   "
-            " XX X   "
-            " XX   X "
-            "XXXXXXX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'F',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXX "
-            " XX   X "
-            " XX X   "
-            " XXXX   "
-            " XX X   "
-            " XX     "
-            "XXXX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'G',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XXXX  "
-            " XX  XX "
-            "XX      "
-            "XX      "
-            "XX  XXX "
-            " XX  XX "
+            "        "
+            "   XX   "
+            "  X X   "
+            "    X   "
+            "    X   "
+            "    X   "
             "  XXXXX "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'H',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XXXXXX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'I',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'J',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XXXX "
-            "    XX  "
-            "    XX  "
-            "    XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'K',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXX  XX "
-            " XX  XX "
-            " XX XX  "
-            " XXXX   "
-            " XX XX  "
-            " XX  XX "
-            "XXX  XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'L',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXX    "
-            " XX     "
-            " XX     "
-            " XX     "
-            " XX   X "
-            " XX  XX "
-            "XXXXXXX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'M',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX   XX "
-            "XXX XXX "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XX X XX "
-            "XX   XX "
-            "XX   XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'N',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX   XX "
-            "XXX  XX "
-            "XXXX XX "
-            "XX XXXX "
-            "XX  XXX "
-            "XX   XX "
-            "XX   XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'O',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XXX   "
-            " XX XX  "
-            "XX   XX "
-            "XX   XX "
-            "XX   XX "
-            " XX XX  "
-            "  XXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'P',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            " XX  XX "
-            " XX  XX "
-            " XXXXX  "
-            " XX     "
-            " XX     "
-            "XXXX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'Q',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX XXX  "
-            " XXXX   "
-            "   XXX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'R',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            " XX  XX "
-            " XX  XX "
-            " XXXXX  "
-            " XX XX  "
-            " XX  XX "
-            "XXX  XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'S',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "XX  XX  "
-            "XXX     "
-            " XXX    "
-            "   XXX  "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'T',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            "X XX X  "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'U',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XXXXXX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'V',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'W',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX   XX "
-            "XX   XX "
-            "XX   XX "
-            "XX X XX "
-            "XXXXXXX "
-            "XXX XXX "
-            "XX   XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'X',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX   XX "
-            "XX   XX "
-            " XX XX  "
-            "  XXX   "
-            "  XXX   "
-            " XX XX  "
-            "XX   XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'Y',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "  XX    "
-            "  XX    "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'Z',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXX "
-            "XX   XX "
-            "X   XX  "
-            "   XX   "
-            "  XX  X "
-            " XX  XX "
-            "XXXXXXX "
-            "        ")
-    },
-    {
+        /* [2] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '[',
+        0x32,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            " XX     "
-            " XX     "
-            " XX     "
-            " XX     "
-            " XX     "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '\\',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX      "
-            " XX     "
-            "  XX    "
-            "   XX   "
-            "    XX  "
+            "        "
+            "  XXXX  "
+            " X    X "
             "     XX "
+            "   XX   "
+            "  X     "
+            " XXXXXX "
+            "        ")
+    },
+    {
+        /* [3] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x33,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            "   XXX  "
+            "      X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [4] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x34,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "     XX "
+            "   XX X "
+            "  X   X "
+            " XXXXXX "
+            "      X "
             "      X "
             "        ")
     },
     {
+        /* [5] */
         CHAFA_SYMBOL_TAG_ASCII,
-        ']',
+        0x35,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXXX   "
-            "   XX   "
-            "   XX   "
-            "   XX   "
-            "   XX   "
-            "   XX   "
-            " XXXX   "
+            "        "
+            " XXXXXX "
+            " X      "
+            " XXXXX  "
+            "      X "
+            " X    X "
+            "  XXXX  "
             "        ")
     },
     {
+        /* [6] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '^',
+        0x36,
         CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X      "
+            " XXXXX  "
+            " X    X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [7] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x37,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXXX "
+            "      X "
+            "     X  "
+            "    X   "
             "   X    "
-            "  XXX   "
-            " XX XX  "
-            "XX   XX "
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '_',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "XXXXXXX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII,
-        '`',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XX    "
-            "  XX    "
-            "   XX   "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'a',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXXX   "
-            "    XX  "
-            " XXXXX  "
-            "XX  XX  "
-            " XXX XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'b',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXX     "
-            " XX     "
-            " XX     "
-            " XXXXX  "
-            " XX  XX "
-            " XX  XX "
-            "XX XXX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'c',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXXX   "
-            "XX  XX  "
-            "XX      "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'd',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XXX  "
-            "    XX  "
-            "    XX  "
-            " XXXXX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXX XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'e',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXXX   "
-            "XX  XX  "
-            "XXXXXX  "
-            "XX      "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'f',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XXX   "
-            " XX XX  "
-            " XX     "
-            "XXXX    "
-            " XX     "
-            " XX     "
-            "XXXX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'g',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXX XX "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXXX  "
-            "    XX  "
-            "XXXXX   ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'h',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXX     "
-            " XX     "
-            " XX XX  "
-            " XXX XX "
-            " XX  XX "
-            " XX  XX "
-            "XXX  XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'i',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "  XX    "
-            "        "
-            " XXX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'j',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "    XX  "
-            "        "
-            "    XX  "
-            "    XX  "
-            "    XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'k',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXX     "
-            " XX     "
-            " XX  XX "
-            " XX XX  "
-            " XXXX   "
-            " XX XX  "
-            "XXX  XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'l',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            "  XX    "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'm',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XX  XX  "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XX X XX "
-            "XX   XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'n',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XXXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'o',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXXX   "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'p',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XX XXX  "
-            " XX  XX "
-            " XX  XX "
-            " XXXXX  "
-            " XX     "
-            "XXXX    ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'q',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXX XX "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXXX  "
-            "    XX  "
-            "   XXXX ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'r',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XX XXX  "
-            " XXX XX "
-            " XX  XX "
-            " XX     "
-            "XXXX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        's',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            " XXXXX  "
-            "XX      "
-            " XXXX   "
-            "    XX  "
-            "XXXXX   "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        't',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   X    "
+            "        ")
+    },
+    {
+        /* [8] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x38,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            "  XXXX  "
+            " X    X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [9] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x39,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            " X    X "
+            "  XXXXX "
+            "      X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [:] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x3a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "   X    "
+            "        "
+            "        "
+            "   X    "
+            "        ")
+    },
+    {
+        /* [;] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x3b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "   X    "
+            "        "
+            "        "
+            "   X    "
+            "  X     ")
+    },
+    {
+        /* [<] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x3c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "     X  "
+            "    X   "
             "  XX    "
-            " XXXXX  "
-            "  XX    "
-            "  XX    "
-            "  XX X  "
+            " XX     "
             "   XX   "
+            "     X  "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'u',
+        /* [=] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x3d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "        "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXX XX "
+            "        "
+            " XXXXXX "
+            " XXXXXX "
+            "        "
+            "        "
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'v',
+        /* [>] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x3e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
-            "        "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXX   "
-            "  XX    "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'w',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XX   XX "
-            "XX X XX "
-            "XXXXXXX "
-            "XXXXXXX "
-            " XX XX  "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'x',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XX   XX "
-            " XX XX  "
-            "  XXX   "
-            " XX XX  "
-            "XX   XX "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'y',
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XX  XX  "
-            "XX  XX  "
-            "XX  XX  "
-            " XXXXX  "
+            " X      "
+            "  X     "
+            "   XX   "
             "    XX  "
-            "XXXXX   ")
+            "  XX    "
+            " X      "
+            "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_ALPHA,
-        'z',
+        /* [?] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x3f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
+            "  XXXX  "
+            " X    X "
+            " X   XX "
+            "    X   "
             "        "
-            "XXXXXX  "
+            "    X   "
+            "        ")
+    },
+    {
+        /* [@] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x40,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXX  "
+            "X     X "
+            "X XXX X "
+            "X X  XX "
             "X  XX   "
-            "  XX    "
-            " XX  X  "
-            "XXXXXX  "
+            " XXXXXX "
             "        ")
     },
     {
+        /* [A] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '{',
+        0x41,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "   XXX  "
-            "  XX    "
-            "  XX    "
-            "XXX     "
-            "  XX    "
-            "  XX    "
-            "   XXX  "
+            "        "
+            "  XXXX  "
+            " X    X "
+            " X    X "
+            " XXXXXX "
+            " X    X "
+            " X    X "
             "        ")
     },
     {
+        /* [B] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '|',
+        0x42,
         CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXX  "
+            " X    X "
+            " XXXXX  "
+            " X    X "
+            " X    X "
+            " XXXXX  "
+            "        ")
+    },
+    {
+        /* [C] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x43,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            " X      "
+            " X      "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [D] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x44,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXX  "
+            " X    X "
+            " X    X "
+            " X    X "
+            " X    X "
+            " XXXXX  "
+            "        ")
+    },
+    {
+        /* [E] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x45,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXXX "
+            " X      "
+            " XXXX   "
+            " X      "
+            " X      "
+            " XXXXXX "
+            "        ")
+    },
+    {
+        /* [F] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x46,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXXX "
+            " X      "
+            " XXXX   "
+            " X      "
+            " X      "
+            " X      "
+            "        ")
+    },
+    {
+        /* [G] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x47,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            " X      "
+            " X  XXX "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [H] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x48,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X    X "
+            " X    X "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [I] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x49,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXX   "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "  XXX   "
+            "        ")
+    },
+    {
+        /* [J] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x4a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "    XXX "
+            "     X  "
+            "     X  "
+            "     X  "
+            " X   X  "
+            "  XXX   "
+            "        ")
+    },
+    {
+        /* [K] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x4b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X    X "
+            " X  XX  "
+            " XXX    "
+            " XXX    "
+            " X  XX  "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [L] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x4c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X      "
+            " X      "
+            " X      "
+            " X      "
+            " X      "
+            " XXXXXX "
+            "        ")
+    },
+    {
+        /* [M] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x4d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "XX   XX "
+            "X X X X "
+            "X  X  X "
+            "X     X "
+            "X     X "
+            "X     X "
+            "        ")
+    },
+    {
+        /* [N] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x4e,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X    X "
+            " XX   X "
+            " X X  X "
+            " X  X X "
+            " X   XX "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [O] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x4f,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            " X    X "
+            " X    X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [P] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x50,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXX  "
+            " X    X "
+            " X    X "
+            " XXXXX  "
+            " X      "
+            " X      "
+            "        ")
+    },
+    {
+        /* [Q] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x51,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            " X    X "
+            " X    X "
+            " X    X "
+            "  XXXX  "
+            "      X ")
+    },
+    {
+        /* [R] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x52,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXX  "
+            " X    X "
+            " X    X "
+            " XXXXX  "
+            " X  XX  "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [S] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x53,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXXX  "
+            " X    X "
+            " XXXXX  "
+            "      X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [T] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x54,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "XXXXXXX "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "        ")
+    },
+    {
+        /* [U] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x55,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X    X "
+            " X    X "
+            " X    X "
+            " X    X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [V] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x56,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X    X "
+            " X    X "
+            " X    X "
+            "  X  X  "
+            "  X  X  "
+            "   XX   "
+            "        ")
+    },
+    {
+        /* [W] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x57,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "X     X "
+            "X     X "
+            "X     X "
+            "X  X  X "
+            "X X X X "
+            "XX   XX "
+            "        ")
+    },
+    {
+        /* [X] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x58,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X    X "
+            "  X  X  "
             "   XX   "
             "   XX   "
+            "  X  X  "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [Y] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x59,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "X     X "
+            " X   X  "
+            " XX XX  "
+            "   X    "
+            "   X    "
+            "   X    "
+            "        ")
+    },
+    {
+        /* [Z] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x5a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " XXXXXX "
+            "      X "
+            "    XX  "
+            "  XX    "
+            " X      "
+            " XXXXXX "
+            "        ")
+    },
+    {
+        /* [[] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x5b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXX   "
+            "  X     "
+            "  X     "
+            "  X     "
+            "  X     "
+            "  XXX   "
+            "        ")
+    },
+    {
+        /* [\] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x5c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X      "
+            "  X     "
+            "  XX    "
+            "   XX   "
+            "    X   "
+            "     X  "
+            "        ")
+    },
+    {
+        /* []] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x5d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XXX   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "    X   "
+            "  XXX   "
+            "        ")
+    },
+    {
+        /* [^] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x5e,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "   X    "
+            "  X X   "
+            " X   X  "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        /* [_] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x5f,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            " XXXXXX ")
+    },
+    {
+        /* [`] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x60,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XX   "
             "        "
-            "   XX   "
-            "   XX   "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        /* [a] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x61,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "  XXXXX "
+            " XXXXXX "
+            " X    X "
+            "  XXXXX "
+            "        ")
+    },
+    {
+        /* [b] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x62,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X      "
+            " X      "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            " XXXXX  "
+            "        ")
+    },
+    {
+        /* [c] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x63,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X      "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [d] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x64,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "      X "
+            "      X "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            "  XXXXX "
+            "        ")
+    },
+    {
+        /* [e] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x65,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X XX X "
+            " X      "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [f] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x66,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "    XXX "
+            "   X    "
+            " XXXXX  "
+            "   X    "
+            "   X    "
+            "   X    "
+            "        ")
+    },
+    {
+        /* [g] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x67,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            "  XXXXX "
+            "  XXXX  ")
+    },
+    {
+        /* [h] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x68,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X      "
+            " X      "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [i] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x69,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   X    "
+            "        "
+            "  XX    "
+            "   X    "
+            "   X    "
+            "  XXX   "
+            "        ")
+    },
+    {
+        /* [j] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x6a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "     X  "
+            "        "
+            "    XX  "
+            "     X  "
+            "     X  "
+            " X   X  "
+            "  XXX   ")
+    },
+    {
+        /* [k] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x6b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            " X      "
+            " X      "
+            " X   XX "
+            " XXXX   "
+            " X  X   "
+            " X   XX "
+            "        ")
+    },
+    {
+        /* [l] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x6c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XX    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "  XXX   "
+            "        ")
+    },
+    {
+        /* [m] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x6d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXX "
+            "X  X  X "
+            "X  X  X "
+            "X  X  X "
+            "        ")
+    },
+    {
+        /* [n] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x6e,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [o] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x6f,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            "  XXXX  "
+            "        ")
+    },
+    {
+        /* [p] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x70,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            " XXXXX  "
+            " X      ")
+    },
+    {
+        /* [q] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x71,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X    X "
+            " X    X "
+            "  XXXXX "
+            "      X ")
+    },
+    {
+        /* [r] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x72,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " X      "
+            " X      "
+            " X      "
+            "        ")
+    },
+    {
+        /* [s] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x73,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            " XXXXX  "
+            "      X "
+            " XXXXX  "
+            "        ")
+    },
+    {
+        /* [t] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x74,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   X    "
+            "   X    "
+            " XXXXX  "
+            "   X    "
+            "   X    "
+            "    XXX "
+            "        ")
+    },
+    {
+        /* [u] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x75,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " X    X "
+            " X    X "
+            " X    X "
+            "  XXXXX "
+            "        ")
+    },
+    {
+        /* [v] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x76,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " X    X "
+            " XX  XX "
+            "  X  X  "
             "   XX   "
             "        ")
     },
     {
+        /* [w] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '}',
+        0x77,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXX     "
-            "  XX    "
-            "  XX    "
-            "   XXX  "
-            "  XX    "
-            "  XX    "
-            "XXX     "
+            "        "
+            "        "
+            "        "
+            "X     X "
+            "X  X  X "
+            "X  X  X "
+            " XXXXX  "
             "        ")
     },
     {
+        /* [x] */
         CHAFA_SYMBOL_TAG_ASCII,
-        '~',
+        0x78,
         CHAFA_SYMBOL_OUTLINE_8X8 (
-            " XXX XX "
-            "XX XXX  "
+            "        "
+            "        "
+            "        "
+            " X    X "
+            "  XXXX  "
+            "  X  X  "
+            " X    X "
+            "        ")
+    },
+    {
+        /* [y] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x79,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " X    X "
+            " X    X "
+            " X    X "
+            "  XXXXX "
+            "  XXXX  ")
+    },
+    {
+        /* [z] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x7a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            " XXXXXX "
+            "    XX  "
+            "  XX    "
+            " XXXXXX "
+            "        ")
+    },
+    {
+        /* [{] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x7b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "    XX  "
+            "   X    "
+            "  X     "
+            "   X    "
+            "   X    "
+            "    XX  "
+            "        ")
+    },
+    {
+        /* [|] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x7c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "   X    "
+            "        ")
+    },
+    {
+        /* [}] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x7d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "  XX    "
+            "    X   "
+            "     X  "
+            "    X   "
+            "    X   "
+            "  XX    "
+            "        ")
+    },
+    {
+        /* [~] */
+        CHAFA_SYMBOL_TAG_ASCII,
+        0x7e,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            " XX   X "
+            "X  XXX  "
             "        "
             "        "
             "        "
