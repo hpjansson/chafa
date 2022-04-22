@@ -857,6 +857,7 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "alnum", CHAFA_SYMBOL_TAG_ALNUM },
         { "bad", CHAFA_SYMBOL_TAG_BAD },
         { "legacy", CHAFA_SYMBOL_TAG_LEGACY },
+        { "latin", CHAFA_SYMBOL_TAG_LATIN },
 
         { NULL, 0 }
     };

@@ -150,6 +150,7 @@ static const UnicharRange meta_ranges [] =
 static const ChafaSymbolDef symbol_defs [] =
 {
 #include "chafa-symbols-ascii.h"
+#include "chafa-symbols-latin.h"
 #include "chafa-symbols-block.h"
 #include "chafa-symbols-kana.h"
 #include "chafa-symbols-misc-narrow.h"

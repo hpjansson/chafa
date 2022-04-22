@@ -46,6 +46,7 @@ libchafa_internal_la_SOURCES = \
 	chafa-symbols-ascii.h \
 	chafa-symbols-block.h \
 	chafa-symbols-kana.h \
+	chafa-symbols-latin.h \
 	chafa-symbols-misc-narrow.h \
 	chafa-work-cell.c \
 	chafa-work-cell.h
