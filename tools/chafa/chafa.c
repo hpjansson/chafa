@@ -404,6 +404,8 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else if (!g_ascii_strcasecmp (value, "full")
              || !g_ascii_strcasecmp (value, "rgb")
              || !g_ascii_strcasecmp (value, "tc")
+             || !g_ascii_strcasecmp (value, "direct")
+             || !g_ascii_strcasecmp (value, "directcolor")
              || !g_ascii_strcasecmp (value, "truecolor"))
         options.mode = CHAFA_CANVAS_MODE_TRUECOLOR;
     else
