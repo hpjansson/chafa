@@ -90,7 +90,7 @@ Set output color mode; one of [none, 2, 8, 16, 240, 256, full]. Defaults to full
 lower 16 colors are unreliable and tend to differ between terminals. 16-color
 mode will use aixterm extensions to produce 16 foreground and background
 colors. 2-color mode will only emit the ANSI codes for reverse color and
-attribute reset, while "none" will emit no ANSI color codes whatsoever.
+attribute reset, while "none" will emit no escape sequences at all.
 </para>
 <para>
 In sixel mode, "full" will dynamically generate a 256-color palette for each
