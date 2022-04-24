@@ -38,7 +38,7 @@
 #define BYTES_PER_PIXEL 3
 #define ROWSTRIDE_ALIGN 16
 
-#define PAD_TO_N(p, n) (((p) + (n - 1)) & ~((unsigned) (n) - 1))
+#define PAD_TO_N(p, n) (((p) + ((n) - 1)) & ~((unsigned) (n) - 1))
 #define ROWSTRIDE_PAD(rowstride) (PAD_TO_N ((rowstride), (ROWSTRIDE_ALIGN)))
 
 struct JpegLoader
