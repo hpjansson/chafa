@@ -148,8 +148,9 @@ svg_loader_new_from_mapping (FileMapping *mapping)
         goto out;
 
     calc_dimensions (rsvg, &width, &height);
-    if (width < 1 || width > (1 << 30)
-        || height < 1 || height > (1 << 30))
+    if (width < 1 || width >= (1 << 28)
+        || height < 1 || height >= (1 << 28)
+        || (width * (guint64) height >= (1 << 29)))
         goto out;
 
     loader->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
