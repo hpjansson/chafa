@@ -1,6 +1,21 @@
 Chafa releases
 ==============
 
+1.10.2 (2022-04-25)
+-------------------
+
+This release adds security/responsible disclosure guidelines and fixes a few
+issues with input validation in the 'chafa' command-line tool.
+
+* Added disclosure guidelines in SECURITY.md (suggested by Jamie Slome).
+
+* Bug fixes:
+  huntr.dev  Null pointer dereference in libnsgif with crafted GIF file
+             (reported by @JieyongMa).
+  [unfiled]  File magic would not effectively rule out internal loaders.
+  [unfiled]  Very big images could cause absurd allocation requests triggering
+             an abort in the loader.
+
 1.10.1 (2022-04-04)
 -------------------
 
