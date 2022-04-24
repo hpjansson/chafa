@@ -55,7 +55,7 @@ png_loader_new_from_mapping (FileMapping *mapping)
     PngLoader *loader = NULL;
     gboolean success = FALSE;
     guint width, height;
-    unsigned char *frame_data;
+    unsigned char *frame_data = NULL;
     gint lode_error;
 
     g_return_val_if_fail (mapping != NULL, NULL);
@@ -93,6 +93,9 @@ out:
             g_free (loader);
             loader = NULL;
         }
+
+        if (frame_data)
+            free (frame_data);
     }
 
     return loader;
