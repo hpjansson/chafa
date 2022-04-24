@@ -239,7 +239,8 @@ xwd_loader_new (void)
 XwdLoader *
 xwd_loader_new_from_mapping (FileMapping *mapping)
 {
-    XwdLoader *loader;
+    XwdLoader *loader = NULL;
+    gboolean success = FALSE;
 
     g_return_val_if_fail (mapping != NULL, NULL);
 
@@ -253,6 +254,20 @@ xwd_loader_new_from_mapping (FileMapping *mapping)
     }
 
     DEBUG (dump_header (&loader->header));
+
+    if (loader->header.pixmap_width < 1 || loader->header.pixmap_width >= (1 << 28)
+        || loader->header.pixmap_height < 1 || loader->header.pixmap_height >= (1 << 28)
+        || (loader->header.pixmap_width * (guint64) loader->header.pixmap_height >= (1 << 29)))
+        goto out;
+
+    success = TRUE;
+
+out:
+    if (!success)
+    {
+        g_free (loader);
+        loader = NULL;
+    }
 
     return loader;
 }
