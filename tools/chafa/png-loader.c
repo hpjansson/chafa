@@ -75,7 +75,8 @@ png_loader_new_from_mapping (FileMapping *mapping)
                                         loader->file_data, loader->file_data_len)) != 0)
         goto out;
 
-    if (width > (1 << 30) || height > (1 << 30))
+    if (width < 1 || width >= (1 << 28)
+        || height < 1 || height >= (1 << 28))
         goto out;
 
     loader->frame_data = frame_data;
