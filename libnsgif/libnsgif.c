@@ -595,6 +595,12 @@ gif_internal_decode_frame(gif_animation *gif,
         unsigned int x, y, decode_y, burst_bytes;
         register unsigned char colour;
 
+        /* If the GIF has no frame data, frame holders will not be allocated in
+         * gif_initialise() */
+        if (gif->frames == NULL) {
+                return GIF_INSUFFICIENT_DATA;
+        }
+
         /* Ensure this frame is supposed to be decoded */
         if (gif->frames[frame].display == false) {
                 return GIF_OK;
