@@ -492,16 +492,17 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     width = cinfo.output_width;
     height = cinfo.output_height;
 
-    if (width == 0 || width > (1 << 30)
-        || height == 0 || height > (1 << 30))
+    if (width < 1 || width >= (1 << 28)
+        || height < 1 || height >= (1 << 28)
+        || (width * (guint64) height >= (1 << 29)))
         goto out;
 
     rowstride = ROWSTRIDE_PAD (width * BYTES_PER_PIXEL);
-    frame_data = g_malloc (height * rowstride);
+    frame_data = g_malloc (height * (guint64) rowstride);
 
     /* Decoding loop */
 
-    while (cinfo.output_scanline < cinfo.output_height)
+    while (cinfo.output_scanline < height)
     {
         guchar *row_data = frame_data + cinfo.output_scanline * rowstride;
         if (jpeg_read_scanlines (&cinfo, &row_data, 1) < 1)
