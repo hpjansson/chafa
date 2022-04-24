@@ -228,27 +228,42 @@ gconstpointer
 im_loader_get_frame_data (ImLoader *loader, ChafaPixelType *pixel_type_out,
                           gint *width_out, gint *height_out, gint *rowstride_out)
 {
+    gint width, height, rowstride;
+
     g_return_val_if_fail (loader != NULL, NULL);
 
     auto_orient_image (loader->wand);
 
-    *width_out = MagickGetImageWidth (loader->wand);
-    *height_out = MagickGetImageHeight (loader->wand);
-    *rowstride_out = *width_out * 4;
+    width = MagickGetImageWidth (loader->wand);
+    height = MagickGetImageHeight (loader->wand);
+    rowstride = width * 4;
+
+    if (width < 1 || width >= (1 << 28)
+        || height < 1 || height >= (1 << 28)
+        || (width * (guint64) height >= (1 << 29)))
+        goto out;
 
     if (!loader->current_frame_data)
     {
-        loader->current_frame_data = g_malloc (*height_out * *rowstride_out);
+        loader->current_frame_data = g_malloc (height * (guint64) rowstride);
         MagickExportImagePixels (loader->wand,
                                  0, 0,
-                                 *width_out, *height_out,
+                                 width, height,
                                  "RGBA",
                                  CharPixel,
                                  (void *) loader->current_frame_data);
     }
 
-    *pixel_type_out = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+    if (pixel_type_out)
+        *pixel_type_out = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+    if (width_out)
+        *width_out = width;
+    if (height_out)
+        *height_out = height;
+    if (rowstride_out)
+        *rowstride_out = rowstride;
 
+out:
     return loader->current_frame_data;
 }
 
