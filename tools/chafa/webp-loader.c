@@ -78,8 +78,9 @@ webp_loader_new_from_mapping (FileMapping *mapping)
     if (WebPGetFeatures (loader->file_data, loader->file_data_len, &features) != VP8_STATUS_OK)
         goto out;
 
-    if (features.width < 1 || features.width > (1 << 30)
-        || features.height < 1 || features.height > (1 << 30))
+    if (features.width < 1 || features.width >= (1 << 28)
+        || features.height < 1 || features.height >= (1 << 28)
+        || (features.width * (guint64) features.height >= (1 << 29)))
         goto out;
 
     frame_data = WebPDecodeRGBA (loader->file_data, loader->file_data_len,
