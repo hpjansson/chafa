@@ -199,8 +199,9 @@ tiff_loader_new_from_mapping (FileMapping *mapping)
     if (!TIFFGetField (tiff, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel))
         goto out;
 
-    if (width < 1 || width > (1 << 30)
-        || height < 1 || height > (1 << 30))
+    if (width < 1 || width > (1 << 28)
+        || height < 1 || height > (1 << 28)
+        || (width * (guint64) height >= (1 << 29)))
         goto out;
 
     /* An opaque image with unassociated alpha set to 0xff is equivalent to
@@ -223,7 +224,7 @@ tiff_loader_new_from_mapping (FileMapping *mapping)
             loader->pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
     }
 
-    frame_data = _TIFFmalloc (width * height * BYTES_PER_PIXEL);
+    frame_data = _TIFFmalloc (width * height * (guint64) BYTES_PER_PIXEL);
     if (!frame_data)
         goto out;
 
