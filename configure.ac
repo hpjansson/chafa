@@ -38,6 +38,7 @@ dnl --- Standard setup ---
 
 BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes"
 
+AC_USE_SYSTEM_EXTENSIONS
 AM_SANITY_CHECK
 AM_MAINTAINER_MODE
 
