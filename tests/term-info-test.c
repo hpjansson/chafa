@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <chafa.h>
 #include <stdio.h>
 
