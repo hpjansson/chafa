@@ -42,7 +42,7 @@ formatting_test (void)
     g_assert_cmpstr (buf, ==, 
                      "soft-reset"
                      "cursor-up-9876"
-                     "1234-cursor-to-pos-0"
+                     "1235-cursor-to-pos-1"
                      "410-fg-direct-244"
                      "0-bg-direct10099-"
                      "1199-fgbg-99,00-9"
