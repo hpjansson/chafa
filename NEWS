@@ -1,6 +1,18 @@
 Chafa releases
 ==============
 
+1.10.3 (2022-05-04)
+-------------------
+
+This release fixes multiple input validation issues. These were found in the
+'chafa' command-line tool and do not affect the library backend.
+
+* Improved input validation in the XWD loader.
+
+* Bug fixes:
+  huntr.dev  Buffer over-read when compiled with -O0 or non-x86 target
+             (reported by @JieyongMa).
+
 1.10.2 (2022-04-25)
 -------------------
 
