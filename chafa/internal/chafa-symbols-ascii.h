@@ -22,11 +22,14 @@
  *
  * These are 7-bit ASCII symbols. The bitmaps are a close match to the
  * Terminus font (specifically ter-x14n.pcf).
+ *
+ * ASCII symbols are also "Latin" symbols, loosely corresponding to the
+ * symbols you'd find in the European ISO/IEC 8859 charsets.
  */
 
     {
         /* [ ] */
-        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_SPACE,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN | CHAFA_SYMBOL_TAG_SPACE,
         0x20,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -40,7 +43,7 @@
     },
     {
         /* [!] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x21,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -54,7 +57,7 @@
     },
     {
         /* ["] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x22,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "  X  X  "
@@ -68,21 +71,21 @@
     },
     {
         /* [#] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x23,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
             "  X  X  "
             "  X  X  "
-            " XX  XX "
-            " XX  XX "
+            " XXX XX "
+            " XX XXX "
             "  X  X  "
             "  X  X  "
             "        ")
     },
     {
         /* [$] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x24,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "   X    "
@@ -96,7 +99,7 @@
     },
     {
         /* [%] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x25,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -110,7 +113,7 @@
     },
     {
         /* [&] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x26,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -124,7 +127,7 @@
     },
     {
         /* ['] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x27,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "   X    "
@@ -138,7 +141,7 @@
     },
     {
         /* [(] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x28,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -152,7 +155,7 @@
     },
     {
         /* [)] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x29,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -166,7 +169,7 @@
     },
     {
         /* [*] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x2a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -180,7 +183,7 @@
     },
     {
         /* [+] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x2b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -194,7 +197,7 @@
     },
     {
         /* [,] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x2c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -208,7 +211,7 @@
     },
     {
         /* [-] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x2d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -222,7 +225,7 @@
     },
     {
         /* [.] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x2e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -236,7 +239,7 @@
     },
     {
         /* [/] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x2f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -250,7 +253,7 @@
     },
     {
         /* [0] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x30,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -264,7 +267,7 @@
     },
     {
         /* [1] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x31,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -278,7 +281,7 @@
     },
     {
         /* [2] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x32,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -292,7 +295,7 @@
     },
     {
         /* [3] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x33,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -306,7 +309,7 @@
     },
     {
         /* [4] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x34,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -320,7 +323,7 @@
     },
     {
         /* [5] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x35,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -334,7 +337,7 @@
     },
     {
         /* [6] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x36,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -348,7 +351,7 @@
     },
     {
         /* [7] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x37,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -362,7 +365,7 @@
     },
     {
         /* [8] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x38,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -376,7 +379,7 @@
     },
     {
         /* [9] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x39,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -390,7 +393,7 @@
     },
     {
         /* [:] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x3a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -404,7 +407,7 @@
     },
     {
         /* [;] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x3b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -418,7 +421,7 @@
     },
     {
         /* [<] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x3c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -432,7 +435,7 @@
     },
     {
         /* [=] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x3d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -446,7 +449,7 @@
     },
     {
         /* [>] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x3e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -460,7 +463,7 @@
     },
     {
         /* [?] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x3f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -474,7 +477,7 @@
     },
     {
         /* [@] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x40,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -488,7 +491,7 @@
     },
     {
         /* [A] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x41,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -502,7 +505,7 @@
     },
     {
         /* [B] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x42,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -516,7 +519,7 @@
     },
     {
         /* [C] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x43,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -530,7 +533,7 @@
     },
     {
         /* [D] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x44,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -544,7 +547,7 @@
     },
     {
         /* [E] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x45,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -558,7 +561,7 @@
     },
     {
         /* [F] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x46,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -572,7 +575,7 @@
     },
     {
         /* [G] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x47,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -586,7 +589,7 @@
     },
     {
         /* [H] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x48,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -600,7 +603,7 @@
     },
     {
         /* [I] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x49,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -614,7 +617,7 @@
     },
     {
         /* [J] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x4a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -628,7 +631,7 @@
     },
     {
         /* [K] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x4b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -642,7 +645,7 @@
     },
     {
         /* [L] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x4c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -656,7 +659,7 @@
     },
     {
         /* [M] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x4d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -670,7 +673,7 @@
     },
     {
         /* [N] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x4e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -684,7 +687,7 @@
     },
     {
         /* [O] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x4f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -698,7 +701,7 @@
     },
     {
         /* [P] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x50,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -712,7 +715,7 @@
     },
     {
         /* [Q] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x51,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -726,7 +729,7 @@
     },
     {
         /* [R] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x52,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -740,7 +743,7 @@
     },
     {
         /* [S] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x53,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -754,7 +757,7 @@
     },
     {
         /* [T] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x54,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -768,7 +771,7 @@
     },
     {
         /* [U] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x55,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -782,7 +785,7 @@
     },
     {
         /* [V] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x56,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -796,7 +799,7 @@
     },
     {
         /* [W] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x57,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -810,7 +813,7 @@
     },
     {
         /* [X] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x58,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -824,7 +827,7 @@
     },
     {
         /* [Y] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x59,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -838,7 +841,7 @@
     },
     {
         /* [Z] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x5a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -852,7 +855,7 @@
     },
     {
         /* [[] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x5b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -866,7 +869,7 @@
     },
     {
         /* [\] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x5c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -880,7 +883,7 @@
     },
     {
         /* []] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x5d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -894,7 +897,7 @@
     },
     {
         /* [^] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x5e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "   X    "
@@ -908,7 +911,7 @@
     },
     {
         /* [_] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x5f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -922,7 +925,7 @@
     },
     {
         /* [`] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x60,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XX   "
@@ -936,7 +939,7 @@
     },
     {
         /* [a] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x61,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -950,7 +953,7 @@
     },
     {
         /* [b] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x62,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -964,7 +967,7 @@
     },
     {
         /* [c] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x63,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -978,7 +981,7 @@
     },
     {
         /* [d] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x64,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -992,7 +995,7 @@
     },
     {
         /* [e] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x65,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1006,7 +1009,7 @@
     },
     {
         /* [f] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x66,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1020,7 +1023,7 @@
     },
     {
         /* [g] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x67,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1034,7 +1037,7 @@
     },
     {
         /* [h] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x68,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1048,7 +1051,7 @@
     },
     {
         /* [i] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x69,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1062,7 +1065,7 @@
     },
     {
         /* [j] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x6a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1076,7 +1079,7 @@
     },
     {
         /* [k] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x6b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1090,7 +1093,7 @@
     },
     {
         /* [l] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x6c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1104,7 +1107,7 @@
     },
     {
         /* [m] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x6d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1118,7 +1121,7 @@
     },
     {
         /* [n] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x6e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1132,7 +1135,7 @@
     },
     {
         /* [o] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x6f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1146,7 +1149,7 @@
     },
     {
         /* [p] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x70,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1160,7 +1163,7 @@
     },
     {
         /* [q] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x71,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1174,7 +1177,7 @@
     },
     {
         /* [r] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x72,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1188,7 +1191,7 @@
     },
     {
         /* [s] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x73,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1202,7 +1205,7 @@
     },
     {
         /* [t] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x74,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1216,7 +1219,7 @@
     },
     {
         /* [u] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x75,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1230,7 +1233,7 @@
     },
     {
         /* [v] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x76,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1244,7 +1247,7 @@
     },
     {
         /* [w] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x77,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1258,7 +1261,7 @@
     },
     {
         /* [x] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x78,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1272,7 +1275,7 @@
     },
     {
         /* [y] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x79,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1286,7 +1289,7 @@
     },
     {
         /* [z] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x7a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1300,7 +1303,7 @@
     },
     {
         /* [{] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x7b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1314,7 +1317,7 @@
     },
     {
         /* [|] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x7c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1328,7 +1331,7 @@
     },
     {
         /* [}] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x7d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1342,7 +1345,7 @@
     },
     {
         /* [~] */
-        CHAFA_SYMBOL_TAG_ASCII,
+        CHAFA_SYMBOL_TAG_ASCII | CHAFA_SYMBOL_TAG_LATIN,
         0x7e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             " XX   X "
