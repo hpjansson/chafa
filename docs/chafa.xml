@@ -272,6 +272,15 @@ useful in low-color modes.
 </varlistentry>
 
 <varlistentry>
+<term><option>--scale <replaceable>NUM</replaceable></option></term>
+<listitem><para>
+Scale image, respecting terminal's maximum dimensions. 1.0 approximates
+original pixel dimensions. Specify "max" to use all available space. Defaults
+to 1.0 for pixel graphics and 4.0 for symbols.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
 <listitem><para>
 Set maximum output dimensions in columns and rows. By default this will be the

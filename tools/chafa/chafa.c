@@ -38,6 +38,7 @@
 
 #define ANIM_FPS_MAX 100000.0
 #define FILE_DURATION_DEFAULT 0.0
+#define SCALE_MAX 9999.0
 
 typedef struct
 {
@@ -74,6 +75,7 @@ typedef struct
     gint width, height;
     gint cell_width, cell_height;
     gint margin_bottom, margin_right;
+    gdouble scale;
     gdouble font_ratio;
     gint work_factor;
     gint optimization_level;
@@ -110,6 +112,7 @@ TermSize;
 
 static GlobalOptions options;
 static TermSize detected_term_size;
+static gboolean using_detected_size = FALSE;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
 
 static void
@@ -337,6 +340,10 @@ print_summary (void)
     "                     altered state (rude).\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
+    "      --scale=NUM    Scale image, respecting terminal's maximum dimensions. 1.0\n"
+    "                     approximates original pixel dimensions. Specify \"max\" to\n"
+    "                     use all available space. Defaults to 1.0 for pixel graphics\n"
+    "                     and 4.0 for symbols.\n"
     "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
     "                     default this will be the size of your terminal, or 80x25\n"
     "                     if size detection fails.\n"
@@ -479,21 +486,22 @@ parse_dither_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     return result;
 }
 
+/* FIXME: Make it parse negative values too, and use sscanf() return values properly */
 static gboolean
-parse_font_ratio_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+parse_fraction_or_real (const gchar *str, gdouble *real_out)
 {
-    gboolean result = TRUE;
+    gboolean success = FALSE;
     gdouble ratio = -1.0;
     gint width = -1, height = -1;
     gint o = 0;
 
-    sscanf (value, "%d/%d%n", &width, &height, &o);
+    sscanf (str, "%d/%d%n", &width, &height, &o);
     if (width < 0 || height < 0)
-        sscanf (value, "%d:%d%n", &width, &height, &o);
+        sscanf (str, "%d:%d%n", &width, &height, &o);
     if (width < 0 || height < 0)
-        sscanf (value, "%lf%n", &ratio, &o);
+        sscanf (str, "%lf%n", &ratio, &o);
 
-    if (o != 0 && value [o] != '\0')
+    if (o != 0 && str [o] != '\0')
     {
         width = -1;
         height = -1;
@@ -504,19 +512,58 @@ parse_font_ratio_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
     if (width > 0 && height > 0)
         ratio = width / (gdouble) height;
 
+    if (ratio < 0.0)
+        goto out;
+
+    *real_out = ratio;
+    success = TRUE;
+
 out:
-    if (ratio <= 0.0)
+    return success;
+}
+
+static gboolean
+parse_font_ratio_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gdouble ratio = -1.0;
+    gboolean success = FALSE;
+
+    if (!parse_fraction_or_real (value, &ratio) || ratio <= 0.0)
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Font ratio must be specified as a real number or fraction.");
-        result = FALSE;
-    }
-    else
-    {
-        options.font_ratio = ratio;
+                     "Font ratio must be specified as a positive real number or fraction.");
+        goto out;
     }
 
-    return result;
+    options.font_ratio = ratio;
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
+parse_scale_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gdouble scale = -1.0;
+    gboolean success = FALSE;
+
+    if (!strcasecmp (value, "max") || !strcasecmp (value, "fill"))
+    {
+        scale = SCALE_MAX;
+    }
+    else if (!parse_fraction_or_real (value, &scale) || scale <= 0.0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Scale must be specified as a positive real number or fraction.");
+        goto out;
+    }
+
+    options.scale = scale;
+    success = TRUE;
+
+out:
+    return success;
 }
 
 static gboolean
@@ -1184,6 +1231,7 @@ parse_options (int *argc, char **argv [])
         { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
+        { "scale",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_scale_arg,       "Scale", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
         { "speed",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_anim_speed_arg,  "Animation speed", NULL },
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
@@ -1191,12 +1239,12 @@ parse_options (int *argc, char **argv [])
         { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
+        /* Deprecated: Equivalent to --scale max */
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
         { NULL }
     };
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
-    gboolean using_detected_size = FALSE;
 
     memset (&options, 0, sizeof (options));
 
@@ -1236,6 +1284,7 @@ parse_options (int *argc, char **argv [])
     options.font_ratio = -1.0;  /* Unset */
     options.margin_bottom = -1;  /* Unset */
     options.margin_right = -1;  /* Unset */
+    options.scale = -1.0;  /* Unset */
     options.work_factor = 5;
     options.optimization_level = G_MININT;  /* Unset */
     options.n_threads = -1;
@@ -1368,6 +1417,8 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_height = 4;
         if (options.font_ratio <= 0.0)
             options.font_ratio = 1.0 / 2.0;
+        if (options.scale <= 0.0)
+            options.scale = 4.0;
     }
     else
     {
@@ -1381,6 +1432,8 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_height = 1;
         if (options.font_ratio <= 0.0)
             options.font_ratio = 1.0 / 2.0;
+        if (options.scale <= 0.0)
+            options.scale = 1.0;
     }
 
     if (options.work_factor < 1 || options.work_factor > 9)
@@ -1615,6 +1668,34 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     return gs;
 }
 
+static void
+pixel_to_cell_dimensions (gdouble scale,
+                          gint cell_width, gint cell_height,
+                          gint width, gint height,
+                          gint *width_out, gint *height_out)
+{
+    /* Scale can't be zero or negative */
+    scale = MAX (scale, 0.00001);
+
+    /* Zero or negative cell dimensions -> presumably unknown, use 8x8 */
+    if (cell_width < 1)
+        cell_width = 8;
+    if (cell_height < 1)
+        cell_height = 8;
+
+    if (width_out)
+    {
+        *width_out = (gdouble) width * scale / cell_width + 0.5;
+        *width_out = MAX (*width_out, 1);
+    }
+
+    if (height_out)
+    {
+        *height_out = (gdouble) height * scale / cell_width + 0.5;
+        *height_out = MAX (*height_out, 1);
+    }
+}
+
 static gboolean
 run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
@@ -1661,6 +1742,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             gint delay_ms;
             ChafaPixelType pixel_type;
             gint src_width, src_height, src_rowstride;
+            gint virt_src_width, virt_src_height;
             gint dest_width, dest_height;
             const guint8 *pixels;
 
@@ -1679,11 +1761,27 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
             delay_ms = media_loader_get_frame_delay (media_loader);
 
+            /* Hack to work around the fact that chafa_calc_canvas_geometry() doesn't
+             * support arbitrary scaling. Instead, we manipulate the source size to
+             * achieve the desired effect. */
+            if (using_detected_size)
+            {
+                pixel_to_cell_dimensions (options.scale,
+                                          options.cell_width, options.cell_height,
+                                          src_width, src_height,
+                                          &virt_src_width, &virt_src_height);
+            }
+            else
+            {
+                virt_src_width = src_width;
+                virt_src_height = src_height;
+            }
+
             dest_width = options.width;
             dest_height = options.height;
 
-            chafa_calc_canvas_geometry (src_width,
-                                        src_height,
+            chafa_calc_canvas_geometry (virt_src_width,
+                                        virt_src_height,
                                         &dest_width,
                                         &dest_height,
                                         options.font_ratio,
