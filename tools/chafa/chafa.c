@@ -351,7 +351,7 @@ print_summary (void)
     "                     either a unitless multiplier, or a real number followed\n"
     "                     by \"fps\" to apply a specific framerate.\n"
     "      --stretch      Stretch image to fit output dimensions; ignore aspect.\n"
-    "                     Implies --zoom.\n"
+    "                     Implies --scale max.\n"
     "      --symbols=SYMS  Specify character symbols to employ in final output.\n"
     "                     See below for full usage and a list of symbol classes.\n"
     "      --threads=NUM  Maximum number of CPU threads to use. If left unspecified\n"
@@ -362,8 +362,7 @@ print_summary (void)
     "                     contents change. Will run until manually interrupted\n"
     "                     or, if --duration is set, until it expires.\n"
     "  -w, --work=NUM     How hard to work in terms of CPU and memory [1-9]. 1 is the\n"
-    "                     cheapest, 9 is the most accurate. Defaults to 5.\n"
-    "      --zoom         Allow scaling up beyond one character per pixel.\n\n"
+    "                     cheapest, 9 is the most accurate. Defaults to 5.\n\n"
 
     "  Accepted classes for --symbols and --fill are [all, none, space, solid,\n"
     "  stipple, block, border, diagonal, dot, quad, half, hhalf, vhalf, inverted,\n"
@@ -1493,8 +1492,18 @@ parse_options (int *argc, char **argv [])
         }
     }
 
-    /* --stretch implies --zoom */
-    options.zoom |= options.stretch;
+    if (options.zoom)
+    {
+        g_printerr ("%s: Warning: --zoom is deprecated, use --scale max instead.\n",
+                    options.executable_name);
+        options.scale = SCALE_MAX;
+    }
+
+    /* --stretch implies --scale max (same as --zoom) */
+    if (options.stretch)
+    {
+        options.scale = SCALE_MAX;
+    }
 
     if (options.invert)
     {
@@ -1764,7 +1773,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             /* Hack to work around the fact that chafa_calc_canvas_geometry() doesn't
              * support arbitrary scaling. Instead, we manipulate the source size to
              * achieve the desired effect. */
-            if (using_detected_size)
+            if (using_detected_size && options.scale < SCALE_MAX - 0.1)
             {
                 pixel_to_cell_dimensions (options.scale,
                                           options.cell_width, options.cell_height,
@@ -1785,7 +1794,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                         &dest_width,
                                         &dest_height,
                                         options.font_ratio,
-                                        options.zoom,
+                                        options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
 
             gs = build_string (pixel_type, pixels,

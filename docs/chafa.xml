@@ -300,7 +300,7 @@ to apply a specific framerate.
 <varlistentry>
 <term><option>--stretch</option></term>
 <listitem><para>
-Stretch image to fit output dimensions; ignore aspect. Implies --zoom.
+Stretch image to fit output dimensions; ignore aspect. Implies --scale max.
 </para></listitem>
 </varlistentry>
 
@@ -350,13 +350,6 @@ until manually interrupted or, if --duration is set, until it expires.
 <listitem><para>
 How hard to work in terms of CPU and memory [1-9]. 1 is the cheapest, 9 is the
 most accurate. Defaults to 5.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--zoom</option></term>
-<listitem><para>
-Allow scaling up beyond one character per pixel.
 </para></listitem>
 </varlistentry>
 
