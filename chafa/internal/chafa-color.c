@@ -262,91 +262,6 @@ chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99)
     din99->ch [3] = rgb->ch [3];
 }
 
-static gint
-color_diff_rgb (const ChafaColor *col_a, const ChafaColor *col_b)
-{
-    gint error = 0;
-    gint d [3];
-
-    d [0] = (gint) col_b->ch [0] - (gint) col_a->ch [0];
-    d [0] = d [0] * d [0];
-    d [1] = (gint) col_b->ch [1] - (gint) col_a->ch [1];
-    d [1] = d [1] * d [1];
-    d [2] = (gint) col_b->ch [2] - (gint) col_a->ch [2];
-    d [2] = d [2] * d [2];
-
-    error = 2 * d [0] + 4 * d [1] + 3 * d [2]
-    + (((col_a->ch [0] + (gint) col_b->ch [0]) / 2)
-        * abs (d [0] - d [2])) / 256;
-
-    return error;
-}
-
-static gint
-color_diff_euclidean (const ChafaColor *col_a, const ChafaColor *col_b)
-{
-    gint error = 0;
-    gint d [3];
-
-    d [0] = (gint) col_b->ch [0] - (gint) col_a->ch [0];
-    d [0] = d [0] * d [0];
-    d [1] = (gint) col_b->ch [1] - (gint) col_a->ch [1];
-    d [1] = d [1] * d [1];
-    d [2] = (gint) col_b->ch [2] - (gint) col_a->ch [2];
-    d [2] = d [2] * d [2];
-
-    error = d [0] + d [1] + d [2];
-    return error;
-}
-
-static gint
-color_diff_alpha (const ChafaColor *col_a, const ChafaColor *col_b, gint error)
-{
-    gint max_opacity;
-    gint a;
-
-    /* Alpha */
-    a = (gint) col_b->ch [3] - (gint) col_a->ch [3];
-    a = a * a;
-    max_opacity = MAX (col_a->ch [3], col_b->ch [3]);
-    error *= max_opacity;
-    error /= 256;
-    error += a * 8;
-
-    return error;
-}
-
-gint
-chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space)
-{
-    gint error;
-
-    if (color_space == CHAFA_COLOR_SPACE_RGB)
-        error = color_diff_rgb (col_a, col_b);
-    else if (color_space == CHAFA_COLOR_SPACE_DIN99D)
-        error = color_diff_euclidean (col_a, col_b);
-    else
-    {
-        g_assert_not_reached ();
-        return -1;
-    }
-
-    error = color_diff_alpha (col_a, col_b, error);
-
-    return error;
-}
-
-/* FIXME: We may be able to avoid mixing alpha in most cases, but 16-color fill relies
- * on it at the moment. */
-void
-chafa_color_mix (ChafaColor *out, const ChafaColor *a, const ChafaColor *b, gint ratio)
-{
-    gint i;
-
-    for (i = 0; i < 4; i++)
-        out->ch [i] = (a->ch [i] * ratio + b->ch [i] * (1000 - ratio)) / 1000;
-}
-
 static void
 init_candidates (ChafaColorCandidates *candidates)
 {
@@ -382,7 +297,7 @@ update_candidates_with_color_index_diff (ChafaColorCandidates *candidates, Chafa
     gint error;
 
     palette_color = chafa_get_palette_color_256 (index, color_space);
-    error = chafa_color_diff_slow (color, palette_color, color_space);
+    error = chafa_color_diff_fast (color, palette_color);
     update_candidates (candidates, index, error);
 
     return error;
@@ -415,7 +330,7 @@ pick_color_24_grays (const ChafaColor *color, ChafaColorSpace color_space, Chafa
     last_error = update_candidates_with_color_index_diff (candidates, color_space, color, i);
 
     palette_color = chafa_get_palette_color_256 (i + 1, color_space);
-    error = chafa_color_diff_slow (color, palette_color, color_space);
+    error = chafa_color_diff_fast (color, palette_color);
     if (error < last_error)
     {
         update_candidates (candidates, i, error);
@@ -433,7 +348,7 @@ pick_color_24_grays (const ChafaColor *color, ChafaColorSpace color_space, Chafa
         i += step;
         palette_color = chafa_get_palette_color_256 (i, color_space);
 
-        error = chafa_color_diff_slow (color, palette_color, color_space);
+        error = chafa_color_diff_fast (color, palette_color);
         if (error > last_error)
             break;
 
@@ -452,11 +367,6 @@ pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorC
     {
         update_candidates_with_color_index_diff (candidates, color_space, color, i);
     }
-
-    /* Try transparency */
-
-    update_candidates_with_color_index_diff (candidates, color_space, color,
-                                             CHAFA_PALETTE_INDEX_TRANSPARENT);
 }
 
 void
@@ -476,12 +386,6 @@ pick_color_8 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCa
     {
         update_candidates_with_color_index_diff (candidates, color_space, color, i);
     }
-#if 0
-    /* Try transparency */
-
-    update_candidates_with_color_index_diff (candidates, color_space, color,
-                                             CHAFA_PALETTE_INDEX_TRANSPARENT);
-#endif
 }
 
 void
@@ -504,14 +408,12 @@ chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, Chaf
         pick_color_216_cube (color, color_space, candidates);
         pick_color_24_grays (color, color_space, candidates);
 
-        /* This will try transparency too. Do this last so ties are broken in
-         * favor of high-index colors. */
+        /* Do this last so ties are broken in favor of high-index colors. */
         pick_color_16 (color, color_space, candidates);
     }
     else
     {
-        /* All colors including transparent, but not bg or fg */
-        for (i = 0; i < 257; i++)
+        for (i = 0; i < 256; i++)
         {
             update_candidates_with_color_index_diff (candidates, color_space, color, i);
         }
@@ -529,16 +431,11 @@ chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, Chaf
     {
         pick_color_216_cube (color, color_space, candidates);
         pick_color_24_grays (color, color_space, candidates);
-
-        /* Try transparency */
-
-        update_candidates_with_color_index_diff (candidates, color_space, color,
-                                                 CHAFA_PALETTE_INDEX_TRANSPARENT);
     }
     else
     {
-        /* Color cube and transparent, but not lower 16, bg or fg */
-        for (i = 16; i < 257; i++)
+        /* Check color cube, but not lower 16, bg or fg. Slow! */
+        for (i = 16; i < 256; i++)
         {
             update_candidates_with_color_index_diff (candidates, color_space, color, i);
         }
@@ -548,7 +445,7 @@ chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, Chaf
 /* Pick the best approximation of color from a palette consisting of
  * fg_color and bg_color */
 void
-chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
+chafa_pick_color_fgbg (const ChafaColor *color,
                        const ChafaColor *fg_color, const ChafaColor *bg_color,
                        ChafaColorCandidates *candidates)
 {
@@ -556,20 +453,9 @@ chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
 
     init_candidates (candidates);
 
-    error = chafa_color_diff_slow (color, fg_color, color_space);
+    error = chafa_color_diff_fast (color, fg_color);
     update_candidates (candidates, CHAFA_PALETTE_INDEX_FG, error);
 
-    error = chafa_color_diff_slow (color, bg_color, color_space);
+    error = chafa_color_diff_fast (color, bg_color);
     update_candidates (candidates, CHAFA_PALETTE_INDEX_BG, error);
-
-    /* Consider opaque background too */
-
-    if (candidates->index [0] != CHAFA_PALETTE_INDEX_BG)
-    {
-        ChafaColor bg_color_opaque = *bg_color;
-        bg_color_opaque.ch [3] = 0xff;
-
-        error = chafa_color_diff_slow (color, &bg_color_opaque, color_space);
-        update_candidates (candidates, CHAFA_PALETTE_INDEX_BG, error);
-    }
 }

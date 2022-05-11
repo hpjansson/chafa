@@ -205,49 +205,25 @@ calc_error_plain (const ChafaPixel *block, const ChafaColorPair *color_pair, con
     return error;
 }
 
-static gint
-calc_error_with_alpha (const ChafaPixel *block, const ChafaColorPair *color_pair, const guint8 *cov, ChafaColorSpace cs)
-{
-    gint error = 0;
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        guint8 p = *cov++;
-        const ChafaPixel *p0 = block++;
-
-        error += chafa_color_diff_slow (&color_pair->colors [p], &p0->col, cs);
-    }
-
-    return error;
-}
-
 static void
-eval_symbol_error (ChafaCanvas *canvas, const ChafaWorkCell *wcell,
+eval_symbol_error (const ChafaWorkCell *wcell,
                    const ChafaSymbol *sym, SymbolEval *eval)
 {
     const guint8 *covp = (guint8 *) &sym->coverage [0];
     gint error;
 
-    if (canvas->have_alpha)
-    {
-        error = calc_error_with_alpha (wcell->pixels, &eval->colors, covp, canvas->config.color_space);
-    }
-    else
-    {
 #ifdef HAVE_SSE41_INTRINSICS
-        if (chafa_have_sse41 ())
-            error = calc_error_sse41 (wcell->pixels, &eval->colors, covp);
-        else
+    if (chafa_have_sse41 ())
+        error = calc_error_sse41 (wcell->pixels, &eval->colors, covp);
+    else
 #endif
-            error = calc_error_plain (wcell->pixels, &eval->colors, covp);
-    }
+        error = calc_error_plain (wcell->pixels, &eval->colors, covp);
 
     eval->error = error;
 }
 
 static void
-eval_symbol_error_wide (ChafaCanvas *canvas, const ChafaWorkCell *wcell_a, const ChafaWorkCell *wcell_b,
+eval_symbol_error_wide (const ChafaWorkCell *wcell_a, const ChafaWorkCell *wcell_b,
                         const ChafaSymbol2 *sym, SymbolEval2 *wide_eval)
 {
     SymbolEval eval [2];
@@ -255,8 +231,8 @@ eval_symbol_error_wide (ChafaCanvas *canvas, const ChafaWorkCell *wcell_a, const
     eval [0].colors = wide_eval->colors;
     eval [1].colors = wide_eval->colors;
 
-    eval_symbol_error (canvas, wcell_a, &sym->sym [0], &eval [0]);
-    eval_symbol_error (canvas, wcell_b, &sym->sym [1], &eval [1]);
+    eval_symbol_error (wcell_a, &sym->sym [0], &eval [0]);
+    eval_symbol_error (wcell_b, &sym->sym [1], &eval [1]);
 
     wide_eval->error [0] = eval [0].error;
     wide_eval->error [1] = eval [1].error;
@@ -280,7 +256,7 @@ eval_symbol (ChafaCanvas *canvas, ChafaWorkCell *wcell, gint sym_index,
         eval_symbol_colors (canvas, wcell, sym, &eval);
     }
 
-    eval_symbol_error (canvas, wcell, sym, &eval);
+    eval_symbol_error (wcell, sym, &eval);
 
     if (eval.error < best_eval_inout->error)
     {
@@ -310,7 +286,7 @@ eval_symbol_wide (ChafaCanvas *canvas, ChafaWorkCell *wcell_a, ChafaWorkCell *wc
                                  &eval);
     }
 
-    eval_symbol_error_wide (canvas, wcell_a, wcell_b,
+    eval_symbol_error_wide (wcell_a, wcell_b,
                             sym2,
                             &eval);
 
@@ -658,7 +634,7 @@ apply_fill (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvasCell *ce
         col [2].ch [2] = (col [0].ch [2] * (64 - i) + col [1].ch [2] * i) / 64;
         col [2].ch [3] = (col [0].ch [3] * (64 - i) + col [1].ch [3] * i) / 64;
 
-        error = chafa_color_diff_slow (&mean, &col [2], canvas->config.color_space);
+        error = chafa_color_diff_fast (&mean, &col [2]);
         if (error < best_error)
         {
             /* In FGBG mode there's no way to invert or set the BG color, so

@@ -135,15 +135,9 @@ G_STMT_START { \
   + ((gint) (col_b)->ch [1] - (gint) (col_a)->ch [1]) * ((gint) (col_b)->ch [1] - (gint) (col_a)->ch [1]) \
   + ((gint) (col_b)->ch [2] - (gint) (col_a)->ch [2]) * ((gint) (col_b)->ch [2] - (gint) (col_a)->ch [2]))
 
-/* Required to get alpha right */
-gint chafa_color_diff_slow (const ChafaColor *col_a, const ChafaColor *col_b, ChafaColorSpace color_space) G_GNUC_PURE;
-
 void chafa_color_accum_div_scalar (ChafaColorAccum *color, gint scalar);
 
 void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
-
-/* Ratio is in the range 0-1000 */
-void chafa_color_mix (ChafaColor *out, const ChafaColor *a, const ChafaColor *b, gint ratio);
 
 /* Takes values 0-255 for r, g, b and returns a universal palette index 0-255 */
 void chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
@@ -158,7 +152,7 @@ void chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, 
 void chafa_pick_color_8 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
 
 /* Takes values 0-255 for r, g, b and returns CHAFA_PALETTE_INDEX_FG or CHAFA_PALETTE_INDEX_BG */
-void chafa_pick_color_fgbg (const ChafaColor *color, ChafaColorSpace color_space,
+void chafa_pick_color_fgbg (const ChafaColor *color,
                             const ChafaColor *fg_color, const ChafaColor *bg_color,
                             ChafaColorCandidates *candidates);
 

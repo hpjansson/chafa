@@ -641,16 +641,15 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
         if (!candidates)
             candidates = &candidates_temp;
 
-#if 0
-        /* Transparency */
-
-        /* NOTE: Disabled because chafa_pick_color_*() deal
-         * with transparency */
         if (color->ch [3] < palette->alpha_threshold)
-            return palette->transparent_index;
-#endif
-
-        if (palette->type == CHAFA_PALETTE_TYPE_FIXED_256)
+        {
+            /* Transparency */
+            candidates->index [0] = palette->transparent_index;
+            candidates->error [0] = 0;
+            candidates->index [1] = palette->transparent_index;
+            candidates->error [1] = 0;
+        }
+        else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_256)
             chafa_pick_color_256 (color, color_space, candidates);
         else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_240)
             chafa_pick_color_240 (color, color_space, candidates);
@@ -659,7 +658,7 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
         else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_8)
             chafa_pick_color_8 (color, color_space, candidates);
         else /* CHAFA_PALETTE_TYPE_FIXED_FGBG */
-            chafa_pick_color_fgbg (color, color_space,
+            chafa_pick_color_fgbg (color,
                                    &palette->colors [CHAFA_PALETTE_INDEX_FG].col [color_space],
                                    &palette->colors [CHAFA_PALETTE_INDEX_BG].col [color_space],
                                    candidates);
