@@ -694,9 +694,9 @@ chafa_palette_lookup_with_error (const ChafaPalette *palette, ChafaColorSpace co
 
     if (error_inout)
     {
-        compensated_color.ch [0] = ((gint16) color.ch [0]) + ((error_inout->ch [0] * 0.9) / 16);
-        compensated_color.ch [1] = ((gint16) color.ch [1]) + ((error_inout->ch [1] * 0.9) / 16);
-        compensated_color.ch [2] = ((gint16) color.ch [2]) + ((error_inout->ch [2] * 0.9) / 16);
+        compensated_color.ch [0] = ((gint16) color.ch [0]) + ((error_inout->ch [0] * 0.9f) / 16);
+        compensated_color.ch [1] = ((gint16) color.ch [1]) + ((error_inout->ch [1] * 0.9f) / 16);
+        compensated_color.ch [2] = ((gint16) color.ch [2]) + ((error_inout->ch [2] * 0.9f) / 16);
 
         color.ch [0] = CLAMP (compensated_color.ch [0], 0, 255);
         color.ch [1] = CLAMP (compensated_color.ch [1], 0, 255);
