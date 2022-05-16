@@ -120,8 +120,6 @@ ChafaColorCandidates;
 
 /* Internal API */
 
-void chafa_init_palette (void);
-
 guint32 chafa_pack_color (const ChafaColor *color) G_GNUC_PURE;
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);
 
@@ -138,25 +136,6 @@ G_STMT_START { \
 void chafa_color_accum_div_scalar (ChafaColorAccum *color, gint scalar);
 
 void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 0-255 */
-void chafa_pick_color_256 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 16-255 */
-void chafa_pick_color_240 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 0-15 */
-void chafa_pick_color_16 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns a universal palette index 0-7 */
-void chafa_pick_color_8 (const ChafaColor *color, ChafaColorSpace color_space, ChafaColorCandidates *candidates);
-
-/* Takes values 0-255 for r, g, b and returns CHAFA_PALETTE_INDEX_FG or CHAFA_PALETTE_INDEX_BG */
-void chafa_pick_color_fgbg (const ChafaColor *color,
-                            const ChafaColor *fg_color, const ChafaColor *bg_color,
-                            ChafaColorCandidates *candidates);
-
-const ChafaColor *chafa_get_palette_color_256 (guint index, ChafaColorSpace color_space) G_GNUC_CONST;
 
 G_END_DECLS
 

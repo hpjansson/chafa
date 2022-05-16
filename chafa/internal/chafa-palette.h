@@ -49,6 +49,9 @@ typedef struct
 }
 ChafaPalette;
 
+/* Global init */
+void chafa_init_palette (void);
+
 void chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type);
 void chafa_palette_deinit (ChafaPalette *palette);
 
