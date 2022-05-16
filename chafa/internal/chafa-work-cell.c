@@ -322,7 +322,6 @@ work_cell_get_dominant_channels_for_symbol (ChafaWorkCell *wcell, const ChafaSym
     *fg_ch_out = best_ch [1];
 }
 
-/* colors_out must point to an array of two elements */
 void
 chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out)
 {
