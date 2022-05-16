@@ -27,11 +27,54 @@
 
 #define DEBUG(x)
 
-/* 256-color values */
+/* ---------------- *
+ * Color candidates *
+ * ---------------- */
+
+/* Some situations (like fill symbols) call for both a best and a second-best
+ * match. ChafaColorCandidates is used to track and return these. */
+
+static void
+init_candidates (ChafaColorCandidates *candidates)
+{
+    candidates->index [0] = candidates->index [1] = -1;
+    candidates->error [0] = candidates->error [1] = G_MAXINT;
+}
+
+static gboolean
+update_candidates (ChafaColorCandidates *candidates, gint index, gint error)
+{
+    if (error < candidates->error [0])
+    {
+        candidates->index [1] = candidates->index [0];
+        candidates->index [0] = index;
+        candidates->error [1] = candidates->error [0];
+        candidates->error [0] = error;
+        return TRUE;
+    }
+    else if (error < candidates->error [1])
+    {
+        candidates->index [1] = index;
+        candidates->error [1] = error;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* -------------------- *
+ * Fixed system palette *
+ * -------------------- */
+
 static const guint32 term_colors_256 [CHAFA_PALETTE_INDEX_MAX] =
 {
+    /* First 16 colors; these are usually set by the terminal and can vary quite a
+     * bit. We try to strike a balance. */
+
     0x000000, 0x800000, 0x007000, 0x707000, 0x000070, 0x700070, 0x007070, 0xc0c0c0,
-    /* 0x808080 -> */ 0x404040, 0xff0000, 0x00ff00, 0xffff00, 0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
+    0x404040, 0xff0000, 0x00ff00, 0xffff00, 0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
+
+    /* 240 universal colors; a 216-entry color cube followed by 24 grays */
 
     0x000000, 0x00005f, 0x000087, 0x0000af, 0x0000d7, 0x0000ff, 0x005f00, 0x005f5f,
     0x005f87, 0x005faf, 0x005fd7, 0x005fff, 0x008700, 0x00875f, 0x008787, 0x0087af,
@@ -78,9 +121,11 @@ static const guint32 term_colors_256 [CHAFA_PALETTE_INDEX_MAX] =
     0x585858, 0x626262, 0x6c6c6c, 0x767676, 0x808080, 0x8a8a8a, 0x949494, 0x9e9e9e,
     0xa8a8a8, 0xb2b2b2, 0xbcbcbc, 0xc6c6c6, 0xd0d0d0, 0xdadada, 0xe4e4e4, 0xeeeeee,
 
+    /* Special colors */
+
     0x808080,  /* Transparent */
-    0xffffff,  /* Foreground */
-    0x000000,  /* Background */
+    0xffffff,  /* Terminal's default foreground */
+    0x000000,  /* Terminal's default background */
 };
 
 static ChafaPaletteColor fixed_palette_256 [CHAFA_PALETTE_INDEX_MAX];
@@ -128,34 +173,6 @@ chafa_init_palette (void)
         color_cube_216_channel_index [i] = 5;
 
     palette_initialized = TRUE;
-}
-
-static void
-init_candidates (ChafaColorCandidates *candidates)
-{
-    candidates->index [0] = candidates->index [1] = -1;
-    candidates->error [0] = candidates->error [1] = G_MAXINT;
-}
-
-static gboolean
-update_candidates (ChafaColorCandidates *candidates, gint index, gint error)
-{
-    if (error < candidates->error [0])
-    {
-        candidates->index [1] = candidates->index [0];
-        candidates->index [0] = index;
-        candidates->error [1] = candidates->error [0];
-        candidates->error [0] = error;
-        return TRUE;
-    }
-    else if (error < candidates->error [1])
-    {
-        candidates->index [1] = index;
-        candidates->error [1] = error;
-        return TRUE;
-    }
-
-    return FALSE;
 }
 
 static gint
@@ -306,7 +323,9 @@ pick_color_fixed_fgbg (const ChafaColor *color,
     update_candidates (candidates, CHAFA_PALETTE_INDEX_BG, error);
 }
 
-/* FIXME: Refactor old color selection code into a common palette framework */
+/* --------------------------------- *
+ * Quantization for dynamic palettes *
+ * --------------------------------- */
 
 static gint
 find_dominant_channel (gconstpointer pixels, gint n_pixels)
@@ -755,6 +774,10 @@ clean_up (ChafaPalette *palette_out)
     }
 }
 
+/* --- *
+ * API *
+ * --- */
+
 void
 chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
 {
@@ -831,6 +854,7 @@ chafa_palette_copy (const ChafaPalette *src, ChafaPalette *dest)
 }
 
 /* pixels must point to RGBA8888 data to sample */
+/* FIXME: Rowstride etc? */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
                         ChafaColorSpace color_space)
