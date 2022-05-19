@@ -785,6 +785,7 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
 
     chafa_init_palette ();
     palette_out->type = type;
+    palette_out->transparent_index = CHAFA_PALETTE_INDEX_TRANSPARENT;
 
     for (i = 0; i < CHAFA_PALETTE_INDEX_MAX; i++)
     {
@@ -792,34 +793,35 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
         palette_out->colors [i].col [CHAFA_COLOR_SPACE_DIN99D] = *get_fixed_palette_color (i, CHAFA_COLOR_SPACE_DIN99D);
     }
 
-    palette_out->transparent_index = CHAFA_PALETTE_INDEX_TRANSPARENT;
+    switch (type)
+    {
+        case CHAFA_PALETTE_TYPE_FIXED_FGBG:
+            palette_out->first_color = CHAFA_PALETTE_INDEX_FG;
+            palette_out->n_colors = 2;
+            break;
 
-    palette_out->first_color = 0;
-    palette_out->n_colors = 256;
+        case CHAFA_PALETTE_TYPE_FIXED_8:
+            palette_out->n_colors = 8;
+            break;
 
-    if (type == CHAFA_PALETTE_TYPE_FIXED_240)
-    {
-        palette_out->first_color = 16;
-        palette_out->n_colors = 240;
-    }
-    else if (type == CHAFA_PALETTE_TYPE_FIXED_16)
-    {
-        palette_out->n_colors = 16;
-    }
-    else if (type == CHAFA_PALETTE_TYPE_FIXED_8)
-    {
-        palette_out->n_colors = 8;
-    }
-    else if (type == CHAFA_PALETTE_TYPE_FIXED_FGBG)
-    {
-        palette_out->first_color = CHAFA_PALETTE_INDEX_FG;
-        palette_out->n_colors = 2;
-    }
+        case CHAFA_PALETTE_TYPE_FIXED_16:
+            palette_out->n_colors = 16;
+            break;
 
-    if (palette_out->type == CHAFA_PALETTE_TYPE_DYNAMIC_256)
-    {
-        for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
-            chafa_color_table_init (&palette_out->table [i]);
+        case CHAFA_PALETTE_TYPE_FIXED_240:
+            palette_out->first_color = 16;
+            palette_out->n_colors = 240;
+            break;
+
+        case CHAFA_PALETTE_TYPE_FIXED_256:
+            palette_out->first_color = 0;
+            palette_out->n_colors = 256;
+            break;
+
+        case CHAFA_PALETTE_TYPE_DYNAMIC_256:
+            for (i = 0; i < CHAFA_COLOR_SPACE_MAX; i++)
+                chafa_color_table_init (&palette_out->table [i]);
+            break;
     }
 }
 
@@ -950,8 +952,8 @@ chafa_palette_lookup_nearest (const ChafaPalette *palette, ChafaColorSpace color
         {
             /* Transparency */
             candidates->index [0] = palette->transparent_index;
-            candidates->error [0] = 0;
             candidates->index [1] = palette->transparent_index;
+            candidates->error [0] = 0;
             candidates->error [1] = 0;
         }
         else if (palette->type == CHAFA_PALETTE_TYPE_FIXED_256)
