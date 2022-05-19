@@ -135,11 +135,10 @@ AS_IF([test "$with_tools" != no], [
     ,
     with_webp=yes)
   AS_IF([test "$with_webp" != no], [
-    PKG_CHECK_MODULES(WEBP, [libwebpdecoder],,
-      [PKG_CHECK_MODULES(WEBP, [libwebp],,
-        missing_rpms="$missing_rpms libwebp-devel"
-        missing_debs="$missing_debs libwebp-dev"
-        with_webp=no)])])
+    PKG_CHECK_MODULES(WEBP, [libwebpdemux],,
+      missing_rpms="$missing_rpms libwebp-devel"
+      missing_debs="$missing_debs libwebp-dev"
+      with_webp=no)])
   AS_IF([test "$with_webp" != no], [AC_DEFINE([HAVE_WEBP], [1], [Define if we have WebP support.])])
 ])
 

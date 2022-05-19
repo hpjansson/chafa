@@ -28,11 +28,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <webp/decode.h>
+#include <webp/demux.h>
 
 #include <chafa.h>
 #include "webp-loader.h"
 
+#define DEFAULT_FRAME_DURATION_MS 50
 #define BYTES_PER_PIXEL 4
 
 struct WebpLoader
@@ -40,9 +41,12 @@ struct WebpLoader
     FileMapping *mapping;
     const guint8 *file_data;
     size_t file_data_len;
-    gpointer frame_data;
     gint width, height;
     ChafaPixelType pixel_type;
+    WebPAnimDecoder *anim_dec;
+    gpointer this_frame_data, next_frame_data;
+    gint this_timestamp, next_timestamp;
+    guint is_animation : 1;
 };
 
 static WebpLoader *
@@ -56,10 +60,14 @@ webp_loader_new_from_mapping (FileMapping *mapping)
 {
     WebpLoader *loader = NULL;
     gboolean success = FALSE;
-    uint8_t *frame_data = NULL;
     WebPBitstreamFeatures features;
+    WebPAnimDecoderOptions anim_dec_options;
+    WebPData webp_data;
+    WebPAnimInfo anim_info;
 
     g_return_val_if_fail (mapping != NULL, NULL);
+
+    /* Basic validation and info extraction */
 
     if (!file_mapping_has_magic (mapping, 0, "RIFF", 4)
         || !file_mapping_has_magic (mapping, 8, "WEBP", 4))
@@ -78,19 +86,39 @@ webp_loader_new_from_mapping (FileMapping *mapping)
     if (WebPGetFeatures (loader->file_data, loader->file_data_len, &features) != VP8_STATUS_OK)
         goto out;
 
-    if (features.width < 1 || features.width >= (1 << 28)
-        || features.height < 1 || features.height >= (1 << 28)
-        || (features.width * (guint64) features.height >= (1 << 29)))
+    /* Set up the animation decoder */
+
+    webp_data.bytes = loader->file_data;
+    webp_data.size = loader->file_data_len;
+
+    WebPAnimDecoderOptionsInit (&anim_dec_options);
+    anim_dec_options.color_mode = MODE_RGBA;
+    anim_dec_options.use_threads = TRUE;
+
+    loader->anim_dec = WebPAnimDecoderNew (&webp_data, &anim_dec_options);
+    if (!loader->anim_dec)
         goto out;
 
-    frame_data = WebPDecodeRGBA (loader->file_data, loader->file_data_len,
-                                 &features.width, &features.height);
-    if (!frame_data)
+    /* Get animation info and validate */
+
+    if (!WebPAnimDecoderGetInfo (loader->anim_dec, &anim_info))
         goto out;
 
-    loader->frame_data = frame_data;
-    loader->width = features.width;
-    loader->height = features.height;
+    if (anim_info.canvas_width < 1 || anim_info.canvas_width >= (1 << 28)
+        || anim_info.canvas_height < 1 || anim_info.canvas_height >= (1 << 28)
+        || (anim_info.canvas_width * (guint64) anim_info.canvas_height >= (1 << 29)))
+        goto out;
+
+    if (anim_info.frame_count < 1)
+        goto out;
+
+    /* Store parameters */
+
+    if (anim_info.frame_count > 1)
+        loader->is_animation = TRUE;
+
+    loader->width = anim_info.canvas_width;
+    loader->height = anim_info.canvas_height;
 
     /* An opaque image with unassociated alpha set to 0xff is equivalent to
      * premultiplied alpha. This will speed up resampling later on. */
@@ -101,9 +129,6 @@ webp_loader_new_from_mapping (FileMapping *mapping)
 out:
     if (!success)
     {
-        if (frame_data)
-            WebPFree (frame_data);
-
         if (loader)
         {
             g_free (loader);
@@ -117,11 +142,16 @@ out:
 void
 webp_loader_destroy (WebpLoader *loader)
 {
+    if (loader->anim_dec)
+        WebPAnimDecoderDelete (loader->anim_dec);
+
     if (loader->mapping)
         file_mapping_destroy (loader->mapping);
 
-    if (loader->frame_data)
-        WebPFree (loader->frame_data);
+    g_free (loader->this_frame_data);
+    loader->this_frame_data = NULL;
+    g_free (loader->next_frame_data);
+    loader->next_frame_data = NULL;
 
     g_free (loader);
 }
@@ -131,7 +161,29 @@ webp_loader_get_is_animation (WebpLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, 0);
 
-    return FALSE;
+    return loader->is_animation;
+}
+
+static gboolean
+decode_next_frame (WebpLoader *loader, uint8_t **buf, int *timestamp)
+{
+    return WebPAnimDecoderGetNext (loader->anim_dec, buf, timestamp);
+}
+
+static gboolean
+maybe_decode_frame (WebpLoader *loader)
+{
+    uint8_t *buf;
+
+    if (loader->this_frame_data)
+        return TRUE;
+
+    if (decode_next_frame (loader, &buf, &loader->this_timestamp))
+    {
+        loader->this_frame_data = g_memdup (buf, loader->width * BYTES_PER_PIXEL * loader->height);
+    }
+
+    return loader->this_frame_data ? TRUE : FALSE;
 }
 
 gconstpointer
@@ -139,6 +191,9 @@ webp_loader_get_frame_data (WebpLoader *loader, ChafaPixelType *pixel_type_out,
                             gint *width_out, gint *height_out, gint *rowstride_out)
 {
     g_return_val_if_fail (loader != NULL, NULL);
+
+    if (!maybe_decode_frame (loader))
+        return NULL;
 
     if (pixel_type_out)
         *pixel_type_out = loader->pixel_type;
@@ -149,21 +204,44 @@ webp_loader_get_frame_data (WebpLoader *loader, ChafaPixelType *pixel_type_out,
     if (rowstride_out)
         *rowstride_out = loader->width * BYTES_PER_PIXEL;
 
-    return loader->frame_data;
+    return loader->this_frame_data;
 }
 
 gint
 webp_loader_get_frame_delay (WebpLoader *loader)
 {
+    uint8_t *buf;
+
     g_return_val_if_fail (loader != NULL, 0);
 
-    return 0;
+    /* The libwebp API complicates this a little. We need to load the next frame
+     * in advance to know how long to hold this frame. */
+
+    maybe_decode_frame (loader);
+
+    if (!loader->next_frame_data)
+    {
+        if (decode_next_frame (loader, &buf, &loader->next_timestamp))
+        {
+            loader->next_frame_data = g_memdup (buf, loader->width * BYTES_PER_PIXEL * loader->height);
+        }
+    }
+
+    return loader->next_frame_data ?
+        (loader->next_timestamp - loader->this_timestamp)
+        : DEFAULT_FRAME_DURATION_MS;
 }
 
 void
 webp_loader_goto_first_frame (WebpLoader *loader)
 {
     g_return_if_fail (loader != NULL);
+
+    WebPAnimDecoderReset (loader->anim_dec);
+    g_free (loader->this_frame_data);
+    loader->this_frame_data = NULL;
+    g_free (loader->next_frame_data);
+    loader->next_frame_data = NULL;
 }
 
 gboolean
@@ -171,5 +249,15 @@ webp_loader_goto_next_frame (WebpLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, FALSE);
 
-    return FALSE;
+    g_free (loader->this_frame_data);
+    loader->this_frame_data = loader->next_frame_data;
+    loader->next_frame_data = NULL;
+
+    if (loader->this_frame_data)
+    {
+        loader->this_timestamp = loader->next_timestamp;
+        return TRUE;
+    }
+
+    return WebPAnimDecoderHasMoreFrames (loader->anim_dec) ? TRUE : FALSE;
 }
