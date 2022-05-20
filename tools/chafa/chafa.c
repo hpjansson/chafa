@@ -1981,6 +1981,10 @@ proc_init (void)
     sa.sa_flags = SA_RESETHAND;
 
     sigaction (SIGINT, &sa, NULL);
+
+    /* Chafa may create and destroy GThreadPools multiple times while rendering
+     * an image. This reduces thread churn and saves a decent amount of CPU. */
+    g_thread_pool_set_max_unused_threads (-1);
 }
 
 int
