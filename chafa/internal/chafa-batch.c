@@ -33,7 +33,7 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
     gint n_threads;
     gint n_units;
     gfloat units_per_batch;
-    gfloat ofs [2] = { .0, .0 };
+    gfloat ofs [2] = { .0f, .0f };
     gint i;
 
     g_assert (n_batches >= 1);
