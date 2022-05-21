@@ -293,8 +293,8 @@ print_summary (void)
     "      --bg=COLOR     Background color of display (color name or hex).\n"
     "  -C, --center=BOOL  Center images [on, off]. Defaults to off.\n"
     "      --clear        Clear screen before processing each file.\n"
-    "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16, 240, 256,\n"
-    "                     full]. Defaults to full (24-bit).\n"
+    "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16/8, 16, 240,\n"
+    "                     256, full]. Defaults to full (24-bit).\n"
     "      --color-extractor=EXTR  Method for extracting color from an area\n"
     "                     [average, median]. Average is the default.\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
@@ -399,10 +399,13 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
         options.mode = CHAFA_CANVAS_MODE_FGBG;
     else if (!g_ascii_strcasecmp (value, "2"))
         options.mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
-    else if (!g_ascii_strcasecmp (value, "16"))
-        options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
     else if (!g_ascii_strcasecmp (value, "8"))
         options.mode = CHAFA_CANVAS_MODE_INDEXED_8;
+    else if (!g_ascii_strcasecmp (value, "16-8")
+             || !g_ascii_strcasecmp (value, "16/8"))
+        options.mode = CHAFA_CANVAS_MODE_INDEXED_16FG_8BG;
+    else if (!g_ascii_strcasecmp (value, "16"))
+        options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
     else if (!g_ascii_strcasecmp (value, "240"))
         options.mode = CHAFA_CANVAS_MODE_INDEXED_240;
     else if (!g_ascii_strcasecmp (value, "256"))
@@ -417,7 +420,7 @@ parse_colors_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Colors must be one of [none, 2, 16, 240, 256, full].");
+                     "Colors must be one of [none, 2, 8, 16/8, 16, 240, 256, full].");
         result = FALSE;
     }
 
