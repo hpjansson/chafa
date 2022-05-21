@@ -68,8 +68,9 @@ struct ChafaCanvas
      * (ChafaSixelCanvas *), (ChafaKittyCanvas *), (ChafaIterm2Canvas *) */
     gpointer pixel_canvas;
 
-    /* Our palette. Kind of a big structure, so it goes last. */
-    ChafaPalette palette;
+    /* Our palettes. Kind of a big structure, so they go last. */
+    ChafaPalette fg_palette;
+    ChafaPalette bg_palette;
 };
 
 G_END_DECLS
