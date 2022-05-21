@@ -620,6 +620,14 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
 { return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg); }
 
+#define DEFINE_EMIT_SEQ_1_8fg_guint8(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
+{ return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg + 30); }
+
+#define DEFINE_EMIT_SEQ_1_8bg_guint8(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
+{ return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg + 40); }
+
 #define DEFINE_EMIT_SEQ_1_aix16fg_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg) \
 { return emit_seq_1_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg + (arg < 8 ? 30 : (90 - 8))); }
@@ -639,6 +647,10 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 #define DEFINE_EMIT_SEQ_2_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1) \
 { return emit_seq_2_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1); }
+
+#define DEFINE_EMIT_SEQ_2_8fgbg_guint8(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1) \
+{ return emit_seq_2_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0 + 30, arg1 + 40); }
 
 #define DEFINE_EMIT_SEQ_2_aix16fgbg_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1) \

@@ -1012,6 +1012,83 @@ CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, void
  **/
 CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, void)
 
+/* --- Available in 1.12+ --- */
+
+#undef CHAFA_TERM_SEQ_AVAILABILITY
+#define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_12
+
+/**
+ * chafa_term_info_emit_bold:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BOLD.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.12
+ **/
+CHAFA_TERM_SEQ_DEF(bold, BOLD, 0, none, void)
+
+/**
+ * chafa_term_info_emit_set_color_fg_8:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @pen: Pen number, 0-7
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FG_8.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.12
+ **/
+CHAFA_TERM_SEQ_DEF(set_color_fg_8, SET_COLOR_FG_8, 1, 8fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+
+/**
+ * chafa_term_info_emit_set_color_bg_8:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @pen: Pen number, 0-7
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_BG_8.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.12
+ **/
+CHAFA_TERM_SEQ_DEF(set_color_bg_8, SET_COLOR_BG_8, 1, 8bg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+
+/**
+ * chafa_term_info_emit_set_color_fgbg_8:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @fg_pen: Foreground pen number, 0-7
+ * @bg_pen: Background pen number, 0-7
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_COLOR_FGBG_8.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.12
+ **/
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_8, SET_COLOR_FGBG_8, 2, 8fgbg, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

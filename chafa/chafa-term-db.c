@@ -54,6 +54,7 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_RESET_TERMINAL_HARD, "\033c" },
     { CHAFA_TERM_SEQ_RESET_ATTRIBUTES, "\033[0m" },
     { CHAFA_TERM_SEQ_CLEAR, "\033[2J" },
+    { CHAFA_TERM_SEQ_BOLD, "\033[1m" },
     { CHAFA_TERM_SEQ_INVERT_COLORS, "\033[7m" },
     { CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT, "\033[0H" },
     { CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT, "\033[9999;1H" },
@@ -129,11 +130,21 @@ static const SeqStr color_16_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
+static const SeqStr color_8_seqs [] =
+{
+    { CHAFA_TERM_SEQ_SET_COLOR_FG_8, "\033[%1m" },
+    { CHAFA_TERM_SEQ_SET_COLOR_BG_8, "\033[%1m" },
+    { CHAFA_TERM_SEQ_SET_COLOR_FGBG_8, "\033[%1;%2m" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
 static const SeqStr *color_direct_list [] =
 {
     color_direct_seqs,
     color_256_seqs,
     color_16_seqs,
+    color_8_seqs,
     NULL
 };
 
@@ -141,12 +152,14 @@ static const SeqStr *color_256_list [] =
 {
     color_256_seqs,
     color_16_seqs,
+    color_8_seqs,
     NULL
 };
 
 static const SeqStr *color_16_list [] =
 {
     color_16_seqs,
+    color_8_seqs,
     NULL
 };
 
@@ -165,6 +178,7 @@ static const SeqStr color_fbterm_seqs [] =
 static const SeqStr *color_fbterm_list [] =
 {
     color_fbterm_seqs,
+    color_8_seqs,
     NULL
 };
 
@@ -192,6 +206,7 @@ static const SeqStr *fallback_list [] =
     color_direct_seqs,
     color_256_seqs,
     color_16_seqs,
+    color_8_seqs,
     sixel_seqs,
     kitty_seqs,
     iterm2_seqs,
