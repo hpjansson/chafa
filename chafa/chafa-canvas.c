@@ -1184,6 +1184,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
                 dither_intensity = DITHER_BASE_INTENSITY_256C;
                 break;
             case CHAFA_CANVAS_MODE_INDEXED_16:
+            case CHAFA_CANVAS_MODE_INDEXED_16FG_8BG:
                 dither_intensity = DITHER_BASE_INTENSITY_16C;
                 break;
             case CHAFA_CANVAS_MODE_INDEXED_8:
