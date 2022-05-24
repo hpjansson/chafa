@@ -706,7 +706,7 @@ emit_attributes_16fg_8bg (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        out = handle_attrs_with_reuse (ctx, out, fg, bg, inverted, fg > 7 ? TRUE : FALSE);
+        out = handle_attrs_with_reuse (ctx, out, fg, bg, inverted, fg > 7 && fg < 256 ? TRUE : FALSE);
 
         if (fg != ctx->cur_fg)
         {
@@ -756,7 +756,7 @@ emit_attributes_16fg_8bg (PrintCtx *ctx, gchar *out,
     ctx->cur_fg = fg;
     ctx->cur_bg = bg;
     ctx->cur_inverted = inverted;
-    ctx->cur_bold = fg > 7 ? TRUE : FALSE;
+    ctx->cur_bold = fg > 7 && fg < 256 ? TRUE : FALSE;
     return out;
 }
 
