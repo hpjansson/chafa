@@ -25,8 +25,6 @@
 #include "internal/chafa-private.h"
 #include "internal/smolscale/smolscale.h"
 
-#define DEBUG(x)
-
 /* Max number of candidates to return from chafa_symbol_map_find_candidates() */
 #define N_CANDIDATES_MAX 8
 
@@ -266,31 +264,6 @@ bitmap_to_argb (guint64 bitmap, guint8 *argb, gint rowstride)
     }
 }
 
-G_GNUC_UNUSED static void
-dump_coverage (const guint8 *cov, gint width, gint height)
-{
-    gint i;
-
-    for (i = 0; i < width * height; i++)
-    {
-        if (cov [i] > 127)
-        {
-            DEBUG (g_printerr ("@@"));
-        }
-        else
-        {
-            DEBUG (g_printerr ("--"));
-        }
-
-        if (!((i + 1) % width))
-        {
-            DEBUG (g_printerr ("\n"));
-        }
-    }
-
-    DEBUG (g_printerr ("\n"));
-}
-
 static guint64
 glyph_to_bitmap (gint width, gint height,
                  gint rowstride,
@@ -314,8 +287,6 @@ glyph_to_bitmap (gint width, gint height,
 
     pixels_to_coverage (scaled_pixels, pixel_format, cov, CHAFA_SYMBOL_N_PIXELS);
     sharpen_coverage (cov, sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS);
-    DEBUG (dump_coverage (cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS));
-    DEBUG (dump_coverage (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS));
     bitmap = coverage_to_bitmap (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS);
 
     return bitmap;
@@ -345,8 +316,6 @@ glyph_to_bitmap_wide (gint width, gint height,
 
     pixels_to_coverage (scaled_pixels, pixel_format, cov, CHAFA_SYMBOL_N_PIXELS * 2);
     sharpen_coverage (cov, sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS);
-    DEBUG (dump_coverage (cov, CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS));
-    DEBUG (dump_coverage (sharpened_cov, CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS));
 
     *left_bitmap_out = coverage_to_bitmap (sharpened_cov,
                                            CHAFA_SYMBOL_WIDTH_PIXELS * 2);
