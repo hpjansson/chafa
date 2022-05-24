@@ -459,12 +459,14 @@ G_GNUC_WARN_UNUSED_RESULT static gchar *
 handle_inverted_with_reuse (PrintCtx *ctx, gchar *out,
                             guint32 fg, guint32 bg, gboolean inverted)
 {
-    /* We must check fg_only_enabled because we can run into the situation where
-     * fg is set to transparent. */
-    if (!ctx->canvas->config.fg_only_enabled
-        && ((ctx->cur_inverted && !inverted)
-            || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
-            || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)))
+    /* In FG-only mode, we can't use inverse color or bold because the
+     * attribute reset would mess with the background color. */
+    if (ctx->canvas->config.fg_only_enabled)
+        return out;
+
+    if ((ctx->cur_inverted && !inverted)
+        || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
+        || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
     {
         out = flush_chars (ctx, out);
         out = reset_attributes (ctx, out);
@@ -484,13 +486,15 @@ handle_attrs_with_reuse (PrintCtx *ctx, gchar *out,
                          guint32 fg, guint32 bg,
                          gboolean inverted, gboolean bold)
 {
-    /* We must check fg_only_enabled because we can run into the situation where
-     * fg is set to transparent. */
-    if (!ctx->canvas->config.fg_only_enabled
-        && ((ctx->cur_inverted && !inverted)
-            || (ctx->cur_bold && !bold)
-            || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
-            || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)))
+    /* In FG-only mode, we can't use inverse color or bold because the
+     * attribute reset would mess with the background color. */
+    if (ctx->canvas->config.fg_only_enabled)
+        return out;
+
+    if ((ctx->cur_inverted && !inverted)
+        || (ctx->cur_bold && !bold)
+        || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
+        || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
     {
         out = flush_chars (ctx, out);
         out = reset_attributes (ctx, out);
