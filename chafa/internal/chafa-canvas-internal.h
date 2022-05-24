@@ -52,6 +52,10 @@ struct ChafaCanvas
     /* Whether to extract symbol colors; FALSE if using default colors */
     guint extract_colors : 1;
 
+    /* Whether to quantize colors before calculating error (slower, but
+     * yields better results in palettized modes, especially 16/8) */
+    guint use_quantized_error : 1;
+
     ChafaColorPair default_colors;
     guint work_factor_int;
 
