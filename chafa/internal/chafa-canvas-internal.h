@@ -59,6 +59,12 @@ struct ChafaCanvas
      * space, but could be something else depending on the symbol map. */
     gunichar blank_char;
 
+    /* Character to use in cells where fg color == bg color and the color
+     * is only legal in FG. Typically 0x2588 (solid block), but could be
+     * something else depending on the symbol map. Can be zero if there is
+     * no good candidate! */
+    gunichar solid_char;
+
     ChafaCanvasConfig config;
 
     /* Used when setting pixel data */

@@ -1082,6 +1082,45 @@ find_best_blank_char (ChafaCanvas *canvas)
     return best_char;
 }
 
+static gunichar
+find_best_solid_char (ChafaCanvas *canvas)
+{
+    ChafaCandidate candidates [N_CANDIDATES_MAX];
+    gint n_candidates;
+    gunichar best_char = 0;
+
+    /* Try solid block (0x2588) first */
+    if (chafa_symbol_map_has_symbol (&canvas->config.symbol_map, 0x2588)
+        || chafa_symbol_map_has_symbol (&canvas->config.fill_symbol_map, 0x2588))
+        return 0x2588;
+
+    n_candidates = N_CANDIDATES_MAX;
+    chafa_symbol_map_find_fill_candidates (&canvas->config.fill_symbol_map,
+                                           64,
+                                           FALSE,
+                                           candidates,
+                                           &n_candidates);
+    if (n_candidates > 0 && candidates [0].hamming_distance <= 32)
+    {
+        best_char = canvas->config.fill_symbol_map.symbols [candidates [0].symbol_index].c;
+    }
+    else
+    {
+        n_candidates = N_CANDIDATES_MAX;
+        chafa_symbol_map_find_candidates (&canvas->config.symbol_map,
+                                          0xffffffffffffffff,
+                                          FALSE,
+                                          candidates,
+                                          &n_candidates);
+        if (n_candidates > 0 && candidates [0].hamming_distance <= 32)
+        {
+            best_char = canvas->config.symbol_map.symbols [candidates [0].symbol_index].c;
+        }
+    }
+
+    return best_char;
+}
+
 /**
  * chafa_canvas_new:
  * @config: Configuration to use or %NULL for hardcoded defaults
@@ -1157,6 +1196,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     chafa_symbol_map_prepare (&canvas->config.fill_symbol_map);
 
     canvas->blank_char = find_best_blank_char (canvas);
+    canvas->solid_char = find_best_solid_char (canvas);
 
     /* In truecolor mode we don't support any fancy color spaces for now, since
      * we'd have to convert back to RGB space when emitting control codes, and
