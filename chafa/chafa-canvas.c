@@ -753,7 +753,6 @@ static gint
 update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cell_out)
 {
     gunichar sym = 0;
-    ChafaColorCandidates ccand;
     ChafaColorPair color_pair;
     gint sym_error;
 
@@ -773,10 +772,12 @@ update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cel
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_8
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
     {
-        chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_FG], &ccand);
-        cell_out->fg_color = ccand.index [0];
-        chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_BG], &ccand);
-        cell_out->bg_color = ccand.index [0];
+        cell_out->fg_color =
+            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
+                                          &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
+        cell_out->bg_color =
+            chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
+                                          &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16FG_8BG)
     {
@@ -785,10 +786,12 @@ update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cel
 
         /* TODO: Investigate if we could just force evaluation of the solid symbol instead. */
 
-        chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_FG], &ccand);
-        cell_out->fg_color = ccand.index [0];
-        chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_BG], &ccand);
-        cell_out->bg_color = ccand.index [0];
+        cell_out->fg_color =
+            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
+                                          &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
+        cell_out->bg_color =
+            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
+                                          &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
 
         if (cell_out->fg_color == cell_out->bg_color && cell_out->fg_color >= 8 && cell_out->fg_color <= 15)
         {
@@ -837,7 +840,6 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
                    gint *error_a_out, gint *error_b_out)
 {
     gunichar sym = 0;
-    ChafaColorCandidates ccand;
     ChafaColorPair color_pair;
 
     *error_a_out = *error_b_out = SYMBOL_ERROR_MAX;
@@ -863,10 +865,12 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_8
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
     {
-        chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_FG], &ccand);
-        cell_a_out->fg_color = cell_b_out->fg_color = ccand.index [0];
-        chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space, &color_pair.colors [CHAFA_COLOR_PAIR_BG], &ccand);
-        cell_a_out->bg_color = cell_b_out->bg_color = ccand.index [0];
+        cell_a_out->fg_color = cell_b_out->fg_color =
+            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
+                                          &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
+        cell_a_out->bg_color = cell_b_out->bg_color =
+            chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
+                                          &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
     }
     else
     {
