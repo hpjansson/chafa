@@ -749,6 +749,49 @@ done:
     cell->c = canvas->config.fill_symbol_map.symbols [sym_cand.symbol_index].c;
 }
 
+static void
+quantize_colors_for_cell_16_8 (ChafaCanvas *canvas, ChafaCanvasCell *cell,
+                               const ChafaColorPair *color_pair)
+{
+    /* First pick both colors from FG palette to see if we should eliminate the FG/BG
+     * distinction. This is necessary to prevent artifacts in solid color (fg-bg-fg-bg etc). */
+
+    /* TODO: Investigate if we could just force evaluation of the solid symbol instead. */
+
+    cell->fg_color =
+        chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
+                                      &color_pair->colors [CHAFA_COLOR_PAIR_FG], NULL);
+    cell->bg_color =
+        chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
+                                      &color_pair->colors [CHAFA_COLOR_PAIR_BG], NULL);
+
+    if (cell->fg_color == cell->bg_color && cell->fg_color >= 8 && cell->fg_color <= 15)
+    {
+        /* Chosen FG and BG colors should ideally be the same, but BG palette does not allow it.
+         * Use the solid char with FG color if we have one, else fall back to using the closest
+         * match from the BG palette for both FG and BG. */
+
+        if (canvas->solid_char)
+        {
+            cell->c = canvas->solid_char;
+            cell->bg_color =
+                chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
+                                              &color_pair->colors [CHAFA_COLOR_PAIR_FG], NULL);
+        }
+        else
+        {
+            cell->fg_color = cell->bg_color =
+                chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
+                                              &color_pair->colors [CHAFA_COLOR_PAIR_FG], NULL);
+        }
+    }
+    else
+    {
+        cell->bg_color = chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
+                                                       &color_pair->colors [CHAFA_COLOR_PAIR_BG], NULL);
+    }
+}
+
 static gint
 update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cell_out)
 {
@@ -781,43 +824,7 @@ update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cel
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16FG_8BG)
     {
-        /* First pick both colors from FG palette to see if we should eliminate the FG/BG
-         * distinction. This is necessary to prevent artifacts in solid color (fg-bg-fg-bg etc). */
-
-        /* TODO: Investigate if we could just force evaluation of the solid symbol instead. */
-
-        cell_out->fg_color =
-            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
-                                          &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
-        cell_out->bg_color =
-            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
-                                          &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
-
-        if (cell_out->fg_color == cell_out->bg_color && cell_out->fg_color >= 8 && cell_out->fg_color <= 15)
-        {
-            /* Chosen FG and BG colors should ideally be the same, but BG palette does not allow it.
-             * Use the solid char with FG color if we have one, else fall back to using the closest
-             * match from the BG palette for both FG and BG. */
-
-            if (canvas->solid_char)
-            {
-                cell_out->c = canvas->solid_char;
-                cell_out->bg_color =
-                    chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
-                                                  &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
-            }
-            else
-            {
-                cell_out->fg_color = cell_out->bg_color =
-                    chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
-                                                  &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
-            }
-        }
-        else
-        {
-            cell_out->bg_color = chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
-                                                               &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
-        }
+        quantize_colors_for_cell_16_8 (canvas, cell_out, &color_pair);
     }
     else
     {
@@ -874,45 +881,14 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
     }
     else if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16FG_8BG)
     {
-        /* First pick both colors from FG palette to see if we should eliminate the FG/BG
-         * distinction. This is necessary to prevent artifacts in solid color (fg-bg-fg-bg etc). */
+        quantize_colors_for_cell_16_8 (canvas, cell_a_out, &color_pair);
+        cell_b_out->fg_color = cell_a_out->fg_color;
+        cell_b_out->bg_color = cell_a_out->bg_color;
 
-        /* TODO: Investigate if we could just force evaluation of the solid symbol instead. */
-
-        cell_a_out->fg_color = cell_b_out->fg_color =
-            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
-                                          &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
-        cell_a_out->bg_color = cell_b_out->bg_color =
-            chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
-                                          &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
-
-        if (cell_a_out->fg_color == cell_a_out->bg_color && cell_a_out->fg_color >= 8 && cell_a_out->fg_color <= 15)
-        {
-            /* Chosen FG and BG colors should ideally be the same, but BG palette does not allow it.
-             * Use the solid char with FG color if we have one, else fall back to using the closest
-             * match from the BG palette for both FG and BG. */
-
-            if (canvas->solid_char)
-            {
-                cell_a_out->c = canvas->solid_char;
-                cell_a_out->bg_color = cell_b_out->bg_color =
-                    chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
-                                                  &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
-            }
-            else
-            {
-                cell_a_out->fg_color = cell_a_out->bg_color =
-                    cell_b_out->fg_color = cell_b_out->bg_color =
-                    chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
-                                                  &color_pair.colors [CHAFA_COLOR_PAIR_FG], NULL);
-            }
-        }
-        else
-        {
-            cell_a_out->bg_color = cell_b_out->bg_color =
-                chafa_palette_lookup_nearest (&canvas->bg_palette, canvas->config.color_space,
-                                              &color_pair.colors [CHAFA_COLOR_PAIR_BG], NULL);
-        }
+        /* quantize_colors_for_cell_16_8() can revert the char to solid, and
+         * the solid char is always narrow. Extend it to both cells. */
+        if (cell_a_out->c == canvas->solid_char)
+            cell_b_out->c = cell_a_out->c;
     }
     else
     {
@@ -981,7 +957,7 @@ update_cells_row (ChafaCanvas *canvas, gint row)
                 cell_errors [wide_buf_index [0]] + cell_errors [wide_buf_index [1]])
             {
                 cells [cx - 1] = wide_cells [0];
-                cells [cx] = wide_cells [1]; cells [cx].c = 0;
+                cells [cx] = wide_cells [1];
                 cell_errors [wide_buf_index [0]] = wide_cell_errors [0];
                 cell_errors [wide_buf_index [1]] = wide_cell_errors [1];
             }
