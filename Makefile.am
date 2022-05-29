@@ -1,4 +1,4 @@
-SUBDIRS = chafa docs libnsgif lodepng tests tools
+SUBDIRS = chafa docs libnsgif lodepng tools tests
 
 EXTRA_DIST = \
 	HACKING \

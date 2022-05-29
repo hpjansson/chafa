@@ -7,6 +7,13 @@ noinst_PROGRAMS = \
 term_info_test_SOURCES = \
 	term-info-test.c
 
+## -- Checks --
+
+check:
+	$(srcdir)/chafa-tool-test.sh $(top_srcdir) $(top_builddir) quick
+
+EXTRA_DIST=chafa-tool-test.sh
+
 ## -- General ---
 
 ## Include $(top_builddir)/chafa to get generated chafaconfig.h.
