@@ -82,7 +82,12 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
         }
 
         if (row_ofs [0] >= row_ofs [1])
+        {
+            /* Save the number of batches actually produced to use in
+             * post_func loop later. */
+            n_batches = i;
             break;
+        }
 
         batch = &batches [i++];
         batch->first_row = row_ofs [0];
