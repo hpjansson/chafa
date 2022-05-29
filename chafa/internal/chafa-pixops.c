@@ -621,7 +621,7 @@ prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 {
     if (prep_ctx->preprocessing_enabled
         && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16
-            ||prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8
+            || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8
             || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_FGBG))
         normalize_rgb (prep_ctx->dest_pixels, &prep_ctx->hist, prep_ctx->dest_width,
                        batch->first_row, batch->n_rows);
