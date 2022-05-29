@@ -10,7 +10,7 @@ term_info_test_SOURCES = \
 ## -- Checks --
 
 check:
-	$(srcdir)/chafa-tool-test.sh $(top_srcdir) $(top_builddir) quick
+	$(srcdir)/chafa-tool-test.sh $(top_srcdir) $(top_builddir)
 
 EXTRA_DIST=chafa-tool-test.sh
 
