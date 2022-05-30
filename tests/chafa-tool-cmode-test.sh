@@ -1,8 +1,7 @@
 #!/bin/sh
 
-[ "x${top_srcdir}" = "x" ] && top_srcdir=".."
-[ "x${top_builddir}" = "x" ] && top_builddir="$top_srcdir"
-. "${top_srcdir}/tests/chafa-tool-test-common.sh"
+[ "x${srcdir}" = "x" ] && srcdir="."
+. "${srcdir}/chafa-tool-test-common.sh"
 
 for cmode in $cmodes; do
     for size in $sizes; do
