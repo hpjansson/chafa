@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright © 2019-2021 Hans Petter Jansson. See COPYING for details. */
+/* Copyright © 2019-2022 Hans Petter Jansson. See COPYING for details. */
 
 #include <stdint.h>
 
