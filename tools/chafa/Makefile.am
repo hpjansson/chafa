@@ -64,7 +64,7 @@ chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LI
 
 endif
 
-## -- General ---
+## --- General ---
 
 ## Include $(top_builddir)/chafa to get generated chafaconfig.h.
 

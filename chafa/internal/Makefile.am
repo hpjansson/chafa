@@ -75,7 +75,7 @@ libchafa_popcnt_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mpopcnt -DCHAFA_C
 libchafa_popcnt_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
 endif
 
-## -- General ---
+## --- General ---
 
 ## Include $(top_builddir)/chafa to get generated chafaconfig.h.
 

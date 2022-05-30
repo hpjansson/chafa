@@ -62,7 +62,7 @@ chafaconfig-stamp: ../config.status
 	  $(SHELL) ./config.status chafa/chafaconfig.h
 	@touch chafaconfig-stamp
 
-## -- General ---
+## --- General ---
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)
