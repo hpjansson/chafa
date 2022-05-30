@@ -486,7 +486,7 @@ emit_ansi_16 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_attributes_16fg_8bg (PrintCtx *ctx, gchar *out,
+emit_attributes_16_8 (PrintCtx *ctx, gchar *out,
                           guint32 fg, guint32 bg, gboolean inverted)
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
@@ -547,7 +547,7 @@ emit_attributes_16fg_8bg (PrintCtx *ctx, gchar *out,
 
 /* Uses bold for bright FG colors. */
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_16fg_8bg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_16_8 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 {
     for ( ; i < i_max; i++)
     {
@@ -562,9 +562,9 @@ emit_ansi_16fg_8bg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
         bg = cell->bg_color;
 
         if (fg == CHAFA_PALETTE_INDEX_TRANSPARENT && bg != CHAFA_PALETTE_INDEX_TRANSPARENT)
-            out = emit_attributes_16fg_8bg (ctx, out, bg, fg, TRUE);
+            out = emit_attributes_16_8 (ctx, out, bg, fg, TRUE);
         else
-            out = emit_attributes_16fg_8bg (ctx, out, fg, bg, FALSE);
+            out = emit_attributes_16_8 (ctx, out, fg, bg, FALSE);
 
         if (fg == CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
@@ -727,8 +727,8 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
             case CHAFA_CANVAS_MODE_INDEXED_16:
                 out = emit_ansi_16 (&ctx, out, i, i_next);
                 break;
-            case CHAFA_CANVAS_MODE_INDEXED_16FG_8BG:
-                out = emit_ansi_16fg_8bg (&ctx, out, i, i_next);
+            case CHAFA_CANVAS_MODE_INDEXED_16_8:
+                out = emit_ansi_16_8 (&ctx, out, i, i_next);
                 break;
             case CHAFA_CANVAS_MODE_INDEXED_8:
                 out = emit_ansi_16 (&ctx, out, i, i_next);
