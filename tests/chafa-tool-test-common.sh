@@ -1,18 +1,18 @@
 #!/bin/sh
 
+set -e
+
 run_cmd () {
     cmd="$1"
     echo $cmd >&2
     $cmd "${top_srcdir}/docs/chafa-logo.gif" >/dev/null
 }
 
-set -e
-
-[ "x$1" == "xlong" ] && long="yes"
+[ "x$1" = "xlong" ] && long="yes"
 
 tool="${top_builddir}/tools/chafa/chafa"
 
-if [ "x$long" == "xyes" ]; then
+if [ "x$long" = "xyes" ]; then
     formats="symbol sixel kitty iterm"
     cmodes="none 2 8 16/8 16 240 256 full"
     sizes="$(seq 1 100)"
