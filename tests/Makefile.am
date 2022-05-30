@@ -9,10 +9,13 @@ term_info_test_SOURCES = \
 
 ## -- Checks --
 
-check:
-	$(srcdir)/chafa-tool-test.sh $(top_srcdir) $(top_builddir)
+TESTS = \
+	chafa-tool-cmode-test.sh \
+	chafa-tool-format-test.sh
 
-EXTRA_DIST=chafa-tool-test.sh
+AM_TESTS_ENVIRONMENT = \
+	echo Running test: $$f \
+	;
 
 ## -- General ---
 
