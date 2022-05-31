@@ -12,4 +12,4 @@ before_install:
   - export LD_LIBRARY_PATH=$(if [[ $CC == "clang" ]]; then echo -n '/usr/local/clang/lib'; fi)
 
 script:
-  mkdir build && cd build && ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man && make -j4 && make check && sudo make install && chafa --version && cd ../tests && ./postinstall.sh
+  mkdir build && cd build && CFLAGS='-g -O2 -fsanitize=address' ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man && make -j4 && make check && sudo make install && chafa --version && cd ../tests && ./postinstall.sh
