@@ -169,6 +169,8 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                            iterm2_canvas->height,
                            chafa_get_n_actual_threads (),
                            1);
+
+    smol_scale_destroy (ctx.scale_ctx);
 }
 
 static void

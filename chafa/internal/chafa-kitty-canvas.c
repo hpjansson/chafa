@@ -107,6 +107,8 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                            kitty_canvas->height,
                            chafa_get_n_actual_threads (),
                            1);
+
+    smol_scale_destroy (ctx.scale_ctx);
 }
 
 static void
