@@ -199,13 +199,14 @@ get_random_u64 (void)
 {
     guint64 u64 = 0;
     guint32 *u32p = (guint32 *) &u64;
+    gint len = 0;
     GTimeVal tv;
 
 #ifdef HAVE_GETRANDOM
-    getrandom ((void *) &u64, sizeof (guint64), GRND_NONBLOCK);
+    len = getrandom ((void *) &u64, sizeof (guint64), GRND_NONBLOCK);
 #endif
 
-    if (!u64)
+    if (!u64 || len < sizeof (guint64))
     {
         gpointer p;
 
