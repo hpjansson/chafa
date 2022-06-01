@@ -2,5 +2,5 @@
 
 set -evx
 
-cc example.c $(pkg-config --libs --cflags chafa) -o example
+cc -g -fsanitize=address example.c $(pkg-config --libs --cflags chafa) -o example
 ./example
