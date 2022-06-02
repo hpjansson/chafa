@@ -981,6 +981,12 @@ chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map)
     for (i = 0; i < symbol_map->n_symbols; i++)
         g_free (symbol_map->symbols [i].coverage);
 
+    for (i = 0; i < symbol_map->n_symbols2; i++)
+    {
+        g_free (symbol_map->symbols2 [i].sym [0].coverage);
+        g_free (symbol_map->symbols2 [i].sym [1].coverage);
+    }
+
     g_hash_table_destroy (symbol_map->glyphs);
     g_hash_table_destroy (symbol_map->glyphs2);
     g_array_free (symbol_map->selectors, TRUE);
