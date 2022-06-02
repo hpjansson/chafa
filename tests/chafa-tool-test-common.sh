@@ -4,8 +4,8 @@ set -e
 
 run_cmd () {
     cmd="$1"
-    echo $cmd >&2
-    $cmd "${top_srcdir}/docs/chafa-logo.gif" >/dev/null
+    echo "$cmd" >&2
+    sh -c "$cmd ${top_srcdir}/docs/chafa-logo.gif >/dev/null"
 }
 
 [ "x${top_srcdir}" = "x" ] && top_srcdir="${srcdir}/.."
