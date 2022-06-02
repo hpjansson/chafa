@@ -13,7 +13,9 @@ term_info_test_SOURCES = \
 
 TOOL_CHECKS = \
 	chafa-tool-cmode-test.sh \
-	chafa-tool-format-test.sh
+	chafa-tool-format-test.sh \
+	chafa-tool-options-test.sh \
+	chafa-tool-pipe-test.sh
 
 TESTS = \
 	term-info-test \
