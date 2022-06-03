@@ -1080,7 +1080,20 @@ get_tty_size (TermSize *term_size_out)
      * aspect information for the font used. Sixel-capable terminals
      * like mlterm set these fields, but most others do not. */
 
-    if (w.ws_xpixel > 0 && w.ws_ypixel > 0)
+    if (w.ws_xpixel >= 32768 || w.ws_ypixel >= 32768)
+    {
+        /* https://github.com/hpjansson/chafa/issues/62 */
+
+        g_printerr ("%s: Terminal reports strange pixel dimensions of %dx%d.\n"
+                    "%s: Disregarding so as to avoid unreasonably large allocation.\n"
+                    "%s: This is sometimes caused by older versions of the 'fish' shell.\n"
+                    "%s: See https://github.com/hpjansson/chafa/issues/62 for details.\n",
+                    options.executable_name, (gint) w.ws_xpixel, (gint) w.ws_ypixel,
+                    options.executable_name,
+                    options.executable_name,
+                    options.executable_name);
+    }
+    else if (w.ws_xpixel > 0 && w.ws_ypixel > 0)
     {
         term_size_out->width_pixels = w.ws_xpixel;
         term_size_out->height_pixels = w.ws_ypixel;
