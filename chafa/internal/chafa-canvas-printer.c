@@ -241,32 +241,6 @@ emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-handle_inverted_with_reuse (PrintCtx *ctx, gchar *out,
-                            guint32 fg, guint32 bg, gboolean inverted)
-{
-    /* In FG-only mode, we can't use inverse color or bold because the
-     * attribute reset would mess with the background color. */
-    if (ctx->canvas->config.fg_only_enabled)
-        return out;
-
-    if ((ctx->cur_inverted && !inverted)
-        || (ctx->cur_fg != CHAFA_PALETTE_INDEX_TRANSPARENT && fg == CHAFA_PALETTE_INDEX_TRANSPARENT)
-        || (ctx->cur_bg != CHAFA_PALETTE_INDEX_TRANSPARENT && bg == CHAFA_PALETTE_INDEX_TRANSPARENT))
-    {
-        out = flush_chars (ctx, out);
-        out = reset_attributes (ctx, out);
-    }
-
-    if (!ctx->cur_inverted && inverted)
-    {
-        out = flush_chars (ctx, out);
-        out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
-    }
-
-    return out;
-}
-
-G_GNUC_WARN_UNUSED_RESULT static gchar *
 handle_attrs_with_reuse (PrintCtx *ctx, gchar *out,
                          guint32 fg, guint32 bg,
                          gboolean inverted, gboolean bold)
@@ -306,7 +280,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        out = handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
+        out = handle_attrs_with_reuse (ctx, out, fg, bg, inverted, FALSE);
 
         if (fg != ctx->cur_fg)
         {
@@ -398,7 +372,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
 {
     if (ctx->canvas->config.optimizations & CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES)
     {
-        out = handle_inverted_with_reuse (ctx, out, fg, bg, inverted);
+        out = handle_attrs_with_reuse (ctx, out, fg, bg, inverted, FALSE);
 
         if (fg != ctx->cur_fg)
         {
