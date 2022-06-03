@@ -61,6 +61,14 @@ struct FileMapping
     guint is_mmapped : 1;
 };
 
+static gboolean
+file_is_stdin (FileMapping *file_mapping)
+{
+    return file_mapping->path
+        && file_mapping->path [0] == '-'
+        && file_mapping->path [1] == '\0' ? TRUE : FALSE;
+ }
+
 static gsize
 safe_read (gint fd, void *buf, gsize len)
 {
@@ -206,7 +214,7 @@ get_random_u64 (void)
     len = getrandom ((void *) &u64, sizeof (guint64), GRND_NONBLOCK);
 #endif
 
-    if (!u64 || len < sizeof (guint64))
+    if (!u64 || len < (gint) sizeof (guint64))
     {
         gpointer p;
 
@@ -325,13 +333,25 @@ out:
 static gint
 open_file (FileMapping *file_mapping)
 {
-    if (file_mapping->path [0] == '-'
-        && file_mapping->path [1] == '\0')
+    if (file_is_stdin (file_mapping))
     {
         return cache_stdin (file_mapping);
     }
 
     return open (file_mapping->path, O_RDONLY);
+}
+
+static gboolean
+ensure_open_file (FileMapping *file_mapping)
+{
+    if (file_mapping->data || file_mapping->fd >= 0)
+        return TRUE;
+
+    file_mapping->fd = open_file (file_mapping);
+    if (file_mapping->data || file_mapping->fd >= 0)
+        return TRUE;
+
+    return FALSE;
 }
 
 static guint8 *
@@ -477,8 +497,19 @@ file_mapping_get_data (FileMapping *file_mapping, gsize *length_out)
 gboolean
 file_mapping_taste (FileMapping *file_mapping, gpointer out, goffset ofs, gsize length)
 {
-    if (file_mapping->fd < 0)
-        file_mapping->fd = open_file (file_mapping);
+    if (!ensure_open_file (file_mapping))
+        return FALSE;
+
+    if (file_mapping->data)
+    {
+        if (ofs + length <= file_mapping->length)
+        {
+            memcpy (out, ((const gchar *) file_mapping->data) + ofs, length);
+            return TRUE;
+        }
+
+        return FALSE;
+    }
 
     if (file_mapping->fd < 0)
         return FALSE;
@@ -493,8 +524,23 @@ file_mapping_taste (FileMapping *file_mapping, gpointer out, goffset ofs, gsize 
 }
 
 gssize
-file_mapping_read (FileMapping *file_mapping, gpointer out, goffset ofs, gssize length)
+file_mapping_read (FileMapping *file_mapping, gpointer out, goffset ofs, gsize length)
 {
+    if (!ensure_open_file (file_mapping))
+        return FALSE;
+
+    if (file_mapping->data)
+    {
+        if (ofs <= (gssize) file_mapping->length)
+        {
+            gssize seg_len = MIN (length, file_mapping->length - ofs);
+            memcpy (out, ((const gchar *) file_mapping->data) + ofs, seg_len);
+            return seg_len;
+        }
+
+        return -1;
+    }
+
     if (file_mapping->fd < 0)
         file_mapping->fd = open_file (file_mapping);
 
@@ -511,6 +557,9 @@ gboolean
 file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer data, gsize length)
 {
     gchar *buf;
+
+    if (!ensure_open_file (file_mapping))
+        return FALSE;
 
     if (file_mapping->data)
     {
