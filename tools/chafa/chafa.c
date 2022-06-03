@@ -1721,7 +1721,15 @@ pixel_to_cell_dimensions (gdouble scale,
     }
 }
 
-static gboolean
+typedef enum
+{
+    FILE_FAILED,
+    FILE_WAS_STILL,
+    FILE_WAS_ANIMATION
+}
+RunResult;
+
+static RunResult
 run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
     gboolean is_animation = FALSE;
@@ -1732,6 +1740,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
     GString *gs;
     gchar *p0;
+    RunResult result = FILE_FAILED;
 
     timer = g_timer_new ();
 
@@ -1749,6 +1758,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
         goto out;
 
     is_animation = options.animate ? media_loader_get_is_animation (media_loader) : FALSE;
+    result = is_animation ? FILE_WAS_ANIMATION : FILE_WAS_STILL;
 
     do
     {
@@ -1904,10 +1914,10 @@ out:
         media_loader_destroy (media_loader);
     g_timer_destroy (timer);
 
-    return is_animation;
+    return result;
 }
 
-static gboolean
+static RunResult
 run (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
     return run_generic (filename, is_first_file, is_first_frame, quiet);
@@ -1956,7 +1966,10 @@ static int
 run_all (GList *filenames)
 {
     GList *l;
+    gint n_processed = 0;
+    gint n_failed = 0;
 
+    /* This can only happen with --help and --version, so no error */
     if (!filenames)
         return 0;
 
@@ -1965,11 +1978,15 @@ run_all (GList *filenames)
     for (l = filenames; l && !interrupted_by_user; l = g_list_next (l))
     {
         gchar *filename = l->data;
-        gboolean was_animation;
+        RunResult result;
 
-        was_animation = run (filename, l->prev ? FALSE : TRUE, TRUE, FALSE);
+        result = run (filename, l->prev ? FALSE : TRUE, TRUE, FALSE);
 
-        if (!was_animation && options.file_duration_s != G_MAXDOUBLE)
+        n_processed++;
+        if (result == FILE_FAILED)
+            n_failed++;
+
+        if (result == FILE_WAS_STILL && options.file_duration_s != G_MAXDOUBLE)
         {
             interruptible_usleep (options.file_duration_s * 1000000.0);
         }
@@ -1980,7 +1997,7 @@ run_all (GList *filenames)
         write_to_stdout ("\n", 1);
 
     tty_options_deinit ();
-    return 0;
+    return (n_processed - n_failed < 1) ? 2 : (n_failed > 0) ? 1 : 0;
 }
 
 static void
@@ -2011,7 +2028,7 @@ main (int argc, char *argv [])
     proc_init ();
 
     if (!parse_options (&argc, &argv))
-        exit (1);
+        exit (2);
 
     ret = options.watch
         ? run_watch (options.args->data)

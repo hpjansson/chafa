@@ -358,6 +358,20 @@ most accurate. Defaults to 5.
 </variablelist>
 </refsect1>
 
+<refsect1><title>Exit Status</title>
+<para>
+<command>chafa</command> will return 0 on success, 1 on partial failure or
+2 on complete failure (including when invoked with no arguments).
+</para>
+<segmentedlist>
+<segtitle>Status</segtitle>
+<segtitle>Meaning</segtitle>
+<seglistitem><seg>0</seg><seg>Success</seg></seglistitem>
+<seglistitem><seg>1</seg><seg>Some files failed to display</seg></seglistitem>
+<seglistitem><seg>2</seg><seg>All files failed to display</seg></seglistitem>
+</segmentedlist>
+</refsect1>
+
 <refsect1><title>Symbols</title>
 <para>
 Accepted classes for --symbols are [all, none, space, solid, stipple, block,
