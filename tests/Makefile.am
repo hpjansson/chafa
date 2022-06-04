@@ -1,3 +1,5 @@
+SUBDIRS = data
+
 AM_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS)
 LDADD = $(GLIB_LIBS) $(top_builddir)/chafa/libchafa.la
 

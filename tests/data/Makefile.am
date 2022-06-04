@@ -1,0 +1,1 @@
+SUBDIRS = bad good

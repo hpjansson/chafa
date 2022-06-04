@@ -5,7 +5,7 @@ set -e
 run_cmd () {
     cmd="$1"
     echo "$cmd" >&2
-    sh -c "$cmd ${top_srcdir}/docs/chafa-logo.gif >/dev/null"
+    sh -c "$cmd ${top_srcdir}/tests/data/good/card-32c-noalpha.png >/dev/null"
 }
 
 [ "x${top_srcdir}" = "x" ] && top_srcdir="${srcdir}/.."

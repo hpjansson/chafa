@@ -489,6 +489,9 @@ AC_CONFIG_FILES([Makefile
                  docs/Makefile
                  docs/version.xml
                  tests/Makefile
+                 tests/data/Makefile
+                 tests/data/bad/Makefile
+                 tests/data/good/Makefile
                  tools/Makefile
                  tools/chafa/Makefile
                  tools/fontgen/Makefile])
