@@ -21,6 +21,7 @@ The directory layout is as follows:
   |- docs .............. Built documentation (API and man pages).
   |- libnsgif .......... Private copy of a GIF library, used by tools.
   |- lodepng ........... Private copy of a PNG library, used by tools.
+  |- tests ............. Tests for library and tools.
   `- tools ............. Command-line tools.
      |- chafa .......... The Chafa command-line graphics viewer.
      `- fontgen ........ Experimental font generator.
