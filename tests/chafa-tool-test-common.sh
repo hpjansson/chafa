@@ -3,9 +3,23 @@
 set -e
 
 run_cmd () {
-    cmd="$1"
+    cmd="$1 ${top_srcdir}/tests/data/good/card-32c-noalpha.png >/dev/null"
     echo "$cmd" >&2
-    sh -c "$cmd ${top_srcdir}/tests/data/good/card-32c-noalpha.png >/dev/null"
+    sh -c "$cmd"
+}
+
+run_cmd_single_file () {
+    file="$2"
+    cmd="$1 ${top_srcdir}/tests/data/$file >/dev/null"
+    echo "$cmd" >&2
+    sh -c "$cmd"
+}
+
+get_supported_loaders () {
+    sh -c "$tool --version" \
+        | grep '^Loaders: ' \
+        | sed 's/[^:]*: *\(.*\)/\1/' \
+        | tr [:upper:] [:lower:]
 }
 
 [ "x${top_srcdir}" = "x" ] && top_srcdir="${srcdir}/.."
