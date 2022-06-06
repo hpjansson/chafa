@@ -75,6 +75,9 @@ ChafaFeatures
 chafa_get_builtin_features
 chafa_get_supported_features
 chafa_describe_features
+chafa_get_n_threads
+chafa_set_n_threads
+chafa_get_n_actual_threads
 </SECTION>
 
 <SECTION>
@@ -94,6 +97,7 @@ chafa_symbol_map_remove_by_range
 chafa_symbol_map_apply_selectors
 chafa_symbol_map_get_allow_builtin_glyphs
 chafa_symbol_map_set_allow_builtin_glyphs
+chafa_symbol_map_get_glyph
 chafa_symbol_map_add_glyph
 </SECTION>
 
@@ -106,6 +110,8 @@ CHAFA_VERSION_1_2
 CHAFA_VERSION_1_4
 CHAFA_VERSION_1_6
 CHAFA_VERSION_1_8
+CHAFA_VERSION_1_10
+CHAFA_VERSION_1_12
 ChafaPixelType
 chafa_calc_canvas_geometry
 </SECTION>
@@ -155,7 +161,11 @@ chafa_term_info_emit_enable_insert
 chafa_term_info_emit_disable_insert
 chafa_term_info_emit_enable_wrap
 chafa_term_info_emit_disable_wrap
+chafa_term_info_emit_enable_bold
 chafa_term_info_emit_invert_colors
+chafa_term_info_emit_set_color_bg_8
+chafa_term_info_emit_set_color_fg_8
+chafa_term_info_emit_set_color_fgbg_8
 chafa_term_info_emit_set_color_fg_16
 chafa_term_info_emit_set_color_bg_16
 chafa_term_info_emit_set_color_fgbg_16
