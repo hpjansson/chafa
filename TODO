@@ -11,7 +11,6 @@ Minor Features/UX
 - Verbose output. Show file names. Call it --annotate.
 - Add a --test option to print a test page.
 - Add a --show-symbols op to print matching symbols.
-- Add a --ping-pong option for animations.
 - Strv building API in addition to GString?
 - If FG color is transparent, see if we can use an inverted symbol and swap
   with BG.
@@ -28,7 +27,6 @@ Minor Features/UX
   - Come up with some kind of support matrix.
 - More symbols/symbol aliases:
   - CP437.
-  - Latin (mainly ASCII + diacritics, i.e. ISO 8859-15).
 - Control sequences:
   - Screen buffer: CSI ?1047l (normal) and CSI ?1047h (alternate). Or use
     CSI ?47l and CSI ?47h ?
@@ -36,8 +34,9 @@ Minor Features/UX
   - RexPaint.
   - lvllvl.com.
   - CharPad/CharPad Pro.
+  - Marq's PETSCII Editor (http://www.kameli.net/marq/?page_id=2717).
   - PabloDraw.
-  - Verify ANSILove compatibility.
+  - ANSILove (direct to .ANS, other formats?).
   - Others?
 - More image loaders:
   - BMP. The GIMP has a fairly complete decoder.
@@ -76,9 +75,6 @@ Major features
 Optimization
 ------------
 
-- Avoid ImageMagick for remaining common formats like PNG, JPEG and directly
-  use more efficient decoders instead.
-- Speed up alpha transparency code path.
 - Preload next image/frame in delay phase.
 - Don't calculate error if we're only using a single symbol (e.g. vhalf).
 
