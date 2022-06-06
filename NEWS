@@ -1,6 +1,72 @@
 Chafa releases
 ==============
 
+1.12.0 (2022-06-06)
+-------------------
+
+This is a feature release with new image loaders aimed at phasing out
+ImageMagick. It also has new convenience functions, character art improvements,
+tests and bug fixes.
+
+Special thanks go to the very fine security researchers at huntr.dev for their
+help in hardening Chafa over the last few releases.
+
+* The ImageMagick dependency is now optional and deprecated. Packagers are
+  encouraged to drop the ImageMagick dependency (--without-imagemagick) and
+  add direct dependencies on relevant image codecs. ImageMagick support will be
+  removed in a future release.
+
+* Added image loaders for the following formats: JPEG, SVG, TIFF, WebP. Like
+  the existing GIF, PNG and XWD loaders, these are much faster and generally
+  safer than their ImageMagick counterparts. If ImageMagick is enabled, it will
+  be used as a fallback. Supported image loaders will be listed in the
+  --version output.
+
+* Implemented a 16/8 mode producing 8 colors and an additional 8 bright
+  foreground-only colors for a total of 16 foreground and 8 background colors.
+  When using ANSI escape sequences in symbol mode, the sequence for bold text
+  is used to enable bright colors. This scheme corresponds to that of the IBM
+  PC's VGA hardware text modes and was popular with terminal emulators in the
+  late 1980s to early 2000s.
+
+  With a few tweaks, output from this mode can be turned into ANSI art scene
+  .ANS files compatible with utilities like the wonderful Ansilove, e.g:
+
+  $ chafa -f symbols -c 16/8 -s 80 --symbols space+solid+half --fill stipple \
+      in.jpg | tr -d '\n' | iconv -c -f utf8 -t cp432 > out.ans
+  $ ansilove out.ans -o out.png
+
+* New builtin Latin symbols (available with --symbols latin). This class
+  comprises most of the symbols from the Latin-1 Supplement, Latin Extended-A
+  and -B, IPA Extensions and Spacing Modifier Letters plus a few Latin-like
+  symbols from other ranges, using Terminus as the reference font. The ASCII
+  class is also a subset of this class.
+
+* Reworked ASCII symbols to be more representative of modern terminal fonts. As
+  with the other Latin ranges, the reference font is now Terminus.
+
+* New option: --scale <n>. This takes a real number specifying the on-screen
+  scaling factor relative to the input's pixel size, respecting the terminal
+  size. The special argument 'max' will fit the output to the terminal. The
+  defaults are 1.0 for iTerm, Kitty and sixels, and 4.0 for symbols. Suggested
+  by Lionel Dricot in github#84.
+
+* Deprecated option: --zoom. Use '--scale max' instead.
+
+* Added a battery of simple tests that can be run with 'make check'.
+
+* Made 'configure' friendlier. It's now more lenient with dependencies, and
+  the summary is more detailed and colorized if possible.
+
+* Bug fixes:
+  github#62  Too big alloc on bogus terminal dimensions (reported by
+             Sotiris Papatheodorou and Mo Zhou).
+  huntr.dev  Null pointer dereference caused by calling post_func on unused
+             batch entries (reported by @han0nly).
+  [unfiled]  Small memory leaks when using iTerm and Kitty formats.
+  [unfiled]  Wide symbol coverages leaked in symbol map destructor.
+  [unfiled]  No error code if files failed to load.
+
 1.10.3 (2022-05-04)
 -------------------
 
