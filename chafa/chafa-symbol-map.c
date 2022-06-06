@@ -108,6 +108,7 @@ Glyph2;
  * @CHAFA_SYMBOL_TAG_LEGACY: Legacy computer symbols, including sextants, wedges and more.
  * @CHAFA_SYMBOL_TAG_SEXTANT: Sextant 2x3 mosaics.
  * @CHAFA_SYMBOL_TAG_WEDGE: Wedge shapes that align with sextants.
+ * @CHAFA_SYMBOL_TAG_LATIN: Latin and Latin-like symbols (superset of ASCII).
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
  * @CHAFA_SYMBOL_TAG_BAD: Joint set of ugly and ambiguous characters. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
