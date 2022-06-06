@@ -5,7 +5,7 @@ dnl ----------------------------
 dnl --- Package configuration ---
 
 m4_define([chafa_major_version], [1])
-m4_define([chafa_minor_version], [12])
+m4_define([chafa_minor_version], [13])
 m4_define([chafa_micro_version], [0])
 
 m4_define([chafa_version], [chafa_major_version.chafa_minor_version.chafa_micro_version])
