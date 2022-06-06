@@ -33,7 +33,7 @@ help in hardening Chafa over the last few releases.
   .ANS files compatible with utilities like the wonderful Ansilove, e.g:
 
   $ chafa -f symbols -c 16/8 -s 80 --symbols space+solid+half --fill stipple \
-      in.jpg | tr -d '\n' | iconv -c -f utf8 -t cp432 > out.ans
+      in.jpg | tr -d '\n' | iconv -c -f utf8 -t cp437 > out.ans
   $ ansilove out.ans -o out.png
 
 * New builtin Latin symbols (available with --symbols latin). This class
