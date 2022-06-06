@@ -859,7 +859,7 @@ CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  * @width_cells: Target width in cells
  * @height_cells: Target height in cells
  *
- * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_IMMEDIATE.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is

@@ -44,7 +44,7 @@
  * @CHAFA_TERM_SEQ_RESET_TERMINAL_HARD: Reset the terminal to factory defaults.
  * @CHAFA_TERM_SEQ_RESET_ATTRIBUTES: Reset active graphics rendition (colors and other attributes) to terminal defaults.
  * @CHAFA_TERM_SEQ_CLEAR: Clear the screen.
- * @CHAFA_TERM_SEQ_INVERT_COLORS: Invert foreground and background colors.
+ * @CHAFA_TERM_SEQ_INVERT_COLORS: Invert foreground and background colors (disable with RESET_ATTRIBUTES).
  * @CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT: Move cursor to top left of screen.
  * @CHAFA_TERM_SEQ_CURSOR_TO_BOTTOM_LEFT: Move cursor to bottom left of screen.
  * @CHAFA_TERM_SEQ_CURSOR_TO_POS: Move cursor to specific position.
