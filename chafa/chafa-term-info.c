@@ -91,6 +91,10 @@
  * @CHAFA_TERM_SEQ_END_ITERM2_IMAGE: End of iTerm2 image data.
  * @CHAFA_TERM_SEQ_ENABLE_SIXEL_SCROLLING: Enable sixel scrolling.
  * @CHAFA_TERM_SEQ_DISABLE_SIXEL_SCROLLING: Disable sixel scrolling.
+ * @CHAFA_TERM_SEQ_ENABLE_BOLD: Enable boldface (disable with RESET_ATTRIBUTES).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FG_8: Set foreground color (8 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_BG_8: Set background color (8 colors).
+ * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_8: Set foreground and background colors (8 colors).
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
