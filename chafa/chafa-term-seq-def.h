@@ -1018,11 +1018,11 @@ CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, vo
 #define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_12
 
 /**
- * chafa_term_info_emit_bold:
+ * chafa_term_info_emit_enable_bold:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for #CHAFA_TERM_SEQ_BOLD.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_BOLD.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -1032,7 +1032,7 @@ CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, vo
  *
  * Since: 1.12
  **/
-CHAFA_TERM_SEQ_DEF(bold, BOLD, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_bold, ENABLE_BOLD, 0, none, void)
 
 /**
  * chafa_term_info_emit_set_color_fg_8:

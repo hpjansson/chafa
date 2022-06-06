@@ -268,7 +268,7 @@ handle_attrs_with_reuse (PrintCtx *ctx, gchar *out,
     if (!ctx->cur_bold && bold)
     {
         out = flush_chars (ctx, out);
-        out = chafa_term_info_emit_bold (ctx->term_info, out);
+        out = chafa_term_info_emit_enable_bold (ctx->term_info, out);
     }
 
     return out;
@@ -493,7 +493,7 @@ emit_attributes_16_8 (PrintCtx *ctx, gchar *out,
         if (inverted)
             out = chafa_term_info_emit_invert_colors (ctx->term_info, out);
         if (fg > 7)
-            out = chafa_term_info_emit_bold (ctx->term_info, out);
+            out = chafa_term_info_emit_enable_bold (ctx->term_info, out);
 
         if (fg != CHAFA_PALETTE_INDEX_TRANSPARENT)
         {
