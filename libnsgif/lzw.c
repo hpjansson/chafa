@@ -329,6 +329,10 @@ lzw_result lzw_decode(struct lzw_ctx *ctx,
 		/* Code is invalid */
 		return LZW_BAD_CODE;
 
+	} else if (code_new >= 1 << LZW_CODE_MAX) {
+		/* Don't access out of bound */
+		return LZW_BAD_CODE;
+
 	} else if (code_new < current_entry) {
 		/* Code is in table */
 		code_out = code_new;
