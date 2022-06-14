@@ -299,6 +299,9 @@ static gif_result gif_initialise_frame(gif_animation *gif)
                 }
                 gif->frames = temp_buf;
                 gif->frame_holders = frame + 1;
+
+                /* Clear all frame fields */
+                memset(&gif->frames[frame], 0, sizeof(gif_frame));
         }
 
         /* Store our frame pointer. We would do it when allocating except we
@@ -1067,6 +1070,9 @@ gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
                         return GIF_INSUFFICIENT_MEMORY;
                 }
                 gif->frame_holders = 1;
+
+                /* Clear all frame fields */
+                memset(gif->frames, 0, sizeof(gif_frame));
 
                 /* Initialise the bitmap header */
                 assert(gif->bitmap_callbacks.bitmap_create);
