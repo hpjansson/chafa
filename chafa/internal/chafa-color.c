@@ -30,10 +30,10 @@ guint32
 chafa_pack_color (const ChafaColor *color)
 {
     /* Assumes each channel 0 <= value <= 255 */
-    return (color->ch [0] << 16)
-            | (color->ch [1] << 8)
-            | (color->ch [2])
-            | (color->ch [3] << 24);  /* Alpha */
+    return ((guint32) color->ch [0] << 16)
+            | ((guint32) color->ch [1] << 8)
+            | ((guint32) color->ch [2])
+            | ((guint32) color->ch [3] << 24);  /* Alpha */
 }
 
 void
