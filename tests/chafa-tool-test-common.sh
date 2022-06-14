@@ -14,7 +14,10 @@ run_cmd_single_file () {
 }
 
 run_cmd_all_safe_files () {
-    cmd="$1 ${top_srcdir}/tests/data/good/*.{gif,png,xwd} >/dev/null"
+    # Only run on files for which we're guaranteed to have loaders.
+    # '$dir/*.{gif,png,xwd}' is a Bash-ism, so we can't use it.
+    dir="${top_srcdir}/tests/data/good"
+    cmd="$1 $dir/*.gif $dir/*.png $dir/*.xwd >/dev/null"
     echo "$cmd" >&2
     sh -c "$cmd" || exit $?
 }
