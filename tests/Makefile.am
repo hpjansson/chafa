@@ -14,6 +14,7 @@ term_info_test_SOURCES = \
 ## --- Frontend tests ---
 
 TOOL_CHECKS = \
+	chafa-tool-bad-test.sh \
 	chafa-tool-cmode-test.sh \
 	chafa-tool-format-test.sh \
 	chafa-tool-loader-test.sh \
