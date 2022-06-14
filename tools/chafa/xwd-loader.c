@@ -213,6 +213,7 @@ load_header (XwdLoader *loader)
 
     ASSERT_HEADER (h->header_size >= sizeof (XwdHeader));
     ASSERT_HEADER (h->header_size <= 65535);
+    ASSERT_HEADER (h->header_size % 4 == 0);  /* For image data alignment */
     ASSERT_HEADER (h->file_version == 7);
     ASSERT_HEADER (h->pixmap_depth == 24);
 
