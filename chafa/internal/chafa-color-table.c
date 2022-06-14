@@ -192,19 +192,22 @@ do_pca (ChafaColorTable *color_table)
 
 static inline gboolean
 refine_pen_choice (const ChafaColorTable *color_table, guint want_color, const gint *v, gint j,
-                   gint *best_pen, gint *best_diff)
+                   gint *best_pen, gint64 *best_diff)
 {
     const ChafaColorTableEntry *pj = &color_table->entries [j];
-    gint a, b, d;
+    gint64 a, b, d;
 
-    a = POW2 (pj->v [0] - v [0]);
+    a = POW2 ((gint64) pj->v [0] - v [0]);
 
     profile_counter_inc (n_a);
     DEBUG_PEN_CHOICE (g_printerr ("a=%d\n", a));
 
     if (a <= *best_diff)
     {
-        b = POW2 (pj->v [1] - v [1]);
+        /* TODO: When using gint32, the POW2 multiplication can result in overflow.
+         * Our workaround is to use gint64 for best_diff, a, b and d. This probably
+         * slows us down, though (we should measure). Is there a better fix? */
+        b = POW2 ((gint64) pj->v [1] - v [1]);
 
         profile_counter_inc (n_b);
         DEBUG_PEN_CHOICE (g_printerr ("b=%d\n", b));
@@ -312,7 +315,7 @@ chafa_color_table_sort (ChafaColorTable *color_table)
 gint
 chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 want_color)
 {
-    gint best_diff = G_MAXINT;
+    gint64 best_diff = G_MAXINT64;
     gint best_pen = 0;
     gint v [2];
     gint i, j, m;
@@ -359,12 +362,12 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
 
 #if CHAFA_COLOR_TABLE_ENABLE_PROFILING
     gint best_pen_2 = -1;
-    gint best_diff_2 = G_MAXINT;
+    gint64 best_diff_2 = G_MAXINT64;
 
     for (i = 0; i < color_table->n_entries; i++)
     {
         const ChafaColorTableEntry *pi = &color_table->entries [i];
-        gint d = color_diff (color_table->pens [pi->pen], want_color);
+        gint64 d = color_diff (color_table->pens [pi->pen], want_color);
 
         if (d < best_diff_2)
         {
