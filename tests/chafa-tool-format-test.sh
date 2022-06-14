@@ -6,7 +6,7 @@
 for format in $formats; do
     for size in $sizes; do
         for n_threads in $thread_counts; do
-            run_cmd "$tool -f $format -c full -s $size --threads $n_threads --animate no"
+            run_cmd_all_safe_files "$tool -f $format -c full -s $size --threads $n_threads -d 0 --speed max"
         done
     done
 done

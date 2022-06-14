@@ -15,6 +15,13 @@ run_cmd_single_file () {
     sh -c "$cmd"
 }
 
+run_cmd_all_safe_files () {
+    file="$2"
+    cmd="$1 ${top_srcdir}/tests/data/good/*.{gif,png,xwd} >/dev/null"
+    echo "$cmd" >&2
+    sh -c "$cmd"
+}
+
 get_supported_loaders () {
     sh -c "$tool --version" \
         | grep '^Loaders: ' \
