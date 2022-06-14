@@ -15,7 +15,7 @@ for format in $formats; do
                 for main_symbols in $symbol_selectors; do
                     for fill_symbols in $symbol_selectors; do
                         run_cmd "$tool -f $format -c 240 -s 53 --threads 12 --animate no --color-space $color_space \
---color-extractor $color_extractor --dither $dither_type --symbols $main_symbols --fill $fill_symbols"
+--color-extractor $color_extractor --dither $dither_type --symbols $main_symbols --fill $fill_symbols" || exit $?
                     done
                 done
             done
