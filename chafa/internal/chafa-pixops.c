@@ -24,7 +24,7 @@
 #include "internal/smolscale/smolscale.h"
 
 /* Fixed point multiplier */
-#define FIXED_MULT 16384
+#define FIXED_MULT 4096
 
 /* See rgb_to_intensity_fast () */
 #define INTENSITY_MAX (256 * 8)
@@ -33,6 +33,10 @@
 #define INDEXED_16_CROP_PCT 5
 #define INDEXED_8_CROP_PCT  10
 #define INDEXED_2_CROP_PCT  20
+
+/* Ensure there's no overflow in normalize_ch() */
+G_STATIC_ASSERT (FIXED_MULT * INTENSITY_MAX * (gint64) 255 <= G_MAXINT);
+G_STATIC_ASSERT (FIXED_MULT * INTENSITY_MAX * (gint64) -255 >= G_MININT);
 
 typedef struct
 {
