@@ -18,7 +18,18 @@ run_cmd_all_safe_files () {
     echo "$cmd" >&2
     sh -c "$cmd" || exit $?
 }
+
+run_cmd_all_bad_files () {
+    # Since this only fails on crashes, it's fine to run it on absolutely
+    # everything (including unsupported formats, build files etc).
+    cmd="$1 ${top_srcdir}/tests/data/bad/* >/dev/null"
+    echo "$cmd" >&2
     sh -c "$cmd"
+    result=$?
+
+    # For corrupt files, an exit value of 1 or 2 is a fine result,
+    # but other values are trouble (e.g. terminated by signal).
+    if test $result -gt 2; then exit $result; fi
 }
 
 get_supported_loaders () {
@@ -40,8 +51,11 @@ if [ "x$long" = "xyes" ]; then
     sizes="$(seq 1 100)"
     thread_counts="$(seq 1 32) 61"
 else
+    # The 13x13 size is specifically required to trigger the normalization
+    # overflow (see commit 60d7718f9d8fa591d3d69079fe583913c58c19d9).
+
     formats="symbol sixel kitty iterm"
     cmodes="none 2 16/8 16 256 full"
-    sizes="1 3 17 133"
+    sizes="1 3 13x13 133"
     thread_counts="1 2 3 12 32 61"
 fi
