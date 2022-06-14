@@ -235,6 +235,9 @@ load_header (XwdLoader *loader)
     ASSERT_HEADER (h->bytes_per_line >= h->pixmap_width * (h->bits_per_pixel / 8));
     ASSERT_HEADER (h->bytes_per_line <= h->pixmap_width * (h->bits_per_pixel / 8) + 1024);
 
+    /* If each pixel is four bytes, reject unaligned rowstrides */
+    ASSERT_HEADER (h->bits_per_pixel != 32 || h->bytes_per_line % 4 == 0);
+
     /* Make sure the total allocation/map is not too big. */
     ASSERT_HEADER (h->bytes_per_line * h->pixmap_height < (1UL << 31) - 65536 - 256 * 32);
 
