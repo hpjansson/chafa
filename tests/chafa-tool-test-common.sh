@@ -1,24 +1,23 @@
 #!/bin/sh
 
-set -e
-
 run_cmd () {
     cmd="$1 ${top_srcdir}/tests/data/good/card-32c-noalpha.png >/dev/null"
     echo "$cmd" >&2
-    sh -c "$cmd"
+    sh -c "$cmd" || exit $?
 }
 
 run_cmd_single_file () {
     file="$2"
     cmd="$1 ${top_srcdir}/tests/data/$file >/dev/null"
     echo "$cmd" >&2
-    sh -c "$cmd"
+    sh -c "$cmd" || exit $?
 }
 
 run_cmd_all_safe_files () {
-    file="$2"
     cmd="$1 ${top_srcdir}/tests/data/good/*.{gif,png,xwd} >/dev/null"
     echo "$cmd" >&2
+    sh -c "$cmd" || exit $?
+}
     sh -c "$cmd"
 }
 
