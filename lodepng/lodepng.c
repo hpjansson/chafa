@@ -1367,8 +1367,11 @@ static unsigned inflateNoCompression(ucvector* out, LodePNGBitReader* reader,
   /*read the literal data: LEN bytes are now stored in the out buffer*/
   if(bytepos + LEN > size) return 23; /*error: reading outside of in buffer*/
 
-  lodepng_memcpy(out->data + out->size - LEN, reader->data + bytepos, LEN);
-  bytepos += LEN;
+  /*out->data can be NULL (when LEN is zero), and arithmetics on NULL ptr is undefined. so we check*/
+  if (out->data) {
+    lodepng_memcpy(out->data + out->size - LEN, reader->data + bytepos, LEN);
+    bytepos += LEN;
+  }
 
   reader->bp = bytepos << 3u;
 
