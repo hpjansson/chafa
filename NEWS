@@ -1,6 +1,28 @@
 Chafa releases
 ==============
 
+1.12.1 (2022-06-20)
+-------------------
+
+This release fixes one important input validation bug and several instances of
+undefined behavior revealed by fuzzing.
+
+* Increased GLib minimum version to 2.20.
+
+* Added 12 new test inputs, including bad inputs to handle gracefully.
+
+* Added a few symbols to API documentation that were accidentally left out.
+
+* Bug fixes:
+  huntr.dev  CVE-2022-2061: Out-of-bounds read in libnsgif's lzw_decode()
+             (Sudhakar Verma of CrowdStrike).
+  [unfiled]  Undefined behavior in libnsgif due to uninitialized frame fields.
+  [unfiled]  Signed integer overflow in chafa_pack_color().
+  [unfiled]  Integer overflow in normalization pass on some images.
+  [unfiled]  Potential unaligned access with corrupt XWD images.
+  [unfiled]  Integer overflow in quantization on some images.
+  [unfiled]  Calculating offset from NULL pointer in LodePNG.
+
 1.12.0 (2022-06-06)
 -------------------
 
