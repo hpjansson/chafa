@@ -50,22 +50,6 @@ if test "$DIE" -eq 1; then
         ${MY_ECHO}
 fi
 
-GTKDOCIZE=$(which gtkdocize 2>/dev/null)
-
-if test -z $GTKDOCIZE; then
-        ${MY_ECHO} -e "Missing optional tool:\e[1;33m gtk-doc"
-        ${MY_ECHO} -e "\e[0m"
-        ${MY_ECHO} "Without this, no developer documentation will be generated."
-        ${MY_ECHO}
-        rm -f gtk-doc.make
-        cat > gtk-doc.make <<EOF
-EXTRA_DIST =
-CLEANFILES =
-EOF
-else
-        gtkdocize || exit $?
-fi
-
 if test "$DIE" -eq 1; then
         exit 1
 fi
@@ -88,6 +72,22 @@ am_opt="--include-deps --add-missing"
 
 ${MY_ECHO} "Running libtoolize..."
 libtoolize --force --copy
+
+GTKDOCIZE=$(which gtkdocize 2>/dev/null)
+
+if test -z $GTKDOCIZE; then
+        ${MY_ECHO} -e "Missing optional tool:\e[1;33m gtk-doc"
+        ${MY_ECHO} -e "\e[0m"
+        ${MY_ECHO} "Without this, no developer documentation will be generated."
+        ${MY_ECHO}
+        rm -f gtk-doc.make
+        cat > gtk-doc.make <<EOF
+EXTRA_DIST =
+CLEANFILES =
+EOF
+else
+        gtkdocize || exit $?
+fi
 
 ${MY_ECHO} "Running aclocal..."
 aclocal $ACLOCAL_FLAGS
