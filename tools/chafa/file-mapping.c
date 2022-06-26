@@ -36,12 +36,24 @@
 # include <sys/random.h>
 #endif
 
+#include <glib/gstdio.h>
+
 #include "file-mapping.h"
 
 #ifdef HAVE_MMAP
 /* Workaround for non-Linux platforms */
 # ifndef MAP_NORESERVE
 #  define MAP_NORESERVE 0
+# endif
+#endif
+
+/* MS Windows needs files to be explicitly opened as O_BINARY. However, this
+ * flag is not always defined in our cross builds. */
+#ifndef O_BINARY
+# ifdef _O_BINARY
+# define O_BINARY _O_BINARY
+# else
+# define O_BINARY 0
 # endif
 #endif
 
@@ -116,7 +128,9 @@ safe_read (gint fd, void *buf, gsize len)
            ntotal += (unsigned int)/*SAFE*/iread;
        }
        else
+       {
            return ntotal;
+       }
    }
 
    return ntotal; /* len == 0 */
@@ -195,7 +209,7 @@ free_file_data (FileMapping *file_mapping)
     }
 
     if (file_mapping->fd >= 0)
-        close (file_mapping->fd);
+        g_close (file_mapping->fd, NULL);
 
     file_mapping->fd = -1;
     file_mapping->data = NULL;
@@ -252,9 +266,12 @@ open_temp_file_in_path (const gchar *base_path)
                                   get_random_u64 ());
 
     /* Create the file and unlink it, so it goes away when we exit */
-    fd = open (cache_path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+    fd = g_open (cache_path, O_CREAT | O_RDWR | O_BINARY, S_IRUSR | S_IWUSR);
     if (fd >= 0)
-        unlink (cache_path);
+    {
+        /* You can't unlink an open file on MS Windows, so this will fail there */
+        g_unlink (cache_path);
+    }
 
     g_free (cache_path);
 
@@ -274,7 +291,7 @@ open_temp_file (void)
 }
 
 static gint
-cache_stdin (FileMapping *file_mapping)
+cache_stdin (FileMapping *file_mapping, GError **error)
 {
     gpointer buf = NULL;
     gint stdin_fd = fileno (stdin);  /* Can't use STDIN_FILENO on Windows */
@@ -322,23 +339,40 @@ out:
     if (!success)
     {
         if (cache_fd >= 0)
-            close (cache_fd);
+            g_close (cache_fd, NULL);
         cache_fd = -1;
         g_free (buf);
+
+        if (error && !*error)
+        {
+            g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                         "Could not cache input stream");
+        }
     }
 
     return cache_fd;
 }
 
 static gint
-open_file (FileMapping *file_mapping)
+open_file (FileMapping *file_mapping, GError **error)
 {
+    gint fd;
+
     if (file_is_stdin (file_mapping))
     {
-        return cache_stdin (file_mapping);
+        fd = cache_stdin (file_mapping, error);
+    }
+    else
+    {
+        fd = g_open (file_mapping->path, O_RDONLY | O_BINARY, S_IRUSR | S_IWUSR);
+        if (fd < 0)
+        {
+            g_set_error (error, G_FILE_ERROR, g_file_error_from_errno (errno),
+                         strerror (errno));
+        }
     }
 
-    return open (file_mapping->path, O_RDONLY);
+    return fd;
 }
 
 static gboolean
@@ -347,7 +381,7 @@ ensure_open_file (FileMapping *file_mapping)
     if (file_mapping->data || file_mapping->fd >= 0)
         return TRUE;
 
-    file_mapping->fd = open_file (file_mapping);
+    file_mapping->fd = open_file (file_mapping, NULL);
     if (file_mapping->data || file_mapping->fd >= 0)
         return TRUE;
 
@@ -405,7 +439,7 @@ map_or_read_file (FileMapping *file_mapping)
         return TRUE;
 
     if (file_mapping->fd < 0)
-        file_mapping->fd = open_file (file_mapping);
+        file_mapping->fd = open_file (file_mapping, NULL);
 
     /* If the data arrived over a pipe and was reasonably small, open_file () will
      * populate the data fields instead of the fd. */
@@ -476,6 +510,25 @@ file_mapping_destroy (FileMapping *file_mapping)
     g_free (file_mapping);
 }
 
+gboolean
+file_mapping_open_now (FileMapping *file_mapping, GError **error)
+{
+    if (file_mapping->data || file_mapping->fd >= 0)
+        return TRUE;
+
+    file_mapping->fd = open_file (file_mapping, error);
+    if (file_mapping->data || file_mapping->fd >= 0)
+        return TRUE;
+
+    if (error && !*error)
+    {
+        g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                     "Open/map failed");
+    }
+
+    return FALSE;
+}
+
 const gchar *
 file_mapping_get_path (FileMapping *file_mapping)
 {
@@ -541,9 +594,7 @@ file_mapping_read (FileMapping *file_mapping, gpointer out, goffset ofs, gsize l
         return -1;
     }
 
-    if (file_mapping->fd < 0)
-        file_mapping->fd = open_file (file_mapping);
-
+    /* FIXME: Shouldn't happen */
     if (file_mapping->fd < 0)
         return -1;
 
@@ -570,9 +621,7 @@ file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer da
         return FALSE;
     }
 
-    if (file_mapping->fd < 0)
-        file_mapping->fd = open_file (file_mapping);
-
+    /* FIXME: Shouldn't happen */
     if (file_mapping->fd < 0)
         return FALSE;
 
