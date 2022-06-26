@@ -253,6 +253,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *tmux;
     const gchar *ctx_backend;
     const gchar *lc_terminal;
+    gchar *comspec = NULL;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
     const SeqStr *rep_seqs_local = NULL;
@@ -285,6 +286,19 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     lc_terminal = g_environ_getenv (envp, "LC_TERMINAL");
     if (!lc_terminal) lc_terminal = "";
+
+    /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
+     * including AIX and DirectColor sequences. We detect this early and allow
+     * TERM to override, if present. */
+    comspec = (gchar *) g_environ_getenv (envp, "ComSpec");
+    if (comspec)
+    {
+        comspec = g_ascii_strdown (comspec, -1);
+        if (g_str_has_suffix (comspec, "\\cmd.exe"))
+            color_seq_list = color_direct_list;
+        g_free (comspec);
+        comspec = NULL;
+    }
 
     /* Some terminals set COLORTERM=truecolor. However, this env var can
      * make its way into environments where truecolor is not desired
