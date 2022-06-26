@@ -1741,16 +1741,18 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     GString *gs;
     gchar *p0;
     RunResult result = FILE_FAILED;
+    GError *error = NULL;
 
     timer = g_timer_new ();
 
-    media_loader = media_loader_new (filename);
+    media_loader = media_loader_new (filename, &error);
     if (!media_loader)
     {
         if (!quiet)
-            g_printerr ("%s: Failed to open '%s'.\n",
+            g_printerr ("%s: Failed to open '%s': %s\n",
                         options.executable_name,
-                        filename);
+                        filename,
+                        error->message);
         goto out;
     }
 
@@ -1913,6 +1915,9 @@ out:
     if (media_loader)
         media_loader_destroy (media_loader);
     g_timer_destroy (timer);
+
+    if (error)
+        g_error_free (error);
 
     return result;
 }

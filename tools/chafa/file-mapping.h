@@ -29,6 +29,8 @@ typedef struct FileMapping FileMapping;
 FileMapping *file_mapping_new (const gchar *path);
 void file_mapping_destroy (FileMapping *file_mapping);
 
+gboolean file_mapping_open_now (FileMapping *file_mapping, GError **error);
+
 const gchar *file_mapping_get_path (FileMapping *file_mapping);
 
 gboolean file_mapping_taste (FileMapping *file_mapping, gpointer out, goffset ofs, gsize length);

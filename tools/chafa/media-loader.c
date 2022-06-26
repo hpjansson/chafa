@@ -192,7 +192,7 @@ ascii_strcasecmp_ptrs (const void *a, const void *b)
 }
 
 MediaLoader *
-media_loader_new (const gchar *path)
+media_loader_new (const gchar *path, GError **error)
 {
     MediaLoader *loader;
     FileMapping *mapping = NULL;
@@ -203,6 +203,9 @@ media_loader_new (const gchar *path)
 
     loader = g_new0 (MediaLoader, 1);
     mapping = file_mapping_new (path);
+
+    if (!file_mapping_open_now (mapping, error))
+        goto out;
 
     for (i = 0; i < LOADER_TYPE_LAST && !loader->loader; i++)
     {
@@ -240,6 +243,12 @@ out:
 
         media_loader_destroy (loader);
         loader = NULL;
+
+        if (error && !*error)
+        {
+            g_set_error (error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                         "Unknown file format");
+        }
     }
 
     return loader;
