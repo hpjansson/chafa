@@ -213,7 +213,8 @@ AS_IF([ test "$enable_man" != no ], [
 
 dnl --- Specific checks ---
 
-AC_CHECK_FUNCS(mmap getrandom)
+AC_CHECK_FUNCS(ctermid getrandom mmap sigaction)
+AC_CHECK_HEADERS(sys/ioctl.h termios.h windows.h)
 
 dnl
 dnl Check for -Bsymbolic-functions linker flag used to avoid
