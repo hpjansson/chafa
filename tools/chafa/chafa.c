@@ -22,14 +22,25 @@
 #include <stdio.h>
 #include <string.h>  /* strspn, strlen, strcmp, strncmp, memset */
 #include <locale.h>  /* setlocale */
-#include <sys/ioctl.h>  /* ioctl */
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>  /* ioctl */
+#endif
 #include <sys/types.h>  /* open */
 #include <sys/stat.h>  /* stat */
 #include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
-#include <signal.h>  /* sigaction */
+#ifdef HAVE_SIGACTION
+# include <signal.h>  /* sigaction */
+#endif
 #include <stdlib.h>  /* exit */
-#include <termios.h>  /* tcgetattr, tcsetattr */
+#ifdef HAVE_TERMIOS_H
+# include <termios.h>  /* tcgetattr, tcsetattr */
+#endif
+#ifdef HAVE_WINDOWS_H
+# include <windows.h>
+#endif
+
+#include <glib/gstdio.h>
 
 #include <chafa.h>
 #include "font-loader.h"
@@ -115,11 +126,13 @@ static TermSize detected_term_size;
 static gboolean using_detected_size = FALSE;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
 
+#ifdef HAVE_SIGACTION
 static void
 sigint_handler (G_GNUC_UNUSED int sig)
 {
     interrupted_by_user = TRUE;
 }
+#endif
 
 static void
 interruptible_usleep (gint us)
@@ -132,13 +145,73 @@ interruptible_usleep (gint us)
     }
 }
 
+#ifdef G_OS_WIN32
+static gboolean
+safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
+{
+    gsize total_written = 0;
+
+    while (total_written < len)
+    {
+        DWORD n_written = 0;
+
+        if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
+            return FALSE;
+
+        data += n_written;
+        total_written += n_written;
+    }
+
+    return TRUE;
+}
+#endif
+
 static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
     if (len == 0)
         return TRUE;
 
-   return fwrite (buf, 1, len, stdout) == len ? TRUE : FALSE;
+#ifdef G_OS_WIN32
+    {
+        const gchar *p0, *p1, *end;
+        gsize total_written = 0;
+
+        /* In order for UTF-8 to be handled correctly, we need to use WriteConsoleA()
+         * on MS Windows. We also convert line feeds to DOS-style CRLF as we go. */
+
+        /* TODO: Check if it's a console handle, and if not, use WriteFile instead */
+
+        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
+
+        for (p0 = buf, end = p0 + len;
+             chd != INVALID_HANDLE_VALUE && total_written < len;
+             p0 = p1)
+        {
+            p1 = memchr (p0, '\n', end - p0);
+            if (!p1)
+                p1 = end;
+
+            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
+                break;
+
+            total_written += p1 - p0;
+
+            if (p1 != end)
+            {
+                if (!safe_WriteConsoleA (chd, "\r\n", 2))
+                    break;
+
+                p1++;
+                total_written += 1;
+            }
+        }
+
+        return total_written == len ? TRUE : FALSE;
+    }
+#else
+    return fwrite (buf, 1, len, stdout) == len ? TRUE : FALSE;
+#endif
 }
 
 static guchar
@@ -1032,55 +1105,78 @@ parse_bg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, 
 static void
 get_tty_size (TermSize *term_size_out)
 {
-    struct winsize w;
-    gboolean have_winsz = FALSE;
+    TermSize term_size;
 
-    term_size_out->width_cells
-        = term_size_out->height_cells
-        = term_size_out->width_pixels
-        = term_size_out->height_pixels
+    term_size.width_cells
+        = term_size.height_cells
+        = term_size.width_pixels
+        = term_size.height_pixels
         = -1;
 
-    /* FIXME: Use tcgetwinsize() when it becomes more widely available.
-     * See: https://www.austingroupbugs.net/view.php?id=1151#c3856 */
-
-    if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) >= 0
-        || ioctl (STDERR_FILENO, TIOCGWINSZ, &w) >= 0
-        || ioctl (STDIN_FILENO, TIOCGWINSZ, &w) >= 0)
-        have_winsz = TRUE;
-
-    if (!have_winsz)
+#ifdef G_OS_WIN32
     {
-        const gchar *term_path;
-        gint fd = -1;
+        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO csb_info;
 
-        term_path = ctermid (NULL);
-        if (term_path)
-            fd = open (term_path, O_RDONLY);
-
-        if (fd >= 0)
+        if (chd != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo (chd, &csb_info))
         {
-            if (ioctl (fd, TIOCGWINSZ, &w) >= 0)
-                have_winsz = TRUE;
-
-            close (fd);
+            term_size.width_cells = csb_info.srWindow.Right - csb_info.srWindow.Left + 1;
+            term_size.height_cells = csb_info.srWindow.Bottom - csb_info.srWindow.Top + 1;
         }
     }
+#elif defined(HAVE_SYS_IOCTL_H)
+    {
+        struct winsize w;
+        gboolean have_winsz = FALSE;
 
-    if (!have_winsz)
-        return;
+        /* FIXME: Use tcgetwinsize() when it becomes more widely available.
+         * See: https://www.austingroupbugs.net/view.php?id=1151#c3856 */
 
-    if (w.ws_col > 0)
-        term_size_out->width_cells = w.ws_col;
+        if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) >= 0
+            || ioctl (STDERR_FILENO, TIOCGWINSZ, &w) >= 0
+            || ioctl (STDIN_FILENO, TIOCGWINSZ, &w) >= 0)
+            have_winsz = TRUE;
 
-    if (w.ws_row > 2)
-        term_size_out->height_cells = w.ws_row;
+# ifdef HAVE_CTERMID
+        if (!have_winsz)
+        {
+            const gchar *term_path;
+            gint fd = -1;
+
+            term_path = ctermid (NULL);
+            if (term_path)
+                fd = g_open (term_path, O_RDONLY);
+
+            if (fd >= 0)
+            {
+                if (ioctl (fd, TIOCGWINSZ, &w) >= 0)
+                    have_winsz = TRUE;
+
+                g_close (fd, NULL);
+            }
+        }
+# endif /* HAVE_CTERMID */
+
+        if (have_winsz)
+        {
+            term_size.width_cells = w.ws_col;
+            term_size.height_cells = w.ws_row;
+            term_size.width_pixels = w.ws_xpixel;
+            term_size.height_pixels = w.ws_ypixel;
+        }
+    }
+#endif /* HAVE_SYS_IOCTL_H */
+
+    if (term_size.width_cells <= 0)
+        term_size.width_cells = -1;
+    if (term_size.height_cells <= 2)
+        term_size.height_cells = -1;
 
     /* If .ws_xpixel and .ws_ypixel are filled out, we can calculate
      * aspect information for the font used. Sixel-capable terminals
      * like mlterm set these fields, but most others do not. */
 
-    if (w.ws_xpixel >= 32768 || w.ws_ypixel >= 32768)
+    if (term_size.width_pixels >= 32768 || term_size.height_pixels >= 32768)
     {
         /* https://github.com/hpjansson/chafa/issues/62 */
 
@@ -1088,28 +1184,68 @@ get_tty_size (TermSize *term_size_out)
                     "%s: Disregarding so as to avoid unreasonably large allocation.\n"
                     "%s: This is sometimes caused by older versions of the 'fish' shell.\n"
                     "%s: See https://github.com/hpjansson/chafa/issues/62 for details.\n",
-                    options.executable_name, (gint) w.ws_xpixel, (gint) w.ws_ypixel,
+                    options.executable_name,
+                    (gint) term_size.width_pixels,
+                    (gint) term_size.height_pixels,
                     options.executable_name,
                     options.executable_name,
                     options.executable_name);
+
+        term_size.width_pixels = -1;
+        term_size.height_pixels = -1;
     }
-    else if (w.ws_xpixel > 0 && w.ws_ypixel > 0)
+    else if (term_size.width_pixels <= 0 || term_size.height_pixels <= 0)
     {
-        term_size_out->width_pixels = w.ws_xpixel;
-        term_size_out->height_pixels = w.ws_ypixel;
+        term_size.width_pixels = -1;
+        term_size.height_pixels = -1;
     }
+
+    *term_size_out = term_size;
 }
 
+#ifdef HAVE_TERMIOS_H
 static struct termios saved_termios;
+#endif
+
+#ifdef G_OS_WIN32
+static UINT saved_console_output_cp;
+static UINT saved_console_input_cp;
+#endif
 
 static void
 tty_options_init (void)
 {
+#ifdef G_OS_WIN32
+    {
+        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
+
+        /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
+        if (chd != INVALID_HANDLE_VALUE)
+        {
+            SetConsoleMode (chd,
+                            ENABLE_PROCESSED_OUTPUT
+                            | ENABLE_WRAP_AT_EOL_OUTPUT
+                            | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                            | DISABLE_NEWLINE_AUTO_RETURN);
+        }
+
+        saved_console_output_cp = GetConsoleOutputCP ();
+        saved_console_input_cp = GetConsoleCP ();
+
+        /* Set UTF-8 code page output */
+        SetConsoleOutputCP (65001);
+
+        /* Set UTF-8 code page input, for good measure */
+        SetConsoleCP (65001);
+    }
+#endif
+
     if (!options.polite)
     {
         gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
         gchar *p0;
 
+#ifdef HAVE_TERMIOS_H
         if (options.is_interactive)
         {
             struct termios t;
@@ -1119,6 +1255,7 @@ tty_options_init (void)
             t.c_lflag &= ~ECHO;
             tcsetattr (STDIN_FILENO, TCSANOW, &t);
         }
+#endif
 
         if (options.mode != CHAFA_CANVAS_MODE_FGBG)
         {
@@ -1139,6 +1276,11 @@ tty_options_init (void)
 static void
 tty_options_deinit (void)
 {
+#ifdef G_OS_WIN32
+        SetConsoleOutputCP (saved_console_output_cp);
+        SetConsoleCP (saved_console_input_cp);
+#endif
+
     if (!options.polite)
     {
         if (options.mode != CHAFA_CANVAS_MODE_FGBG)
@@ -1150,10 +1292,12 @@ tty_options_deinit (void)
             write_to_stdout (buf, p0 - buf);
         }
 
+#if HAVE_TERMIOS_H
         if (options.is_interactive)
         {
             tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
         }
+#endif
     }
 }
 
@@ -1272,9 +1416,16 @@ parse_options (int *argc, char **argv [])
     /* Defaults */
 
     options.symbol_map = chafa_symbol_map_new ();
+#ifdef G_OS_WIN32
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_HALF);
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BORDER);
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
+    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SOLID);
+#else
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BORDER);
     chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
+#endif
     chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_WIDE);
 
     options.fill_symbol_map = chafa_symbol_map_new ();
@@ -2008,17 +2159,19 @@ run_all (GList *filenames)
 static void
 proc_init (void)
 {
+#ifdef HAVE_SIGACTION
     struct sigaction sa = { 0 };
-
-    /* Must do this early. Buffer size probably doesn't matter */
-    setvbuf (stdout, NULL, _IOFBF, 32768);
-
-    setlocale (LC_ALL, "");
 
     sa.sa_handler = sigint_handler;
     sa.sa_flags = SA_RESETHAND;
 
     sigaction (SIGINT, &sa, NULL);
+#endif
+
+    /* Must do this early. Buffer size probably doesn't matter */
+    setvbuf (stdout, NULL, _IOFBF, 32768);
+
+    setlocale (LC_ALL, "");
 
     /* Chafa may create and destroy GThreadPools multiple times while rendering
      * an image. This reduces thread churn and saves a decent amount of CPU. */
