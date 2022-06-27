@@ -1,6 +1,17 @@
 Chafa releases
 ==============
 
+1.12.2 (2022-06-28)
+-------------------
+
+This release adds basic support for Microsoft Windows.
+
+* Made everything compile for the x86_64-w64-mingw32 target using gcc.
+
+* Added support for the Windows 10 Command Prompt.
+
+* Improved error reporting.
+
 1.12.1 (2022-06-20)
 -------------------
 
