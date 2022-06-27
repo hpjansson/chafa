@@ -146,17 +146,42 @@ interruptible_usleep (gint us)
 }
 
 #ifdef G_OS_WIN32
+
+/* We must determine if stdout is redirected to a file, and if so, use a
+ * different set of I/O functions. */
+static gboolean win32_stdout_is_file = FALSE;
+
 static gboolean
 safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 {
     gsize total_written = 0;
 
+    if (chd == INVALID_HANDLE_VALUE)
+        return FALSE;
+
     while (total_written < len)
     {
         DWORD n_written = 0;
 
-        if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
-            return FALSE;
+        if (win32_stdout_is_file)
+        {
+            /* WriteFile() and fwrite() seem to work equally well despite various
+             * claims that the former does poorly in a UTF-8 environment. The
+             * resulting files look good in my tests, but note that catting them
+             * out with 'type' introduces lots of artefacts. */
+#if 0
+            if (!WriteFile (chd, data, len - total_written, &n_written, NULL))
+                return FALSE;
+#else
+            if ((n_written = fwrite (data, 1, len - total_written, stdout)) < 1)
+                return FALSE;
+#endif
+        }
+        else
+        {
+            if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
+                return FALSE;
+        }
 
         data += n_written;
         total_written += n_written;
@@ -164,6 +189,7 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 
     return TRUE;
 }
+
 #endif
 
 static gboolean
@@ -1219,18 +1245,19 @@ tty_options_init (void)
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
 
+        saved_console_output_cp = GetConsoleOutputCP ();
+        saved_console_input_cp = GetConsoleCP ();
+
         /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
         if (chd != INVALID_HANDLE_VALUE)
         {
-            SetConsoleMode (chd,
-                            ENABLE_PROCESSED_OUTPUT
-                            | ENABLE_WRAP_AT_EOL_OUTPUT
-                            | ENABLE_VIRTUAL_TERMINAL_PROCESSING
-                            | DISABLE_NEWLINE_AUTO_RETURN);
+            if (!SetConsoleMode (chd,
+                                 ENABLE_PROCESSED_OUTPUT
+                                 | ENABLE_WRAP_AT_EOL_OUTPUT
+                                 | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                                 | DISABLE_NEWLINE_AUTO_RETURN))
+                win32_stdout_is_file = TRUE;
         }
-
-        saved_console_output_cp = GetConsoleOutputCP ();
-        saved_console_input_cp = GetConsoleCP ();
 
         /* Set UTF-8 code page output */
         SetConsoleOutputCP (65001);
