@@ -9,7 +9,7 @@ noinst_LTLIBRARIES =
 noinst_HEADERS =
 
 libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
-libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 8:1:8
+libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -version-info 8:2:8
 libchafa_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal.la -lm
 
 libchafa_la_SOURCES = \
