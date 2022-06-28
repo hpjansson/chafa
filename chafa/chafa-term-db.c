@@ -44,7 +44,7 @@ struct ChafaTermDb
 typedef struct
 {
     ChafaTermSeq seq;
-    gchar *str;
+    const gchar *str;
 }
 SeqStr;
 
