@@ -1,6 +1,7 @@
 noinst_LTLIBRARIES = liblodepng.la
 
 liblodepng_la_SOURCES = lodepng.c lodepng.h
-AM_CPPFLAGS = -I${top_srcdir} ${LODEPNG_FEATURES}
+liblodepng_la_CFLAGS = ${LODEPNG_CFLAGS} -I${top_srcdir}
+liblodepng_la_LDFLAGS = ${LODEPNG_LDFLAGS}
 
 EXTRA_DIST = LICENSE README.md
