@@ -368,7 +368,7 @@ open_file (FileMapping *file_mapping, GError **error)
         if (fd < 0)
         {
             g_set_error (error, G_FILE_ERROR, g_file_error_from_errno (errno),
-                         strerror (errno));
+                         "%s", strerror (errno));
         }
     }
 
