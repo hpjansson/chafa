@@ -1427,7 +1427,7 @@ parse_options (int *argc, char **argv [])
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         /* Deprecated: Equivalent to --scale max */
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
-        { NULL }
+        { 0 }
     };
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
