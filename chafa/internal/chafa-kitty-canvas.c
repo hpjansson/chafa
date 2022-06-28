@@ -137,7 +137,8 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *te
                                                           height_cells) = '\0';
     g_string_append (out_str, seq);
 
-    last = kitty_canvas->rgba_image + kitty_canvas->width * kitty_canvas->height * sizeof (guint32);
+    last = ((guint8 *) kitty_canvas->rgba_image)
+        + kitty_canvas->width * kitty_canvas->height * sizeof (guint32);
 
     for (p = kitty_canvas->rgba_image; p < last; )
     {
