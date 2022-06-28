@@ -78,7 +78,7 @@ typedef struct
      * the leftmost in [0] and rightmost in [1]. */
     guint64 bitmap [2];
 #else
-    gchar *outline;
+    const gchar *outline;
 #endif
 }
 ChafaSymbolDef;
