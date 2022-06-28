@@ -115,6 +115,9 @@ premul_u_to_p_64bpp (const uint64_t in,
 /* It's nice to be able to shift by a negative amount */
 #define SHIFT_S(in, s) ((s >= 0) ? (in) << (s) : (in) >> -(s))
 
+#if 0
+/* Currently unused */
+
 /* This is kind of bulky (~13 x86 insns), but it's about the same as using
  * unions, and we don't have to worry about endianness. */
 #define PACK_FROM_1234_64BPP(in, a, b, c, d)                  \
@@ -122,6 +125,7 @@ premul_u_to_p_64bpp (const uint64_t in,
     | (SHIFT_S ((in), ((b) - 1) * 16 + 8 - 40) & 0x00ff0000)  \
     | (SHIFT_S ((in), ((c) - 1) * 16 + 8 - 48) & 0x0000ff00)  \
     | (SHIFT_S ((in), ((d) - 1) * 16 + 8 - 56) & 0x000000ff))
+#endif
 
 #define PACK_FROM_1234_128BPP(in, a, b, c, d)                                         \
      ((SHIFT_S ((in [((a) - 1) >> 1]), (((a) - 1) & 1) * 32 + 24 - 32) & 0xff000000)  \
@@ -137,7 +141,9 @@ premul_u_to_p_64bpp (const uint64_t in,
     | (SHIFT_S ((in), (SWAP_2_AND_3 (c) - 1) * 16 + 8 - 48) & 0x0000ff00)  \
     | (SHIFT_S ((in), (SWAP_2_AND_3 (d) - 1) * 16 + 8 - 56) & 0x000000ff))
 
-/* Note: May not be needed */
+#if 0
+/* Currently unused */
+
 #define PACK_FROM_1324_128BPP(in, a, b, c, d)                               \
      ((SHIFT_S ((in [(SWAP_2_AND_3 (a) - 1) >> 1]),                         \
                 ((SWAP_2_AND_3 (a) - 1) & 1) * 32 + 24 - 32) & 0xff000000)  \
@@ -147,6 +153,7 @@ premul_u_to_p_64bpp (const uint64_t in,
                 ((SWAP_2_AND_3 (c) - 1) & 1) * 32 + 24 - 48) & 0x0000ff00)  \
     | (SHIFT_S ((in [(SWAP_2_AND_3 (d) - 1) >> 1]),                         \
                 ((SWAP_2_AND_3 (d) - 1) & 1) * 32 + 24 - 56) & 0x000000ff))
+#endif
 
 /* Pack p -> p */
 
