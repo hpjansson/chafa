@@ -36,8 +36,11 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 
 dnl --- Standard setup ---
 
-BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes \
+BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes -Werror=format-security \
+-Wwrite-strings -Wunused-macros -Wundef -Wpointer-arith -Wstack-usage=131072 \
 -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26"
+
+# May want to look into -Wconversion sometime. For now, it's just too much noise.
 
 AC_USE_SYSTEM_EXTENSIONS
 AM_SANITY_CHECK
