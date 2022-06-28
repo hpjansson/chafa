@@ -657,6 +657,10 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in,
                          const LodePNGColorMode* mode_out, const LodePNGColorMode* mode_in,
                          unsigned w, unsigned h);
 
+unsigned lodepng_convert_rgb(unsigned* r_out, unsigned* g_out, unsigned* b_out,
+                             unsigned r_in, unsigned g_in, unsigned b_in,
+                             const LodePNGColorMode* mode_out, const LodePNGColorMode* mode_in);
+
 #ifdef LODEPNG_COMPILE_DECODER
 /*
 Settings for the decoder. This contains settings for the PNG and the Zlib
