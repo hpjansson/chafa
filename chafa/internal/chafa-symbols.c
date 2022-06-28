@@ -33,7 +33,7 @@
  * and the symbol outlines would be less legible that way. */
 #undef CHAFA_USE_CONSTANT_STRING_EXPR
 
-#if CHAFA_USE_CONSTANT_STRING_EXPR
+#ifdef CHAFA_USE_CONSTANT_STRING_EXPR
 
 /* Fancy macros that turn our ASCII symbol outlines into compact bitmaps */
 #define CHAFA_FOLD_BYTE_TO_BIT(x) ((((x) >> 0) | ((x) >> 1) | ((x) >> 2) | ((x) >> 3) | \
@@ -69,7 +69,7 @@ typedef struct
     ChafaSymbolTags sc;
     gunichar c;
 
-#if CHAFA_USE_CONSTANT_STRING_EXPR
+#ifdef CHAFA_USE_CONSTANT_STRING_EXPR
     /* Each 64-bit integer represents an 8x8 bitmap, scanning left-to-right
      * and top-to-bottom, stored in host byte order.
      *
@@ -155,7 +155,7 @@ static const ChafaSymbolDef symbol_defs [] =
 #include "chafa-symbols-kana.h"
 #include "chafa-symbols-misc-narrow.h"
     {
-#if CHAFA_USE_CONSTANT_STRING_EXPR
+#ifdef CHAFA_USE_CONSTANT_STRING_EXPR
         0, 0, { 0, 0 }
 #else
         0, 0, NULL
