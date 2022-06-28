@@ -63,6 +63,9 @@
 /* Size of buffer used for copying stdin to file */
 #define COPY_BUFFER_SIZE 8192
 
+/* A contiguous magic string can't be longer than this */
+#define MAGIC_LENGTH_MAX 1024
+
 struct FileMapping
 {
     gchar *path;
@@ -607,7 +610,9 @@ file_mapping_read (FileMapping *file_mapping, gpointer out, goffset ofs, gsize l
 gboolean
 file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer data, gsize length)
 {
-    gchar *buf;
+    gchar buf [MAGIC_LENGTH_MAX];
+
+    g_assert (length <= MAGIC_LENGTH_MAX);
 
     if (!ensure_open_file (file_mapping))
         return FALSE;
@@ -627,8 +632,6 @@ file_mapping_has_magic (FileMapping *file_mapping, goffset ofs, gconstpointer da
 
     if (lseek (file_mapping->fd, ofs, SEEK_SET) != ofs)
         return FALSE;
-
-    buf = alloca (length);
 
     if (safe_read (file_mapping->fd, buf, length) != length)
         return FALSE;
