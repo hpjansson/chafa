@@ -45,6 +45,10 @@
  * Sixels: https://vt100.net/docs/vt3xx-gp/chapter14.html
  */
 
+/* For zero-argument functions, we use "char" as the argument type instead
+ * of the more appropriate "void", since we need to be able to use it with
+ * sizeof() and -Wpointer-arith. */
+
 /* __VA_OPT__ from C++2a would be nice, but it's too recent to rely on in
  * public headers just yet. So we have this exciting trick instead. */
 #define CHAFA_TERM_SEQ_ARGS ,
@@ -68,7 +72,7 @@
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, void)
+CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, char)
 
 /**
  * chafa_term_info_emit_reset_terminal_hard:
@@ -85,7 +89,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, void)
+CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, char)
 
 /**
  * chafa_term_info_emit_reset_attributes:
@@ -102,7 +106,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, void)
+CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, char)
 
 /**
  * chafa_term_info_emit_clear:
@@ -119,7 +123,7 @@ CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, void)
+CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, char)
 
 /**
  * chafa_term_info_emit_invert_colors:
@@ -136,7 +140,7 @@ CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, void)
+CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, char)
 
 /* Cursor movement. Cursor stops at margins. */
 
@@ -155,7 +159,7 @@ CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_to_bottom_left:
@@ -172,7 +176,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_to_pos:
@@ -208,7 +212,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_A
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_up:
@@ -243,7 +247,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_down:
@@ -278,7 +282,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_left:
@@ -313,7 +317,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_right:
@@ -351,7 +355,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, char)
 
 /**
  * chafa_term_info_emit_cursor_down_scroll:
@@ -368,7 +372,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, void)
+CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, char)
 
 /* Cells will shift on insert. Cells shifted off the edge will be lost. */
 
@@ -489,7 +493,7 @@ CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, char)
 
 /**
  * chafa_term_info_emit_disable_insert:
@@ -506,7 +510,7 @@ CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, void)
+CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, char)
 
 /**
  * chafa_term_info_emit_enable_cursor:
@@ -523,7 +527,7 @@ CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, char)
 
 /**
  * chafa_term_info_emit_disable_cursor:
@@ -540,7 +544,7 @@ CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, void)
+CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, char)
 
 /**
  * chafa_term_info_emit_enable_echo:
@@ -557,7 +561,7 @@ CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, char)
 
 /**
  * chafa_term_info_emit_disable_echo:
@@ -574,7 +578,7 @@ CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, void)
+CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, char)
 
 /* When printing a character in the last column, indicates whether the
  * cursor should move to the next row and potentially cause scrolling. If
@@ -595,7 +599,7 @@ CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, char)
 
 /**
  * chafa_term_info_emit_disable_wrap:
@@ -612,7 +616,7 @@ CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, void)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, void)
+CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, char)
 
 /**
  * chafa_term_info_emit_set_color_fg_direct:
@@ -824,7 +828,7 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, void)
+CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, char)
 
 /**
  * chafa_term_info_emit_repeat_char:
@@ -896,7 +900,7 @@ CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_image_v1, BEGIN_KITTY_IMMEDIATE_IMAGE_V
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(end_kitty_image, END_KITTY_IMAGE, 0, none, void)
+CHAFA_TERM_SEQ_DEF(end_kitty_image, END_KITTY_IMAGE, 0, none, char)
 
 /**
  * chafa_term_info_emit_begin_kitty_image_chunk:
@@ -913,7 +917,7 @@ CHAFA_TERM_SEQ_DEF(end_kitty_image, END_KITTY_IMAGE, 0, none, void)
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, void)
+CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, char)
 
 /**
  * chafa_term_info_emit_end_kitty_image_chunk:
@@ -930,7 +934,7 @@ CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, vo
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(end_kitty_image_chunk, END_KITTY_IMAGE_CHUNK, 0, none, void)
+CHAFA_TERM_SEQ_DEF(end_kitty_image_chunk, END_KITTY_IMAGE_CHUNK, 0, none, char)
 
 /**
  * chafa_term_info_emit_begin_iterm2_image:
@@ -971,7 +975,7 @@ CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, CHAFA
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, void)
+CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, char)
 
 /* --- Available in 1.10+ --- */
 
@@ -993,7 +997,7 @@ CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, void)
  *
  * Since: 1.10
  **/
-CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, char)
 
 /**
  * chafa_term_info_emit_disable_sixel_scrolling:
@@ -1010,7 +1014,7 @@ CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, void
  *
  * Since: 1.10
  **/
-CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, void)
+CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, char)
 
 /* --- Available in 1.12+ --- */
 
@@ -1032,7 +1036,7 @@ CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, vo
  *
  * Since: 1.12
  **/
-CHAFA_TERM_SEQ_DEF(enable_bold, ENABLE_BOLD, 0, none, void)
+CHAFA_TERM_SEQ_DEF(enable_bold, ENABLE_BOLD, 0, none, char)
 
 /**
  * chafa_term_info_emit_set_color_fg_8:

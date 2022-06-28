@@ -612,7 +612,7 @@ chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source)
     }
 }
 
-#define DEFINE_EMIT_SEQ_0_none_void(func_name, seq_name) \
+#define DEFINE_EMIT_SEQ_0_none_char(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest) \
 { return emit_seq_0_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name); }
 
