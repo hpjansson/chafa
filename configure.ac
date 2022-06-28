@@ -36,7 +36,8 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 
 dnl --- Standard setup ---
 
-BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes"
+BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes \
+-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26"
 
 AC_USE_SYSTEM_EXTENSIONS
 AM_SANITY_CHECK
@@ -73,7 +74,7 @@ dnl AC_DEFINE([_POSIX_C_SOURCE], [200809L], [Minimum POSIX standard we need])
 
 dnl --- Dependency check ---
 
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.20)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.26)
 
 AC_ARG_WITH(tools,
   [AS_HELP_STRING([--without-tools], [don't build command-line tools [default=on]])],
