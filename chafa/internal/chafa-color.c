@@ -24,8 +24,6 @@
 #include "chafa.h"
 #include "internal/chafa-color.h"
 
-#define DEBUG(x)
-
 guint32
 chafa_pack_color (const ChafaColor *color)
 {
