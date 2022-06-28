@@ -142,7 +142,6 @@ safe_read (gint fd, void *buf, gsize len)
 static gboolean
 safe_write (gint fd, gconstpointer buf, gsize len)
 {
-    gsize ntotal = 0;
     const guint8 *buffer = buf;
     gboolean success = FALSE;
 
@@ -173,7 +172,6 @@ safe_write (gint fd, gconstpointer buf, gsize len)
            /* Continue writing until permanent failure or entire buffer written */
            buffer += n_written;
            len -= (unsigned int) n_written;
-           ntotal += (unsigned int) n_written;
        }
     }
 
