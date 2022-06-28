@@ -1780,7 +1780,7 @@ chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
             *pixels_out = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4 * 2);
             bitmap_to_argb (glyph2->bitmap [0], *pixels_out,
                             CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
-            bitmap_to_argb (glyph2->bitmap [1], (*pixels_out) + CHAFA_SYMBOL_WIDTH_PIXELS * 4,
+            bitmap_to_argb (glyph2->bitmap [1], ((guint8 *) *pixels_out) + CHAFA_SYMBOL_WIDTH_PIXELS * 4,
                             CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
         }
 
