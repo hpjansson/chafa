@@ -12,7 +12,7 @@ before_install:
   - export LD_LIBRARY_PATH=$(if [[ $CC == "clang" ]]; then echo -n '/usr/local/clang/lib'; fi)
 
 script:
-  - mkdir build && cd build && CFLAGS='-g -O2 -fsanitize=address,undefined -fsanitize-undefined-trap-on-error -Werror -Wno-error=unused' ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man --without-imagemagick && make -j4 && make check && rm -Rf ../build/* && ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man && make -j4 && sudo make install && chafa --version && cd ../tests && ./postinstall.sh
+  - mkdir build && cd build && CFLAGS='-g -O2 -fsanitize=address,undefined -fsanitize-undefined-trap-on-error -Werror -Wno-error=unused -Wno-error=unused-function -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-value -Wno-error=comment' ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man --without-imagemagick && make -j4 && make check && rm -Rf ../build/* && ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man && make -j4 && sudo make install && chafa --version && cd ../tests && ./postinstall.sh
 
 after_failure:
   - touch tests/test-suite.log && cat tests/test-suite.log
