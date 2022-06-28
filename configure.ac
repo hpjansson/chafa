@@ -37,7 +37,7 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 dnl --- Standard setup ---
 
 BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes -Werror=format-security \
--Wwrite-strings -Wunused-macros -Wundef -Wpointer-arith -Wstack-usage=131072 \
+-Wwrite-strings -Wunused-macros -Wundef -Wpointer-arith \
 -DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26"
 
 # May want to look into -Wconversion sometime. For now, it's just too much noise.
@@ -52,6 +52,17 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AM_PROG_AR
 LT_INIT
+
+dnl --- Check for extra compiler warnings ---
+
+MORE_CFLAGS="-Wstack-usage=131072"
+
+SAVED_CFLAGS="${CFLAGS}"
+CFLAGS="-Werror $MORE_CFLAGS"
+AC_MSG_CHECKING([for more warnings])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])],[AC_MSG_RESULT($MORE_CFLAGS)
+                  BASE_CFLAGS="${BASE_CFLAGS} ${MORE_CFLAGS}"],[AC_MSG_RESULT(none)])
+CFLAGS="${SAVED_CFLAGS}"
 
 dnl --- Required standards ---
 
