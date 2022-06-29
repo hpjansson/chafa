@@ -55,14 +55,10 @@ LT_INIT
 
 dnl --- Check for extra compiler warnings ---
 
-MORE_CFLAGS="-Wstack-usage=131072"
-
-SAVED_CFLAGS="${CFLAGS}"
-CFLAGS="-Werror $MORE_CFLAGS"
-AC_MSG_CHECKING([for more warnings])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[return 0]])],[AC_MSG_RESULT($MORE_CFLAGS)
-                  BASE_CFLAGS="${BASE_CFLAGS} ${MORE_CFLAGS}"],[AC_MSG_RESULT(none)])
-CFLAGS="${SAVED_CFLAGS}"
+AX_CHECK_COMPILE_FLAG([-Wstack-usage=131072],[BASE_CFLAGS="$BASE_CFLAGS -Wstack-usage=131072"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wfor-loop-analysis],[BASE_CFLAGS="$BASE_CFLAGS -Wfor-loop-analysis"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wlogical-op],[BASE_CFLAGS="$BASE_CFLAGS -Wlogical-op"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wlogical-op-parentheses],[BASE_CFLAGS="$BASE_CFLAGS -Wlogical-op-parentheses"],,[-Werror])
 
 dnl --- Required standards ---
 
