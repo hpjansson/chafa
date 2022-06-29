@@ -361,7 +361,7 @@ case "$host" in
     dnl On mingw32 we do -fvisibility=hidden and __declspec(dllexport)
     AC_DEFINE([_CHAFA_EXTERN], [__attribute__((visibility("default"))) __declspec(dllexport) extern],
               [Defines how to decorate public symbols while building])
-    CFLAGS="${CFLAGS} -fvisibility=hidden"
+    CHAFA_VISIBILITY_CFLAGS="-fvisibility=hidden"
     ;;
   *)
     dnl On other compilers, check if we can do -fvisibility=hidden
@@ -375,7 +375,7 @@ case "$host" in
 
     AS_IF([test "${enable_fvisibility_hidden}" = "yes"], [
       AC_DEFINE([_CHAFA_EXTERN], [__attribute__((visibility("default"))) extern],
-                [defines how to decorate public symbols while building])
+                [Defines how to decorate public symbols while building])
       CHAFA_VISIBILITY_CFLAGS="-fvisibility=hidden"
     ])
     ;;
