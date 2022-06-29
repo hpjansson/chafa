@@ -1319,7 +1319,7 @@ tty_options_deinit (void)
             write_to_stdout (buf, p0 - buf);
         }
 
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
         if (options.is_interactive)
         {
             tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
