@@ -36,9 +36,9 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 
 dnl --- Standard setup ---
 
-BASE_CFLAGS="-Wall -Wextra -Wmissing-prototypes -Werror=format-security \
--Wwrite-strings -Wunused-macros -Wundef -Wpointer-arith \
--DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26"
+BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26 \
+-Wall -Wextra -Wmissing-prototypes -Wwrite-strings -Wunused-macros -Wundef \
+-Wpointer-arith -Werror=format-security"
 
 # May want to look into -Wconversion sometime. For now, it's just too much noise.
 
