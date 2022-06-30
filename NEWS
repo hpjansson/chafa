@@ -1,6 +1,23 @@
 Chafa releases
 ==============
 
+1.12.3 (2022-07-01)
+-------------------
+
+A bug crept into the previous release that prevented successful package builds
+in some environments. This has been fixed.
+
+* Increased GLib minimum version to 2.26.
+
+* Enabled a few compiler warnings not included in '-Wall -Wextra' in order to
+  catch more potential issues early. Also started using '-Werror' selectively.
+
+* Silenced deprecation warnings for older GLib APIs that we would like to
+  keep using a bit longer.
+
+* Bug fixes:
+  github#96  Regression: Fails to build on Linux/Debian (reported by Mo Zhou).
+
 1.12.2 (2022-06-28)
 -------------------
 
