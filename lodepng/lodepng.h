@@ -30,6 +30,10 @@ freely, subject to the following restrictions:
 
 extern const char* LODEPNG_VERSION_STRING;
 
+/*Hard upper limit on size of an uncompressed in-memory image buffer. The
+total memory consumption may be higher, e.g. during postProcessScanlines().*/
+#define LODEPNG_IMAGE_DATA_SIZE_MAX 0xffffffffU
+
 /*
 The following #defines are used to create code sections. They can be disabled
 to disable code sections, which can give faster compile time and smaller binary.
