@@ -33,6 +33,7 @@
 #include "png-loader.h"
 
 #define BYTES_PER_PIXEL 4
+#define IMAGE_BUFFER_SIZE_MAX 0xffffffffU
 
 struct PngLoader
 {
@@ -56,9 +57,12 @@ png_loader_new_from_mapping (FileMapping *mapping)
     gboolean success = FALSE;
     guint width, height;
     unsigned char *frame_data = NULL;
+    LodePNGState lode_state;
     gint lode_error;
 
     g_return_val_if_fail (mapping != NULL, NULL);
+
+    lodepng_state_init (&lode_state);
 
     if (!file_mapping_has_magic (mapping, 0, "\x89PNG", 4))
         goto out;
@@ -70,9 +74,14 @@ png_loader_new_from_mapping (FileMapping *mapping)
     if (!loader->file_data)
         goto out;
 
+    lode_state.info_raw.colortype = LCT_RGBA;
+    lode_state.info_raw.bitdepth = 8;
+    lode_state.decoder.zlibsettings.max_output_size = IMAGE_BUFFER_SIZE_MAX;
+
     /* Decodes to RGBA8 */
-    if ((lode_error = lodepng_decode32 (&frame_data, &width, &height,
-                                        loader->file_data, loader->file_data_len)) != 0)
+    if ((lode_error = lodepng_decode (&frame_data, &width, &height,
+                                      &lode_state,
+                                      loader->file_data, loader->file_data_len)) != 0)
         goto out;
 
     if (width < 1 || width >= (1 << 28)
@@ -98,6 +107,7 @@ out:
             free (frame_data);
     }
 
+    lodepng_state_cleanup (&lode_state);
     return loader;
 }
 
