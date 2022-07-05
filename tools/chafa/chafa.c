@@ -126,6 +126,15 @@ static TermSize detected_term_size;
 static gboolean using_detected_size = FALSE;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
 
+#ifdef HAVE_TERMIOS_H
+static struct termios saved_termios;
+#endif
+
+#ifdef G_OS_WIN32
+static UINT saved_console_output_cp;
+static UINT saved_console_input_cp;
+#endif
+
 #ifdef HAVE_SIGACTION
 static void
 sigint_handler (G_GNUC_UNUSED int sig)
@@ -1228,15 +1237,6 @@ get_tty_size (TermSize *term_size_out)
 
     *term_size_out = term_size;
 }
-
-#ifdef HAVE_TERMIOS_H
-static struct termios saved_termios;
-#endif
-
-#ifdef G_OS_WIN32
-static UINT saved_console_output_cp;
-static UINT saved_console_input_cp;
-#endif
 
 static void
 tty_options_init (void)
