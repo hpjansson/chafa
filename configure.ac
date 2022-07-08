@@ -51,7 +51,7 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AM_PROG_AR
-LT_INIT
+LT_INIT([win32-dll])
 
 dnl --- Check for extra compiler warnings ---
 
