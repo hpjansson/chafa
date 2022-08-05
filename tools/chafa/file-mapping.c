@@ -26,7 +26,11 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+
+#ifdef G_OS_WIN32
+# include <stdio.h>
+# include <io.h>
+#endif
 
 #ifdef HAVE_MMAP
 # include <sys/mman.h>
@@ -306,6 +310,10 @@ cache_stdin (FileMapping *file_mapping, GError **error)
 
     if (stdin_fd < 0)
         goto out;
+
+#ifdef G_OS_WIN32
+    setmode (stdin_fd, O_BINARY);
+#endif
 
     /* Read from stdin */
 
