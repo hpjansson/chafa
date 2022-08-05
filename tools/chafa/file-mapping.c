@@ -51,9 +51,9 @@
  * flag is not always defined in our cross builds. */
 #ifndef O_BINARY
 # ifdef _O_BINARY
-# define O_BINARY _O_BINARY
+#  define O_BINARY _O_BINARY
 # else
-# define O_BINARY 0
+#  define O_BINARY 0
 # endif
 #endif
 
@@ -82,7 +82,7 @@ file_is_stdin (FileMapping *file_mapping)
     return file_mapping->path
         && file_mapping->path [0] == '-'
         && file_mapping->path [1] == '\0' ? TRUE : FALSE;
- }
+}
 
 static gsize
 safe_read (gint fd, void *buf, gsize len)
