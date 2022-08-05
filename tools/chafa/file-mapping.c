@@ -94,6 +94,7 @@ safe_read (gint fd, void *buf, gsize len)
    {
        unsigned int nread;
        int iread;
+       int saved_errno;
 
        /* Passing nread > INT_MAX to read is implementation defined in POSIX
         * 1003.1, therefore despite the unsigned argument portable code must
@@ -105,6 +106,7 @@ safe_read (gint fd, void *buf, gsize len)
            nread = (unsigned int)/*SAFE*/len;
 
        iread = read (fd, buffer, nread);
+       saved_errno = errno;
 
        if (iread == -1)
        {
@@ -112,7 +114,7 @@ safe_read (gint fd, void *buf, gsize len)
             * bytes read because of EINTR, yet it still returns -1 otherwise end
             * of file cannot be distinguished.
             */
-           if (errno != EINTR)
+           if (saved_errno != EINTR)
            {
                /* I.e. a permanent failure */
                return 0;
@@ -149,6 +151,7 @@ safe_write (gint fd, gconstpointer buf, gsize len)
     {
        guint to_write;
        gint n_written;
+       gint saved_errno;
 
        if (len > INT_MAX)
            to_write = INT_MAX;
@@ -156,10 +159,11 @@ safe_write (gint fd, gconstpointer buf, gsize len)
            to_write = (unsigned int) len;
 
        n_written = write (fd, buffer, to_write);
+       saved_errno = errno;
 
        if (n_written == -1)
        {
-           if (errno != EINTR)
+           if (saved_errno != EINTR)
                goto out;
        }
        else if (n_written < 0)
