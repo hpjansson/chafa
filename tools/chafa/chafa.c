@@ -36,9 +36,6 @@
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
-#ifdef HAVE_WINDOWS_H
-# include <windows.h>
-#endif
 
 #include <glib/gstdio.h>
 
@@ -46,6 +43,14 @@
 #include "font-loader.h"
 #include "media-loader.h"
 #include "named-colors.h"
+
+/* Include after glib.h for G_OS_WIN32 */
+#ifdef G_OS_WIN32
+# ifdef HAVE_WINDOWS_H
+#  include <windows.h>
+# endif
+# include <io.h>
+#endif
 
 #define ANIM_FPS_MAX 100000.0
 #define FILE_DURATION_DEFAULT 0.0
@@ -2193,6 +2198,11 @@ proc_init (void)
     sa.sa_flags = SA_RESETHAND;
 
     sigaction (SIGINT, &sa, NULL);
+#endif
+
+#ifdef G_OS_WIN32
+    setmode (fileno (stdin), O_BINARY);
+    setmode (fileno (stdout), O_BINARY);
 #endif
 
     /* Must do this early. Buffer size probably doesn't matter */
