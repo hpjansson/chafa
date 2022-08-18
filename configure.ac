@@ -228,6 +228,24 @@ AC_CHECK_FUNCS(ctermid getrandom mmap sigaction)
 AC_CHECK_HEADERS(sys/ioctl.h termios.h windows.h)
 
 dnl
+dnl Define IS_WIN32_BUILD if we're building for Microsoft Windows. In order to
+dnl get UTF-8 support in command-line arguments and environment vars, we need
+dnl to build a resource file with windres and link it in.
+dnl
+
+is_windows_build=no
+case "${host_os}" in
+     cygwin*|mingw*)
+         is_windows_build=yes
+         ;;
+esac
+
+AM_CONDITIONAL([IS_WIN32_BUILD],
+               [test "x$is_windows_build" = "xyes"])
+
+AC_CHECK_TOOL([WINDRES], [windres], [:])
+
+dnl
 dnl Check for -Bsymbolic-functions linker flag used to avoid
 dnl intra-library PLT jumps, if available.
 dnl

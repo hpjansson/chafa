@@ -60,7 +60,18 @@ chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(JPEG_CFLAGS
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la $(WIN32_LDADD)
+
+# On Microsoft Windows, we compile a resource file with windres and link it in.
+# This enables UTF-8 support in filenames, environment variables, etc.
+
+if IS_WIN32_BUILD
+WIN32_LDADD = manifest.o
+manifest.o: $(srcdir)/manifest.rc
+	$(WINDRES) -o $@ $(srcdir)/manifest.rc
+else
+WIN32_LDADD =
+endif
 
 endif
 
@@ -73,3 +84,5 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)/chafa \
 	-I$(top_srcdir)/libnsgif \
 	-I$(top_srcdir)/lodepng
+
+EXTRA_DIST = manifest.rc ms-utf8.xml
