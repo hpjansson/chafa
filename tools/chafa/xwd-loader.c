@@ -213,7 +213,11 @@ load_header (XwdLoader *loader)
 
     ASSERT_HEADER (h->header_size >= sizeof (XwdHeader));
     ASSERT_HEADER (h->header_size <= 65535);
-    ASSERT_HEADER (h->header_size % 4 == 0);  /* For image data alignment */
+
+    /* FIXME: ImageMagick can generate 118-byte headers. Does Smolscale AVX2
+     * need multiples of 4 to avoid distortion, or is 2 ok? */
+    ASSERT_HEADER (h->header_size % 2 == 0);  /* For image data alignment */
+
     ASSERT_HEADER (h->file_version == 7);
     ASSERT_HEADER (h->pixmap_depth == 24);
 
