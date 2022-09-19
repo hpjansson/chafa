@@ -26,6 +26,7 @@
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-kitty-canvas.h"
+#include "internal/chafa-pixops.h"
 #include "internal/chafa-string-util.h"
 
 typedef struct
@@ -39,6 +40,8 @@ typedef struct
 {
     ChafaKittyCanvas *kitty_canvas;
     SmolScaleCtx *scale_ctx;
+    ChafaColor bg_color;
+    gboolean flatten_alpha;
 }
 DrawCtx;
 
@@ -47,7 +50,7 @@ chafa_kitty_canvas_new (gint width, gint height)
 {
     ChafaKittyCanvas *kitty_canvas;
 
-    kitty_canvas = g_new (ChafaKittyCanvas, 1);
+    kitty_canvas = g_new0 (ChafaKittyCanvas, 1);
     kitty_canvas->width = width;
     kitty_canvas->height = height;
     kitty_canvas->rgba_image = g_malloc (width * height * sizeof (guint32));
@@ -69,12 +72,21 @@ draw_pixels_worker (ChafaBatchInfo *batch, const DrawCtx *ctx)
                            ((guint32 *) ctx->kitty_canvas->rgba_image) + (ctx->kitty_canvas->width * batch->first_row),
                            batch->first_row,
                            batch->n_rows);
+
+    /* FIXME: Smolscale should be able to do this */
+    if (ctx->flatten_alpha)
+        chafa_composite_rgba_on_solid_color (ctx->bg_color,
+                                             ctx->kitty_canvas->rgba_image,
+                                             ctx->kitty_canvas->width,
+                                             batch->first_row,
+                                             batch->n_rows);
 }
 
 void
 chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelType src_pixel_type,
                                     gconstpointer src_pixels,
-                                    gint src_width, gint src_height, gint src_rowstride)
+                                    gint src_width, gint src_height, gint src_rowstride,
+                                    ChafaColor bg_color)
 {
     DrawCtx ctx;
 
@@ -100,6 +112,8 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                                          kitty_canvas->width * sizeof (guint32),
                                          NULL,
                                          &ctx);
+    ctx.bg_color = bg_color;
+    ctx.flatten_alpha = bg_color.ch [3] == 0;
 
     chafa_process_batches (&ctx,
                            (GFunc) draw_pixels_worker,

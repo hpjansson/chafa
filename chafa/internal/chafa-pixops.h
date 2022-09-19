@@ -43,6 +43,9 @@ void chafa_sort_pixel_index_by_channel (guint8 *index,
                                         const ChafaPixel *pixels, gint n_pixels,
                                         gint ch);
 
+void chafa_composite_rgba_on_solid_color (ChafaColor color,
+                                          ChafaPixel *pixels, gint width, gint first_row, gint n_rows);
+
 G_END_DECLS
 
 #endif /* __CHAFA_PIXOPS_H__ */
