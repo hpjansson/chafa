@@ -102,6 +102,7 @@ typedef struct
     guint32 bg_color;
     gboolean bg_color_set;
     gdouble transparency_threshold;
+    gboolean transparency_threshold_set;
     gdouble file_duration_s;
 
     /* If > 0.0, override the framerate specified by the input file. */
@@ -1642,6 +1643,8 @@ parse_options (int *argc, char **argv [])
 
     if (options.transparency_threshold == G_MAXDOUBLE)
         options.transparency_threshold = 0.5;
+    else
+        options.transparency_threshold_set = TRUE;
 
     if (options.transparency_threshold < 0.0 || options.transparency_threshold > 1.0)
     {
@@ -1832,7 +1835,8 @@ out:
 static GString *
 build_string (ChafaPixelType pixel_type, const guint8 *pixels,
               gint src_width, gint src_height, gint src_rowstride,
-              gint dest_width, gint dest_height)
+              gint dest_width, gint dest_height,
+              gboolean is_animation)
 {
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
@@ -1853,8 +1857,13 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
     chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
 
-    if (options.transparency_threshold >= 0.0)
+    if (is_animation
+        && options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        && !options.transparency_threshold_set)
+        chafa_canvas_config_set_transparency_threshold (config, 1.0f);
+    else if (options.transparency_threshold >= 0.0)
         chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
+
     if (options.cell_width > 0 && options.cell_height > 0)
         chafa_canvas_config_set_cell_geometry (config, options.cell_width, options.cell_height);
 
@@ -2010,7 +2019,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
             gs = build_string (pixel_type, pixels,
                                src_width, src_height, src_rowstride,
-                               dest_width, dest_height);
+                               dest_width, dest_height,
+                               is_animation);
 
             p0 = buf;
 
