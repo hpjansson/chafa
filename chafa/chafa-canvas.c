@@ -1561,6 +1561,11 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
+        ChafaColor bg_color;
+
+        chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_color);
+        bg_color.ch [3] = canvas->config.alpha_threshold < 1 ? 0x00 : 0xff;
+
         /* Kitty mode */
 
         canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
@@ -1570,7 +1575,8 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
                                             src_pixel_type,
                                             src_pixels,
                                             src_width, src_height,
-                                            src_rowstride);
+                                            src_rowstride,
+                                            bg_color);
     }
     else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2) */
     {

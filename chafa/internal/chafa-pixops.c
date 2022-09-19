@@ -620,6 +620,33 @@ composite_alpha_on_bg (ChafaColor bg_color,
     }
 }
 
+/* FIXME: Could we always destroy the alpha channel and eliminate the other
+ * variant? */
+static void
+composite_alpha_on_solid (ChafaColor bg_color,
+                          ChafaPixel *pixels, gint width, gint first_row, gint n_rows)
+{
+    ChafaPixel *p0, *p1;
+
+    p0 = pixels + first_row * width;
+    p1 = p0 + n_rows * width;
+
+    for ( ; p0 < p1; p0++)
+    {
+        p0->col.ch [0] += (bg_color.ch [0] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [1] += (bg_color.ch [1] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [2] += (bg_color.ch [2] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [3] = 0xff;
+    }
+}
+
+void
+chafa_composite_rgba_on_solid_color (ChafaColor color,
+                                     ChafaPixel *pixels, gint width, gint first_row, gint n_rows)
+{
+    composite_alpha_on_solid (color, pixels, width, first_row, n_rows);
+}
+
 static void
 prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 {
