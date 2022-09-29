@@ -1963,8 +1963,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
         media_loader_goto_first_frame (media_loader);
 
         for (have_frame = TRUE;
-             (is_first_frame || is_animation)
-             && have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
+             have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
              have_frame = media_loader_goto_next_frame (media_loader))
         {
             gdouble elapsed_ms, remain_ms;
@@ -2097,6 +2096,9 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             }
 
             is_first_frame = FALSE;
+
+            if (!is_animation)
+                break;
         }
 
         loop_n++;
