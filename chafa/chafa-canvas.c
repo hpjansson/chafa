@@ -973,7 +973,18 @@ update_cells_row (ChafaCanvas *canvas, gint row)
              * sure the "blank" char has no foreground features. It's safest to
              * permit this optimization only with ASCII space. */
             if (canvas->blank_char == ' ' && cx > 0)
+            {
                 cells [cx].fg_color = cells [cx - 1].fg_color;
+
+                /* We may use inverted colors when the foreground is transparent.
+                 * Some downstream tools don't handle this and will keep
+                 * modulating the wrong pen. In order to suppress long runs of
+                 * artifacts, make the (unused) foreground pen opaque (gh#108). */
+                if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR)
+                    cells [cx].fg_color |= 0xff000000;
+                else if (cells [cx].fg_color == CHAFA_PALETTE_INDEX_TRANSPARENT)
+                    cells [cx].fg_color = CHAFA_PALETTE_INDEX_FG;
+            }
         }
     }
 }
