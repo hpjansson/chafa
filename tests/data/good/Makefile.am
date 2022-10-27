@@ -14,4 +14,5 @@ EXTRA_DIST = \
 	pixel.svg \
 	pixel.tiff \
 	pixel.webp \
-	pixel.xwd
+	pixel.xwd \
+	taxic.jpg

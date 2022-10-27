@@ -40,4 +40,5 @@ AM_CPPFLAGS = \
 
 EXTRA_DIST = \
 	$(TOOL_CHECKS) \
+	chafa-tool-gallery.sh \
 	chafa-tool-test-common.sh
