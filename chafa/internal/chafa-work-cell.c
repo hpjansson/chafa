@@ -323,8 +323,8 @@ chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair
 
     /* Choose two colors by median cut */
 
-    color_pair_out->colors [0] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS / 4]].col;
-    color_pair_out->colors [1] = wcell->pixels [sorted_pixels [(CHAFA_SYMBOL_N_PIXELS * 3) / 4]].col;
+    color_pair_out->colors [CHAFA_COLOR_PAIR_BG] = wcell->pixels [sorted_pixels [0]].col;
+    color_pair_out->colors [CHAFA_COLOR_PAIR_FG] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS - 1]].col;
 }
 
 static const ChafaPixel *
