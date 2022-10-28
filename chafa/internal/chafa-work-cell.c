@@ -111,8 +111,8 @@ chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, const Ch
     if (sym->bg_weight > 1)
         chafa_color_accum_div_scalar (&accums [0], sym->bg_weight);
 
-    accum_to_color (&accums [1], &color_pair_out->colors [CHAFA_COLOR_PAIR_FG]);
     accum_to_color (&accums [0], &color_pair_out->colors [CHAFA_COLOR_PAIR_BG]);
+    accum_to_color (&accums [1], &color_pair_out->colors [CHAFA_COLOR_PAIR_FG]);
 }
 
 void
