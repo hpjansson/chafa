@@ -408,7 +408,7 @@ print_summary (void)
     "  -C, --center=BOOL  Center images [on, off]. Defaults to off.\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16/8, 16, 240,\n"
-    "                     256, full]. Defaults to full (24-bit).\n"
+    "                     256, full]. Defaults to best guess.\n"
     "      --color-extractor=EXTR  Method for extracting color from an area\n"
     "                     [average, median]. Average is the default.\n"
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"

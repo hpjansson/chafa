@@ -85,20 +85,24 @@ Clear screen before processing each file.
 <varlistentry>
 <term><option>-c <replaceable>mode</replaceable>, --colors <replaceable>mode</replaceable></option></term>
 <listitem><para>
-Set output color mode; one of [none, 2, 8, 16/8 16, 240, 256, full]. Defaults
-to full (24-bit). The 240-color mode is recommended over the 256-color one,
-since the lower 16 colors are unreliable and tend to differ between terminals.
-16-color mode will use aixterm extensions to produce 16 foreground and
-background colors. The 16/8 mode allows for 8 colors plus another "bright" 8
-colors in the foreground implemented with the "bold" escape sequence. 2-color
-mode will only emit the ANSI codes for reverse color and attribute reset,
-while "none" will emit no escape sequences at all.
+Set output color mode; one of [none, 2, 8, 16/8 16, 240, 256, full]. The
+240-color mode is recommended over the 256-color one, since the lower 16 colors
+are unreliable and tend to differ between terminals. 16-color mode will use
+aixterm extensions to produce 16 foreground and background colors. The 16/8
+mode allows for 8 colors plus another "bright" 8 colors in the foreground
+implemented with the "bold" escape sequence. 2-color mode will only emit the
+ANSI codes for reverse color and attribute reset, while "none" will emit no
+escape sequences at all.
 </para>
 <para>
 In sixel mode, "full" will dynamically generate a 256-color palette for each
 image or animation frame. The other modes refer to built-in palettes. "none"
 and "2" are interchangeable and will use the specified foreground/background
 colors (see --fg and --bg).
+</para>
+<para>
+If left unspecified, an optimal default will be chosen based on the current
+environment.
 </para></listitem>
 </varlistentry>
 
