@@ -7,4 +7,6 @@ EXTRA_DIST = \
 	no-frame-data.gif \
 	pixops-normalize-signed-overflow.gif \
 	smolscale-unaligned-1.xwd \
-	smolscale-unaligned-2.xwd
+	smolscale-unaligned-2.xwd \
+	smolscale-unaligned-3.xwd \
+	smolscale-unaligned-4.xwd
