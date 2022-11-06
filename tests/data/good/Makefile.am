@@ -8,6 +8,7 @@ EXTRA_DIST = \
 	noise-32x32-indexed.png \
 	noise-32x32.gif \
 	noise-32x32.png \
+	noise-32x32.xwd \
 	pixel.gif \
 	pixel.jpeg \
 	pixel.png \
