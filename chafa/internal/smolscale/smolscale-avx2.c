@@ -1753,6 +1753,19 @@ scale_horizontal (const SmolScaleCtx *scale_ctx,
 
     unpacked_in = vertical_ctx->parts_row [3];
 
+    /* 32-bit unpackers need 32-bit alignment */
+    if ((((uintptr_t) row_in) & 3)
+        && scale_ctx->pixel_type_in != SMOL_PIXEL_RGB8
+        && scale_ctx->pixel_type_in != SMOL_PIXEL_BGR8)
+    {
+        if (!vertical_ctx->in_aligned)
+            vertical_ctx->in_aligned =
+                smol_alloc_aligned (scale_ctx->width_in * sizeof (uint32_t),
+                                    &vertical_ctx->in_aligned_storage);
+        memcpy (vertical_ctx->in_aligned, row_in, scale_ctx->width_in * sizeof (uint32_t));
+        row_in = vertical_ctx->in_aligned;
+    }
+
     scale_ctx->unpack_row_func (row_in,
                                 unpacked_in,
                                 scale_ctx->width_in);

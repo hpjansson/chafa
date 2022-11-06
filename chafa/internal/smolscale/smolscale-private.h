@@ -110,6 +110,8 @@ typedef struct
     uint32_t in_ofs;
     uint64_t *parts_row [4];
     uint64_t *row_storage [4];
+    uint32_t *in_aligned;
+    uint32_t *in_aligned_storage;
 }
 SmolVerticalCtx;
 
