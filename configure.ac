@@ -51,6 +51,11 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AM_PROG_AR
+
+# We keep this obsolete macro around to allow configuration on older systems
+# that require -std=c99, cf. CentOS 7. See github#113.
+AC_PROG_CC_STDC
+
 LT_INIT([win32-dll])
 
 dnl --- Check for extra compiler warnings ---
