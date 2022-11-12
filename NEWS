@@ -1,6 +1,34 @@
 Chafa releases
 ==============
 
+1.12.4 (2022-11-12)
+-------------------
+
+This release improves support for Microsoft Windows and fixes several bugs.
+
+* MS Windows: Added support for Unicode command-line arguments.
+
+* MS Windows: Enabled support for building a DLL.
+
+* Improved quality of accelerated symbol picking (the default with -w 6 and
+  lower), especially along sharp edges.
+
+* The XWD loader now supports unaligned image data, which can occur when the
+  header is of an uneven length. Such images will no longer be rejected.
+
+* Bug fixes:
+  github#100  Reading image data from stdin fails on Windows (reported by
+              @TransparentLC).
+  github#104  Artifacts with transparent animations on Kitty (reported by Akash
+              Patel).
+  github#112  Bad documentation for -c default (reported by Jakub Wilk).
+  github#113  Autogen/build fails on CentOS 7 (partial solution) (reported by
+              Ivan Shatsky).
+  huntr.dev   Uncontrolled memory allocation in lodepng (reported by
+              @JieyongMa).
+  [unfiled]   -lm should not be in pkg-config Libs: list (Tomasz Kłoczko).
+  [unfiled]   The --watch switch was broken with the introduction of --animate.
+
 1.12.3 (2022-07-01)
 -------------------
 
