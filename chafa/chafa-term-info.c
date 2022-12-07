@@ -241,10 +241,10 @@ out:
     return result;
 }
 
-#define EMIT_SEQ_DEF(inttype, intformatter)                             \
+#define EMIT_SEQ_DEF(name, inttype, intformatter)                        \
     static gchar *                                                      \
-    emit_seq_##inttype (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, \
-                        inttype *args, gint n_args)                     \
+    emit_seq_##name (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, \
+                     inttype *args, gint n_args)                     \
     {                                                                   \
         const gchar *seq_str;                                           \
         const SeqArgInfo *seq_args;                                     \
@@ -262,7 +262,7 @@ out:
             copy_bytes (out, &seq_str [ofs], seq_args [i].pre_len);     \
             out += seq_args [i].pre_len;                                \
             ofs += seq_args [i].pre_len;                                \
-            out = intformatter (out, args [seq_args [i].arg_index]); \
+            out = intformatter (out, args [seq_args [i].arg_index]);    \
         }                                                               \
                                                                         \
         copy_bytes (out, &seq_str [ofs], seq_args [i].pre_len);         \
@@ -271,8 +271,9 @@ out:
         return out;                                                     \
     }
 
-EMIT_SEQ_DEF(guint, chafa_format_dec_uint_0_to_9999)
-EMIT_SEQ_DEF(guint8, chafa_format_dec_u8)
+EMIT_SEQ_DEF(guint, guint, chafa_format_dec_uint_0_to_9999)
+EMIT_SEQ_DEF(guint8, guint8, chafa_format_dec_u8)
+EMIT_SEQ_DEF(guint16_hex, guint16, chafa_format_dec_u16_hex)
 
 static gchar *
 emit_seq_0_args_uint (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq)
@@ -360,6 +361,17 @@ emit_seq_6_args_uint8 (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq 
     args [4] = arg4;
     args [5] = arg5;
     return emit_seq_guint8 (term_info, out, seq, args, 6);
+}
+
+static gchar *
+emit_seq_3_args_uint16_hex (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, guint16 arg0, guint16 arg1, guint16 arg2)
+{
+    guint16 args [3];
+
+    args [0] = arg0;
+    args [1] = arg1;
+    args [2] = arg2;
+    return emit_seq_guint16_hex (term_info, out, seq, args, 3);
 }
 
 /* Public */
@@ -675,6 +687,10 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 #define DEFINE_EMIT_SEQ_6_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1, guint8 arg2, guint8 arg3, guint8 arg4, guint8 arg5) \
 { return emit_seq_6_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2, arg3, arg4, arg5); }
+
+#define DEFINE_EMIT_SEQ_3_u16hex_guint16(func_name, seq_name) \
+    gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint16 arg0, guint16 arg1, guint16 arg2) \
+    { return emit_seq_3_args_uint16_hex (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2); }
 
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     DEFINE_EMIT_SEQ_##n_args##_##arg_proc##_##arg_type(name, NAME)

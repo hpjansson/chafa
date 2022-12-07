@@ -7,7 +7,7 @@ static void
 formatting_test (void)
 {
     ChafaTermInfo *ti;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 12 + 1];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 14 + 1];
     gchar *out = buf;
 
     ti = chafa_term_info_new ();
@@ -21,6 +21,8 @@ formatting_test (void)
     chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FG_16, "aix%1,", NULL);
     chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_BG_16, "aix%1,", NULL);
     chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FGBG_16, "aix-%1-%2,", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, "def-fg-%1-%2-%3,", NULL);
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_BG, "def-bg-%1-%2-%3,", NULL);
 
     out = chafa_term_info_emit_reset_terminal_soft (ti, out);
     out = chafa_term_info_emit_cursor_up (ti, out, 9876);
@@ -34,6 +36,8 @@ formatting_test (void)
     out = chafa_term_info_emit_set_color_bg_16 (ti, out, 8);
     out = chafa_term_info_emit_set_color_fgbg_16 (ti, out, 0, 0);
     out = chafa_term_info_emit_set_color_fgbg_16 (ti, out, 8, 8);
+    out = chafa_term_info_emit_set_default_fg (ti, out, 0xffff, 0x0000, 0x1234);
+    out = chafa_term_info_emit_set_default_bg (ti, out, 0x1234, 0xffff, 0x0000);
 
     *out = '\0';
 
@@ -51,7 +55,9 @@ formatting_test (void)
                      "aix40,"
                      "aix100,"
                      "aix-30-40,"
-                     "aix-90-100,");
+                     "aix-90-100,"
+                     "def-fg-ffff-0000-1234,"
+                     "def-bg-1234-ffff-0000,");
 }
 
 int

@@ -103,8 +103,22 @@ static const SeqStr sixel_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
+static const SeqStr default_color_seqs [] =
+{
+    { CHAFA_TERM_SEQ_RESET_DEFAULT_FG, "\033]110\033\\" },
+    { CHAFA_TERM_SEQ_SET_DEFAULT_FG, "\033]10;rgb:%1/%2/%3\e\\" },
+    { CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, "\033]10;?\033\\" },
+
+    { CHAFA_TERM_SEQ_RESET_DEFAULT_BG, "\033]111\033\\" },
+    { CHAFA_TERM_SEQ_SET_DEFAULT_BG, "\033]11;rgb:%1/%2/%3\e\\" },
+    { CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, "\033]11;?\033\\" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
 static const SeqStr color_direct_seqs [] =
 {
+    /* ISO 8613-6 */
     { CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT, "\033[38;2;%1;%2;%3m" },
     { CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT, "\033[48;2;%1;%2;%3m" },
     { CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT, "\033[38;2;%1;%2;%3;48;2;%4;%5;%6m" },

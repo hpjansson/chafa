@@ -1093,6 +1093,119 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_8, SET_COLOR_BG_8, 1, 8bg, guint8, CHAFA_TERM_SE
  **/
 CHAFA_TERM_SEQ_DEF(set_color_fgbg_8, SET_COLOR_FGBG_8, 2, 8fgbg, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
 
+/* --- Available in 1.14+ --- */
+
+#undef CHAFA_TERM_SEQ_AVAILABILITY
+#define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_14
+
+/**
+ * chafa_term_info_emit_reset_default_fg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_DEFAULT_FG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(reset_default_fg, RESET_DEFAULT_FG, 0, none, char)
+
+/**
+ * chafa_term_info_emit_set_default_fg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @r: Red component (0-65535)
+ * @g: Green component (0-65535)
+ * @b: Blue component (0-65535)
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_DEFAULT_FG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(set_default_fg, SET_DEFAULT_FG, 3, u16hex, guint16, CHAFA_TERM_SEQ_ARGS guint16 r, guint16 g, guint16 b)
+
+/**
+ * chafa_term_info_emit_query_default_fg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_DEFAULT_FG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(query_default_fg, QUERY_DEFAULT_FG, 0, none, char)
+
+/**
+ * chafa_term_info_emit_reset_default_bg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_DEFAULT_BG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(reset_default_bg, RESET_DEFAULT_BG, 0, none, char)
+
+/**
+ * chafa_term_info_emit_set_default_bg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @r: Red component (0-65535)
+ * @g: Green component (0-65535)
+ * @b: Blue component (0-65535)
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_DEFAULT_BG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(set_default_bg, SET_DEFAULT_BG, 3, u16hex, guint16, CHAFA_TERM_SEQ_ARGS guint16 r, guint16 g, guint16 b)
+
+/**
+ * chafa_term_info_emit_query_default_bg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_DEFAULT_BG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(query_default_bg, QUERY_DEFAULT_BG, 0, none, char)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS
