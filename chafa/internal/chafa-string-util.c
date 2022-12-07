@@ -126,3 +126,20 @@ chafa_format_dec_uint_0_to_9999 (char *dest, guint arg)
 
 #pragma clang diagnostic pop
 #pragma GCC diagnostic pop
+
+static gchar
+format_hex_digit (guchar n)
+{
+    g_assert (n < 16);
+    return (n < 10) ? '0' + n : 'a' - 10 + n;
+}
+
+gchar *
+chafa_format_dec_u16_hex (char *dest, guint16 arg)
+{
+    *(dest++) = format_hex_digit ((arg >> 12) & 0xf);
+    *(dest++) = format_hex_digit ((arg >> 8) & 0xf);
+    *(dest++) = format_hex_digit ((arg >> 4) & 0xf);
+    *(dest++) = format_hex_digit (arg & 0xf);
+    return dest;
+}
