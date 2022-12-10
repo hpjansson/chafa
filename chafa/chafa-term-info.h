@@ -92,6 +92,8 @@ gint chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const 
                               GError **error);
 CHAFA_AVAILABLE_IN_1_6
 gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
+CHAFA_AVAILABLE_IN_1_14
+gchar *chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...);
 
 CHAFA_AVAILABLE_IN_1_6
 void chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source);

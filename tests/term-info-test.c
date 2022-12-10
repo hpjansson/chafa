@@ -60,12 +60,79 @@ formatting_test (void)
                      "def-bg-1234-ffff-0000,");
 }
 
+static void
+dynamic_test (void)
+{
+    ChafaTermInfo *ti;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    gchar *out = buf;
+    gchar *dyn;
+
+    ti = chafa_term_info_new ();
+
+    /* No args */
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT, "reset-soft", NULL);
+    out = chafa_term_info_emit_reset_terminal_soft (ti, buf);
+    *out = '\0';
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_RESET_TERMINAL_SOFT, -1);
+    g_assert_cmpstr (buf, ==, dyn);
+    g_free (dyn);
+
+    /* 8-bit args */
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT, "%1%2-fg-direct-%3", NULL);
+    out = chafa_term_info_emit_set_color_fg_direct (ti, buf, 0xff, 0x00, 0x12);
+    *out = '\0';
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT,
+                                    0xff, 0x00, 0x12, -1);
+    g_assert_cmpstr (buf, ==, dyn);
+    g_free (dyn);
+
+    /* uint args */
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_CURSOR_TO_POS, "%1-cursor-to-pos-%2", NULL);
+    out = chafa_term_info_emit_cursor_to_pos (ti, buf, 100000, 200000);
+    *out = '\0';
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_CURSOR_TO_POS,
+                                    100000, 200000, -1);
+    g_assert_cmpstr (buf, ==, dyn);
+    g_free (dyn);
+
+    /* 16-bit hex args */
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, "def-fg-%1-%2-%3,", NULL);
+
+    out = chafa_term_info_emit_set_default_fg (ti, buf, 0xffff, 0x0000, 0x1234);
+    *out = '\0';
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+                                    0xffff, 0x0000, 0x1234, -1);
+    g_assert_cmpstr (buf, ==, dyn);
+    g_free (dyn);
+
+    /* Arg out of range */
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+                                    0xffff, 0x10000, 0x1234, 0, -1);
+    g_assert (dyn == NULL);
+
+    /* Too many args */
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+                                    0xffff, 0x0000, 0x1234, 0, -1);
+    g_assert (dyn == NULL);
+
+    /* Too few args */
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+                                    0xffff, 0x0000, -1);
+    g_assert (dyn == NULL);
+
+    /* Too few (zero) args */
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, -1);
+    g_assert (dyn == NULL);
+}
+
 int
 main (int argc, char *argv [])
 {
     g_test_init (&argc, &argv, NULL);
 
     g_test_add_func ("/term-info/formatting", formatting_test);
+    g_test_add_func ("/term-info/dynamic", dynamic_test);
 
     return g_test_run ();
 }

@@ -19,6 +19,8 @@
 
 #include "config.h"
 
+#include <stdarg.h>
+
 #include "chafa.h"
 #include "internal/chafa-private.h"
 #include "internal/chafa-string-util.h"
@@ -591,6 +593,96 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
     }
 
     return result;
+}
+
+/**
+ * chafa_term_info_emit_seq:
+ * @term_info: A #ChafaTermInfo
+ * @seq: A #ChafaTermSeq to emit
+ * @...: A list of int arguments to insert in @seq, terminated by -1
+ *
+ * Formats the terminal sequence @seq, inserting positional arguments. The seq's
+ * number of arguments must be supplied exactly.
+ *
+ * The argument list must be terminated by -1, or undefined behavior will result.
+ *
+ * If the wrong number of arguments is supplied, or an argument is out of range,
+ * this function will return %NULL. Otherwise, it returns a zero-terminated string
+ * that must be freed with g_free().
+ *
+ * If you want compile-time validation of arguments, consider using one of the
+ * specific chafa_term_info_emit_*() functions. They are also faster, but require
+ * you to allocate at least CHAFA_TERM_SEQ_LENGTH_MAX bytes up front.
+ *
+ * Returns: A newly allocated, zero-terminated formatted string, or %NULL on error
+ *
+ * Since: 1.14
+ **/
+gchar *
+chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
+{
+  va_list ap;
+  guint args_uint [CHAFA_TERM_SEQ_ARGS_MAX];
+  guint16 args_u16 [CHAFA_TERM_SEQ_ARGS_MAX];
+  guint8 args_u8 [CHAFA_TERM_SEQ_ARGS_MAX];
+  gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
+  guint n_args = 0;
+  gchar *p;
+  gchar *result = NULL;
+
+  va_start (ap, seq);
+
+  for (;;)
+  {
+      gint arg = va_arg (ap, gint);
+      if (arg < 0)
+          break;
+
+      if (n_args == CHAFA_TERM_SEQ_ARGS_MAX || n_args == seq_meta [seq].n_args)
+          goto out;
+
+      if (seq_meta [seq].type_size == 1)
+      {
+          if (arg > 0xff)
+              goto out;
+          args_u8 [n_args] = arg;
+      }
+      else if (seq_meta [seq].type_size == 2)
+      {
+          if (arg > 0xffff)
+              goto out;
+          args_u16 [n_args] = arg;
+      }
+      else
+      {
+          args_uint [n_args] = arg;
+      }
+
+      n_args++;
+  }
+
+  if (n_args != seq_meta [seq].n_args)
+      goto out;
+
+  /* 16-bit args are always hex for now. It has no other uses. */
+
+  if (seq_meta [seq].n_args == 0)
+      p = emit_seq_0_args_uint (term_info, buf, seq);
+  else if (seq_meta [seq].type_size == 1)
+      p = emit_seq_guint8 (term_info, buf, seq, args_u8, n_args);
+  else if (seq_meta [seq].type_size == 2)
+      p = emit_seq_guint16_hex (term_info, buf, seq, args_u16, n_args);
+  else
+      p = emit_seq_guint (term_info, buf, seq, args_uint, n_args);
+
+  if (p == buf)
+      goto out;
+
+  result = g_strndup (buf, p - buf);
+
+out:
+  va_end (ap);
+  return result;
 }
 
 /**
