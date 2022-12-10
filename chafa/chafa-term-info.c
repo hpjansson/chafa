@@ -636,6 +636,9 @@ chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
     gchar *p;
     gchar *result = NULL;
 
+    g_return_val_if_fail (term_info != NULL, NULL);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, NULL);
+
     va_start (ap, seq);
 
     for (;;)
