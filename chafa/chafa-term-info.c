@@ -192,7 +192,7 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
                 out [j++] = '%';
                 pre_len++;
             }
-            else if (c >= '1' && c <= '8')  /* arg # 0-7 */
+            else if (c >= '1' && c <= '7')  /* arg # 0-6 */
             {
                 /* "%n" -> argument n-1 */
 
