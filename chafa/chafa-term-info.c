@@ -108,8 +108,6 @@
  * An enumeration of the control sequences supported by #ChafaTermInfo.
  **/
 
-/* Maximum number of arguments + 1 for the sentinel */
-#define CHAFA_TERM_SEQ_ARGS_MAX 8
 #define ARG_INDEX_SENTINEL 255
 
 typedef struct
@@ -380,6 +378,115 @@ emit_seq_3_args_uint16_hex (const ChafaTermInfo *term_info, gchar *out, ChafaTer
     args [1] = arg1;
     args [2] = arg2;
     return emit_seq_guint16_hex (term_info, out, seq, args, 3);
+}
+
+/* Stream parsing */
+
+static gint
+parse_dec (const gchar *in, gint in_len, guint *args_out)
+{
+    gint i = 0;
+    guint result = 0;
+
+    while (in_len > 0 && *in >= '0' && *in <= '9')
+    {
+        result *= 10;
+        result += *in - '0';
+        in++;
+        in_len--;
+        i++;
+    }
+
+    *args_out = result;
+    return i;
+}
+
+static gint
+parse_hex4 (const gchar *in, gint in_len, guint *args_out)
+{
+    gint i = 0;
+    guint result = 0;
+
+    while (in_len > 0)
+    {
+        gchar c = g_ascii_tolower (*in);
+
+        if (c >= '0' && c <= '9')
+        {
+            result *= 16;
+            result += c - '0';
+        }
+        else if (c >= 'a' && c <= 'f')
+        {
+            result *= 16;
+            result += c - 'a' + 10;
+        }
+        else
+            break;
+
+        in++;
+        in_len--;
+        i++;
+    }
+
+    *args_out = result;
+    return i;
+}
+
+static ChafaParseResult
+try_parse_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq,
+               gchar **input, gint *input_len, guint *args_out)
+{
+    gchar *in = *input;
+    gint in_len = *input_len;
+    const gchar *seq_str;
+    const SeqArgInfo *seq_args;
+    gint pofs = 0;
+    guint i = 0;
+
+    seq_str = &term_info->seq_str [seq] [0];
+    seq_args = &term_info->seq_args [seq] [0];
+
+    memset (args_out, 0, seq_meta [seq].n_args * sizeof (guint));
+
+    for ( ; ; i++)
+    {
+        gint len;
+
+        if (memcmp (in, &seq_str [pofs], MIN (in_len, seq_args [i].pre_len)))
+            return CHAFA_PARSE_FAILURE;
+        if (in_len < seq_args [i].pre_len)
+            return CHAFA_PARSE_AGAIN;
+        in += seq_args [i].pre_len;
+        in_len -= seq_args [i].pre_len;
+        pofs += seq_args [i].pre_len;
+
+        if (i >= seq_meta [seq].n_args)
+            break;
+
+        if (in_len == 0)
+            return CHAFA_PARSE_AGAIN;
+
+        if (seq_meta [seq].type_size == 1)
+            len = parse_dec (in, in_len, args_out + seq_args [i].arg_index);
+        else if (seq_meta [seq].type_size == 2)
+            len = parse_hex4 (in, in_len, args_out + seq_args [i].arg_index);
+        else
+            len = parse_dec (in, in_len, args_out + seq_args [i].arg_index);
+
+        if (len == 0)
+            return CHAFA_PARSE_FAILURE;
+
+        in += len;
+        in_len -= len;
+    }
+
+    if (*input == in)
+        return CHAFA_PARSE_FAILURE;
+
+    *input = in;
+    *input_len = in_len;
+    return CHAFA_PARSE_SUCCESS;
 }
 
 /* Public */
@@ -692,6 +799,44 @@ chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
 out:
     va_end (ap);
     return result;
+}
+
+/**
+ * chafa_term_info_emit_seq:
+ * @term_info: A #ChafaTermInfo
+ * @seq: A #ChafaTermSeq to attempt to parse
+ * @input: Pointer to pointer to input data
+ * @input_len: Pointer to maximum input data length
+ * @args_out: Pointer to parsed argument values
+ *
+ * Attempts to parse a terminal sequence from an input data array. If successful,
+ * #CHAFA_PARSE_SUCCESS will be returned, the @input pointer will be advanced and
+ * the parsed length will be subtracted from @input_len.
+ *
+ * Returns: A #ChafaParseResult indicating success, failure or insufficient input data
+ *
+ * Since: 1.14
+ **/
+ChafaParseResult
+chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
+                           gchar **input, gint *input_len,
+                           guint *args_out)
+{
+    guint dummy_args_out [CHAFA_TERM_SEQ_ARGS_MAX];
+
+    g_return_val_if_fail (term_info != NULL, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (input != NULL, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (*input != NULL, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (input_len != NULL, CHAFA_PARSE_FAILURE);
+
+    if (!chafa_term_info_have_seq (term_info, seq))
+        return CHAFA_PARSE_FAILURE;
+
+    if (!args_out)
+        args_out = dummy_args_out;
+
+    return try_parse_seq (term_info, seq, input, input_len, args_out);
 }
 
 /**

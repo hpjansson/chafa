@@ -28,6 +28,9 @@ G_BEGIN_DECLS
 
 #define CHAFA_TERM_SEQ_LENGTH_MAX 96
 
+/* Maximum number of arguments + 1 for sentinel */
+#define CHAFA_TERM_SEQ_ARGS_MAX 8
+
 #ifndef __GTK_DOC_IGNORE__
 /* This declares the enum for CHAFA_TERM_SEQ_*. See chafa-term-seq-def.h
  * for more information, or look up the canonical documentation at
@@ -73,6 +76,22 @@ typedef enum
 }
 ChafaTermInfoError;
 
+/**
+ * ChafaParseResult:
+ * @CHAFA_PARSE_SUCCESS: Parsed successfully
+ * @CHAFA_PARSE_FAILURE: Data mismatch
+ * @CHAFA_PARSE_AGAIN: Partial success, but not enough input
+ *
+ * An enumeration of the possible return values from the parsing function.
+ **/
+typedef enum
+{
+    CHAFA_PARSE_SUCCESS,
+    CHAFA_PARSE_FAILURE,
+    CHAFA_PARSE_AGAIN
+}
+ChafaParseResult;
+
 CHAFA_AVAILABLE_IN_1_6
 GQuark chafa_term_info_error_quark (void);
 
@@ -94,6 +113,10 @@ CHAFA_AVAILABLE_IN_1_6
 gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
 CHAFA_AVAILABLE_IN_1_14
 gchar *chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...);
+CHAFA_AVAILABLE_IN_1_14
+ChafaParseResult chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
+                                            gchar **input, gint *input_len,
+                                            guint *args_out);
 
 CHAFA_AVAILABLE_IN_1_6
 void chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source);

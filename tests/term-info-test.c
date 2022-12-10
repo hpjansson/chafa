@@ -124,6 +124,58 @@ dynamic_test (void)
     /* Too few (zero) args */
     dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, -1);
     g_assert (dyn == NULL);
+
+    chafa_term_info_unref (ti);
+}
+
+static void
+parsing_test (void)
+{
+    ChafaTermInfo *ti;
+    gchar *dyn;
+    gint dyn_len;
+    gchar *p;
+    guint args [CHAFA_TERM_SEQ_ARGS_MAX];
+    ChafaParseResult result;
+    guint i;
+
+    ti = chafa_term_info_new ();
+
+    /* Define and emit */
+
+    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, "def-fg-%1-%2-%3,", NULL);
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+                                    0xffff, 0x0000, 0x1234, -1);
+
+    /* Parse success */
+
+    p = dyn;
+    dyn_len = strlen (dyn);
+    result = chafa_term_info_parse_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, &p, &dyn_len, args);
+    g_assert (result == CHAFA_PARSE_SUCCESS);
+    g_assert (args [0] == 0xffff);
+    g_assert (args [1] == 0x0000);
+    g_assert (args [2] == 0x1234);
+
+    /* Not enough data */
+
+    for (i = 0; i < strlen (dyn); i++)
+    {
+        p = dyn;
+        dyn_len = i;
+        result = chafa_term_info_parse_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, &p, &dyn_len, args);
+        g_assert (result == CHAFA_PARSE_AGAIN);
+    }
+
+    /* Parse failure */
+
+    p = dyn + 1;
+    dyn_len = strlen (dyn) - 1;
+    result = chafa_term_info_parse_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, &p, &dyn_len, args);
+    g_assert (result == CHAFA_PARSE_FAILURE);
+
+    g_free (dyn);
+    chafa_term_info_unref (ti);
 }
 
 int
@@ -133,6 +185,7 @@ main (int argc, char *argv [])
 
     g_test_add_func ("/term-info/formatting", formatting_test);
     g_test_add_func ("/term-info/dynamic", dynamic_test);
+    g_test_add_func ("/term-info/parsing", parsing_test);
 
     return g_test_run ();
 }
