@@ -97,6 +97,12 @@
  * @CHAFA_TERM_SEQ_SET_COLOR_FG_8: Set foreground color (8 colors).
  * @CHAFA_TERM_SEQ_SET_COLOR_BG_8: Set background color (8 colors).
  * @CHAFA_TERM_SEQ_SET_COLOR_FGBG_8: Set foreground and background colors (8 colors).
+ * @CHAFA_TERM_SEQ_RESET_DEFAULT_FG: Reset the default FG color to the terminal's default.
+ * @CHAFA_TERM_SEQ_SET_DEFAULT_FG: Set the default FG to a specific RGB color.
+ * @CHAFA_TERM_SEQ_QUERY_DEFAULT_FG: Query the default FG color.
+ * @CHAFA_TERM_SEQ_RESET_DEFAULT_BG: Reset the default BG color to the terminal's default.
+ * @CHAFA_TERM_SEQ_SET_DEFAULT_BG: Set the default BG to a specific RGB color.
+ * @CHAFA_TERM_SEQ_QUERY_DEFAULT_BG: Query the default BG color.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
