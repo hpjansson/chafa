@@ -1206,6 +1206,1146 @@ CHAFA_TERM_SEQ_DEF(set_default_bg, SET_DEFAULT_BG, 3, u16hex, guint16, CHAFA_TER
  **/
 CHAFA_TERM_SEQ_DEF(query_default_bg, QUERY_DEFAULT_BG, 0, none, char)
 
+/**
+ * chafa_term_info_emit_tab_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_TAB_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(tab_shift_key, TAB_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_up_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_UP_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(up_key, UP_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_up_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_UP_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(up_ctrl_key, UP_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_up_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_UP_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(up_shift_key, UP_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_down_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DOWN_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(down_key, DOWN_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_down_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DOWN_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(down_ctrl_key, DOWN_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_down_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DOWN_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(down_shift_key, DOWN_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_left_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_LEFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(left_key, LEFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_left_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_LEFT_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(left_ctrl_key, LEFT_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_left_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_LEFT_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(left_shift_key, LEFT_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_right_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RIGHT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(right_key, RIGHT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_right_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RIGHT_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(right_ctrl_key, RIGHT_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_right_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RIGHT_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(right_shift_key, RIGHT_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_page_up_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PAGE_UP_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(page_up_key, PAGE_UP_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_page_up_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PAGE_UP_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(page_up_ctrl_key, PAGE_UP_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_page_up_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PAGE_UP_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(page_up_shift_key, PAGE_UP_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_page_down_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PAGE_DOWN_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(page_down_key, PAGE_DOWN_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_page_down_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PAGE_DOWN_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(page_down_ctrl_key, PAGE_DOWN_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_page_down_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PAGE_DOWN_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(page_down_shift_key, PAGE_DOWN_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_home_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_HOME_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(home_key, HOME_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_home_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_HOME_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(home_ctrl_key, HOME_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_home_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_HOME_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(home_shift_key, HOME_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_end_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_END_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(end_key, END_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_end_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_END_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(end_ctrl_key, END_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_end_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_END_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(end_shift_key, END_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_insert_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_INSERT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(insert_key, INSERT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_insert_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_INSERT_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(insert_ctrl_key, INSERT_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_insert_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_INSERT_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(insert_shift_key, INSERT_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_delete_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DELETE_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(delete_key, DELETE_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_delete_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DELETE_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(delete_ctrl_key, DELETE_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_delete_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DELETE_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(delete_shift_key, DELETE_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f1_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F1_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f1_key, F1_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f1_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F1_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f1_ctrl_key, F1_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f1_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F1_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f1_shift_key, F1_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f2_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F2_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f2_key, F2_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f2_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F2_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f2_ctrl_key, F2_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f2_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F2_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f2_shift_key, F2_SHIFT_KEY, 0, none, char)
+
+
+/**
+ * chafa_term_info_emit_f3_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F3_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f3_key, F3_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f3_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F3_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f3_ctrl_key, F3_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f3_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F3_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f3_shift_key, F3_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f4_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F4_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f4_key, F4_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f4_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F4_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f4_ctrl_key, F4_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f4_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F4_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f4_shift_key, F4_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f5_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F5_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f5_key, F5_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f5_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F5_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f5_ctrl_key, F5_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f5_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F5_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f5_shift_key, F5_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f6_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F6_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f6_key, F6_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f6_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F6_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f6_ctrl_key, F6_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f6_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F6_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f6_shift_key, F6_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f7_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F7_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f7_key, F7_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f7_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F7_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f7_ctrl_key, F7_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f7_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F7_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f7_shift_key, F7_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f8_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F8_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f8_key, F8_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f8_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F8_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f8_ctrl_key, F8_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f8_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F8_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f8_shift_key, F8_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f9_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F9_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f9_key, F9_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f9_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F9_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f9_ctrl_key, F9_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f9_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F9_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f9_shift_key, F9_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f10_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F10_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f10_key, F10_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f10_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F10_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f10_ctrl_key, F10_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f10_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F10_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f10_shift_key, F10_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f11_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F11_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f11_key, F11_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f11_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F11_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f11_ctrl_key, F11_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f11_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F11_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f11_shift_key, F11_SHIFT_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f12_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F12_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f12_key, F12_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f12_ctrl_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F12_CTRL_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f12_ctrl_key, F12_CTRL_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_f12_shift_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_F12_SHIFT_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(f12_shift_key, F12_SHIFT_KEY, 0, none, char)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

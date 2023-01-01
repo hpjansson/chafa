@@ -103,6 +103,73 @@
  * @CHAFA_TERM_SEQ_RESET_DEFAULT_BG: Reset the default BG color to the terminal's default.
  * @CHAFA_TERM_SEQ_SET_DEFAULT_BG: Set the default BG to a specific RGB color.
  * @CHAFA_TERM_SEQ_QUERY_DEFAULT_BG: Query the default BG color.
+ * @CHAFA_TERM_SEQ_TAB_SHIFT_KEY: Shift + tab key.
+ * @CHAFA_TERM_SEQ_UP_KEY: Up key.
+ * @CHAFA_TERM_SEQ_UP_CTRL_KEY: Up key.
+ * @CHAFA_TERM_SEQ_UP_SHIFT_KEY: Up key.
+ * @CHAFA_TERM_SEQ_DOWN_KEY: Down key.
+ * @CHAFA_TERM_SEQ_DOWN_CTRL_KEY: Up key.
+ * @CHAFA_TERM_SEQ_DOWN_SHIFT_KEY: Up key.
+ * @CHAFA_TERM_SEQ_LEFT_KEY: Left key.
+ * @CHAFA_TERM_SEQ_LEFT_CTRL_KEY: Up key.
+ * @CHAFA_TERM_SEQ_LEFT_SHIFT_KEY: Up key.
+ * @CHAFA_TERM_SEQ_RIGHT_KEY: Right key.
+ * @CHAFA_TERM_SEQ_RIGHT_CTRL_KEY: Up key.
+ * @CHAFA_TERM_SEQ_RIGHT_SHIFT_KEY: Up key.
+ * @CHAFA_TERM_SEQ_PAGE_UP_KEY: Page up key.
+ * @CHAFA_TERM_SEQ_PAGE_UP_CTRL_KEY: Page up key.
+ * @CHAFA_TERM_SEQ_PAGE_UP_SHIFT_KEY: Page up key.
+ * @CHAFA_TERM_SEQ_PAGE_DOWN_KEY: Page down key.
+ * @CHAFA_TERM_SEQ_PAGE_DOWN_CTRL_KEY: Page down key.
+ * @CHAFA_TERM_SEQ_PAGE_DOWN_SHIFT_KEY: Page down key.
+ * @CHAFA_TERM_SEQ_HOME_KEY: Home key.
+ * @CHAFA_TERM_SEQ_HOME_CTRL_KEY: Home key.
+ * @CHAFA_TERM_SEQ_HOME_SHIFT_KEY: Home key.
+ * @CHAFA_TERM_SEQ_END_KEY: End key.
+ * @CHAFA_TERM_SEQ_END_CTRL_KEY: End key.
+ * @CHAFA_TERM_SEQ_END_SHIFT_KEY: End key.
+ * @CHAFA_TERM_SEQ_INSERT_KEY: Insert key.
+ * @CHAFA_TERM_SEQ_INSERT_CTRL_KEY: Insert key.
+ * @CHAFA_TERM_SEQ_INSERT_SHIFT_KEY: Insert key.
+ * @CHAFA_TERM_SEQ_DELETE_KEY: Delete key.
+ * @CHAFA_TERM_SEQ_DELETE_CTRL_KEY: Delete key.
+ * @CHAFA_TERM_SEQ_DELETE_SHIFT_KEY: Delete key.
+ * @CHAFA_TERM_SEQ_F1_KEY: F1 key.
+ * @CHAFA_TERM_SEQ_F1_CTRL_KEY: Ctrl + F1 key.
+ * @CHAFA_TERM_SEQ_F1_SHIFT_KEY: Shift + F1 key.
+ * @CHAFA_TERM_SEQ_F2_KEY: F2 key.
+ * @CHAFA_TERM_SEQ_F2_CTRL_KEY: Ctrl + F2 key.
+ * @CHAFA_TERM_SEQ_F2_SHIFT_KEY: Shift + F2 key.
+ * @CHAFA_TERM_SEQ_F3_KEY: F3 key.
+ * @CHAFA_TERM_SEQ_F3_CTRL_KEY: Ctrl + F3 key.
+ * @CHAFA_TERM_SEQ_F3_SHIFT_KEY: Shift + F3 key.
+ * @CHAFA_TERM_SEQ_F4_KEY: F4 key.
+ * @CHAFA_TERM_SEQ_F4_CTRL_KEY: Ctrl + F4 key.
+ * @CHAFA_TERM_SEQ_F4_SHIFT_KEY: Shift + F4 key.
+ * @CHAFA_TERM_SEQ_F5_KEY: F5 key.
+ * @CHAFA_TERM_SEQ_F5_CTRL_KEY: Ctrl + F5 key.
+ * @CHAFA_TERM_SEQ_F5_SHIFT_KEY: Shift + F5 key.
+ * @CHAFA_TERM_SEQ_F6_KEY: F6 key.
+ * @CHAFA_TERM_SEQ_F6_CTRL_KEY: Ctrl + F6 key.
+ * @CHAFA_TERM_SEQ_F6_SHIFT_KEY: Shift + F6 key.
+ * @CHAFA_TERM_SEQ_F7_KEY: F7 key.
+ * @CHAFA_TERM_SEQ_F7_CTRL_KEY: Ctrl + F7 key.
+ * @CHAFA_TERM_SEQ_F7_SHIFT_KEY: Shift + F7 key.
+ * @CHAFA_TERM_SEQ_F8_KEY: F8 key.
+ * @CHAFA_TERM_SEQ_F8_CTRL_KEY: Ctrl + F8 key.
+ * @CHAFA_TERM_SEQ_F8_SHIFT_KEY: Shift + F8 key.
+ * @CHAFA_TERM_SEQ_F9_KEY: F9 key.
+ * @CHAFA_TERM_SEQ_F9_CTRL_KEY: Ctrl + F9 key.
+ * @CHAFA_TERM_SEQ_F9_SHIFT_KEY: Shift + F9 key.
+ * @CHAFA_TERM_SEQ_F10_KEY: F10 key.
+ * @CHAFA_TERM_SEQ_F10_CTRL_KEY: Ctrl + F10 key.
+ * @CHAFA_TERM_SEQ_F10_SHIFT_KEY: Shift + F10 key.
+ * @CHAFA_TERM_SEQ_F11_KEY: F11 key.
+ * @CHAFA_TERM_SEQ_F11_CTRL_KEY: Ctrl + F11 key.
+ * @CHAFA_TERM_SEQ_F11_SHIFT_KEY: Shift + F11 key.
+ * @CHAFA_TERM_SEQ_F12_KEY: F12 key.
+ * @CHAFA_TERM_SEQ_F12_CTRL_KEY: Ctrl + F12 key.
+ * @CHAFA_TERM_SEQ_F12_SHIFT_KEY: Shift + F12 key.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
