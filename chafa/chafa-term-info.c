@@ -103,6 +103,9 @@
  * @CHAFA_TERM_SEQ_RESET_DEFAULT_BG: Reset the default BG color to the terminal's default.
  * @CHAFA_TERM_SEQ_SET_DEFAULT_BG: Set the default BG to a specific RGB color.
  * @CHAFA_TERM_SEQ_QUERY_DEFAULT_BG: Query the default BG color.
+ * @CHAFA_TERM_SEQ_RETURN_KEY: Return key.
+ * @CHAFA_TERM_SEQ_BACKSPACE_KEY: Backspace key.
+ * @CHAFA_TERM_SEQ_TAB_KEY: Tab key.
  * @CHAFA_TERM_SEQ_TAB_SHIFT_KEY: Shift + tab key.
  * @CHAFA_TERM_SEQ_UP_KEY: Up key.
  * @CHAFA_TERM_SEQ_UP_CTRL_KEY: Ctrl + up key.

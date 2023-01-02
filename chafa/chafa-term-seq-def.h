@@ -1207,6 +1207,57 @@ CHAFA_TERM_SEQ_DEF(set_default_bg, SET_DEFAULT_BG, 3, u16hex, guint16, CHAFA_TER
 CHAFA_TERM_SEQ_DEF(query_default_bg, QUERY_DEFAULT_BG, 0, none, char)
 
 /**
+ * chafa_term_info_emit_return_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RETURN_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(return_key, RETURN_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_backspace_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BACKSPACE_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(backspace_key, BACKSPACE_KEY, 0, none, char)
+
+/**
+ * chafa_term_info_emit_tab_key:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_TAB_KEY.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(tab_key, TAB_KEY, 0, none, char)
+
+/**
  * chafa_term_info_emit_tab_shift_key:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
