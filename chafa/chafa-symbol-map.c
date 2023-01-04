@@ -1009,11 +1009,16 @@ chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src)
     dest->glyphs2 = copy_glyph2_table (dest->glyphs2);
     dest->selectors = copy_selector_array (dest->selectors);
     dest->symbols = NULL;
+    dest->n_symbols = 0;
     dest->symbols2 = NULL;
+    dest->n_symbols2 = 0;
     dest->packed_bitmaps = NULL;
     dest->packed_bitmaps2 = NULL;
     dest->need_rebuild = TRUE;
     dest->refs = 1;
+
+    if (!src->need_rebuild)
+        chafa_symbol_map_prepare (dest);
 }
 
 void
