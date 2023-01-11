@@ -73,3 +73,10 @@ $ sudo make install
 ```
 
 That should do it!
+
+## Python bindings
+
+[Erica Ferrua Edwardsdóttir](https://mage.black/) maintains
+[excellent Python bindings](https://chafapy.mage.black/) for Chafa. If
+Python's your thing, check them out. They are easy to use and come with a
+[detailed tutorial](https://chafapy.mage.black/usage/tutorial.html).

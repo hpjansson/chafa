@@ -78,3 +78,13 @@ Then cd to the toplevel directory and issue the following shell commands:
 $ ./autogen.sh
 $ make
 $ sudo make install
+
+Python bindings
+---------------
+
+Erica Ferrua Edwardsdóttir maintains excellent Python bindings for Chafa. If
+Python's your thing, check them out. They are easy to use and come with a
+detailed tutorial:
+
+https://chafapy.mage.black/
+
