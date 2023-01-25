@@ -109,6 +109,7 @@ Glyph2;
  * @CHAFA_SYMBOL_TAG_SEXTANT: Sextant 2x3 mosaics.
  * @CHAFA_SYMBOL_TAG_WEDGE: Wedge shapes that align with sextants.
  * @CHAFA_SYMBOL_TAG_LATIN: Latin and Latin-like symbols (superset of ASCII).
+ * @CHAFA_SYMBOL_TAG_IMPORTED: Symbols for which glyphs were imported with chafa_symbol_map_add_glyph ().
  * @CHAFA_SYMBOL_TAG_EXTRA: Symbols not in any other category.
  * @CHAFA_SYMBOL_TAG_BAD: Joint set of ugly and ambiguous characters. Always excluded unless specifically asked for.
  * @CHAFA_SYMBOL_TAG_ALL: Special value meaning all supported symbols.
@@ -578,7 +579,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
     while (g_hash_table_iter_next (&iter, &key, &value))
     {
         Glyph *glyph = value;
-        ChafaSymbolTags tags = chafa_get_tags_for_char (glyph->c);
+        ChafaSymbolTags tags = chafa_get_tags_for_char (glyph->c) | CHAFA_SYMBOL_TAG_IMPORTED;
 
         if (char_is_selected (symbol_map->selectors, tags, glyph->c))
         {
@@ -605,7 +606,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
     while (g_hash_table_iter_next (&iter, &key, &value))
     {
         Glyph2 *glyph = value;
-        ChafaSymbolTags tags = chafa_get_tags_for_char (glyph->c);
+        ChafaSymbolTags tags = chafa_get_tags_for_char (glyph->c) | CHAFA_SYMBOL_TAG_IMPORTED;
 
         if (char_is_selected (symbol_map->selectors, tags, glyph->c))
         {
@@ -828,6 +829,8 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "bad", CHAFA_SYMBOL_TAG_BAD },
         { "legacy", CHAFA_SYMBOL_TAG_LEGACY },
         { "latin", CHAFA_SYMBOL_TAG_LATIN },
+        { "import", CHAFA_SYMBOL_TAG_IMPORTED },
+        { "imported", CHAFA_SYMBOL_TAG_IMPORTED },
 
         { NULL, 0 }
     };
