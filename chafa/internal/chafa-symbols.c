@@ -356,6 +356,14 @@ generate_sextant_syms (ChafaSymbol *syms, gint first_ofs)
     return i;
 }
 
+static gboolean
+is_private_use (gunichar c)
+{
+    return !!((c >= 0xe000 && c <= 0xf8ff)
+              || (c >= 0xf0000 && c <= 0xfffff)
+              || (c >= 0x100000 && c <= 0x10ffff));
+}
+
 static ChafaSymbolTags
 get_default_tags_for_char (gunichar c)
 {
@@ -363,7 +371,8 @@ get_default_tags_for_char (gunichar c)
 
     if (g_unichar_iswide (c))
         tags |= CHAFA_SYMBOL_TAG_WIDE;
-    else if (g_unichar_iswide_cjk (c))
+    else if (g_unichar_iswide_cjk (c)
+             && !is_private_use (c))
         tags |= CHAFA_SYMBOL_TAG_AMBIGUOUS;
 
     if (g_unichar_ismark (c)
