@@ -21,11 +21,13 @@ Chafa8x8 Custom Block Font
 
 ## Misc Notes
 
-Python dependencies: numpy scipy scikit-learn tqdm
+1. Python dependencies: `numpy scipy scikit-learn tqdm`
 
-Note, in order to generate a usable font, the `python-fontforge` (for older Debian systems) or the `python3-fontforge` (for Debian bullseye and newer) package has to be installed as well. It will be used in the `./chafa8x8.py GenA` step. It will automatically invoke `chafa8x8.py GenFont` subcommand for creating the font.
+2. Note, in order to generate a usable font, the `python-fontforge` (for older Debian systems) or the `python3-fontforge` (for Debian bullseye and newer) package has to be installed as well. It will be used in the `./chafa8x8.py GenA` step. It will automatically invoke `chafa8x8.py GenFont` subcommand for creating the font.
 
-Note, the clustering step is the most time-consuming procedure. If the created dataset is very large (e.g., more than 1 million vectors inside), it won't be surprising to run for several hours or even longer. Although the result can be better with a large dataset, the resulting fonts should be good to use as long as, say, the dataset size is more than 10 times larger than the number of optimal glyphs we want.
+3. Note, the clustering step is the most time-consuming procedure. If the created dataset is very large (e.g., more than 1 million vectors inside), it won't be surprising to run for several hours or even longer. Although the result can be better with a large dataset, the resulting fonts should be good to use as long as, say, the dataset size is more than 10 times larger than the number of optimal glyphs we want.
+
+4. You may take a quick glance at the glyphs from the json files, e.g., for the finalized glyphs: `./chafa8x8.py Dump --json chafa8x8.json | less`, and for the preliminary glyphs before deduplication: `./chafa8x8.py Dump --json chafa8x8.raw.json | less`.
 
 ## Todos
 
