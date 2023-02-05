@@ -218,7 +218,7 @@ def mainGenSVG(argv):
 
 
 def mainGenFont(argv):
-    call(['python2.7', 'svg2ttf.py'])
+    call(['python3', 'svg2ttf.py'])
 
 
 def mainGenA(argv):
