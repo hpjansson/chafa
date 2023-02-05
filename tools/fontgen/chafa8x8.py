@@ -11,12 +11,9 @@ except ModuleNotFoundError:
     import json
 import time
 import random
-import numpy as np
-from tqdm import tqdm
 from PIL import Image
 from subprocess import call
-from sklearn.cluster import KMeans, MiniBatchKMeans
-from scipy.signal import convolve2d as conv2d
+import numpy as np
 
 # Preserved Unicode Plane for Private use, see wikipedia for detail.
 UNICODE_BASE = 0x100000
@@ -50,6 +47,7 @@ def mainCreateDataset(argv):
     ag.add_argument('-N', type=int, default=64, help='vector length')
     ag.add_argument('--save', type=str, default='chafa8x8.npz')
     ag = ag.parse_args(argv)
+    from tqdm import tqdm
 
     if not os.path.exists(ag.save):
         # Glob images
@@ -92,6 +90,10 @@ def mainClustering(argv):
     ag.add_argument('--dataset', type=str, default='chafa8x8.npz')
     ag.add_argument('--save', type=str, default='chafa8x8.raw.json')
     ag.add_argument('-C', type=int, default=5120, help='number of clusters')
+    ag.add_argument('-B', '--backend', type=str, default='sklearn',
+            choices=('sklearn', 'faiss'), help='k-means backend')
+    ag.add_argument('-I', '--iterations', type=int, default=100,
+            help='number of iterations for K-means algorithm (faiss)')
     ag = ag.parse_args(argv)
 
     print(f'=> loading dataset from {ag.dataset}')
@@ -99,15 +101,40 @@ def mainClustering(argv):
 
     # Findout the cluster centers with KMeans
     print('=> Clustering ...')
-    kmeans = MiniBatchKMeans(n_clusters=ag.C, init='k-means++',
-            init_size=37*ag.C, batch_size=8*ag.C,
-            compute_labels=False, verbose=True).fit(dataset)
-    centers = (kmeans.cluster_centers_ >= 0.5).astype(np.uint8)
+    if ag.backend == 'sklearn':
+        from sklearn.cluster import KMeans, MiniBatchKMeans
+        kmeans = MiniBatchKMeans(n_clusters=ag.C, init='k-means++',
+                init_size=37*ag.C, batch_size=8*ag.C,
+                compute_labels=False, verbose=True).fit(dataset)
+        centers = (kmeans.cluster_centers_ >= 0.5).astype(np.uint8)
 
-    # Save the result to JSON file
-    centers = list(sorted([list(map(int, center)) for center in centers],
-                    key=lambda x:sum(x)))
-    json.dump(centers, open(ag.save, 'w'))
+        # Save the result to JSON file
+        centers = list(sorted([list(map(int, center)) for center in centers],
+                        key=lambda x:sum(x)))
+        json.dump(centers, open(ag.save, 'w'))
+    elif ag.backend == 'faiss':
+        import faiss  # pip3 install faiss-gpu
+        dataset = dataset.astype(np.float32)  # uint8 to float32
+        print('dataset type', dataset.dtype, ', size', dataset.shape)
+        clus = faiss.Clustering(dataset.shape[1], ag.C)
+        clus.verbose = True
+        clus.niter = ag.iterations
+        clus.max_points_per_centroid = 10000000
+        res = faiss.StandardGpuResources()
+        cfg = faiss.GpuIndexFlatConfig()
+        cfg.useFloat16 = False
+        index = faiss.GpuIndexFlatL2(res, dataset.shape[1], cfg)
+        clus.train(dataset, index)
+        centroids = faiss.vector_float_to_array(clus.centroids)
+        centroids = centroids.reshape(ag.C, dataset.shape[1])
+        centroids = (centroids >= 0.5).astype(np.uint8)
+        print('centroids', centroids.shape, centroids.dtype)
+        # sort and save
+        centroids = list(sorted(
+                    [list(map(int, c)) for c in centroids],
+                    key=lambda x: sum(x)
+                    ))
+        json.dump(centroids, open(ag.save, 'w'))
     print(f'=> {ag.save}')
 
 
@@ -120,9 +147,11 @@ def mainPostproc(argv):
     ag.add_argument('--json', type=str, default='chafa8x8.raw.json')
     ag.add_argument('--save', type=str, default='chafa8x8.json')
     ag = ag.parse_args(argv)
+    from scipy.signal import convolve2d as conv2d
 
     # load raw vectors
     centers = json.load(open(ag.json, 'r'))
+    print(' -> (before) number of centers:', len(centers))
 
     # [default kernel] Gaussian kernel (kernel size = 3)
     Kg = np.array([[1/16, 1/8, 1/16], [1/8, 1/4, 1/8], [1/16, 1/8, 1/16]])
@@ -135,7 +164,7 @@ def mainPostproc(argv):
         center = conv2d(center, K, 'same').ravel()
         centers[i] = (center >= 0.5)
     centers = np.unique(np.array(centers), axis=0)
-    print(' -> number of centers:', centers.shape[0])
+    print(' -> (after) number of centers:', centers.shape[0])
     centers = list(sorted([list(map(int, center)) for center in centers],
                     key=lambda x:sum(x)))
     json.dump(centers, open(ag.save, 'w'))
