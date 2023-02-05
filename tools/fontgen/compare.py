@@ -1,4 +1,5 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
+# Just a simple tool to compare the results using different symbol sets
 # (C) 2018 Mo Zhou
 # LGPLv3+
 import glob
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     for i in range(ag.n):
         im = random.choice(images)
         print('<<<<<< chafa: block')
+        # FIXME: the command is oudated
         call(['chafa', '-s', '80x24', '--symbols', 'block', im])
         print('------')
         call(['chafa', '-s', '80x24', '--symbols', 'custom', im])

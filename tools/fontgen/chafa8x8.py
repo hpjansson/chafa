@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # This script is written for Chafa in order to generate custom fonts.
-# Copyright (C) 2018 Mo Zhou <lumin@debian.org>
+# Copyright (C) 2018-2023 Mo Zhou <lumin@debian.org>
 # License: LGPLv3+
-import os, sys
+import os
+import sys
 import argparse
 import glob
 try:
@@ -14,35 +15,43 @@ import random
 from PIL import Image
 from subprocess import call
 import numpy as np
+from typing import *
 
 # Preserved Unicode Plane for Private use, see wikipedia for detail.
 UNICODE_BASE = 0x100000
 
 
-def bdump8x8(v: np.ndarray, *, clang=False, padding=0) -> str:
+def bdump8x8(v: np.ndarray, *, clang: bool = False, padding: int = 0) -> str:
     '''
-    dump the 8x8 bitmap
+    dump the 8x8 bitmap.
+    v: np.ndarray -- the vector (bitmap) to dump
+    clang: bool -- dump C code intead of plain text
+    padding: int -- number of spaces to indent in clang mode
     '''
     assert(v.size == 64)
     dump = []
     for (i, v) in enumerate(v):
-        if i%8==0 and clang: dump.append(' '*padding + "\"")
+        if i % 8 == 0 and clang:
+            dump.append(' '*padding + "\"")
         if v:
             dump.append('X')
         else:
             dump.append(' ' if clang else '.')
-        if (i+1)%8==0 and clang: dump.append("\"")
-        if (i+1)%8==0: dump.append('\n')
+        if (i+1) % 8 == 0 and clang:
+            dump.append("\"")
+        if (i+1) % 8 == 0:
+            dump.append('\n')
     return ''.join(dump)
 
 
-def mainCreateDataset(argv):
+def mainCreateDataset(argv: List[str]):
     '''
     Generate dataset used for generating chafa8x8 font from MS-COCO dataset
     http://cocodataset.org/
     '''
     ag = argparse.ArgumentParser()
-    ag.add_argument('--glob', type=str, default='~/coco/*.jpg')
+    ag.add_argument('--glob', type=str, default='~/coco/*.jpg',
+                    help='image file glob pattern to be expanded by python')
     ag.add_argument('-Mc', type=int, default=16, help='num crops per image')
     ag.add_argument('-N', type=int, default=64, help='vector length')
     ag.add_argument('--save', type=str, default='chafa8x8.npz')
@@ -53,9 +62,11 @@ def mainCreateDataset(argv):
         # Glob images
         images = glob.glob(ag.glob, recursive=True)
         Mi = len(images)
-        print(f'=> Found {Mi} images. Will sample {ag.Mc} vectors from each image')
+        print(
+            f'=> Found {Mi} images. Will sample {ag.Mc} vectors from each image')
         print(f' -> Dataset size M = {Mi*ag.Mc}')
-        print(f' -> The resulting dataset takes {Mi*ag.Mc*ag.N/(1024**2)} MiB space.')
+        print(
+            f' -> The resulting dataset takes {Mi*ag.Mc*ag.N/(1024**2)} MiB space.')
 
         # Sample Mi*Mc vectors as the dataset from those images
         print(f'=> Sampling vectors from every image ...')
@@ -71,7 +82,7 @@ def mainCreateDataset(argv):
                 hoff = random.randrange(0, height - h)
                 box = (woff, hoff, woff+w, hoff+h)
                 region = image.crop(box).convert('1')
-                region = region.resize((8,8))
+                region = region.resize((8, 8))
                 region = np.array(region).ravel()
                 dataset[i*ag.Mc+c, :] = region
         # save the dataset as acche
@@ -80,7 +91,7 @@ def mainCreateDataset(argv):
         print(f'=> Dataset already generated: {ag.save}')
 
 
-def mainClustering(argv):
+def mainClustering(argv: List[str]):
     '''
     Run K-Means algorithm on the dataset. For large-scale training,
     MiniBatchKMeans will be much faster than KMeans.
@@ -91,9 +102,9 @@ def mainClustering(argv):
     ag.add_argument('--save', type=str, default='chafa8x8.raw.json')
     ag.add_argument('-C', type=int, default=5120, help='number of clusters')
     ag.add_argument('-B', '--backend', type=str, default='sklearn',
-            choices=('sklearn', 'faiss'), help='k-means backend')
+                    choices=('sklearn', 'faiss'), help='k-means backend')
     ag.add_argument('-I', '--iterations', type=int, default=100,
-            help='number of iterations for K-means algorithm (faiss)')
+                    help='number of iterations for K-means algorithm (faiss)')
     ag = ag.parse_args(argv)
 
     print(f'=> loading dataset from {ag.dataset}')
@@ -104,13 +115,13 @@ def mainClustering(argv):
     if ag.backend == 'sklearn':
         from sklearn.cluster import KMeans, MiniBatchKMeans
         kmeans = MiniBatchKMeans(n_clusters=ag.C, init='k-means++',
-                init_size=37*ag.C, batch_size=8*ag.C,
-                compute_labels=False, verbose=True).fit(dataset)
+                                 init_size=37*ag.C, batch_size=8*ag.C,
+                                 compute_labels=False, verbose=True).fit(dataset)
         centers = (kmeans.cluster_centers_ >= 0.5).astype(np.uint8)
 
         # Save the result to JSON file
         centers = list(sorted([list(map(int, center)) for center in centers],
-                        key=lambda x:sum(x)))
+                              key=lambda x: sum(x)))
         json.dump(centers, open(ag.save, 'w'))
     elif ag.backend == 'faiss':
         import faiss  # pip3 install faiss-gpu
@@ -129,16 +140,17 @@ def mainClustering(argv):
         centroids = centroids.reshape(ag.C, dataset.shape[1])
         centroids = (centroids >= 0.5).astype(np.uint8)
         print('centroids', centroids.shape, centroids.dtype)
+
         # sort and save
         centroids = list(sorted(
-                    [list(map(int, c)) for c in centroids],
-                    key=lambda x: sum(x)
-                    ))
+            [list(map(int, c)) for c in centroids],
+            key=lambda x: sum(x)
+        ))
         json.dump(centroids, open(ag.save, 'w'))
     print(f'=> {ag.save}')
 
 
-def mainPostproc(argv):
+def mainPostproc(argv: List[str]):
     '''
     Post-processing to make the glyphs "smoother" and do deduplication
     Default convolution kernel: Gaussian 3x3
@@ -156,22 +168,22 @@ def mainPostproc(argv):
     # [default kernel] Gaussian kernel (kernel size = 3)
     Kg = np.array([[1/16, 1/8, 1/16], [1/8, 1/4, 1/8], [1/16, 1/8, 1/16]])
     # mean value (glyphs tends to have round corner instead of sharp ones)
-    Km = np.ones((3,3))/9
+    Km = np.ones((3, 3))/9
     # Select Kg as the default kernel
     K = Kg
     for (i, center) in enumerate(centers):
-        center = np.array(center).reshape((8,8))
+        center = np.array(center).reshape((8, 8))
         center = conv2d(center, K, 'same').ravel()
         centers[i] = (center >= 0.5)
     centers = np.unique(np.array(centers), axis=0)
     print(' -> (after) number of centers:', centers.shape[0])
     centers = list(sorted([list(map(int, center)) for center in centers],
-                    key=lambda x:sum(x)))
+                          key=lambda x: sum(x)))
     json.dump(centers, open(ag.save, 'w'))
     print(f'=> Result saved to {ag.save}')
 
 
-def mainDump(argv):
+def mainDump(argv: List[str]):
     '''
     Dump human-readable bitmaps from json file
     '''
@@ -186,7 +198,7 @@ def mainDump(argv):
         print(bdump8x8(center))
 
 
-def mainGenC(argv):
+def mainGenC(argv: List[str]):
     '''
     Generate C code
     '''
@@ -216,7 +228,7 @@ def mainGenC(argv):
     f.close()
 
 
-def mainGenSVG(argv):
+def mainGenSVG(argv: List[str]):
     '''
     Generate SVG files
     '''
@@ -249,9 +261,9 @@ def mainGenSVG(argv):
         f.close()
 
 
-def mainGenFont(argv):
+def mainGenFont(argv: List[str]):
     '''
-    Generate Font file
+    Generate Font file (ttf) using fontforge
     '''
     ag = argparse.ArgumentParser()
     ag.add_argument('--json', type=str, default='chafa8x8.json')
@@ -278,12 +290,12 @@ def mainGenFont(argv):
         print('Number of glyphs:', N)
         for i in range(N):
             glyph = font.createChar(0x100000 + i)
-            glyph.importOutlines('chafa8x8_svg/%d.svg'%i)
+            glyph.importOutlines('chafa8x8_svg/%d.svg' % i)
             glyph.left_side_bearing = 0
             glyph.right_side_bearing = 0
             glyph.width = 0
             glyph.vwidth = 0
-        #font.save('chafa8x8.sfd')
+        # font.save('chafa8x8.sfd')
         font.generate(ag.ttf)
         font.close()
     except Exception as e:
@@ -291,7 +303,7 @@ def mainGenFont(argv):
     print(f'done. the font has been written as {ag.ttf}')
 
 
-def mainGenA(argv):
+def mainGenA(argv: List[str]):
     print('calling ./chafa8x8.py Postproc')
     call(['./chafa8x8.py', 'Postproc'])
     print('calling ./chafa8x8.py GenC')

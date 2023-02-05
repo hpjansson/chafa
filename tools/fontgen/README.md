@@ -31,6 +31,10 @@ Chafa8x8 Custom Block Font
 
 5. The clustering step can be accelerated using Nvidia GPU (through CUDA). You need to install faiss first: `pip3 install faiss-gpu`. To use it, just specify the backend in the command line: `./chafa8x8.py Clustering --backend faiss`. 
 
+## Todos
+
+- [ ] update `compare.py` with the latest usage.
+
 ## Acknowledgement
 
 The core algorithm used to generate the glyphs is
