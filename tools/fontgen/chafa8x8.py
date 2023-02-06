@@ -247,7 +247,7 @@ def mainGenSVG(argv: List[str]):
 <?xml version="1.0" encoding="UTF-8"?>
 <svg version="1.1"
      height="1000"
-     width="1000"
+     width="500"
      viewBox="0 0 500 1000"><defs />
 <g>
 ''')
@@ -256,7 +256,9 @@ def mainGenSVG(argv: List[str]):
         indeces = np.argwhere(center > 0)
         for index in indeces:
             r, c = index
-            f.write(template.format(w=62.5, h=127.5, x=0+c*62.5, y=-40+r*127.5))
+            _w = (50 + 500.0 + 50) / 8.0
+            _h = (200 + 1000.0 + 75) / 8.0
+            f.write(template.format(w=_w, h=_h, x=-50+c*_w, y=-200+r*_h))
         f.write(''' </g>\n</svg>''')
         f.close()
 
@@ -293,8 +295,8 @@ def mainGenFont(argv: List[str]):
             glyph.importOutlines('chafa8x8_svg/%d.svg' % i)
             glyph.left_side_bearing = 0
             glyph.right_side_bearing = 0
-            glyph.width = 0
-            glyph.vwidth = 0
+            glyph.width = 500
+            glyph.vwidth = 1000
         # font.save('chafa8x8.sfd')
         font.generate(ag.ttf)
         font.close()
