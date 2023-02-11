@@ -263,6 +263,68 @@ def mainGenSVG(argv: List[str]):
         f.close()
 
 
+def mainGenBDF(argv: List[str]):
+    '''
+    Generate BDF font (it is a plain text format!)
+    https://en.wikipedia.org/wiki/Glyph_Bitmap_Distribution_Format
+    '''
+    ag = argparse.ArgumentParser()
+    ag.add_argument('--json', type=str, default='chafa8x8.json')
+    ag.add_argument('--bdf', type=str, default='chafa8x8.bdf')
+    ag = ag.parse_args(argv)
+
+    # open file
+    with open(ag.json, 'rt') as f:
+        j = json.load(f)  # List[List[int]]
+    bdf = open(ag.bdf, 'wt')
+
+    # write bdf header
+    _timestamp_ = time.ctime().replace(' ', '-').replace(':', '-')
+    bdf.writelines([
+        'STARTFONT 2.1\n',
+        f'FONT chafa8x8-{len(j)}-{_timestamp_}\n',
+        'SIZE 16 75 75\n',
+        'FONTBOUNDINGBOX 16 16 0 -2\n',
+        '\n',
+        'STARTPROPERTIES 2\n',
+        'FONT_ASCENT 14\n',
+        'FONT_DESCENT 2\n',
+        'ENDPROPERTIES\n',
+        '\n',
+        f'CHARS {len(j)}\n',
+        '\n',
+    ])
+
+    # write characters
+    _base_ = 0x100000
+    for (i, vector) in enumerate(j):
+        # start char
+        bdf.writelines([
+            f'COMMENT Chafa8x8-glyph-id-{i}\n',
+            f'STARTCHAR U+{hex(_base_ + i)}\n',
+            f'ENCODING {int(_base_ + i)}\n',
+            f'SWIDTH 500 0\n',
+            f'DWIDTH 8 0\n',
+            'BBX 8 16 0 -2\n',
+            'BITMAP\n',
+        ])
+        # glyph representation
+        for i in range(0, 64, 8):
+            line = 0b0
+            for j in range(8):
+                line = line + (0b1 << j) * vector[i + j]
+            line = '{:02x}'.format(line).upper()
+            bdf.writelines([line + '\n'] * 2)
+        # end char
+        bdf.writelines(['ENDCHAR\n', '\n'])
+
+    # end font
+    bdf.write('ENDFONT\n')
+
+    # close file
+    bdf.close()
+
+
 def mainGenFont(argv: List[str]):
     '''
     Generate Font file (ttf) using fontforge
@@ -314,6 +376,11 @@ def mainGenA(argv: List[str]):
     call(['./chafa8x8.py', 'GenSVG'])
     print('calling ./chafa8x8.py GenFont')
     call(['./chafa8x8.py', 'GenFont'])
+    # experimental
+    #print('calling ./chafa8x8.py GenBDF')
+    #call(['./chafa8x8.py', 'GenBDF'])
+    #call('bdftopcf -o chafa8x8.pcf chafa8x8.bdf'.split())
+
 
 
 if __name__ == '__main__':
