@@ -301,7 +301,7 @@ def mainGenBDF(argv: List[str]):
         # start char
         bdf.writelines([
             f'COMMENT Chafa8x8-glyph-id-{i}\n',
-            f'STARTCHAR U+{hex(_base_ + i)}\n',
+            f'STARTCHAR U+{hex(_base_ + i)[2:]}\n',
             f'ENCODING {int(_base_ + i)}\n',
             f'SWIDTH 500 0\n',
             f'DWIDTH 8 0\n',
