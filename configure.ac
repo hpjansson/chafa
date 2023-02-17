@@ -538,6 +538,7 @@ AC_CONFIG_FILES([Makefile
                  tests/data/good/Makefile
                  tools/Makefile
                  tools/chafa/Makefile
+                 tools/completions/Makefile
                  tools/fontgen/Makefile])
 AC_OUTPUT
 

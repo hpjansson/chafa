@@ -1,1 +1,1 @@
-SUBDIRS = chafa fontgen
+SUBDIRS = chafa fontgen completions
