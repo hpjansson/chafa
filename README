@@ -34,9 +34,10 @@ OpenBSD ....... pkg_add chafa
 openSUSE ...... zypper in chafa
 Ubuntu ........ apt install chafa
 
-On Windows, Chafa can be installed by scoop:
+On Windows, Chafa can be installed via Scoop and Winget:
 
-Windows ....... scoop install chafa
+Scoop ....... scoop install chafa
+Winget ....... winget install hpjansson.Chafa
 
 See https://hpjansson.org/chafa/download/ for more.
 
