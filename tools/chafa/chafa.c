@@ -398,7 +398,7 @@ print_summary (void)
 
     "Options:\n"
 
-    "  -h  --help         Show help.\n"
+    "  -h, --help         Show help.\n"
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n\n"
 
