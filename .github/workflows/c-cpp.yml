@@ -1,0 +1,78 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Running prerequisites
+      run: >
+        sudo apt install -y
+        automake
+        libtool
+        libglib2.0-dev
+        libmagickwand-dev
+        libjpeg-dev
+        librsvg2-dev
+        libtiff-dev
+        libwebp-dev
+        gtk-doc-tools
+        docbook-xml
+        libxml2-utils
+        
+        export LD_LIBRARY_PATH=$(if [[ $CC == "clang" ]]; then echo -n '/usr/local/clang/lib'; fi)
+    - name: Making without ImageMagick
+      run: >
+        mkdir build
+        
+        cd build
+        
+        CFLAGS='
+        -g 
+        -O2 
+        -fsanitize=address,undefined 
+        -fsanitize-undefined-trap-on-error 
+        -Werror -Wno-error=unused 
+        -Wno-error=unused-function 
+        -Wno-error=unused-parameter 
+        -Wno-error=unused-variable 
+        -Wno-error=unused-const-variable 
+        -Wno-error=unused-value 
+        -Wno-error=comment 
+        -Wno-error=missing-braces' 
+        ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man --without-imagemagick
+        
+        make -j4
+    - name: Making check
+      run: make check
+    - name: Making with ImageMagick
+      run: >
+        rm -Rf ../build/*
+        
+        ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man
+        
+        make -j4
+    - name: Installing chafa
+      run: >
+        sudo make install
+        
+        chafa --version
+    - name: Run post install
+      run: >
+        cd ../tests
+        
+        ./postinstall.sh
+    - name: After failure
+      if: failure()
+      run: >
+        touch tests/test-suite.log
+        
+        cat tests/test-suite.log
