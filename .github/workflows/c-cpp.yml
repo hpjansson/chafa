@@ -52,7 +52,7 @@ jobs:
         
         make -j4
         
-    - name: Making check
+    - name: Running tests
       working-directory: ./build
       run: make check
       
