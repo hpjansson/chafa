@@ -1004,14 +1004,14 @@ static SMOL_INLINE const uint32_t *
 inrow_ofs_to_pointer (const SmolScaleCtx *scale_ctx,
                       uint32_t inrow_ofs)
 {
-    return scale_ctx->pixels_in + scale_ctx->rowstride_in * inrow_ofs;
+    return (const uint32_t *) (((const uint8_t *) scale_ctx->pixels_in) + scale_ctx->rowstride_in * inrow_ofs);
 }
 
 static SMOL_INLINE uint32_t *
 outrow_ofs_to_pointer (const SmolScaleCtx *scale_ctx,
                        uint32_t outrow_ofs)
 {
-    return scale_ctx->pixels_out + scale_ctx->rowstride_out * outrow_ofs;
+    return (uint32_t *) (((uint8_t *) scale_ctx->pixels_out) + scale_ctx->rowstride_out * outrow_ofs);
 }
 
 static SMOL_INLINE uint64_t
@@ -2369,7 +2369,7 @@ do_rows (const SmolScaleCtx *scale_ctx,
     for (i = row_out_index; i < row_out_index + n_rows; i++)
     {
         scale_outrow (scale_ctx, &vertical_ctx, i, outrows_dest);
-        outrows_dest = (uint32_t *) outrows_dest + scale_ctx->rowstride_out;
+        outrows_dest = (uint8_t *) outrows_dest + scale_ctx->rowstride_out;
     }
 
     for (i = 0; i < n_stored_rows; i++)
@@ -2917,12 +2917,12 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     scale_ctx->pixels_in = pixels_in;
     scale_ctx->width_in = width_in;
     scale_ctx->height_in = height_in;
-    scale_ctx->rowstride_in = rowstride_in / sizeof (uint32_t);
+    scale_ctx->rowstride_in = rowstride_in;
     scale_ctx->pixel_type_out = pixel_type_out;
     scale_ctx->pixels_out = pixels_out;
     scale_ctx->width_out = width_out;
     scale_ctx->height_out = height_out;
-    scale_ctx->rowstride_out = rowstride_out / sizeof (uint32_t);
+    scale_ctx->rowstride_out = rowstride_out;
 
     scale_ctx->post_row_func = post_row_func;
     scale_ctx->user_data = user_data;
