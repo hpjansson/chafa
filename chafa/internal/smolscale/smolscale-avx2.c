@@ -1239,14 +1239,14 @@ static SMOL_INLINE const uint32_t *
 inrow_ofs_to_pointer (const SmolScaleCtx *scale_ctx,
                       uint32_t inrow_ofs)
 {
-    return scale_ctx->pixels_in + scale_ctx->rowstride_in * inrow_ofs;
+    return (const uint32_t *) (((const uint8_t *) scale_ctx->pixels_in) + scale_ctx->rowstride_in * inrow_ofs);
 }
 
 static SMOL_INLINE uint32_t *
 outrow_ofs_to_pointer (const SmolScaleCtx *scale_ctx,
                        uint32_t outrow_ofs)
 {
-    return scale_ctx->pixels_out + scale_ctx->rowstride_out * outrow_ofs;
+    return (uint32_t *) (((uint8_t *) scale_ctx->pixels_out) + scale_ctx->rowstride_out * outrow_ofs);
 }
 
 static SMOL_INLINE uint64_t
