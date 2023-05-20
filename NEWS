@@ -1,6 +1,18 @@
 Chafa releases
 ==============
 
+1.12.5 (2023-05-21)
+-------------------
+
+This is a bugfix release.
+
+* Bug fixes:
+  github#123  Crash on canvas created with chafa_canvas_new_similar()
+              (reported by Erica Ferrua Edwardsdóttir).
+  github#141  Distortion when rowstride is not a multiple of 4 (reported by
+              @jstkdng).
+  [unfiled]   Missing comma in --help output (reported by @Freed-Wu).
+
 1.12.4 (2022-11-12)
 -------------------
 
