@@ -221,8 +221,6 @@ write_to_stdout (gconstpointer buf, gsize len)
         /* In order for UTF-8 to be handled correctly, we need to use WriteConsoleA()
          * on MS Windows. We also convert line feeds to DOS-style CRLF as we go. */
 
-        /* TODO: Check if it's a console handle, and if not, use WriteFile instead */
-
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
 
         for (p0 = buf, end = p0 + len;
