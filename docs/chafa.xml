@@ -384,6 +384,16 @@ technical, geometric, ascii, legacy, sextant, wedge, wide, narrow]. Some
 symbols belong to multiple classes, e.g. diagonals are also borders.
 </para>
 <para>
+You can add specific characters with the letter "u" followed by a hexadecimal
+code point, e.g. "ue080", or a range of code points by separating the first
+and last index by "..", e.g. "u100..u200".
+</para>
+<para>
+Symbol sets can also be specified as a string of UTF-8 characters in square
+brackets, e.g. [abcd]. To include a closing bracket in the set, escape it
+with a backslash.
+</para>
+<para>
 You can specify a list of classes separated by commas, or prefix them with +
 and - to add or remove symbols relative to the existing set. The ordering is
 significant.

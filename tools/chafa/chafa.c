@@ -482,7 +482,7 @@ print_summary (void)
     "  extra]. Some symbols belong to multiple classes, e.g. diagonals are also\n"
     "  borders. You can specify a list of classes separated by commas, or prefix them\n"
     "  with + and - to add or remove symbols relative to the existing set. The\n"
-    "  ordering is significant.\n\n"
+    "  ordering is significant; see the man page for more.\n\n"
 
     "  The default symbol set is block+border+space-wide-inverted for all modes\n"
     "  except \"none\", which uses block+border+space-wide (including inverse symbols).\n\n"

@@ -692,7 +692,7 @@ copy_selector_array (GArray *src)
 }
 
 static void
-add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
+add_by_tags (GArray *selectors, ChafaSymbolTags tags)
 {
     Selector s = { 0 };
 
@@ -700,11 +700,11 @@ add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
     s.additive = TRUE;
     s.tags = tags;
 
-    g_array_append_val (symbol_map->selectors, s);
+    g_array_append_val (selectors, s);
 }
 
 static void
-remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
+remove_by_tags (GArray *selectors, ChafaSymbolTags tags)
 {
     Selector s = { 0 };
 
@@ -712,11 +712,11 @@ remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
     s.additive = FALSE;
     s.tags = tags;
 
-    g_array_append_val (symbol_map->selectors, s);
+    g_array_append_val (selectors, s);
 }
 
 static void
-add_by_range (ChafaSymbolMap *symbol_map, gunichar first, gunichar last)
+add_by_range (GArray *selectors, gunichar first, gunichar last)
 {
     Selector s = { 0 };
 
@@ -725,11 +725,11 @@ add_by_range (ChafaSymbolMap *symbol_map, gunichar first, gunichar last)
     s.first_code_point = first;
     s.last_code_point = last;
 
-    g_array_append_val (symbol_map->selectors, s);
+    g_array_append_val (selectors, s);
 }
 
 static void
-remove_by_range (ChafaSymbolMap *symbol_map, gunichar first, gunichar last)
+remove_by_range (GArray *selectors, gunichar first, gunichar last)
 {
     Selector s = { 0 };
 
@@ -738,7 +738,7 @@ remove_by_range (ChafaSymbolMap *symbol_map, gunichar first, gunichar last)
     s.first_code_point = first;
     s.last_code_point = last;
 
-    g_array_append_val (symbol_map->selectors, s);
+    g_array_append_val (selectors, s);
 }
 
 static gboolean
@@ -885,8 +885,9 @@ static gboolean
 parse_selectors (ChafaSymbolMap *symbol_map, const gchar *selectors, GError **error)
 {
     const gchar *p0 = selectors;
-    gboolean is_add = FALSE, is_remove = FALSE;
+    gboolean is_add = FALSE, is_remove = FALSE, do_clear = FALSE;
     gboolean result = FALSE;
+    GArray *selector_array = g_array_new (FALSE, FALSE, sizeof (Selector));
 
     while (*p0)
     {
@@ -916,46 +917,88 @@ parse_selectors (ChafaSymbolMap *symbol_map, const gchar *selectors, GError **er
         if (!*p0)
             break;
 
-        n = strspn (p0, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.");
-        if (!n)
+        if (!is_add && !is_remove)
+        {
+            do_clear = TRUE;
+            is_add = TRUE;
+        }
+
+        if (*p0 == '[')
+        {
+            gboolean escape = FALSE;
+
+            p0++;
+
+            for ( ; p0 && *p0; p0 = g_utf8_next_char (p0))
+            {
+                gunichar c = g_utf8_get_char (p0);
+
+                if (c == '\\' && !escape)
+                {
+                    escape = TRUE;
+                    continue;
+                }
+
+                if (c == ']' && !escape)
+                    break;
+
+                if (is_add)
+                    add_by_range (selector_array, c, c);
+                else if (is_remove)
+                    remove_by_range (selector_array, c, c);
+
+                escape = FALSE;
+            }
+
+            if (!p0 || *p0 != ']')
+            {
+                g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                             "Syntax error in symbol selector set.");
+                goto out;
+            }
+
+            n = 1;
+        }
+        else if (!(n = strspn (p0, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.")))
         {
             g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                          "Syntax error in symbol tag selectors.");
             goto out;
         }
-
-        if (!parse_symbol_tag (p0, n, &sel_type, &sc, &first, &last, error))
+        else if (!parse_symbol_tag (p0, n, &sel_type, &sc, &first, &last, error))
+        {
             goto out;
-
-        p0 += n;
-
-        if (!is_add && !is_remove)
-        {
-            g_array_set_size (symbol_map->selectors, 0);
-            is_add = TRUE;
-        }
-
-        if (sel_type == SELECTOR_TAG)
-        {
-            if (is_add)
-                add_by_tags (symbol_map, sc);
-            else if (is_remove)
-                remove_by_tags (symbol_map, sc);
         }
         else
         {
-            if (is_add)
-                add_by_range (symbol_map, first, last);
-            else if (is_remove)
-                remove_by_range (symbol_map, first, last);
+            if (sel_type == SELECTOR_TAG)
+            {
+                if (is_add)
+                    add_by_tags (selector_array, sc);
+                else if (is_remove)
+                    remove_by_tags (selector_array, sc);
+            }
+            else
+            {
+                if (is_add)
+                    add_by_range (selector_array, first, last);
+                else if (is_remove)
+                    remove_by_range (selector_array, first, last);
+            }
         }
+
+        p0 += n;
     }
 
-    symbol_map->need_rebuild = TRUE;
+    if (do_clear)
+        g_array_set_size (symbol_map->selectors, 0);
+    g_array_append_vals (symbol_map->selectors, selector_array->data, selector_array->len);
 
+    symbol_map->need_rebuild = TRUE;
     result = TRUE;
 
 out:
+    g_array_free (selector_array, TRUE);
     return result;
 }
 
@@ -1529,7 +1572,7 @@ chafa_symbol_map_add_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tags)
     g_return_if_fail (symbol_map != NULL);
     g_return_if_fail (symbol_map->refs > 0);
 
-    add_by_tags (symbol_map, tags);
+    add_by_tags (symbol_map->selectors, tags);
 
     symbol_map->need_rebuild = TRUE;
 }
@@ -1547,7 +1590,7 @@ chafa_symbol_map_remove_by_tags (ChafaSymbolMap *symbol_map, ChafaSymbolTags tag
     g_return_if_fail (symbol_map != NULL);
     g_return_if_fail (symbol_map->refs > 0);
 
-    remove_by_tags (symbol_map, tags);
+    remove_by_tags (symbol_map->selectors, tags);
 
     symbol_map->need_rebuild = TRUE;
 }
@@ -1569,7 +1612,7 @@ chafa_symbol_map_add_by_range (ChafaSymbolMap *symbol_map, gunichar first, gunic
     g_return_if_fail (symbol_map != NULL);
     g_return_if_fail (symbol_map->refs > 0);
 
-    add_by_range (symbol_map, first, last);
+    add_by_range (symbol_map->selectors, first, last);
 
     symbol_map->need_rebuild = TRUE;
 }
@@ -1591,7 +1634,7 @@ chafa_symbol_map_remove_by_range (ChafaSymbolMap *symbol_map, gunichar first, gu
     g_return_if_fail (symbol_map != NULL);
     g_return_if_fail (symbol_map->refs > 0);
 
-    remove_by_range (symbol_map, first, last);
+    remove_by_range (symbol_map->selectors, first, last);
 
     symbol_map->need_rebuild = TRUE;
 }
