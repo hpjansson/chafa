@@ -111,6 +111,17 @@ queue_char (PrintCtx *ctx, gchar *out, gunichar c)
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
+reset_fg (PrintCtx *ctx, gchar *out)
+{
+    out = chafa_term_info_emit_reset_color_fg (ctx->term_info, out);
+
+    ctx->cur_fg = CHAFA_PALETTE_INDEX_TRANSPARENT;
+    ctx->cur_fg_direct.ch [3] = 0;
+
+    return out;
+}
+
+G_GNUC_WARN_UNUSED_RESULT static gchar *
 reset_attributes (PrintCtx *ctx, gchar *out)
 {
     out = chafa_term_info_emit_reset_attributes (ctx->term_info, out);
@@ -683,10 +694,12 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
         /* Avoid control codes in FGBG mode. Don't reset attributes when BG
          * is held, to preserve any BG color set previously. */
         if (i == 0
-            && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
-            && !canvas->config.fg_only_enabled)
+            && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
         {
-            out = reset_attributes (&ctx, out);
+            if (canvas->config.fg_only_enabled)
+                out = reset_fg (&ctx, out);
+            else
+                out = reset_attributes (&ctx, out);
         }
 
         switch (canvas->config.canvas_mode)
@@ -722,10 +735,12 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 
         /* Avoid control codes in FGBG mode. Don't reset attributes when BG
          * is held, to preserve any BG color set previously. */
-        if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG
-            && !canvas->config.fg_only_enabled)
+        if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
         {
-            out = reset_attributes (&ctx, out);
+            if (canvas->config.fg_only_enabled)
+                out = reset_fg (&ctx, out);
+            else
+                out = reset_attributes (&ctx, out);
         }
 
         /* Last line should not end in newline */
