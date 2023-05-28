@@ -150,7 +150,7 @@ sigint_handler (G_GNUC_UNUSED int sig)
 #endif
 
 static void
-interruptible_usleep (gint us)
+interruptible_usleep (gdouble us)
 {
     while (us > 0 && !interrupted_by_user)
     {
@@ -2088,7 +2088,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 remain_ms = MAX (remain_ms - elapsed_ms, 0);
 
                 if (remain_ms > 0.0001 && 1000.0 / (gdouble) remain_ms < ANIM_FPS_MAX)
-                    interruptible_usleep (remain_ms * 1000);
+                    interruptible_usleep (remain_ms * 1000.0);
 
                 anim_elapsed_s += MAX (elapsed_ms, delay_ms) / 1000.0;
             }
