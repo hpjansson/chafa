@@ -2397,6 +2397,57 @@ CHAFA_TERM_SEQ_DEF(f12_ctrl_key, F12_CTRL_KEY, 0, none, char)
  **/
 CHAFA_TERM_SEQ_DEF(f12_shift_key, F12_SHIFT_KEY, 0, none, char)
 
+/**
+ * chafa_term_info_emit_reset_color_fg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_COLOR_FG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(reset_color_fg, RESET_COLOR_FG, 0, none, char)
+
+/**
+ * chafa_term_info_emit_reset_color_bg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_COLOR_BG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(reset_color_bg, RESET_COLOR_BG, 0, none, char)
+
+/**
+ * chafa_term_info_emit_reset_color_fgbg:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESET_COLOR_FGBG.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(reset_color_fgbg, RESET_COLOR_FGBG, 0, none, char)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

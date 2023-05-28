@@ -173,6 +173,9 @@
  * @CHAFA_TERM_SEQ_F12_KEY: F12 key.
  * @CHAFA_TERM_SEQ_F12_CTRL_KEY: Ctrl + F12 key.
  * @CHAFA_TERM_SEQ_F12_SHIFT_KEY: Shift + F12 key.
+ * @CHAFA_TERM_SEQ_RESET_COLOR_FG: Reset foreground color to the default.
+ * @CHAFA_TERM_SEQ_RESET_COLOR_BG: Reset background color to the default.
+ * @CHAFA_TERM_SEQ_RESET_COLOR_FGBG: Reset foreground and background colors to the default.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
