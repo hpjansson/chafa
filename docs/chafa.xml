@@ -430,7 +430,7 @@ duration will be zero, causing animations to play once and then stop.
 <refsect1><title>Examples</title>
 <variablelist>
 <varlistentry>
-<term>chafa in.gif</term>
+<term><command>chafa in.gif</command></term>
 <listitem><para>
 Show a potentially animated GIF image in the terminal. If this is an animation,
 it will run until the user generates an interrupt (typically ctrl-c). All
@@ -438,20 +438,20 @@ parameters will be autodetected based on the current environment.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>chafa -c full -s 200 in.gif</term>
+<term><command>chafa -c full -s 200 in.gif</command></term>
 <listitem><para>
 Like the above, but force truecolor output that is 200 characters wide and
 calculate the height preserving the aspect of the original image.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>chafa -c 16 --color-space din99d --symbols -dot in.jpg</term>
+<term><command>chafa -c 16 --color-space din99d --symbols -dot in.jpg</command></term>
 <listitem><para>
 Generate 16-color output with perceptual color picking and avoid using dot symbols.
 </para></listitem>
 </varlistentry>
 <varlistentry>
-<term>chafa -c none --symbols block+border-solid in.png</term>
+<term><command>chafa -c none --symbols block+border-solid in.png</command></term>
 <listitem><para>
 Generate uncolored output using block and border symbols, but avoid the solid
 block symbol.
