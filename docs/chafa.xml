@@ -379,8 +379,8 @@ most accurate. Defaults to 5.
 
 <refsect1><title>Symbols</title>
 <para>
-Accepted classes for --symbols are [all, none, space, solid, stipple, block,
-border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,
+Accepted classes for --symbols and --fill are [all, none, space, solid, stipple,
+block, border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,
 technical, geometric, ascii, legacy, sextant, wedge, wide, narrow]. Some
 symbols belong to multiple classes, e.g. diagonals are also borders.
 </para>
