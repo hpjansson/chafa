@@ -157,8 +157,9 @@ useful results.
 <listitem><para>
 Time to show each file, in seconds. Defaults to zero for still images and for
 animations when multiple files are specified. If a single animation is
-specified, defaults to infinite. Animations will always be played through at
-least once, even if duration is e.g. zero.
+specified, defaults to infinite, or "inf". Animations will always be played
+through at least once, even if duration is e.g. zero. See the "Duration" section
+for more.
 </para></listitem>
 </varlistentry>
 
@@ -402,6 +403,28 @@ significant.
 The default symbol set is block+border+space-wide-inverted for all modes
 except "none", which uses block+border+space-wide (including inverse symbols).
 </para>
+</refsect1>
+
+<refsect1><title>Duration</title>
+<para>
+In order to accommodate both interactive use and batch processing, an animation's
+duration is determined according to a few simple rules:
+</para>
+<orderedlist>
+<listitem><para>
+If one or more <command>--duration</command> arguments are present, the final
+instance is respected and applied to every file.
+</para></listitem>
+<listitem><para>
+Otherwise, if there's a controlling terminal attached (indicating there's
+an interactive session), and only a single file argument is provided, and
+that file is an animation, it will have infinite duration.
+</para></listitem>
+<listitem><para>
+Otherwise (no controlling terminal, multiple files, file is a still image),
+duration will be zero, causing animations to play once and then stop.
+</para></listitem>
+</orderedlist>
 </refsect1>
 
 <refsect1><title>Examples</title>
