@@ -681,6 +681,32 @@ out:
 }
 
 static gboolean
+parse_duration_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gdouble duration = -1.0;
+    gboolean success = FALSE;
+
+    if (!strcasecmp (value, "max")
+        || !strcasecmp (value, "inf")
+        || !strcasecmp (value, "infinite"))
+    {
+        duration = G_MAXDOUBLE;
+    }
+    else if (!parse_fraction_or_real (value, &duration) || duration < 0.0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Duration must be a positive real number or fraction, \"inf\" or \"infinite\".");
+        goto out;
+    }
+
+    options.file_duration_s = duration;
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
 parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     options.symbols_specified = TRUE;
@@ -1407,7 +1433,7 @@ parse_options (int *argc, char **argv [])
         { "dither-grain",'\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_grain_arg, "Dither grain", NULL },
         { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
         { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
-        { "duration",    'd',  0, G_OPTION_ARG_DOUBLE,   &options.file_duration_s, "Duration", NULL },
+        { "duration",    'd',  0, G_OPTION_ARG_CALLBACK, parse_duration_arg,    "Duration", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
@@ -1488,7 +1514,7 @@ parse_options (int *argc, char **argv [])
     options.fg_color = 0xffffff;
     options.bg_color = 0x000000;
     options.transparency_threshold = G_MAXDOUBLE;  /* Unset */
-    options.file_duration_s = G_MAXDOUBLE;
+    options.file_duration_s = -1.0;  /* Unset */
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
 
@@ -1714,13 +1740,13 @@ parse_options (int *argc, char **argv [])
         options.fg_color = temp_color;
     }
 
-    if (options.file_duration_s == G_MAXDOUBLE
+    if (options.file_duration_s < 0.0
         && (!options.is_interactive
             || (options.args && options.args->next)))
     {
         /* Apply a zero default duration when we have multiple files or it looks
          * like we're part of a pipe; we don't want to get stuck if the user is
-         * trying to e.g. batch convert files */
+         * trying to e.g. batch convert files. Allow -d to override. */
         options.file_duration_s = FILE_DURATION_DEFAULT;
     }
 
@@ -1923,6 +1949,7 @@ static RunResult
 run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
     gboolean is_animation = FALSE;
+    gdouble anim_duration_s = options.file_duration_s >= 0.0 ? options.file_duration_s : G_MAXDOUBLE;
     gdouble anim_elapsed_s = 0.0;
     GTimer *timer;
     gint loop_n = 0;
@@ -1961,7 +1988,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
         media_loader_goto_first_frame (media_loader);
 
         for (have_frame = TRUE;
-             have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < options.file_duration_s);
+             have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < anim_duration_s);
              have_frame = media_loader_goto_next_frame (media_loader))
         {
             gdouble elapsed_ms, remain_ms;
@@ -2102,7 +2129,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
         loop_n++;
     }
     while (is_animation && !interrupted_by_user
-           && !options.watch && anim_elapsed_s < options.file_duration_s);
+           && !options.watch && anim_elapsed_s < anim_duration_s);
 
 out:
     if (media_loader)
@@ -2126,6 +2153,7 @@ run_watch (const gchar *filename)
 {
     GTimer *timer;
     gboolean is_first_frame = TRUE;
+    gdouble duration_s = options.file_duration_s >= 0.0 ? options.file_duration_s : G_MAXDOUBLE;
 
     tty_options_init ();
     timer = g_timer_new ();
@@ -2151,7 +2179,7 @@ run_watch (const gchar *filename)
             g_usleep (250000);
         }
 
-        if (g_timer_elapsed (timer, NULL) > options.file_duration_s)
+        if (g_timer_elapsed (timer, NULL) > duration_s)
             break;
     }
 
@@ -2164,6 +2192,7 @@ static int
 run_all (GList *filenames)
 {
     GList *l;
+    gdouble still_duration_s = options.file_duration_s > 0.0 ? options.file_duration_s : 0.0;
     gint n_processed = 0;
     gint n_failed = 0;
 
@@ -2184,9 +2213,9 @@ run_all (GList *filenames)
         if (result == FILE_FAILED)
             n_failed++;
 
-        if (result == FILE_WAS_STILL && options.file_duration_s != G_MAXDOUBLE)
+        if (result == FILE_WAS_STILL && still_duration_s > 0.0)
         {
-            interruptible_usleep (options.file_duration_s * 1000000.0);
+            interruptible_usleep (still_duration_s * 1000000.0);
         }
     }
 
