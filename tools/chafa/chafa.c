@@ -152,9 +152,9 @@ sigint_handler (G_GNUC_UNUSED int sig)
 static void
 interruptible_usleep (gdouble us)
 {
-    while (us > 0 && !interrupted_by_user)
+    while (us > 0.0 && !interrupted_by_user)
     {
-        gint sleep_us = MIN (us, 50000);
+        gdouble sleep_us = MIN (us, 50000.0);
         g_usleep (sleep_us);
         us -= sleep_us;
     }
