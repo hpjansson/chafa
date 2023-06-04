@@ -1694,7 +1694,7 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
 
         /* Sixel mode */
 
-        out = chafa_term_info_emit_begin_sixels (term_info, buf, 0, 1, 0);
+        out = chafa_term_info_emit_begin_sixels (term_info, buf, 0, 0, 0);
         *out = '\0';
         str = g_string_new (buf);
 
