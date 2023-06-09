@@ -1937,6 +1937,65 @@ pixel_to_cell_dimensions (gdouble scale,
     }
 }
 
+static gboolean
+write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
+                      gint dest_width, gint dest_height)
+{
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
+    gchar *p0 = buf;
+
+    if (options.clear)
+    {
+        if (is_first_frame)
+        {
+            /* Clear */
+            p0 = chafa_term_info_emit_clear (options.term_info, p0);
+        }
+
+        /* Home cursor between frames */
+        p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
+    }
+    else if (!is_first_frame)
+    {
+        /* Cursor to col 0 and up N steps */
+        *(p0++) = '\r';
+        p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height - (options.have_parking_row ? 0 : 1));
+    }
+
+    /* Put a blank line between files in non-clear mode */
+    if (is_first_frame && !options.clear && !is_first_file)
+    {
+        if (!options.have_parking_row)
+            *(p0++) = '\n';
+        *(p0++) = '\n';
+    }
+
+    return write_to_stdout (buf, p0 - buf);
+}
+
+static gboolean
+write_image_epilogue (gboolean is_first_frame)
+{
+    /* No linefeed after frame in sixel mode */
+    if (options.have_parking_row
+        && (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+            || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+            || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2))
+    {
+        if (!write_to_stdout ("\n", 1))
+            return FALSE;
+    }
+    else if (options.center && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+    {
+        /* If image was centered in sixel mode, cursor must be brought
+         * back to left margin manually */
+        if (!write_to_stdout ("\r", 1))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 typedef enum
 {
     FILE_FAILED,
@@ -1954,9 +2013,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     GTimer *timer;
     gint loop_n = 0;
     MediaLoader *media_loader;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
     GString *gs;
-    gchar *p0;
     RunResult result = FILE_FAILED;
     GError *error = NULL;
 
@@ -2046,35 +2103,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                dest_width, dest_height,
                                is_animation);
 
-            p0 = buf;
-
-            if (options.clear)
-            {
-                if (is_first_frame)
-                {
-                    /* Clear */
-                    p0 = chafa_term_info_emit_clear (options.term_info, p0);
-                }
-
-                /* Home cursor between frames */
-                p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
-            }
-            else if (!is_first_frame)
-            {
-                /* Cursor to col 0 and up N steps */
-                *(p0++) = '\r';
-                p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height - (options.have_parking_row ? 0 : 1));
-            }
-
-            /* Put a blank line between files in non-clear mode */
-            if (is_first_frame && !options.clear && !is_first_file)
-            {
-                if (!options.have_parking_row)
-                    *(p0++) = '\n';
-                *(p0++) = '\n';
-            }
-
-            if (!write_to_stdout (buf, p0 - buf))
+            if (!write_image_prologue (is_first_file, is_first_frame,
+                                       dest_width, dest_height))
                 goto out;
 
             if (!write_image (gs->str, gs->len, dest_width))
@@ -2082,22 +2112,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
             g_string_free (gs, TRUE);
 
-            /* No linefeed after frame in sixel mode */
-            if (options.have_parking_row
-                && (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
-                    || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-                    || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2))
-            {
-                if (!write_to_stdout ("\n", 1))
-                    goto out;
-            }
-            else if (options.center && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
-            {
-                /* If image was centered in sixel mode, cursor must be brought
-                 * back to left margin manually */
-                if (!write_to_stdout ("\r", 1))
-                    goto out;
-            }
+            if (!write_image_epilogue (is_first_frame))
+                goto out;
 
             if (fflush (stdout) != 0)
                 goto out;
