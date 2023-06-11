@@ -668,83 +668,91 @@ prealloc_string (GString *gs, gint n_cells)
     }
 }
 
+G_GNUC_WARN_UNUSED_RESULT static gchar *
+build_ansi_row (PrintCtx *ctx, gint row, gchar *out)
+{
+    ChafaCanvas *canvas;
+    gint i, i_max;
+
+    canvas = ctx->canvas;
+    i = row * canvas->config.width;
+    i_max = (row + 1) * canvas->config.width;
+
+    if (row == 0
+        && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+    {
+        if (canvas->config.fg_only_enabled)
+            out = reset_fg (ctx, out);
+        else
+            out = reset_attributes (ctx, out);
+    }
+
+    switch (canvas->config.canvas_mode)
+    {
+        case CHAFA_CANVAS_MODE_TRUECOLOR:
+            out = emit_ansi_truecolor (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_256:
+        case CHAFA_CANVAS_MODE_INDEXED_240:
+            out = emit_ansi_256 (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_16:
+            out = emit_ansi_16 (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_16_8:
+            out = emit_ansi_16_8 (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_8:
+            out = emit_ansi_16 (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_FGBG_BGFG:
+            out = emit_ansi_fgbg_bgfg (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_FGBG:
+            out = emit_ansi_fgbg (ctx, out, i, i_max);
+            break;
+        case CHAFA_CANVAS_MODE_MAX:
+            g_assert_not_reached ();
+            break;
+    }
+
+    out = flush_chars (ctx, out);
+
+    /* Avoid control codes in FGBG mode. Don't reset attributes when BG
+     * is held, to preserve any BG color set previously. */
+    if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
+    {
+        if (canvas->config.fg_only_enabled)
+            out = reset_fg (ctx, out);
+        else
+            out = reset_attributes (ctx, out);
+    }
+
+    return out;
+}
+
 static GString *
 build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
 {
     GString *gs = g_string_new ("");
     PrintCtx ctx = { 0 };
-    gint i, i_max, i_step, i_next;
+    gint i;
 
     ctx.canvas = canvas;
     ctx.term_info = ti;
 
-    i = 0;
-    i_max = canvas->config.width * canvas->config.height;
-    i_step = canvas->config.width;
-
-    for ( ; i < i_max; i = i_next)
+    for (i = 0; i < canvas->config.height; i++)
     {
         gchar *out;
 
-        i_next = i + i_step;
-
-        prealloc_string (gs, i_step);
+        prealloc_string (gs, canvas->config.width);
         out = gs->str + gs->len;
 
-        /* Avoid control codes in FGBG mode. Don't reset attributes when BG
-         * is held, to preserve any BG color set previously. */
-        if (i == 0
-            && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
-        {
-            if (canvas->config.fg_only_enabled)
-                out = reset_fg (&ctx, out);
-            else
-                out = reset_attributes (&ctx, out);
-        }
+        out = build_ansi_row (&ctx, i, out);
 
-        switch (canvas->config.canvas_mode)
-        {
-            case CHAFA_CANVAS_MODE_TRUECOLOR:
-                out = emit_ansi_truecolor (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_INDEXED_256:
-            case CHAFA_CANVAS_MODE_INDEXED_240:
-                out = emit_ansi_256 (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_INDEXED_16:
-                out = emit_ansi_16 (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_INDEXED_16_8:
-                out = emit_ansi_16_8 (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_INDEXED_8:
-                out = emit_ansi_16 (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_FGBG_BGFG:
-                out = emit_ansi_fgbg_bgfg (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_FGBG:
-                out = emit_ansi_fgbg (&ctx, out, i, i_next);
-                break;
-            case CHAFA_CANVAS_MODE_MAX:
-                g_assert_not_reached ();
-                break;
-        }
-
-        out = flush_chars (&ctx, out);
-
-        /* Avoid control codes in FGBG mode. Don't reset attributes when BG
-         * is held, to preserve any BG color set previously. */
-        if (canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)
-        {
-            if (canvas->config.fg_only_enabled)
-                out = reset_fg (&ctx, out);
-            else
-                out = reset_attributes (&ctx, out);
-        }
-
-        /* Last line should not end in newline */
-        if (i_next < i_max)
+        /* Rows end in a newline, except for the last one. This allows for
+         * filling the display area while avoiding a blank bottom row. */
+        if (i < canvas->config.height - 1)
             *(out++) = '\n';
 
         *out = '\0';
