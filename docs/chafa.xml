@@ -279,6 +279,15 @@ useful in low-color modes.
 </varlistentry>
 
 <varlistentry>
+<term><option>--relative <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Use relative cursor positioning [on, off]. When off, linefeeds will be used to
+advance the cursor vertically. Defaults to on, except when used with "-c none",
+where it defaults to off.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--scale <replaceable>NUM</replaceable></option></term>
 <listitem><para>
 Scale image, respecting terminal's maximum dimensions. 1.0 approximates

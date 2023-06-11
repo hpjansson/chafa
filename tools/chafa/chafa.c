@@ -88,6 +88,8 @@ typedef struct
     gboolean fg_only;
     gboolean animate;
     gboolean center;
+    gboolean relative;
+    gboolean relative_set;
     gint width, height;
     gint cell_width, cell_height;
     gint margin_bottom, margin_right;
@@ -452,6 +454,10 @@ print_summary (void)
     "                     altered state (rude).\n"
     "  -p, --preprocess=BOOL  Image preprocessing [on, off]. Defaults to on with 16\n"
     "                     colors or lower, off otherwise.\n"
+    "      --relative=BOOL  Use relative cursor positioning [on, off]. When off,\n"
+    "                     linefeeds will be used to advance the cursor vertically.\n"
+    "                     Defaults to on, except when used with \"-c none\", where\n"
+    "                     it defaults to off.\n"
     "      --scale=NUM    Scale image, respecting terminal's maximum dimensions. 1.0\n"
     "                     approximates original pixel dimensions. Specify \"max\" to\n"
     "                     use all available space. Defaults to 1.0 for pixel graphics\n"
@@ -1082,6 +1088,20 @@ parse_polite_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
 }
 
 static gboolean
+parse_relative_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_boolean_token (value, &options.relative);
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Relative positioning must be one of [on, off].");
+
+    options.relative_set = TRUE;
+    return result;
+}
+
+static gboolean
 parse_anim_speed_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = FALSE;
@@ -1446,6 +1466,7 @@ parse_options (int *argc, char **argv [])
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
         { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
+        { "relative",    '\0', 0, G_OPTION_ARG_CALLBACK, parse_relative_arg,    "Relative", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "scale",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_scale_arg,       "Scale", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
@@ -1499,6 +1520,7 @@ parse_options (int *argc, char **argv [])
     options.center = FALSE;
     options.polite = TRUE;
     options.preprocess = TRUE;
+    options.relative_set = FALSE;
     options.fg_only = FALSE;
     options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
@@ -1769,6 +1791,10 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
+    /* Default to relative positioning unless we're in FGBG mode. */
+    if (!options.relative_set)
+        options.relative = (options.mode == CHAFA_CANVAS_MODE_FGBG) ? FALSE : TRUE;
+
     /* Translate optimization level to flags */
 
     options.optimizations = CHAFA_OPTIMIZATION_NONE;
@@ -1790,6 +1816,41 @@ out:
     return result;
 }
 
+static gchar *
+emit_vertical_space (gchar *dest)
+{
+    if (options.relative)
+    {
+        dest = chafa_term_info_emit_cursor_down_scroll (options.term_info, dest);
+    }
+    else
+    {
+        *dest++ = '\n';
+    }
+
+    return dest;
+}
+
+static gboolean
+write_gstring_to_stdout (GString *gs)
+{
+    return write_to_stdout (gs->str, gs->len);
+}
+
+static gboolean
+write_gstrings_to_stdout (GString **gsa)
+{
+    gint i;
+
+    for (i = 0; gsa [i]; i++)
+    {
+        if (!write_gstring_to_stdout (gsa [i]))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 #define PAD_SPACES_MAX 4096
 
 static gboolean
@@ -1809,8 +1870,10 @@ write_pad_spaces (gint n)
 
 /* Write out the image data, possibly centering it */
 static gboolean
-write_image (const gchar *data, gsize len, gint dest_width)
+write_image (GString **gsa, gint dest_width)
 {
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
+    gchar *p0 = buf;
     gint left_space;
     gboolean result = FALSE;
 
@@ -1819,35 +1882,60 @@ write_image (const gchar *data, gsize len, gint dest_width)
     /* Indent top left corner: Common for all modes */
     if (left_space > 0)
     {
-        if (!write_pad_spaces (left_space))
-            goto out;
+        if (options.relative)
+        {
+            p0 = chafa_term_info_emit_cursor_right (options.term_info, buf, left_space);
+            if (!write_to_stdout (buf, p0 - buf))
+                goto out;
+        }
+        else
+        {
+            if (!write_pad_spaces (left_space))
+                goto out;
+        }
     }
 
-    if (left_space <= 0 || options.pixel_mode != CHAFA_PIXEL_MODE_SYMBOLS)
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
-        if (!write_to_stdout (data, len))
-            goto out;
-    }
-    else
-    {
-        const gchar *end, *p0, *p1;
+        gint i;
 
         /* Indent subsequent rows: Symbols mode only */
 
-        for (p0 = data, end = data + len; p0 < end; p0 = p1)
+        for (i = 0; gsa [i]; i++)
         {
-            p1 = memchr (p0, '\n', end - p0);
-            p1 = p1 ? (p1 + 1) : end;
-
-            if (!write_to_stdout (p0, p1 - p0))
-                goto out;
-
-            if (p1 != end)
+            if (gsa [i + 1] && options.relative)
             {
-                if (!write_pad_spaces (left_space))
+                p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, buf);
+                if (!write_to_stdout (buf, p0 - buf))
                     goto out;
             }
+
+            if (!write_gstring_to_stdout (gsa [i]))
+                goto out;
+
+            if (gsa [i + 1])
+            {
+                if (options.relative)
+                {
+                    p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, buf);
+                    p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
+                    if (!write_to_stdout (buf, p0 - buf))
+                        goto out;
+                }
+                else
+                {
+                    if (!write_to_stdout ("\n", 1))
+                        goto out;
+                    if (!write_pad_spaces (left_space))
+                        goto out;
+                }
+            }
         }
+    }
+    else
+    {
+        if (!write_gstrings_to_stdout (gsa))
+            goto out;
     }
 
     result = TRUE;
@@ -1856,15 +1944,15 @@ out:
     return result;
 }
 
-static GString *
-build_string (ChafaPixelType pixel_type, const guint8 *pixels,
-              gint src_width, gint src_height, gint src_rowstride,
-              gint dest_width, gint dest_height,
-              gboolean is_animation)
+static GString **
+build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
+               gint src_width, gint src_height, gint src_rowstride,
+               gint dest_width, gint dest_height,
+               gboolean is_animation)
 {
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
-    GString *gs;
+    GString **gsa;
 
     config = chafa_canvas_config_new ();
 
@@ -1902,11 +1990,11 @@ build_string (ChafaPixelType pixel_type, const guint8 *pixels,
 
     canvas = chafa_canvas_new (config);
     chafa_canvas_draw_all_pixels (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);
-    gs = chafa_canvas_print (canvas, options.term_info);
+    chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
     chafa_canvas_unref (canvas);
     chafa_canvas_config_unref (config);
-    return gs;
+    return gsa;
 }
 
 static void
@@ -1938,10 +2026,9 @@ pixel_to_cell_dimensions (gdouble scale,
 }
 
 static gboolean
-write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
-                      gint dest_width, gint dest_height)
+write_image_prologue (gboolean is_first_file, gboolean is_first_frame, gint dest_height)
 {
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 4 + 3];
     gchar *p0 = buf;
 
     if (options.clear)
@@ -1957,43 +2044,74 @@ write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
     }
     else if (!is_first_frame)
     {
-        /* Cursor to col 0 and up N steps */
-        *(p0++) = '\r';
+        /* Cursor to top left of image rectangle, always relative positioning */
         p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height - (options.have_parking_row ? 0 : 1));
     }
 
-    /* Put a blank line between files in non-clear mode */
+    /* Put a blank line between files in continuous (!clear) mode */
     if (is_first_frame && !options.clear && !is_first_file)
     {
         if (!options.have_parking_row)
-            *(p0++) = '\n';
-        *(p0++) = '\n';
+            p0 = emit_vertical_space (p0);
+        p0 = emit_vertical_space (p0);
     }
 
     return write_to_stdout (buf, p0 - buf);
 }
 
 static gboolean
-write_image_epilogue (gboolean is_first_frame)
+write_image_epilogue (gint dest_width)
 {
-    /* No linefeed after frame in sixel mode */
-    if (options.have_parking_row
-        && (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
-            || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-            || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2))
+    gint left_space;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
+    gchar *p0 = buf;
+
+    left_space = options.center ? (detected_term_size.width_cells - dest_width) / 2 : 0;
+
+    /* These modes leave cursor to the right of the bottom row */
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+        || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
     {
-        if (!write_to_stdout ("\n", 1))
-            return FALSE;
+        if (options.have_parking_row)
+        {
+            p0 = emit_vertical_space (p0);
+        }
+        else if (!options.relative)
+        {
+            /* We need this because absolute mode relies on emit_vertical_space()
+             * producing an \n that implies a CR with Unix semantics. */
+            if (!write_to_stdout ("\r", 1))
+                return FALSE;
+        }
+
+        if (options.relative)
+            p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
+                                                   left_space + dest_width);
     }
-    else if (options.center && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+    else /* CHAFA_PIXEL_MODE_SIXELS */
     {
-        /* If image was centered in sixel mode, cursor must be brought
-         * back to left margin manually */
-        if (!write_to_stdout ("\r", 1))
-            return FALSE;
+        /* Sixel mode leaves cursor below the leftmost column (typical default,
+         * enforceable with --polite off). That's where we want it, in the
+         * parking row. */
+
+        if (left_space > 0)
+        {
+            if (options.relative)
+            {
+                p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
+                                                       left_space);
+            }
+            else
+            {
+                if (!write_to_stdout ("\r", 1))
+                    return FALSE;
+            }
+        }
     }
 
-    return TRUE;
+
+    return write_to_stdout (buf, p0 - buf);
 }
 
 typedef enum
@@ -2013,7 +2131,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     GTimer *timer;
     gint loop_n = 0;
     MediaLoader *media_loader;
-    GString *gs;
+    GString **gsa;
     RunResult result = FILE_FAILED;
     GError *error = NULL;
 
@@ -2098,25 +2216,18 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                         options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
 
-            gs = build_string (pixel_type, pixels,
-                               src_width, src_height, src_rowstride,
-                               dest_width, dest_height,
-                               is_animation);
+            gsa = build_strings (pixel_type, pixels,
+                                 src_width, src_height, src_rowstride,
+                                 dest_width, dest_height,
+                                 is_animation);
 
-            if (!write_image_prologue (is_first_file, is_first_frame,
-                                       dest_width, dest_height))
+            if (!write_image_prologue (is_first_file, is_first_frame, dest_height)
+                || !write_image (gsa, dest_width)
+                || !write_image_epilogue (dest_width)
+                || fflush (stdout) != 0)
                 goto out;
 
-            if (!write_image (gs->str, gs->len, dest_width))
-                goto out;
-
-            g_string_free (gs, TRUE);
-
-            if (!write_image_epilogue (is_first_frame))
-                goto out;
-
-            if (fflush (stdout) != 0)
-                goto out;
+            chafa_free_gstring_array (gsa);
 
             if (is_animation)
             {
