@@ -2465,6 +2465,40 @@ CHAFA_TERM_SEQ_DEF(reset_color_fgbg, RESET_COLOR_FGBG, 0, none, char)
  **/
 CHAFA_TERM_SEQ_DEF(reset_scrolling_rows, RESET_SCROLLING_ROWS, 0, none, char)
 
+/**
+ * chafa_term_info_emit_save_cursor_pos:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SAVE_CURSOR_POS.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(save_cursor_pos, SAVE_CURSOR_POS, 0, none, char)
+
+/**
+ * chafa_term_info_emit_restore_cursor_pos:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_RESTORE_CURSOR_POS.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(restore_cursor_pos, RESTORE_CURSOR_POS, 0, none, char)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

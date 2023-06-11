@@ -177,6 +177,8 @@
  * @CHAFA_TERM_SEQ_RESET_COLOR_BG: Reset background color to the default.
  * @CHAFA_TERM_SEQ_RESET_COLOR_FGBG: Reset foreground and background colors to the default.
  * @CHAFA_TERM_SEQ_RESET_SCROLLING_ROWS: Reset scrolling area extent to that of the entire screen.
+ * @CHAFA_TERM_SEQ_SAVE_CURSOR_POS: Save the cursor's position.
+ * @CHAFA_TERM_SEQ_RESTORE_CURSOR_POS: Move cursor to the last saved position.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.

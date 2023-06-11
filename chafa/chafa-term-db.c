@@ -83,6 +83,8 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_ENABLE_WRAP, "\033[?7h" },
     { CHAFA_TERM_SEQ_DISABLE_WRAP, "\033[?7l" },
     { CHAFA_TERM_SEQ_RESET_SCROLLING_ROWS, "\033[r" },
+    { CHAFA_TERM_SEQ_SAVE_CURSOR_POS, "\033[s" },
+    { CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, "\033[u" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
