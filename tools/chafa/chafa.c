@@ -1319,7 +1319,7 @@ tty_options_init (void)
 
     if (!options.polite)
     {
-        gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
+        gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
         gchar *p0;
 
 #ifdef HAVE_TERMIOS_H
@@ -1340,11 +1340,12 @@ tty_options_init (void)
             write_to_stdout (buf, p0 - buf);
         }
 
-        /* Most terminals should have sixel scrolling enabled by default, so we're
-         * not going to disable it again later. */
         if (options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
         {
+            /* Most terminals should have sixel scrolling and advance-down enabled
+             * by default, so we're not going to undo these later. */
             p0 = chafa_term_info_emit_enable_sixel_scrolling (options.term_info, buf);
+            p0 = chafa_term_info_emit_enable_advance_down_after_sixel (options.term_info, p0);
             write_to_stdout (buf, p0 - buf);
         }
     }
