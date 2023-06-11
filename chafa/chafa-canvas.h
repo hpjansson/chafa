@@ -48,6 +48,11 @@ void chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel
                                    gint src_width, gint src_height, gint src_rowstride);
 CHAFA_AVAILABLE_IN_1_6
 GString *chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info);
+CHAFA_AVAILABLE_IN_1_14
+void chafa_canvas_print_rows (ChafaCanvas *canvas, ChafaTermInfo *term_info,
+                              GString ***array_out, gint *array_len_out);
+CHAFA_AVAILABLE_IN_1_14
+gchar **chafa_canvas_print_rows_strv (ChafaCanvas *canvas, ChafaTermInfo *term_info);
 
 CHAFA_AVAILABLE_IN_1_8
 gunichar chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y);

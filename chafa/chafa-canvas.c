@@ -1732,6 +1732,113 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
 }
 
 /**
+ * chafa_canvas_print_rows:
+ * @canvas: The canvas to generate a printable representation of
+ * @term_info: Terminal to format for, or %NULL for fallback
+ * @array_out: Pointer to storage for resulting array pointer
+ * @array_len_out: Pointer to storage for array's element count, or %NULL
+ *
+ * Builds an array of UTF-8 strings made up of terminal control sequences
+ * and symbols representing the canvas' current contents. These can be
+ * printed to a terminal. The exact choice of escape sequences and symbols,
+ * dimensions, etc. is determined by the configuration assigned to
+ * @canvas on its creation.
+ *
+ * The array will be %NULL-terminated. The element count does not include
+ * the terminator.
+ *
+ * When the canvas' pixel mode is %CHAFA_PIXEL_MODE_SYMBOLS, each element
+ * will hold the contents of exactly one symbol row. There will be no row
+ * separators, newlines or control sequences to reposition the cursor between
+ * rows. Row positioning is left to the caller.
+ *
+ * In other pixel modes, there may be one or more strings, but the splitting
+ * criteria should not be relied on. They must be printed in sequence, exactly
+ * as they appear.
+ *
+ * Since: 1.14
+ **/
+void
+chafa_canvas_print_rows (ChafaCanvas *canvas, ChafaTermInfo *term_info,
+                         GString ***array_out, gint *array_len_out)
+{
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+    g_return_if_fail (array_out != NULL);
+
+    if (term_info)
+        chafa_term_info_ref (term_info);
+    else
+        term_info = chafa_term_db_get_fallback_info (chafa_term_db_get_default ());
+
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        maybe_clear (canvas);
+        chafa_canvas_print_symbol_rows (canvas, term_info, array_out, array_len_out);
+    }
+    else
+    {
+        GString *gs = chafa_canvas_print (canvas, term_info);
+
+        *array_out = g_new (GString *, 2);
+        (*array_out) [0] = gs;
+        (*array_out) [1] = NULL;
+        if (array_len_out)
+            *array_len_out = 1;
+    }
+}
+
+/**
+ * chafa_canvas_print_rows_strv:
+ * @canvas: The canvas to generate a printable representation of
+ * @term_info: Terminal to format for, or %NULL for fallback
+ *
+ * Builds an array of UTF-8 strings made up of terminal control sequences
+ * and symbols representing the canvas' current contents. These can be
+ * printed to a terminal. The exact choice of escape sequences and symbols,
+ * dimensions, etc. is determined by the configuration assigned to
+ * @canvas on its creation.
+ *
+ * The array will be %NULL-terminated and can be freed with g_strfreev().
+ *
+ * When the canvas' pixel mode is %CHAFA_PIXEL_MODE_SYMBOLS, each element
+ * will hold the contents of exactly one symbol row. There will be no row
+ * separators, newlines or control sequences to reposition the cursor between
+ * rows. Row positioning is left to the caller.
+ *
+ * In other pixel modes, there may be one or more strings, but the splitting
+ * criteria should not be relied on. They must be printed in sequence, exactly
+ * as they appear.
+ *
+ * Returns: A %NULL-terminated array of string pointers
+ *
+ * Since: 1.14
+ **/
+gchar **
+chafa_canvas_print_rows_strv (ChafaCanvas *canvas, ChafaTermInfo *term_info)
+{
+    GString **gsa;
+    gint gsa_len;
+    gchar **strv;
+    gint i;
+
+    g_return_val_if_fail (canvas != NULL, NULL);
+    g_return_val_if_fail (canvas->refs > 0, NULL);
+
+    chafa_canvas_print_rows (canvas, term_info, &gsa, &gsa_len);
+    strv = g_new (gchar *, gsa_len + 1);
+
+    for (i = 0; i < gsa_len; i++)
+    {
+        /* FIXME: Switch to g_string_free_and_steal() in 2025 */
+        strv [i] = g_string_free (gsa [i], FALSE);
+    }
+
+    strv [gsa_len] = NULL;
+    return strv;
+}
+
+/**
  * chafa_canvas_get_char_at:
  * @canvas: The canvas to inspect
  * @x: Column of character cell to inspect

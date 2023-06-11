@@ -762,6 +762,41 @@ build_ansi_gstring (ChafaCanvas *canvas, ChafaTermInfo *ti)
     return gs;
 }
 
+static void
+build_ansi_gstring_array (ChafaCanvas *canvas, ChafaTermInfo *ti,
+                          GString ***array_out, gint *array_len_out)
+{
+    PrintCtx ctx = { 0 };
+    GString **array;
+    gint i;
+
+    ctx.canvas = canvas;
+    ctx.term_info = ti;
+
+    array = g_new (GString *, canvas->config.height + 1);
+
+    for (i = 0; i < canvas->config.height; i++)
+    {
+        GString *gs = g_string_new ("");
+        gchar *out;
+
+        prealloc_string (gs, canvas->config.width);
+        out = gs->str + gs->len;
+
+        out = build_ansi_row (&ctx, i, out);
+        *out = '\0';
+
+        gs->len = out - gs->str;
+        array [i] = gs;
+    }
+
+    array [canvas->config.height] = NULL;
+    *array_out = array;
+
+    if (array_len_out)
+        *array_len_out = canvas->config.height;
+}
+
 GString *
 chafa_canvas_print_symbols (ChafaCanvas *canvas, ChafaTermInfo *ti)
 {
@@ -769,4 +804,15 @@ chafa_canvas_print_symbols (ChafaCanvas *canvas, ChafaTermInfo *ti)
     g_assert (ti != NULL);
 
     return build_ansi_gstring (canvas, ti);
+}
+
+void
+chafa_canvas_print_symbol_rows (ChafaCanvas *canvas, ChafaTermInfo *ti,
+                                GString ***array_out, gint *array_len_out)
+{
+    g_assert (canvas != NULL);
+    g_assert (ti != NULL);
+    g_assert (array_out != NULL);
+
+    build_ansi_gstring_array (canvas, ti, array_out, array_len_out);
 }
