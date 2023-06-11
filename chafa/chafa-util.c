@@ -149,6 +149,27 @@ chafa_calc_canvas_geometry (gint src_width,
         *dest_height_inout = dest_height;
 }
 
+/**
+ * chafa_free_gstring_array:
+ * @gsa: Pointer to a %NULL-terminated array of pointers to #GString
+ *
+ * Frees an array of #GString. If @gsa is %NULL, simply returns without
+ * doing anything.
+ **/
+void
+chafa_free_gstring_array (GString **gsa)
+{
+    gint i;
+
+    if (!gsa)
+        return;
+
+    for (i = 0; gsa [i]; i++)
+        g_string_free (gsa [i], TRUE);
+
+    g_free (gsa);
+}
+
 /* --- Internal; not part of public API --- */
 
 static void

@@ -37,6 +37,9 @@ void chafa_calc_canvas_geometry (gint src_width,
                                  gboolean zoom,
                                  gboolean stretch);
 
+CHAFA_AVAILABLE_IN_1_14
+void chafa_free_gstring_array (GString **gsa);
+
 G_END_DECLS
 
 #endif /* __CHAFA_UTIL_H__ */
