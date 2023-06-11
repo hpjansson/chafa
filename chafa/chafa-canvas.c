@@ -1657,7 +1657,7 @@ chafa_canvas_build_ansi (ChafaCanvas *canvas)
  * @term_info: Terminal to format for, or %NULL for fallback
  *
  * Builds a UTF-8 string of terminal control sequences and symbols
- * representing the canvas' current contents. This can e.g. be printed
+ * representing the canvas' current contents. This can be printed
  * to a terminal. The exact choice of escape sequences and symbols,
  * dimensions, etc. is determined by the configuration assigned to
  * @canvas on its creation.
