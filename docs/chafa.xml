@@ -191,6 +191,13 @@ Usage is similar to that of --symbols; see below.
 </varlistentry>
 
 <varlistentry>
+<term><option>--fit-width</option></term>
+<listitem><para>
+Fit images to the view's width, potentially exceeding its height.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--font-ratio <replaceable>width</replaceable>/<replaceable>height</replaceable></option></term>
 <listitem><para>
 Target font's width/height ratio. Can be specified as a real number or a

@@ -92,6 +92,7 @@ typedef struct
     gboolean center;
     gboolean relative;
     gboolean relative_set;
+    gboolean fit_to_width;
     gint view_width, view_height;
     gint width, height;
     gint cell_width, cell_height;
@@ -432,6 +433,8 @@ print_summary (void)
     "                     character-cell output using foreground colors only.\n"
     "      --fill=SYMS    Specify character symbols to use for fill/gradients.\n"
     "                     Defaults to none. See below for full usage.\n"
+    "      --fit-width    Fit images to the view's width, potentially exceeding its\n"
+    "                     height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
     "  -f, --format=FORMAT  Set output format; one of [iterm, kitty, sixels,\n"
@@ -1499,6 +1502,7 @@ parse_options (int *argc, char **argv [])
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
+        { "fit-width",   '\0', 0, G_OPTION_ARG_NONE,     &options.fit_to_width, "Fit to width", NULL },
         { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
@@ -1571,6 +1575,7 @@ parse_options (int *argc, char **argv [])
     options.view_height = -1;  /* Unset */
     options.width = -1;  /* Unset */
     options.height = -1;  /* Unset */
+    options.fit_to_width = FALSE;
     options.font_ratio = -1.0;  /* Unset */
     options.margin_bottom = -1;  /* Unset */
     options.margin_right = -1;  /* Unset */
@@ -1685,8 +1690,9 @@ parse_options (int *argc, char **argv [])
         }
     }
 
-    if (using_detected_size && options.stretch &&
-        (options.view_width < 0 || options.view_height < 0))
+    if (using_detected_size &&
+        ((options.stretch && (options.view_width < 0 || options.view_height < 0))
+         || (options.fit_to_width && options.view_width < 0)))
     {
         g_printerr ("%s: Refusing to stretch images to infinity.\n", options.executable_name);
         goto out;
@@ -1707,6 +1713,19 @@ parse_options (int *argc, char **argv [])
 
         options.height = (options.height > options.margin_bottom)
             ? options.height - options.margin_bottom : 1;
+
+        if (options.fit_to_width)
+        {
+            options.height = CELL_EXTENT_AUTO_MAX;
+
+            /* Fit-to-width only makes sense if we respect the aspect ratio.
+             * We could complain about infinities here, but let's be nice and
+             * let it override --stretch instead. */
+            options.stretch = FALSE;
+
+            /* --fit-width implies --scale max */
+            options.scale = SCALE_MAX;
+        }
     }
 
     options.have_parking_row = (using_detected_size && options.margin_bottom == 0) ? FALSE : TRUE;
