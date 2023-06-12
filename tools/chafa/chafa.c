@@ -55,6 +55,7 @@
 #define ANIM_FPS_MAX 100000.0
 #define FILE_DURATION_DEFAULT 0.0
 #define SCALE_MAX 9999.0
+#define PIXEL_EXTENT_MAX 32767
 
 typedef struct
 {
@@ -1261,7 +1262,8 @@ get_tty_size (TermSize *term_size_out)
      * aspect information for the font used. Sixel-capable terminals
      * like mlterm set these fields, but most others do not. */
 
-    if (term_size.width_pixels >= 32768 || term_size.height_pixels >= 32768)
+    if (term_size.width_pixels > PIXEL_EXTENT_MAX
+        || term_size.height_pixels > PIXEL_EXTENT_MAX)
     {
         /* https://github.com/hpjansson/chafa/issues/62 */
 
