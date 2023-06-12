@@ -71,7 +71,7 @@ X.Org. Defaults to black.
 <varlistentry>
 <term><option>-C <replaceable>bool</replaceable>, --center <replaceable>bool</replaceable></option></term>
 <listitem><para>
-Center images [on, off]. Defaults to off.
+Center images horizontally in the view [on, off]. Defaults to off.
 </para></listitem>
 </varlistentry>
 
@@ -299,8 +299,8 @@ to 1.0 for pixel graphics and 4.0 for symbols.
 <varlistentry>
 <term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
 <listitem><para>
-Set maximum output dimensions in columns and rows. By default this will be the
-size of your terminal, or 80x25 if size detection fails.
+Set maximum output image dimensions in columns and rows. By default this will
+be equal to the view size (see --view-size).
 </para></listitem>
 </varlistentry>
 
@@ -350,6 +350,16 @@ transparency with the background color (configurable with --bg).
 <term><option>--version</option></term>
 <listitem><para>
 Show version, feature and copyright information.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--view-size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
+<listitem><para>
+Set the view size in columns and rows. By default this will be the size of your
+terminal, or 80x25 if size detection fails. If one dimension is omitted (by
+providing a size of e.g. 80x or x25), it will be set to a reasonable approximation
+of infinity.
 </para></listitem>
 </varlistentry>
 

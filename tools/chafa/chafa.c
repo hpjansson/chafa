@@ -55,6 +55,7 @@
 #define ANIM_FPS_MAX 100000.0
 #define FILE_DURATION_DEFAULT 0.0
 #define SCALE_MAX 9999.0
+#define CELL_EXTENT_AUTO_MAX 65535
 #define PIXEL_EXTENT_MAX 32767
 
 typedef struct
@@ -91,6 +92,7 @@ typedef struct
     gboolean center;
     gboolean relative;
     gboolean relative_set;
+    gint view_width, view_height;
     gint width, height;
     gint cell_width, cell_height;
     gint margin_bottom, margin_right;
@@ -406,7 +408,8 @@ print_summary (void)
     "      --animate=BOOL  Whether to allow animation [on, off]. Defaults to on.\n"
     "                     When off, will show a still frame from each animation.\n"
     "      --bg=COLOR     Background color of display (color name or hex).\n"
-    "  -C, --center=BOOL  Center images [on, off]. Defaults to off.\n"
+    "  -C, --center=BOOL  Center images horizontally in the view [on, off]. Defaults\n"
+    "                     to off.\n"
     "      --clear        Clear screen before processing each file.\n"
     "  -c, --colors=MODE  Set output color mode; one of [none, 2, 8, 16/8, 16, 240,\n"
     "                     256, full]. Defaults to best guess.\n"
@@ -463,9 +466,8 @@ print_summary (void)
     "                     approximates original pixel dimensions. Specify \"max\" to\n"
     "                     use all available space. Defaults to 1.0 for pixel graphics\n"
     "                     and 4.0 for symbols.\n"
-    "  -s, --size=WxH     Set maximum output dimensions in columns and rows. By\n"
-    "                     default this will be the size of your terminal, or 80x25\n"
-    "                     if size detection fails.\n"
+    "  -s, --size=WxH     Set maximum image dimensions in columns and rows. By\n"
+    "                     default this will be equal to the view size.\n"
     "      --speed=SPEED  Set the speed animations will play at. This can be\n"
     "                     either a unitless multiplier, or a real number followed\n"
     "                     by \"fps\" to apply a specific framerate.\n"
@@ -477,6 +479,10 @@ print_summary (void)
     "                     or negative, this will equal available CPU cores.\n"
     "  -t, --threshold=NUM  Threshold above which full transparency will be used\n"
     "                     [0.0 - 1.0].\n"
+    "      --view-size=WxH  Set the view size in columns and rows. By default this\n"
+    "                     will be the size of your terminal, or 80x25 if size\n"
+    "                     detection fails. If one dimension is omitted, it will\n"
+    "                     be set to a reasonable approximation of infinity.\n"
     "      --watch        Watch a single input file, redisplaying it whenever its\n"
     "                     contents change. Will run until manually interrupted\n"
     "                     or, if --duration is set, until it expires.\n"
@@ -764,39 +770,72 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     return result;
 }
 
-static gboolean
-parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+static void
+parse_2d_size (const gchar *value, gint *width_out, gint *height_out)
 {
-    gboolean result = TRUE;
-    gint width = -1, height = -1;
     gint n;
     gint o = 0;
 
-    n = sscanf (value, "%d%n", &width, &o);
+    *width_out = *height_out = -1;
+    n = sscanf (value, "%d%n", width_out, &o);
 
     if (value [o] == 'x' && value [o + 1] != '\0')
     {
         gint o2;
 
-        n = sscanf (value + o + 1, "%d%n", &height, &o2);
+        n = sscanf (value + o + 1, "%d%n", height_out, &o2);
         if (n == 1 && value [o + o2 + 1] != '\0')
         {
-            width = height = -1;
-            goto out;
+            *width_out = *height_out = -1;
         }
     }
+}
 
-out:
+static gboolean
+parse_view_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+    gint width, height;
+
+    parse_2d_size (value, &width, &height);
+
     if (width < 0 && height < 0)
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Output dimensions must be specified as [width]x[height], [width]x or x[height], e.g 80x25, 80x or x25.");
+                     "View size must be specified as [width]x[height], [width]x or x[height], e.g 80x25, 80x or x25.");
         result = FALSE;
     }
     else if (width == 0 || height == 0)
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Output dimensions must be at least 1x1.");
+                     "View size must be at least 1x1.");
+        result = FALSE;
+    }
+
+    options.view_width = width;
+    options.view_height = height;
+
+    return result;
+}
+
+static gboolean
+parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+    gint width, height;
+
+    parse_2d_size (value, &width, &height);
+
+    if (width < 0 && height < 0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Size must be specified as [width]x[height], [width]x or x[height], e.g 80x25, 80x or x25.");
+        result = FALSE;
+    }
+    else if (width == 0 || height == 0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Size must be at least 1x1.");
         result = FALSE;
     }
 
@@ -1478,6 +1517,7 @@ parse_options (int *argc, char **argv [])
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
+        { "view-size",   '\0', 0, G_OPTION_ARG_CALLBACK, parse_view_size_arg,   "View size", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         /* Deprecated: Equivalent to --scale max */
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
@@ -1527,6 +1567,8 @@ parse_options (int *argc, char **argv [])
     options.fg_only = FALSE;
     options.color_extractor = CHAFA_COLOR_EXTRACTOR_AVERAGE;
     options.color_space = CHAFA_COLOR_SPACE_RGB;
+    options.view_width = -1;  /* Unset */
+    options.view_height = -1;  /* Unset */
     options.width = -1;  /* Unset */
     options.height = -1;  /* Unset */
     options.font_ratio = -1.0;  /* Unset */
@@ -1631,16 +1673,34 @@ parse_options (int *argc, char **argv [])
         }
     }
 
+    if (options.view_width < 0 && options.view_height < 0)
+    {
+        options.view_width = detected_term_size.width_cells;
+        options.view_height = detected_term_size.height_cells;
+
+        if (options.view_width < 0 && options.view_height < 0)
+        {
+            options.view_width = 80;
+            options.view_height = 25;
+        }
+    }
+
+    if (using_detected_size && options.stretch &&
+        (options.view_width < 0 || options.view_height < 0))
+    {
+        g_printerr ("%s: Refusing to stretch images to infinity.\n", options.executable_name);
+        goto out;
+    }
+
+    if (options.view_width < 0)
+        options.view_width = CELL_EXTENT_AUTO_MAX;
+    if (options.view_height < 0)
+        options.view_height = CELL_EXTENT_AUTO_MAX;
+
     if (using_detected_size)
     {
-        options.width = detected_term_size.width_cells;
-        options.height = detected_term_size.height_cells;
-
-        if (options.width < 0 && options.height < 0)
-        {
-            options.width = 80;
-            options.height = 25;
-        }
+        options.width = options.view_width;
+        options.height = options.view_height;
 
         options.width = (options.width > options.margin_right)
             ? options.width - options.margin_right : 1;
@@ -1880,7 +1940,7 @@ write_image (GString **gsa, gint dest_width)
     gint left_space;
     gboolean result = FALSE;
 
-    left_space = options.center ? (detected_term_size.width_cells - dest_width) / 2 : 0;
+    left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
 
     /* Indent top left corner: Common for all modes */
     if (left_space > 0)
@@ -2069,7 +2129,7 @@ write_image_epilogue (gint dest_width)
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
     gchar *p0 = buf;
 
-    left_space = options.center ? (detected_term_size.width_cells - dest_width) / 2 : 0;
+    left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
 
     /* These modes leave cursor to the right of the bottom row */
     if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
