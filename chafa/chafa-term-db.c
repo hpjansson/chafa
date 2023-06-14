@@ -457,7 +457,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 
     if (!g_ascii_strcasecmp (term_program, "WezTerm"))
     {
-        gfx_seqs = kitty_seqs;
+        gfx_seqs = sixel_seqs;
     }
 
     if (!g_ascii_strcasecmp (term_name, "contour"))
