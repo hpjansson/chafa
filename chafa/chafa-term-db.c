@@ -86,6 +86,10 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_SAVE_CURSOR_POS, "\033[s" },
     { CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, "\033[u" },
 
+    /* These are actually xterm seqs, but we'll allow it */
+    { CHAFA_TERM_SEQ_ENABLE_ALT_SCREEN, "\033[1049h" },
+    { CHAFA_TERM_SEQ_DISABLE_ALT_SCREEN, "\033[1049l" },
+
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 

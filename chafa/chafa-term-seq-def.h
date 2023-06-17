@@ -2533,6 +2533,40 @@ CHAFA_TERM_SEQ_DEF(enable_advance_down_after_sixel, ENABLE_ADVANCE_DOWN_AFTER_SI
  **/
 CHAFA_TERM_SEQ_DEF(enable_advance_right_after_sixel, ENABLE_ADVANCE_RIGHT_AFTER_SIXEL, 0, none, char)
 
+/**
+ * chafa_term_info_emit_enable_alt_screen:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_ALT_SCREEN.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(enable_alt_screen, ENABLE_ALT_SCREEN, 0, none, char)
+
+/**
+ * chafa_term_info_emit_disable_alt_screen:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_DISABLE_ALT_SCREEN.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(disable_alt_screen, DISABLE_ALT_SCREEN, 0, none, char)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS
