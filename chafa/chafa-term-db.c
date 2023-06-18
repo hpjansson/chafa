@@ -345,6 +345,18 @@ add_seq_list (ChafaTermInfo *ti, const SeqStr **seqlist)
     }
 }
 
+static const gchar *
+getenv_or_blank (gchar **envp, const gchar *key)
+{
+    const gchar *value;
+
+    value = g_environ_getenv (envp, key);
+    if (!value)
+        value = "";
+
+    return value;
+}
+
 static void
 detect_capabilities (ChafaTermInfo *ti, gchar **envp)
 {
@@ -362,34 +374,15 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const SeqStr *gfx_seqs = NULL;
     const SeqStr *rep_seqs_local = NULL;
 
-    add_seqs (ti, vt220_seqs);
-
-    term = g_environ_getenv (envp, "TERM");
-    if (!term) term = "";
-
-    colorterm = g_environ_getenv (envp, "COLORTERM");
-    if (!colorterm) colorterm = "";
-
-    konsole_version = g_environ_getenv (envp, "KONSOLE_VERSION");
-    if (!konsole_version) konsole_version = "";
-
-    vte_version = g_environ_getenv (envp, "VTE_VERSION");
-    if (!vte_version) vte_version = "";
-
-    term_program = g_environ_getenv (envp, "TERM_PROGRAM");
-    if (!term_program) term_program = "";
-
-    term_name = g_environ_getenv (envp, "TERMINAL_NAME");
-    if (!term_name) term_name = "";
-
-    tmux = g_environ_getenv (envp, "TMUX");
-    if (!tmux) tmux = "";
-
-    ctx_backend = g_environ_getenv (envp, "CTX_BACKEND");
-    if (!ctx_backend) ctx_backend = "";
-
-    lc_terminal = g_environ_getenv (envp, "LC_TERMINAL");
-    if (!lc_terminal) lc_terminal = "";
+    term = getenv_or_blank (envp, "TERM");
+    colorterm = getenv_or_blank (envp, "COLORTERM");
+    konsole_version = getenv_or_blank (envp, "KONSOLE_VERSION");
+    vte_version = getenv_or_blank (envp, "VTE_VERSION");
+    term_program = getenv_or_blank (envp, "TERM_PROGRAM");
+    term_name = getenv_or_blank (envp, "TERMINAL_NAME");
+    tmux = getenv_or_blank (envp, "TMUX");
+    ctx_backend = getenv_or_blank (envp, "CTX_BACKEND");
+    lc_terminal = getenv_or_blank (envp, "LC_TERMINAL");
 
     /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
      * including AIX and DirectColor sequences. We detect this early and allow
@@ -537,6 +530,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     if (!strcmp (term, "fbterm"))
         color_seq_list = color_fbterm_list;
 
+    add_seqs (ti, vt220_seqs);
     add_seq_list (ti, color_seq_list);
     add_seqs (ti, gfx_seqs);
     add_seqs (ti, rep_seqs_local);
