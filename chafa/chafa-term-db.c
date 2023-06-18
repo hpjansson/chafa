@@ -517,6 +517,9 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         /* screen and older tmux do not support REP. Newer tmux does,
          * but there's no reliable way to tell which version we're dealing with. */
         rep_seqs_local = NULL;
+
+        /* No graphics in screen and tmux */
+        gfx_seqs = NULL;
     }
 
     /* If TERM is "linux", we're probably on the Linux console, which supports
