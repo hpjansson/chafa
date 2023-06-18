@@ -1389,7 +1389,7 @@ tty_options_init (void)
             /* Most terminals should have sixel scrolling and advance-down enabled
              * by default, so we're not going to undo these later. */
             p0 = chafa_term_info_emit_enable_sixel_scrolling (options.term_info, buf);
-            p0 = chafa_term_info_emit_enable_advance_down_after_sixel (options.term_info, p0);
+            p0 = chafa_term_info_emit_set_sixel_advance_down (options.term_info, p0);
             write_to_stdout (buf, p0 - buf);
         }
     }

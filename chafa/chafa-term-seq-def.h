@@ -2500,11 +2500,11 @@ CHAFA_TERM_SEQ_DEF(save_cursor_pos, SAVE_CURSOR_POS, 0, none, char)
 CHAFA_TERM_SEQ_DEF(restore_cursor_pos, RESTORE_CURSOR_POS, 0, none, char)
 
 /**
- * chafa_term_info_emit_enable_advance_down_after_sixel:
+ * chafa_term_info_emit_set_sixel_advance_down:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_ADVANCE_DOWN_AFTER_SIXEL.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_SIXEL_ADVANCE_DOWN.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -2514,14 +2514,14 @@ CHAFA_TERM_SEQ_DEF(restore_cursor_pos, RESTORE_CURSOR_POS, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(enable_advance_down_after_sixel, ENABLE_ADVANCE_DOWN_AFTER_SIXEL, 0, none, char)
+CHAFA_TERM_SEQ_DEF(set_sixel_advance_down, SET_SIXEL_ADVANCE_DOWN, 0, none, char)
 
 /**
- * chafa_term_info_emit_enable_advance_right_after_sixel:
+ * chafa_term_info_emit_set_sixel_advance_right:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
  *
- * Prints the control sequence for #CHAFA_TERM_SEQ_ENABLE_ADVANCE_RIGHT_AFTER_SIXEL.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_SET_SIXEL_ADVANCE_RIGHT.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
@@ -2531,7 +2531,7 @@ CHAFA_TERM_SEQ_DEF(enable_advance_down_after_sixel, ENABLE_ADVANCE_DOWN_AFTER_SI
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(enable_advance_right_after_sixel, ENABLE_ADVANCE_RIGHT_AFTER_SIXEL, 0, none, char)
+CHAFA_TERM_SEQ_DEF(set_sixel_advance_right, SET_SIXEL_ADVANCE_RIGHT, 0, none, char)
 
 /**
  * chafa_term_info_emit_enable_alt_screen:
