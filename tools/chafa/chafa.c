@@ -52,6 +52,9 @@
 # include <io.h>
 #endif
 
+/* Maximum size of stack-allocated read/write buffer */
+#define BUFFER_MAX 4096
+
 #define ANIM_FPS_MAX 100000.0
 #define FILE_DURATION_DEFAULT 0.0
 #define SCALE_MAX 9999.0
@@ -1946,28 +1949,48 @@ write_gstrings_to_stdout (GString **gsa)
     return TRUE;
 }
 
-#define PAD_SPACES_MAX 4096
-
 static gboolean
 write_pad_spaces (gint n)
 {
-    gchar buf [PAD_SPACES_MAX];
+    gchar buf [BUFFER_MAX];
     gint i;
 
     g_assert (n >= 0);
 
-    n = MIN (n, PAD_SPACES_MAX);
+    n = MIN (n, BUFFER_MAX);
     for (i = 0; i < n; i++)
         buf [i] = ' ';
 
     return write_to_stdout (buf, n);
 }
 
+static gboolean
+write_cursor_down_scroll_n (gint n)
+{
+    gchar buf [BUFFER_MAX];
+    gchar *p0 = buf;
+
+    if (n == 0)
+        return TRUE;
+
+    for ( ; n; n--)
+    {
+        p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
+        if (p0 - buf + CHAFA_TERM_SEQ_LENGTH_MAX > BUFFER_MAX)
+        {
+            write_to_stdout (buf, p0 - buf);
+            p0 = buf;
+        }
+    }
+
+    return write_to_stdout (buf, p0 - buf);
+}
+
 /* Write out the image data, possibly centering it */
 static gboolean
 write_image (GString **gsa, gint dest_width)
 {
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 3 + 3];
     gchar *p0 = buf;
     gint left_space;
     gboolean result = FALSE;
@@ -1975,6 +1998,7 @@ write_image (GString **gsa, gint dest_width)
     left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
 
     /* Indent top left corner: Common for all modes */
+
     if (left_space > 0)
     {
         if (options.relative)
@@ -1998,13 +2022,6 @@ write_image (GString **gsa, gint dest_width)
 
         for (i = 0; gsa [i]; i++)
         {
-            if (gsa [i + 1] && options.relative)
-            {
-                p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, buf);
-                if (!write_to_stdout (buf, p0 - buf))
-                    goto out;
-            }
-
             if (!write_gstring_to_stdout (gsa [i]))
                 goto out;
 
@@ -2012,8 +2029,11 @@ write_image (GString **gsa, gint dest_width)
             {
                 if (options.relative)
                 {
-                    p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, buf);
+                    p0 = chafa_term_info_emit_cursor_left (options.term_info, buf, left_space + dest_width);
                     p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
+
+                    if (left_space > 0)
+                        p0 = chafa_term_info_emit_cursor_right (options.term_info, p0, left_space);
                     if (!write_to_stdout (buf, p0 - buf))
                         goto out;
                 }
@@ -2121,10 +2141,23 @@ pixel_to_cell_dimensions (gdouble scale,
 }
 
 static gboolean
-write_image_prologue (gboolean is_first_file, gboolean is_first_frame, gint dest_height)
+write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
+                      gboolean is_animation, gint dest_height)
 {
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 4 + 3];
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
     gchar *p0 = buf;
+
+    /* Insert a blank line between files in continuous (!clear) mode */
+    if (is_first_frame && !options.clear && !is_first_file)
+    {
+        if (!options.have_parking_row)
+            p0 = emit_vertical_space (p0);
+        p0 = emit_vertical_space (p0);
+
+        if (!write_to_stdout (buf, p0 - buf))
+            return FALSE;
+        p0 = buf;
+    }
 
     if (options.clear)
     {
@@ -2137,18 +2170,19 @@ write_image_prologue (gboolean is_first_file, gboolean is_first_frame, gint dest
         /* Home cursor between frames */
         p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
     }
+    else if (is_first_frame && is_animation)
+    {
+        /* Start animation: reserve space and save image origin */
+        if (!write_cursor_down_scroll_n (dest_height))
+            return FALSE;
+
+        p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height);
+        p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, p0);
+    }
     else if (!is_first_frame)
     {
-        /* Cursor to top left of image rectangle, always relative positioning */
-        p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height - (options.have_parking_row ? 0 : 1));
-    }
-
-    /* Put a blank line between files in continuous (!clear) mode */
-    if (is_first_frame && !options.clear && !is_first_file)
-    {
-        if (!options.have_parking_row)
-            p0 = emit_vertical_space (p0);
-        p0 = emit_vertical_space (p0);
+        /* Subsequent animation frames: cursor to image origin */
+        p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, p0);
     }
 
     return write_to_stdout (buf, p0 - buf);
@@ -2175,9 +2209,8 @@ write_image_epilogue (gint dest_width)
         else if (!options.relative)
         {
             /* We need this because absolute mode relies on emit_vertical_space()
-             * producing an \n that implies a CR with Unix semantics. */
-            if (!write_to_stdout ("\r", 1))
-                return FALSE;
+             * producing an \n that implies a CR with Unix semantics */
+            *(p0++) = '\r';
         }
 
         if (options.relative)
@@ -2186,9 +2219,7 @@ write_image_epilogue (gint dest_width)
     }
     else /* CHAFA_PIXEL_MODE_SIXELS */
     {
-        /* Sixel mode leaves cursor below the leftmost column (typical default,
-         * enforceable with --polite off). That's where we want it, in the
-         * parking row. */
+        /* Sixel mode leaves cursor somewhere at or below the leftmost column */
 
         if (left_space > 0)
         {
@@ -2199,12 +2230,10 @@ write_image_epilogue (gint dest_width)
             }
             else
             {
-                if (!write_to_stdout ("\r", 1))
-                    return FALSE;
+                *(p0++) = '\r';
             }
         }
     }
-
 
     return write_to_stdout (buf, p0 - buf);
 }
@@ -2316,7 +2345,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                  dest_width, dest_height,
                                  is_animation);
 
-            if (!write_image_prologue (is_first_file, is_first_frame, dest_height)
+            if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                 || !write_image (gsa, dest_width)
                 || !write_image_epilogue (dest_width)
                 || fflush (stdout) != 0)
