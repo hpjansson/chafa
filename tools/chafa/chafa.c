@@ -1986,6 +1986,104 @@ write_cursor_down_scroll_n (gint n)
     return write_to_stdout (buf, p0 - buf);
 }
 
+static gboolean
+write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
+                      gboolean is_animation, gint dest_height)
+{
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
+    gchar *p0 = buf;
+
+    /* Insert a blank line between files in continuous (!clear) mode */
+    if (is_first_frame && !options.clear && !is_first_file)
+    {
+        if (!options.have_parking_row)
+            p0 = emit_vertical_space (p0);
+        p0 = emit_vertical_space (p0);
+
+        if (!write_to_stdout (buf, p0 - buf))
+            return FALSE;
+        p0 = buf;
+    }
+
+    if (options.clear)
+    {
+        if (is_first_frame)
+        {
+            /* Clear */
+            p0 = chafa_term_info_emit_clear (options.term_info, p0);
+        }
+
+        /* Home cursor between frames */
+        p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
+    }
+    else if (is_first_frame && is_animation)
+    {
+        /* Start animation: reserve space and save image origin */
+        if (!write_cursor_down_scroll_n (dest_height))
+            return FALSE;
+
+        p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height);
+        p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, p0);
+    }
+    else if (!is_first_frame)
+    {
+        /* Subsequent animation frames: cursor to image origin */
+        p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, p0);
+    }
+
+    return write_to_stdout (buf, p0 - buf);
+}
+
+static gboolean
+write_image_epilogue (gint dest_width)
+{
+    gint left_space;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
+    gchar *p0 = buf;
+
+    left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
+
+    /* These modes leave cursor to the right of the bottom row */
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+        || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+    {
+        if (options.have_parking_row)
+        {
+            p0 = emit_vertical_space (p0);
+        }
+        else if (!options.relative)
+        {
+            /* We need this because absolute mode relies on emit_vertical_space()
+             * producing an \n that implies a CR with Unix semantics */
+            *(p0++) = '\r';
+        }
+
+        if (options.relative)
+            p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
+                                                   left_space + dest_width);
+    }
+    else /* CHAFA_PIXEL_MODE_SIXELS */
+    {
+        /* Sixel mode leaves cursor somewhere at or below the leftmost column */
+
+        if (left_space > 0)
+        {
+            if (options.relative)
+            {
+                p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
+                                                       left_space);
+            }
+            else
+            {
+                *(p0++) = '\r';
+            }
+        }
+    }
+
+    return write_to_stdout (buf, p0 - buf);
+}
+
 /* Write out the image data, possibly centering it */
 static gboolean
 write_image (GString **gsa, gint dest_width)
@@ -2138,104 +2236,6 @@ pixel_to_cell_dimensions (gdouble scale,
         *height_out = (gdouble) height * scale / cell_width + 0.5;
         *height_out = MAX (*height_out, 1);
     }
-}
-
-static gboolean
-write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
-                      gboolean is_animation, gint dest_height)
-{
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
-    gchar *p0 = buf;
-
-    /* Insert a blank line between files in continuous (!clear) mode */
-    if (is_first_frame && !options.clear && !is_first_file)
-    {
-        if (!options.have_parking_row)
-            p0 = emit_vertical_space (p0);
-        p0 = emit_vertical_space (p0);
-
-        if (!write_to_stdout (buf, p0 - buf))
-            return FALSE;
-        p0 = buf;
-    }
-
-    if (options.clear)
-    {
-        if (is_first_frame)
-        {
-            /* Clear */
-            p0 = chafa_term_info_emit_clear (options.term_info, p0);
-        }
-
-        /* Home cursor between frames */
-        p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
-    }
-    else if (is_first_frame && is_animation)
-    {
-        /* Start animation: reserve space and save image origin */
-        if (!write_cursor_down_scroll_n (dest_height))
-            return FALSE;
-
-        p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height);
-        p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, p0);
-    }
-    else if (!is_first_frame)
-    {
-        /* Subsequent animation frames: cursor to image origin */
-        p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, p0);
-    }
-
-    return write_to_stdout (buf, p0 - buf);
-}
-
-static gboolean
-write_image_epilogue (gint dest_width)
-{
-    gint left_space;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
-    gchar *p0 = buf;
-
-    left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
-
-    /* These modes leave cursor to the right of the bottom row */
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
-        || options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-        || options.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
-    {
-        if (options.have_parking_row)
-        {
-            p0 = emit_vertical_space (p0);
-        }
-        else if (!options.relative)
-        {
-            /* We need this because absolute mode relies on emit_vertical_space()
-             * producing an \n that implies a CR with Unix semantics */
-            *(p0++) = '\r';
-        }
-
-        if (options.relative)
-            p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
-                                                   left_space + dest_width);
-    }
-    else /* CHAFA_PIXEL_MODE_SIXELS */
-    {
-        /* Sixel mode leaves cursor somewhere at or below the leftmost column */
-
-        if (left_space > 0)
-        {
-            if (options.relative)
-            {
-                p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
-                                                       left_space);
-            }
-            else
-            {
-                *(p0++) = '\r';
-            }
-        }
-    }
-
-    return write_to_stdout (buf, p0 - buf);
 }
 
 typedef enum
