@@ -255,7 +255,20 @@ write_to_stdout (gconstpointer buf, gsize len)
         return total_written == len ? TRUE : FALSE;
     }
 #else
-    return fwrite (buf, 1, len, stdout) == len ? TRUE : FALSE;
+    {
+        gsize total_written;
+
+        for (total_written = 0; total_written < len; )
+        {
+            gsize n_written = fwrite (((const gchar *) buf) + total_written, 1,
+                                      len - total_written, stdout);
+            total_written += n_written;
+            if (total_written < len && n_written == 0 && errno != EINTR)
+                return FALSE;
+        }
+    }
+
+    return TRUE;
 #endif
 }
 
