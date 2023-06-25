@@ -288,9 +288,9 @@ useful in low-color modes.
 <varlistentry>
 <term><option>--relative <replaceable>bool</replaceable></option></term>
 <listitem><para>
-Use relative cursor positioning [on, off]. When off, linefeeds will be used to
-advance the cursor vertically. Defaults to on, except when used with "-c none",
-where it defaults to off.
+Use relative cursor positioning [on, off]. When on, control sequences will be
+used to position images relative to the cursor. When off, newlines will be used
+to separate rows instead for e.g. 'less -R' interop. Defaults to off.
 </para></listitem>
 </varlistentry>
 
