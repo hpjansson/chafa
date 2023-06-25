@@ -1889,10 +1889,6 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
-    /* Default to relative positioning unless we're in FGBG mode. */
-    if (!options.relative_set)
-        options.relative = (options.mode == CHAFA_CANVAS_MODE_FGBG) ? FALSE : TRUE;
-
     /* Translate optimization level to flags */
 
     options.optimizations = CHAFA_OPTIMIZATION_NONE;
