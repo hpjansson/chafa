@@ -150,7 +150,7 @@ AS_IF([test "$with_tools" != no], [
     ,
     with_webp=yes)
   AS_IF([test "$with_webp" != no], [
-    PKG_CHECK_MODULES(WEBP, [libwebpdemux],,
+    PKG_CHECK_MODULES(WEBP, [libwebp libwebpdemux],,
       missing_rpms="$missing_rpms libwebp-devel"
       missing_debs="$missing_debs libwebp-dev"
       with_webp=no)])
