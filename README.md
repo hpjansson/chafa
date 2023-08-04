@@ -8,14 +8,12 @@
 </a>
 <br />
 
-<a href="https://travis-ci.com/hpjansson/chafa/branches" rel="nofollow">
-<img src="https://img.shields.io/travis/com/hpjansson/chafa/master.svg?label=master&style=for-the-badge" alt="Master Build Status" />
-&emsp;
-<img src="https://img.shields.io/travis/com/hpjansson/chafa/1.12.svg?label=1.12&style=for-the-badge" alt="1.12 Build Status" />
+<a href="https://github.com/hpjansson/chafa/actions/workflows/c-cpp.yml">
+<img src="https://img.shields.io/github/actions/workflow/status/hpjansson/chafa/c-cpp.yml?style=for-the-badge" alt="Master Build Status" />
 </a>
 &emsp;
 <a href="https://hpjansson.org/chafa/download/">
-<img src="https://img.shields.io/github/release/hpjansson/chafa.svg?style=for-the-badge" alt="Latest Release" />
+<img src="https://img.shields.io/github/v/release/hpjansson/chafa?style=for-the-badge" alt="Latest Release" />
 </a>
 <br />
 </p>
