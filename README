@@ -68,9 +68,11 @@ you want to build the command-line tool `chafa` and not just the library,
 you will additionally need development packages for:
 
 * FreeType2
-* ImageMagick
 * libjpeg (optional)
+* librsvg (optional)
+* libtiff (optional)
 * libwebp (optional)
+* ImageMagick (optional, deprecated)
 
 If you want to build documentation, you will also need gtk-doc.
 
