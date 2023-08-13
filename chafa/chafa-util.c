@@ -95,13 +95,13 @@ chafa_calc_canvas_geometry (gint src_width,
     {
         if (dest_width_inout)
         {
-            *dest_width_inout = (src_width + 7 / 8);
+            *dest_width_inout = (src_width + 7) / 8;
             *dest_width_inout = MAX (*dest_width_inout, 1);
         }
 
         if (dest_height_inout)
         {
-            *dest_height_inout = (src_height + 7 / 8) * font_ratio + 0.5;
+            *dest_height_inout = ((src_height + 7) / 8) * font_ratio + 0.5;
             *dest_height_inout = MAX (*dest_height_inout, 1);
         }
 
