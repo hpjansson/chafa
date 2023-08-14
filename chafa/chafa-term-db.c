@@ -466,11 +466,11 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = sixel_seqs;
     }
 
-    /* Check for NeoVim early. It pretends to be xterm-256color, and may or
+    /* Check for Neovim early. It pretends to be xterm-256color, and may or
      * may not support directcolor. */
     if (strlen (nvim) > 0)
     {
-        /* The NeoVim terminal defaults to 256 colors unless termguicolors has
+        /* The Neovim terminal defaults to 256 colors unless termguicolors has
          * been set to true. */
         color_seq_list = color_256_list;
 
@@ -478,7 +478,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
          * this when termguicolors has been set to true *and* COLORTERM was
          * previously set. See Neovim commit d8963c434f01e6a7316 (Nov 26, 2020).
          *
-         * The user may also set NVIM_TUI_ENABLE_TRUE_COLOR=1 in older NeoVim
+         * The user may also set NVIM_TUI_ENABLE_TRUE_COLOR=1 in older Neovim
          * versions. We'll honor that one blindly, since it's specific and there
          * seems to be no better option. */
         if (!g_ascii_strcasecmp (colorterm, "truecolor")
