@@ -369,6 +369,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *tmux;
     const gchar *ctx_backend;
     const gchar *lc_terminal;
+    const gchar *nvim;
+    const gchar *nvim_tui_enable_true_color;
     gchar *comspec = NULL;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
@@ -383,6 +385,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     tmux = getenv_or_blank (envp, "TMUX");
     ctx_backend = getenv_or_blank (envp, "CTX_BACKEND");
     lc_terminal = getenv_or_blank (envp, "LC_TERMINAL");
+    nvim = getenv_or_blank (envp, "NVIM");
+    nvim_tui_enable_true_color = getenv_or_blank (envp, "NVIM_TUI_ENABLE_TRUE_COLOR");
 
     /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
      * including AIX and DirectColor sequences. We detect this early and allow
@@ -460,6 +464,28 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     if (!g_ascii_strcasecmp (term_name, "contour"))
     {
         gfx_seqs = sixel_seqs;
+    }
+
+    /* Check for NeoVim early. It pretends to be xterm-256color, and may or
+     * may not support directcolor. */
+    if (strlen (nvim) > 0)
+    {
+        /* The NeoVim terminal defaults to 256 colors unless termguicolors has
+         * been set to true. */
+        color_seq_list = color_256_list;
+
+        /* If COLORTERM was explicitly set to truecolor, honor it. Neovim may do
+         * this when termguicolors has been set to true *and* COLORTERM was
+         * previously set. See Neovim commit d8963c434f01e6a7316 (Nov 26, 2020).
+         *
+         * The user may also set NVIM_TUI_ENABLE_TRUE_COLOR=1 in older NeoVim
+         * versions. We'll honor that one blindly, since it's specific and there
+         * seems to be no better option. */
+        if (!g_ascii_strcasecmp (colorterm, "truecolor")
+            || !g_ascii_strcasecmp (nvim_tui_enable_true_color, "1"))
+        {
+            color_seq_list = color_direct_list;
+        }
     }
 
     /* Apple Terminal sets TERM=xterm-256color, and does not support truecolor */
