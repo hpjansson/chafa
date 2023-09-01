@@ -1,6 +1,7 @@
-<!-- This file exists mostly to get a pretty page on git web hosts. See
-  -- README (with no extension) for readable plaintext instructions, or
-  -- go to https://hpjansson.org/chafa/ in a web browser -->
+<!-- This file is mostly readable as plain text, but it will look better
+  -- in a Markdown reader (try Frogmouth).
+  -- 
+  -- Alternately, go to https://hpjansson.org/chafa/ in a web browser. -->
 
 <p align="center">
 <a href="https://hpjansson.org/chafa/">
@@ -23,6 +24,8 @@
 </p>
 
 <p align="center"><a href="https://hpjansson.org/chafa/">About</a> • <a href="https://hpjansson.org/chafa/gallery/">Gallery</a> • <a href="https://hpjansson.org/chafa/download/">Packages</a> • <a href="https://hpjansson.org/chafa/development/">Development</a></p>
+
+## About
 
 Chafa is a command-line utility that converts image data, including
 animated GIFs, into graphics formats or ANSI/Unicode character art suitable
