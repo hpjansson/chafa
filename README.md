@@ -15,6 +15,10 @@
 <a href="https://hpjansson.org/chafa/download/">
 <img src="https://img.shields.io/github/v/release/hpjansson/chafa?style=for-the-badge" alt="Latest Release" />
 </a>
+&emsp;
+<a href="https://matrix.to/#/#chafa:matrix.org">
+<img src="https://img.shields.io/badge/friendly_chat-%23chafa%3Amatrix.org-lightgray?style=for-the-badge&logo=matrix" alt="Friendly Chat" />
+</a>
 <br />
 </p>
 
