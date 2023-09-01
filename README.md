@@ -4,7 +4,7 @@
   -- Alternately, go to https://hpjansson.org/chafa/ in a web browser. -->
 
 <p align="center"><a href="https://hpjansson.org/chafa/"><img src="https://raw.githubusercontent.com/hpjansson/chafa/master/docs/chafa-logo.gif" /></a></p>
-<p align="center"><a href="https://github.com/hpjansson/chafa/actions/workflows/c-cpp.yml"><img src="https://img.shields.io/github/actions/workflow/status/hpjansson/chafa/c-cpp.yml?style=for-the-badge" alt="Master Build Status" /></a>&emsp;<a href="https://hpjansson.org/chafa/download/"><img src="https://img.shields.io/github/v/release/hpjansson/chafa?style=for-the-badge" alt="Latest Release" /></a>&emsp;<a href="https://matrix.to/#/#chafa:matrix.org"><img src="https://img.shields.io/badge/friendly_chat-%23chafa%3Amatrix.org-lightgray?style=for-the-badge&logo=matrix" alt="Friendly Chat" /></a></p>
+<p align="center"><a href="https://github.com/hpjansson/chafa/actions/workflows/c-cpp.yml"><img src="https://img.shields.io/github/actions/workflow/status/hpjansson/chafa/c-cpp.yml?style=for-the-badge" alt="Master Build Status" /></a>&emsp;<a href="https://hpjansson.org/chafa/download/"><img src="https://img.shields.io/github/v/release/hpjansson/chafa?style=for-the-badge" alt="Latest Release" /></a>&emsp;<a href="https://matrix.to/#/#chafa:matrix.org"><img src="https://img.shields.io/badge/friendly_chat-%23chafa%3Amatrix.org-blue?style=for-the-badge&logo=matrix" alt="Friendly Chat" /></a></p>
 <p align="center"><a href="https://hpjansson.org/chafa/">About</a> • <a href="https://hpjansson.org/chafa/gallery/">Gallery</a> • <a href="https://hpjansson.org/chafa/download/">Packages</a> • <a href="https://hpjansson.org/chafa/development/">Development</a></p>
 
 ## About
