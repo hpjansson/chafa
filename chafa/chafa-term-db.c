@@ -289,6 +289,7 @@ static const SeqStr *color_fbterm_list [] =
 static const SeqStr kitty_seqs [] =
 {
     { CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1, "\033_Ga=T,f=%1,s=%2,v=%3,c=%4,r=%5,m=1\033\\" },
+    { CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, "\033_Ga=T,U=1,q=2,f=%1,s=%2,v=%3,c=%4,r=%5,i=%6,m=1\033\\" },
     { CHAFA_TERM_SEQ_END_KITTY_IMAGE, "\033_Gm=0\033\\" },
     { CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK, "\033_Gm=1;" },
     { CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK, "\033\\" },
