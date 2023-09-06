@@ -304,6 +304,14 @@ static const SeqStr iterm2_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
+static const SeqStr tmux_seqs [] =
+{
+    { CHAFA_TERM_SEQ_BEGIN_TMUX_PASSTHROUGH, "\033Ptmux;" },
+    { CHAFA_TERM_SEQ_END_TMUX_PASSTHROUGH, "\033\\" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
 static const SeqStr *fallback_list [] =
 {
     vt220_seqs,
@@ -314,6 +322,7 @@ static const SeqStr *fallback_list [] =
     sixel_seqs,
     kitty_seqs,
     iterm2_seqs,
+    tmux_seqs,
     NULL
 };
 
@@ -375,6 +384,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
     const SeqStr *rep_seqs_local = NULL;
+    const SeqStr *inner_seqs = NULL;
 
     term = getenv_or_blank (envp, "TERM");
     colorterm = getenv_or_blank (envp, "COLORTERM");
@@ -531,7 +541,10 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
          *
          * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
         if (strlen (tmux) > 0)
+        {
             color_seq_list = color_direct_list;
+            inner_seqs = tmux_seqs;
+        }
 
         /* screen and older tmux do not support REP. Newer tmux does,
          * but there's no reliable way to tell which version we're dealing with. */
@@ -560,6 +573,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     add_seq_list (ti, color_seq_list);
     add_seqs (ti, gfx_seqs);
     add_seqs (ti, rep_seqs_local);
+    add_seqs (ti, inner_seqs);
 }
 
 static ChafaTermDb *
