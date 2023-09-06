@@ -113,6 +113,7 @@ struct ChafaCanvasConfig
     guint preprocessing_enabled : 1;
     guint fg_only_enabled : 1;
     ChafaOptimizations optimizations;
+    ChafaPassthrough passthrough;
 };
 
 /* Canvas */

@@ -92,6 +92,13 @@
  * @CHAFA_OPTIMIZATION_ALL: All optimizations enabled.
  **/
 
+/**
+ * ChafaPassthrough:
+ * @CHAFA_PASSTHROUGH_NONE: No passthrough guards will be used.
+ * @CHAFA_PASSTHROUGH_TMUX: Passthrough guards for tmux will be used.
+ * @CHAFA_PASSTHROUGH_MAX: Last supported passthrough mode plus one.
+ **/
+
 /* Private */
 
 void
@@ -936,4 +943,53 @@ chafa_canvas_config_set_fg_only_enabled (ChafaCanvasConfig *config, gboolean fg_
     g_return_if_fail (config->refs > 0);
 
     config->fg_only_enabled = fg_only_enabled;
+}
+
+/**
+ * chafa_canvas_config_get_passthrough:
+ * @config: A #ChafaCanvasConfig
+ *
+ * Returns @config's #ChafaPassthrough setting. This defaults to
+ * #CHAFA_PASSTHROUGH_NONE.
+ *
+ * Passthrough is needed to transmit certain escape codes to the outer terminal
+ * when running in an inner terminal environment like tmux. When enabled, this
+ * will happen automatically as needed, dictated by information contained in a
+ * #ChafaTermInfo.
+ *
+ * Returns: The #ChafaPassthrough setting
+ *
+ * Since: 1.14
+ **/
+ChafaPassthrough
+chafa_canvas_config_get_passthrough (const ChafaCanvasConfig *config)
+{
+    g_return_val_if_fail (config != NULL, CHAFA_PASSTHROUGH_NONE);
+    g_return_val_if_fail (config->refs > 0, CHAFA_PASSTHROUGH_NONE);
+
+    return config->passthrough;
+}
+
+/**
+ * chafa_canvas_config_set_passthrough:
+ * @config: A #ChafaCanvasConfig
+ * @passthrough: A #ChafaPassthrough value
+ *
+ * Indicates which passthrough mode to use. This defaults to
+ * #CHAFA_PASSTHROUGH_NONE.
+ *
+ * Passthrough is needed to transmit certain escape codes to the outer terminal
+ * when running in an inner terminal environment like tmux. When enabled, this
+ * will happen automatically as needed, dictated by information contained in a
+ * #ChafaTermInfo.
+ *
+ * Since: 1.14
+ **/
+void
+chafa_canvas_config_set_passthrough (ChafaCanvasConfig *config, ChafaPassthrough passthrough)
+{
+    g_return_if_fail (config != NULL);
+    g_return_if_fail (config->refs > 0);
+
+    config->passthrough = passthrough;
 }
