@@ -1306,6 +1306,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5f;
     canvas->needs_clear = TRUE;
     canvas->have_alpha = FALSE;
+    canvas->placement_id = -1;
 
     canvas->consider_inverted = !(canvas->config.fg_only_enabled
                                   || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG);
@@ -1712,7 +1713,9 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
 
         str = g_string_new ("");
         chafa_kitty_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
-                                       canvas->config.width, canvas->config.height);
+                                       canvas->config.width, canvas->config.height,
+                                       canvas->placement_id,
+                                       canvas->config.passthrough);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
     {

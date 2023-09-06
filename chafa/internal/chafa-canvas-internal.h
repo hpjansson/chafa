@@ -78,6 +78,11 @@ struct ChafaCanvas
      * (ChafaSixelCanvas *), (ChafaKittyCanvas *), (ChafaIterm2Canvas *) */
     gpointer pixel_canvas;
 
+    /* It's possible to have a single placement that covers the entire
+     * canvas. In this case, its placement ID is stored here. Defaults to -1,
+     * meaning we'll avoid using an ID or fall back to some arbitrary value. */
+    gint placement_id;
+
     /* Our palettes. Kind of a big structure, so they go last. */
     ChafaPalette fg_palette;
     ChafaPalette bg_palette;
