@@ -107,6 +107,14 @@ typedef enum
 }
 ChafaOptimizations;
 
+typedef enum
+{
+    CHAFA_PASSTHROUGH_NONE,
+    CHAFA_PASSTHROUGH_TMUX,
+    CHAFA_PASSTHROUGH_MAX
+}
+ChafaPassthrough;
+
 /* Canvas config */
 
 typedef struct ChafaCanvasConfig ChafaCanvasConfig;
@@ -209,6 +217,11 @@ CHAFA_AVAILABLE_IN_1_8
 gboolean chafa_canvas_config_get_fg_only_enabled (const ChafaCanvasConfig *config);
 CHAFA_AVAILABLE_IN_1_8
 void chafa_canvas_config_set_fg_only_enabled (ChafaCanvasConfig *config, gboolean fg_only_enabled);
+
+CHAFA_AVAILABLE_IN_1_14
+ChafaPassthrough chafa_canvas_config_get_passthrough (const ChafaCanvasConfig *config);
+CHAFA_AVAILABLE_IN_1_14
+void chafa_canvas_config_set_passthrough (ChafaCanvasConfig *config, ChafaPassthrough passthrough);
 
 G_END_DECLS
 
