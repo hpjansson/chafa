@@ -40,7 +40,9 @@ void chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas,
                                          gint src_width, gint src_height, gint src_rowstride,
                                          ChafaColor bg_color);
 void chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
-                                    gint width_cells, gint height_cells);
+                                    gint width_cells, gint height_cells,
+                                    gint placement_id,
+                                    ChafaPassthrough passthrough);
 
 G_END_DECLS
 
