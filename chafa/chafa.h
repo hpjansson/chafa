@@ -30,6 +30,8 @@ G_BEGIN_DECLS
 
 #include <chafa-common.h>
 #include <chafa-features.h>
+#include <chafa-frame.h>
+#include <chafa-image.h>
 #include <chafa-canvas-config.h>
 #include <chafa-canvas.h>
 #include <chafa-symbol-map.h>

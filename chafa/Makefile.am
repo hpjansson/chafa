@@ -16,6 +16,8 @@ libchafa_la_SOURCES = \
 	chafa-canvas.c \
 	chafa-canvas-config.c \
 	chafa-features.c \
+	chafa-frame.c \
+	chafa-image.c \
 	chafa-symbol-map.c \
 	chafa-term-db.c \
 	chafa-term-info.c \
@@ -28,6 +30,8 @@ chafainclude_HEADERS = \
 	chafa-canvas-config.h \
 	chafa-common.h \
 	chafa-features.h \
+	chafa-frame.h \
+	chafa-image.h \
 	chafa-symbol-map.h \
 	chafa-term-db.h \
 	chafa-term-info.h \
