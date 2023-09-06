@@ -425,6 +425,20 @@ emit_seq_5_args_uint (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq s
 }
 
 static gchar *
+emit_seq_6_args_uint (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, guint arg0, guint arg1, guint arg2, guint arg3, guint arg4, guint arg5)
+{
+    guint args [6];
+
+    args [0] = arg0;
+    args [1] = arg1;
+    args [2] = arg2;
+    args [3] = arg3;
+    args [4] = arg4;
+    args [5] = arg5;
+    return emit_seq_guint (term_info, out, seq, args, 6);
+}
+
+static gchar *
 emit_seq_3_args_uint8 (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, guint8 arg0, guint8 arg1, guint8 arg2)
 {
     guint8 args [3];
@@ -1005,6 +1019,10 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 #define DEFINE_EMIT_SEQ_5_none_guint(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg0, guint arg1, guint arg2, guint arg3, guint arg4) \
 { return emit_seq_5_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2, arg3, arg4); }
+
+#define DEFINE_EMIT_SEQ_6_none_guint(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint arg0, guint arg1, guint arg2, guint arg3, guint arg4, guint arg5) \
+{ return emit_seq_6_args_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2, arg3, arg4, arg5); }
 
 #define DEFINE_EMIT_SEQ_3_none_guint8(func_name, seq_name) \
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint8 arg0, guint8 arg1, guint8 arg2) \

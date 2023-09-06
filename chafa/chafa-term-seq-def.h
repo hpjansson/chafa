@@ -2607,6 +2607,39 @@ CHAFA_TERM_SEQ_DEF(begin_tmux_passthrough, BEGIN_TMUX_PASSTHROUGH, 0, none, char
  **/
 CHAFA_TERM_SEQ_DEF(end_tmux_passthrough, END_TMUX_PASSTHROUGH, 0, none, char)
 
+/**
+ * chafa_term_info_emit_begin_kitty_immediate_virt_image_v1:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @bpp: Bits per pixel
+ * @width_pixels: Image width in pixels
+ * @height_pixels: Image height in pixels
+ * @width_cells: Target width in cells
+ * @height_cells: Target height in cells
+ * @id: Image ID
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * @bpp must be set to either 24 for RGB data, 32 for RGBA, or 100 to embed a
+ * PNG file.
+ *
+ * This sequence must be followed by zero or more paired sequences of
+ * type #CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK and #CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK
+ * with base-64 encoded image data between them.
+ *
+ * When the image data has been transferred, #CHAFA_TERM_SEQ_END_KITTY_IMAGE must
+ * be emitted.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.14
+ **/
+CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_virt_image_v1, BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, 6, none, guint, CHAFA_TERM_SEQ_ARGS guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells, guint id)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS
