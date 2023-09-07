@@ -2161,6 +2161,8 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
 {
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
+    ChafaFrame *frame;
+    ChafaImage *image;
     GString **gsa;
 
     config = chafa_canvas_config_new ();
@@ -2198,9 +2200,16 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_optimizations (config, options.optimizations);
 
     canvas = chafa_canvas_new (config);
-    chafa_canvas_draw_all_pixels (canvas, pixel_type, pixels, src_width, src_height, src_rowstride);
+    frame = chafa_frame_new_borrow ((gpointer) pixels, pixel_type,
+                                    src_width, src_height, src_rowstride);
+    image = chafa_image_new ();
+    chafa_image_set_frame (image, frame);
+    chafa_canvas_set_image (canvas, image, -1);
+
     chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
+    chafa_image_unref (image);
+    chafa_frame_unref (frame);
     chafa_canvas_unref (canvas);
     chafa_canvas_config_unref (config);
     return gsa;
