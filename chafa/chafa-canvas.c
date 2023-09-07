@@ -1584,6 +1584,25 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
     return &canvas->config;
 }
 
+void
+chafa_canvas_set_image (ChafaCanvas *canvas, ChafaImage *image,
+                        gint placement_id)
+{
+    ChafaFrame *frame;
+
+    g_return_if_fail (canvas != NULL);
+    g_return_if_fail (canvas->refs > 0);
+
+    canvas->placement_id = placement_id;
+
+    frame = image->frame;
+    if (!frame)
+        return;
+
+    draw_all_pixels (canvas, frame->pixel_type, frame->data,
+                     frame->width, frame->height, frame->rowstride);
+}
+
 /**
  * chafa_canvas_draw_all_pixels:
  * @canvas: Canvas whose pixel data to replace
