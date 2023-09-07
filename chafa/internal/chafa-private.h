@@ -116,6 +116,27 @@ struct ChafaCanvasConfig
     ChafaPassthrough passthrough;
 };
 
+/* Frame */
+
+struct ChafaFrame
+{
+    gint refs;
+    ChafaPixelType pixel_type;
+    gint width, height, rowstride;
+
+    gpointer data;
+
+    guint data_is_owned : 1;
+};
+
+/* Image */
+
+struct ChafaImage
+{
+    gint refs;
+    ChafaFrame *frame;
+};
+
 /* Canvas */
 
 typedef struct ChafaCanvasCell ChafaCanvasCell;

@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "chafa.h"
+#include "internal/chafa-private.h"
 
 /**
  * SECTION:chafa-image
@@ -28,12 +29,6 @@
  * A #ChafaImage represents a raster image for placement on a #ChafaCanvas. It
  * can currently hold a single #ChafaFrame.
  **/
-
-struct ChafaImage
-{
-    gint refs;
-    ChafaFrame *frame;
-};
 
 /**
  * chafa_image_new:
