@@ -1245,6 +1245,114 @@ find_best_solid_char (ChafaCanvas *canvas)
     return best_char;
 }
 
+static void
+destroy_pixel_canvas (ChafaCanvas *canvas)
+{
+    if (canvas->pixel_canvas)
+    {
+        if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+            chafa_sixel_canvas_destroy (canvas->pixel_canvas);
+        else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
+            chafa_kitty_canvas_destroy (canvas->pixel_canvas);
+        else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+            chafa_iterm2_canvas_destroy (canvas->pixel_canvas);
+
+        canvas->pixel_canvas = NULL;
+    }
+}
+
+static void
+draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
+                 const guint8 *src_pixels,
+                 gint src_width, gint src_height, gint src_rowstride)
+{
+    if (src_width == 0 || src_height == 0)
+        return;
+
+    if (canvas->pixels)
+    {
+        g_free (canvas->pixels);
+        canvas->pixels = NULL;
+    }
+
+    destroy_pixel_canvas (canvas);
+
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    {
+        /* Symbol mode */
+
+        canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+
+        chafa_prepare_pixel_data_for_symbols (&canvas->fg_palette, &canvas->dither,
+                                              canvas->config.color_space,
+                                              canvas->config.preprocessing_enabled,
+                                              canvas->work_factor_int,
+                                              src_pixel_type,
+                                              src_pixels,
+                                              src_width, src_height,
+                                              src_rowstride,
+                                              canvas->pixels,
+                                              canvas->width_pixels, canvas->height_pixels);
+
+        if (canvas->config.alpha_threshold == 0)
+            canvas->have_alpha = FALSE;
+
+        update_cells (canvas);
+        canvas->needs_clear = FALSE;
+
+        g_free (canvas->pixels);
+        canvas->pixels = NULL;
+    }
+    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+    {
+        /* Sixel mode */
+
+        canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
+        canvas->pixel_canvas = chafa_sixel_canvas_new (canvas->width_pixels,
+                                                       canvas->height_pixels,
+                                                       canvas->config.color_space,
+                                                       &canvas->fg_palette,
+                                                       &canvas->dither);
+        chafa_sixel_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                            src_pixel_type,
+                                            src_pixels,
+                                            src_width, src_height,
+                                            src_rowstride);
+    }
+    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
+    {
+        ChafaColor bg_color;
+
+        chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_color);
+        bg_color.ch [3] = canvas->config.alpha_threshold < 1 ? 0x00 : 0xff;
+
+        /* Kitty mode */
+
+        canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
+        canvas->pixel_canvas = chafa_kitty_canvas_new (canvas->width_pixels,
+                                                       canvas->height_pixels);
+        chafa_kitty_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                            src_pixel_type,
+                                            src_pixels,
+                                            src_width, src_height,
+                                            src_rowstride,
+                                            bg_color);
+    }
+    else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2) */
+    {
+        /* iTerm2 mode */
+
+        canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
+        canvas->pixel_canvas = chafa_iterm2_canvas_new (canvas->width_pixels,
+                                                        canvas->height_pixels);
+        chafa_iterm2_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                             src_pixel_type,
+                                             src_pixels,
+                                             src_width, src_height,
+                                             src_rowstride);
+    }
+}
+
 /**
  * chafa_canvas_new:
  * @config: Configuration to use or %NULL for hardcoded defaults
@@ -1428,22 +1536,6 @@ chafa_canvas_ref (ChafaCanvas *canvas)
     g_atomic_int_inc (&canvas->refs);
 }
 
-static void
-destroy_pixel_canvas (ChafaCanvas *canvas)
-{
-    if (canvas->pixel_canvas)
-    {
-        if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
-            chafa_sixel_canvas_destroy (canvas->pixel_canvas);
-        else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
-            chafa_kitty_canvas_destroy (canvas->pixel_canvas);
-        else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
-            chafa_iterm2_canvas_destroy (canvas->pixel_canvas);
-
-        canvas->pixel_canvas = NULL;
-    }
-}
-
 /**
  * chafa_canvas_unref:
  * @canvas: Canvas to remove a reference from
@@ -1518,91 +1610,8 @@ chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type
     g_return_if_fail (src_width >= 0);
     g_return_if_fail (src_height >= 0);
 
-    if (src_width == 0 || src_height == 0)
-        return;
-
-    if (canvas->pixels)
-    {
-        g_free (canvas->pixels);
-        canvas->pixels = NULL;
-    }
-
-    destroy_pixel_canvas (canvas);
-
-    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
-    {
-        /* Symbol mode */
-
-        canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
-
-        chafa_prepare_pixel_data_for_symbols (&canvas->fg_palette, &canvas->dither,
-                                              canvas->config.color_space,
-                                              canvas->config.preprocessing_enabled,
-                                              canvas->work_factor_int,
-                                              src_pixel_type,
-                                              src_pixels,
-                                              src_width, src_height,
-                                              src_rowstride,
-                                              canvas->pixels,
-                                              canvas->width_pixels, canvas->height_pixels);
-
-        if (canvas->config.alpha_threshold == 0)
-            canvas->have_alpha = FALSE;
-
-        update_cells (canvas);
-        canvas->needs_clear = FALSE;
-
-        g_free (canvas->pixels);
-        canvas->pixels = NULL;
-    }
-    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
-    {
-        /* Sixel mode */
-
-        canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
-        canvas->pixel_canvas = chafa_sixel_canvas_new (canvas->width_pixels,
-                                                       canvas->height_pixels,
-                                                       canvas->config.color_space,
-                                                       &canvas->fg_palette,
-                                                       &canvas->dither);
-        chafa_sixel_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                            src_pixel_type,
-                                            src_pixels,
-                                            src_width, src_height,
-                                            src_rowstride);
-    }
-    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
-    {
-        ChafaColor bg_color;
-
-        chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_color);
-        bg_color.ch [3] = canvas->config.alpha_threshold < 1 ? 0x00 : 0xff;
-
-        /* Kitty mode */
-
-        canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
-        canvas->pixel_canvas = chafa_kitty_canvas_new (canvas->width_pixels,
-                                                       canvas->height_pixels);
-        chafa_kitty_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                            src_pixel_type,
-                                            src_pixels,
-                                            src_width, src_height,
-                                            src_rowstride,
-                                            bg_color);
-    }
-    else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2) */
-    {
-        /* iTerm2 mode */
-
-        canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
-        canvas->pixel_canvas = chafa_iterm2_canvas_new (canvas->width_pixels,
-                                                        canvas->height_pixels);
-        chafa_iterm2_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                             src_pixel_type,
-                                             src_pixels,
-                                             src_width, src_height,
-                                             src_rowstride);
-    }
+    draw_all_pixels (canvas, src_pixel_type, src_pixels,
+                     src_width, src_height, src_rowstride);
 }
 
 /**
@@ -1624,8 +1633,8 @@ void
 chafa_canvas_set_contents_rgba8 (ChafaCanvas *canvas, const guint8 *src_pixels,
                                  gint src_width, gint src_height, gint src_rowstride)
 {
-    chafa_canvas_draw_all_pixels (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
-                                  src_pixels, src_width, src_height, src_rowstride);
+    draw_all_pixels (canvas, CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+                     src_pixels, src_width, src_height, src_rowstride);
 }
 
 /**
