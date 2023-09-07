@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "chafa.h"
+#include "internal/chafa-private.h"
 
 /**
  * SECTION:chafa-frame
@@ -28,15 +29,6 @@
  * A #ChafaFrame contains the specific of a single frame of image data. It can
  * be added to a #ChafaImage.
  **/
-
-struct ChafaFrame
-{
-    gint refs;
-    ChafaPixelType pixel_type;
-    gint width, height, rowstride;
-
-    gpointer data;
-};
 
 static ChafaFrame *
 new_frame (gpointer data,
