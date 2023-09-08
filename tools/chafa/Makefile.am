@@ -13,6 +13,8 @@ chafa_SOURCES = \
 	gif-loader.h \
 	media-loader.c \
 	media-loader.h \
+	placement-counter.c \
+	placement-counter.h \
 	png-loader.c \
 	png-loader.h \
 	named-colors.c \

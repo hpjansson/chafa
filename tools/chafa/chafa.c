@@ -43,6 +43,7 @@
 #include "font-loader.h"
 #include "media-loader.h"
 #include "named-colors.h"
+#include "placement-counter.h"
 
 /* Include after glib.h for G_OS_WIN32 */
 #ifdef G_OS_WIN32
@@ -140,6 +141,8 @@ static GlobalOptions options;
 static TermSize detected_term_size;
 static gboolean using_detected_size = FALSE;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
+
+static PlacementCounter *placement_counter;
 
 #ifdef HAVE_TERMIOS_H
 static struct termios saved_termios;
@@ -2163,7 +2166,16 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
     ChafaCanvas *canvas;
     ChafaFrame *frame;
     ChafaImage *image;
+    gint id = -1;
     GString **gsa;
+
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
+    {
+        if (!placement_counter)
+            placement_counter = placement_counter_new ();
+
+        id = placement_counter_get_next_id (placement_counter));
+    }
 
     config = chafa_canvas_config_new ();
 
@@ -2204,7 +2216,7 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
                                     src_width, src_height, src_rowstride);
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);
-    chafa_canvas_set_image (canvas, image, -1);
+    chafa_canvas_set_image (canvas, image, id);
 
     chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
@@ -2523,6 +2535,9 @@ main (int argc, char *argv [])
     ret = options.watch
         ? run_watch (options.args->data)
         : run_all (options.args);
+
+    if (placement_counter)
+        placement_counter_destroy (placement_counter);
 
     if (options.symbol_map)
         chafa_symbol_map_unref (options.symbol_map);
