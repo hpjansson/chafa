@@ -328,7 +328,7 @@ build_unicode_placement (ChafaTermInfo *term_info,
     {
         /* Encode the image ID in the foreground color */
 
-        p0 = chafa_term_info_emit_set_color_fg_256 (term_info, seq, ((guint) placement_id) % 256);
+        p0 = chafa_term_info_emit_set_color_fg_256 (term_info, seq, placement_id);
         g_string_append_len (out_str, seq, p0 - seq);
 
         /* Reposition after previous row */
@@ -393,9 +393,6 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas,
                                gint placement_id,
                                ChafaPassthrough passthrough)
 {
-    if (placement_id < 1)
-        placement_id = 1;
-
     if (passthrough == CHAFA_PASSTHROUGH_NONE)
     {
         build_immediate (kitty_canvas, term_info, out_str,
@@ -403,6 +400,11 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas,
     }
     else
     {
+        /* Make IDs in the first <256 range predictable, but as the range
+         * cycles we add one to skip over every ID==0 */
+        if (placement_id > 255)
+            placement_id = 1 + (placement_id % 255);
+
         build_unicode_virtual (kitty_canvas, term_info, out_str,
                                width_cells, height_cells,
                                placement_id, passthrough);
