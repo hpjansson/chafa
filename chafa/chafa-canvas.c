@@ -1718,21 +1718,11 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS
              && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS))
     {
-        gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
-        gchar *out;
-
         /* Sixel mode */
 
-        out = chafa_term_info_emit_begin_sixels (term_info, buf, 0, 0, 0);
-        *out = '\0';
-        str = g_string_new (buf);
-
-        g_string_append_printf (str, "\"1;1;%d;%d", canvas->width_pixels, canvas->height_pixels);
-        chafa_sixel_canvas_build_ansi (canvas->pixel_canvas, str);
-
-        out = chafa_term_info_emit_end_sixels (term_info, buf);
-        *out = '\0';
-        g_string_append (str, buf);
+        str = g_string_new ("");
+        chafa_sixel_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
+                                       canvas->config.passthrough);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY
              && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))

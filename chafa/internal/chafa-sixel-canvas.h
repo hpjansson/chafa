@@ -41,7 +41,8 @@ void chafa_sixel_canvas_destroy (ChafaSixelCanvas *sixel_canvas);
 void chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelType src_pixel_type,
                                          gconstpointer src_pixels,
                                          gint src_width, gint src_height, gint src_rowstride);
-void chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, GString *out_str);
+void chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, ChafaTermInfo *term_info,
+                                    GString *out_str, ChafaPassthrough passthrough);
 
 G_END_DECLS
 
