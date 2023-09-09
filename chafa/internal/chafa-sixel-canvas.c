@@ -443,17 +443,87 @@ build_sixel_palette (ChafaSixelCanvas *sixel_canvas, GString *out_str)
     g_string_append_len (out_str, str, p - str);
 }
 
+static void
+escape_string (const gchar *in, gchar *out)
+{
+    gint i, j;
+
+    for (i = 0, j = 0; in [i]; i++)
+    {
+        out [j++] = in [i];
+        if (in [i] == 0x1b)
+            out [j++] = 0x1b;
+    }
+
+    out [j] = '\0';
+}
+
+static void
+append_escaped (GString *gs, const gchar *in, ChafaPassthrough passthrough)
+{
+    gchar escaped_seq [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
+
+    if (passthrough == CHAFA_PASSTHROUGH_TMUX)
+    {
+        escape_string (in, escaped_seq);
+        g_string_append (gs, escaped_seq);
+    }
+    else
+    {
+        g_string_append (gs, in);
+    }
+}
+
+static void
+build_begin_passthrough (ChafaTermInfo *term_info, GString *out_str,
+                         ChafaPassthrough passthrough)
+{
+    gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+
+    if (passthrough == CHAFA_PASSTHROUGH_TMUX)
+    {
+        *chafa_term_info_emit_begin_tmux_passthrough (term_info, seq) = '\0';
+        g_string_append (out_str, seq);
+    }
+}
+
+static void
+build_end_passthrough (ChafaTermInfo *term_info, GString *out_str,
+                       ChafaPassthrough passthrough)
+{
+    gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+
+    if (passthrough == CHAFA_PASSTHROUGH_TMUX)
+    {
+        *chafa_term_info_emit_end_tmux_passthrough (term_info, seq) = '\0';
+        g_string_append (out_str, seq);
+    }
+}
+
 void
-chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, GString *out_str)
+chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, ChafaTermInfo *term_info,
+                               GString *str, ChafaPassthrough passthrough)
 {
     BuildSixelsCtx ctx;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    gchar *out;
 
     g_assert (sixel_canvas->image->height % SIXEL_CELL_HEIGHT == 0);
 
-    ctx.sixel_canvas = sixel_canvas;
-    ctx.out_str = out_str;
+    build_begin_passthrough (term_info, str, passthrough);
 
-    build_sixel_palette (sixel_canvas, out_str);
+    out = chafa_term_info_emit_begin_sixels (term_info, buf, 0, 0, 0);
+    *out = '\0';
+    append_escaped (str, buf, passthrough);
+
+    g_string_append_printf (str, "\"1;1;%d;%d",
+                            sixel_canvas->image->width,
+                            sixel_canvas->image->height);
+
+    ctx.sixel_canvas = sixel_canvas;
+    ctx.out_str = str;
+
+    build_sixel_palette (sixel_canvas, str);
 
     chafa_process_batches (&ctx,
                            (GFunc) build_sixel_row_worker,
@@ -461,4 +531,10 @@ chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, GString *out_str)
                            sixel_canvas->image->height,
                            chafa_get_n_actual_threads (),
                            SIXEL_CELL_HEIGHT);
+
+    out = chafa_term_info_emit_end_sixels (term_info, buf);
+    *out = '\0';
+    append_escaped (str, buf, passthrough);
+
+    build_end_passthrough (term_info, str, passthrough);
 }
