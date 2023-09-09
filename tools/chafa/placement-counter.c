@@ -95,6 +95,6 @@ placement_counter_destroy (PlacementCounter *counter)
 guint
 placement_counter_get_next_id (PlacementCounter *counter)
 {
-    counter->id = (counter->id % 65536) + 1;
+    counter->id = 1 + (counter->id % 65535);
     return counter->id;
 }
