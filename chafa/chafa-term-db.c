@@ -379,6 +379,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *tmux;
     const gchar *ctx_backend;
     const gchar *lc_terminal;
+    const gchar *kitty_pid;
+    const gchar *mlterm;
     const gchar *nvim;
     const gchar *nvim_tui_enable_true_color;
     gchar *comspec = NULL;
@@ -396,6 +398,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     tmux = getenv_or_blank (envp, "TMUX");
     ctx_backend = getenv_or_blank (envp, "CTX_BACKEND");
     lc_terminal = getenv_or_blank (envp, "LC_TERMINAL");
+    kitty_pid = getenv_or_blank (envp, "KITTY_PID");
+    mlterm = getenv_or_blank (envp, "MLTERM");
     nvim = getenv_or_blank (envp, "NVIM");
     nvim_tui_enable_true_color = getenv_or_blank (envp, "NVIM_TUI_ENABLE_TRUE_COLOR");
 
@@ -456,7 +460,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         color_seq_list = color_direct_list;
 
     /* Kitty has a unique graphics protocol */
-    if (!strcmp (term, "xterm-kitty"))
+    if (!strcmp (term, "xterm-kitty")
+        || strlen (kitty_pid) > 0)
         gfx_seqs = kitty_seqs;
 
     /* iTerm2 supports truecolor and has a unique graphics protocol */
@@ -509,6 +514,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
      * yaft supports sixels and truecolor escape codes, but it remaps cell
      * colors to a 256-color palette. */
     if (!strcmp (term, "mlterm")
+        || strlen (mlterm) > 0
         || !strcmp (term, "yaft")
         || !strcmp (term, "yaft-256color"))
     {
@@ -551,8 +557,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
          * but there's no reliable way to tell which version we're dealing with. */
         rep_seqs_local = NULL;
 
-        /* No graphics in screen and tmux */
-        gfx_seqs = NULL;
+        /* Graphics is allowed in screen and tmux, with passthrough. */
+        /* gfx_seqs = NULL; */
     }
 
     /* If TERM is "linux", we're probably on the Linux console, which supports
