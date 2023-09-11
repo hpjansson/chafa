@@ -268,6 +268,17 @@ for when used with "-c none", where it defaults to 0.
 </varlistentry>
 
 <varlistentry>
+<term><option>--passthrough <replaceable>mode</replaceable></option></term>
+<listitem><para>
+Graphics protocol passthrough [auto, none, screen, tmux]. Used to show pixel
+graphics from within multiplexers. Defaults to auto, which will enable
+passthrough if the Kitty terminal is detected along with one of the supported
+multiplexers. Other combinations must be enabled manually; use with the -f
+option to select the appropriate graphics protocol.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--polite <replaceable>bool</replaceable></option></term>
 <listitem><para>
 Polite mode [on, off]. Defaults to on. Turning this off may enhance presentation
