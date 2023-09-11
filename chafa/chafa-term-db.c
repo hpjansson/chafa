@@ -313,6 +313,14 @@ static const SeqStr tmux_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
+static const SeqStr screen_seqs [] =
+{
+    { CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH, "\033P" },
+    { CHAFA_TERM_SEQ_END_SCREEN_PASSTHROUGH, "\033\\" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
 static const SeqStr *fallback_list [] =
 {
     vt220_seqs,
@@ -323,6 +331,7 @@ static const SeqStr *fallback_list [] =
     sixel_seqs,
     kitty_seqs,
     iterm2_seqs,
+    screen_seqs,
     tmux_seqs,
     NULL
 };
@@ -540,8 +549,6 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
      * like so: screen.xterm-256color */
     if (!strncmp (term, "screen", 6))
     {
-        color_seq_list = color_256_list;
-
         /* 'tmux' also sets TERM=screen, but it supports truecolor codes.
          * You may have to add the following to .tmux.conf to prevent
          * remapping to 256 colors:
@@ -551,6 +558,11 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         {
             color_seq_list = color_direct_list;
             inner_seqs = tmux_seqs;
+        }
+        else
+        {
+            color_seq_list = color_256_list;
+            inner_seqs = screen_seqs;
         }
 
         /* screen and older tmux do not support REP. Newer tmux does,
