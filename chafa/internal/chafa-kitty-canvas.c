@@ -199,11 +199,11 @@ end_passthrough (ChafaPassthroughEncoder *ptenc)
 {
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
-    *chafa_term_info_emit_end_screen_passthrough (ptenc->term_info, buf) = '\0';
-
     if (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN)
     {
         gint i;
+
+        *chafa_term_info_emit_end_screen_passthrough (ptenc->term_info, buf) = '\0';
 
         for (i = 0; buf [i]; i++)
         {
@@ -213,6 +213,8 @@ end_passthrough (ChafaPassthroughEncoder *ptenc)
     }
     else if (ptenc->mode == CHAFA_PASSTHROUGH_TMUX)
     {
+        *chafa_term_info_emit_end_tmux_passthrough (ptenc->term_info, buf) = '\0';
+
         chafa_passthrough_encoder_flush (ptenc);
         g_string_append (ptenc->out, buf);
     }
@@ -279,11 +281,55 @@ build_immediate (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GStri
     chafa_passthrough_encoder_end (&ptenc);
 }
 
+static gboolean
+screen_is_wide_diacritic (gint diacritic_index)
+{
+    if (diacritic_index == 35 || diacritic_index == 61 || diacritic_index == 62)
+        return TRUE;
+
+    return FALSE;
+}
+
+static void
+build_begin_row (ChafaTermInfo *term_info, GString *out_str,
+                 gint width_cells, gint row, ChafaPassthrough passthrough)
+{
+    gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
+    gchar *p0;
+
+    if (row > 0)
+    {
+        /* Screen advances the cursor by one position too much for some of the
+         * diacritics. We compensate for the first few, since they will come up
+         * fairly frequently. We don't compensate for every single instance,
+         * since Screen only exhibits this behavior when printing and scrolling
+         * up in the current dpy, and not when scrolling down or redrawing after
+         * switching dpys, making the corrected graphics illegible in those
+         * cases.
+         *
+         * I.e. there's no perfect workaround here, so we try to make the common
+         * case look good and the uncommon case not terrible.
+         *
+         * Another option would've been to save/restore the cursor position
+         * between rows, but we don't want to clobber the register, as the CLI
+         * tool uses it to home the cursor between animation frames. It's
+         * also good policy in general to reserve it for client use. */
+
+        p0 = chafa_term_info_emit_cursor_left (term_info, seq, width_cells
+            + ((passthrough == CHAFA_PASSTHROUGH_SCREEN
+               && screen_is_wide_diacritic (row)) ? 1 : 0));
+        p0 = chafa_term_info_emit_cursor_down_scroll (term_info, p0);
+        g_string_append_len (out_str, seq, p0 - seq);
+    }
+}
+
 static void
 build_unicode_placement (ChafaTermInfo *term_info,
                          GString *out_str,
-                         gint width_cells, gint height_cells,
-                         gint placement_id)
+                         gint width_cells,
+                         gint height_cells,
+                         gint placement_id,
+                         ChafaPassthrough passthrough)
 {
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
     gchar *p0;
@@ -301,19 +347,14 @@ build_unicode_placement (ChafaTermInfo *term_info,
 
     for (i = 0; i < height_cells; i++)
     {
+        /* Reposition after previous row */
+
+        build_begin_row (term_info, out_str, width_cells, i, passthrough);
+
         /* Encode the image ID in the foreground color */
 
         p0 = chafa_term_info_emit_set_color_fg_256 (term_info, seq, placement_id);
         g_string_append_len (out_str, seq, p0 - seq);
-
-        /* Reposition after previous row */
-
-        if (i > 0)
-        {
-            p0 = chafa_term_info_emit_cursor_left (term_info, seq, width_cells);
-            p0 = chafa_term_info_emit_cursor_down_scroll (term_info, p0);
-            g_string_append_len (out_str, seq, p0 - seq);
-        }
 
         /* Print the row */
 
@@ -322,8 +363,16 @@ build_unicode_placement (ChafaTermInfo *term_info,
         for (j = 0; j < width_cells; j++)
         {
             row_ofs += g_unichar_to_utf8 (ROWCOLUMN_UNICHAR, row + row_ofs);
-            row_ofs += g_unichar_to_utf8 (encoding_diacritics [i], row + row_ofs);
-            row_ofs += g_unichar_to_utf8 (encoding_diacritics [j], row + row_ofs);
+
+            /* Screen has issues with some diacritics. We can compensate for this once
+             * per row, but doing it for every col is pushing it. So we omit all offsets
+             * except the row offsets in the first col. This harms overlapping images
+             * and horizontal scrolling, but oh well. */
+
+            if (passthrough != CHAFA_PASSTHROUGH_SCREEN || j == 0)
+                row_ofs += g_unichar_to_utf8 (encoding_diacritics [i], row + row_ofs);
+            if (passthrough != CHAFA_PASSTHROUGH_SCREEN)
+                row_ofs += g_unichar_to_utf8 (encoding_diacritics [j], row + row_ofs);
         }
 
         g_string_append_len (out_str, row, row_ofs);
@@ -364,7 +413,7 @@ build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info,
     chafa_passthrough_encoder_end (&ptenc);
 
     build_unicode_placement (term_info, out_str, width_cells, height_cells,
-                             placement_id);
+                             placement_id, passthrough);
 }
 
 void
