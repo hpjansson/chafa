@@ -26,6 +26,7 @@
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-kitty-canvas.h"
+#include "internal/chafa-passthrough-encoder.h"
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-string-util.h"
 
@@ -194,65 +195,33 @@ encode_chunk (GString *gs, const guint8 *start, const guint8 *end)
 }
 
 static void
-escape_string (const gchar *in, gchar *out)
+end_passthrough (ChafaPassthroughEncoder *ptenc)
 {
-    gint i, j;
+    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
-    for (i = 0, j = 0; in [i]; i++)
+    *chafa_term_info_emit_end_screen_passthrough (ptenc->term_info, buf) = '\0';
+
+    if (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN)
     {
-        out [j++] = in [i];
-        if (in [i] == 0x1b)
-            out [j++] = 0x1b;
+        gint i;
+
+        for (i = 0; buf [i]; i++)
+        {
+            chafa_passthrough_encoder_flush (ptenc);
+            chafa_passthrough_encoder_append_len (ptenc, buf + i, 1);
+        }
+    }
+    else if (ptenc->mode == CHAFA_PASSTHROUGH_TMUX)
+    {
+        chafa_passthrough_encoder_flush (ptenc);
+        g_string_append (ptenc->out, buf);
     }
 
-    out [j] = '\0';
+    chafa_passthrough_encoder_flush (ptenc);
 }
 
 static void
-append_escaped (GString *gs, const gchar *in, ChafaPassthrough passthrough)
-{
-    gchar escaped_seq [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 1];
-
-    if (passthrough == CHAFA_PASSTHROUGH_TMUX)
-    {
-        escape_string (in, escaped_seq);
-        g_string_append (gs, escaped_seq);
-    }
-    else
-    {
-        g_string_append (gs, in);
-    }
-}
-
-static void
-build_begin_passthrough (ChafaTermInfo *term_info, GString *out_str,
-                         ChafaPassthrough passthrough)
-{
-    gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
-
-    if (passthrough == CHAFA_PASSTHROUGH_TMUX)
-    {
-        *chafa_term_info_emit_begin_tmux_passthrough (term_info, seq) = '\0';
-        g_string_append (out_str, seq);
-    }
-}
-
-static void
-build_end_passthrough (ChafaTermInfo *term_info, GString *out_str,
-                       ChafaPassthrough passthrough)
-{
-    gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
-
-    if (passthrough == CHAFA_PASSTHROUGH_TMUX)
-    {
-        *chafa_term_info_emit_end_tmux_passthrough (term_info, seq) = '\0';
-        g_string_append (out_str, seq);
-    }
-}
-
-static void
-build_image_chunks (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
-                    ChafaPassthrough passthrough)
+build_image_chunks (ChafaKittyCanvas *kitty_canvas, ChafaPassthroughEncoder *ptenc)
 {
     const guint8 *p, *last;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
@@ -264,34 +233,37 @@ build_image_chunks (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GS
     {
         const guint8 *end;
 
-        end = p + 512;
+        end = p + (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN ? 64 : 512);
         if (end > last)
             end = last;
 
-        build_begin_passthrough (term_info, out_str, passthrough);
-        *chafa_term_info_emit_begin_kitty_image_chunk (term_info, seq) = '\0';
-        append_escaped (out_str, seq, passthrough);
+        *chafa_term_info_emit_begin_kitty_image_chunk (ptenc->term_info, seq) = '\0';
+        chafa_passthrough_encoder_append (ptenc, seq);
 
-        encode_chunk (out_str, p, end);
+        encode_chunk (ptenc->out, p, end);
 
-        *chafa_term_info_emit_end_kitty_image_chunk (term_info, seq) = '\0';
-        append_escaped (out_str, seq, passthrough);
-        build_end_passthrough (term_info, out_str, passthrough);
+        *chafa_term_info_emit_end_kitty_image_chunk (ptenc->term_info, seq) = '\0';
+        chafa_passthrough_encoder_append (ptenc, seq);
+        chafa_passthrough_encoder_reset (ptenc);
+        end_passthrough (ptenc);
 
         p = end;
     }
 
-    build_begin_passthrough (term_info, out_str, passthrough);
-    *chafa_term_info_emit_end_kitty_image (term_info, seq) = '\0';
-    append_escaped (out_str, seq, passthrough);
-    build_end_passthrough (term_info, out_str, passthrough);
+    *chafa_term_info_emit_end_kitty_image (ptenc->term_info, seq) = '\0';
+    chafa_passthrough_encoder_append (ptenc, seq);
+    chafa_passthrough_encoder_reset (ptenc);
+    end_passthrough (ptenc);
 }
 
 static void
 build_immediate (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
                  gint width_cells, gint height_cells)
 {
+    ChafaPassthroughEncoder ptenc;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+
+    chafa_passthrough_encoder_begin (&ptenc, CHAFA_PASSTHROUGH_NONE, term_info, out_str);
 
     *chafa_term_info_emit_begin_kitty_immediate_image_v1 (term_info, seq,
                                                           32,
@@ -299,9 +271,12 @@ build_immediate (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GStri
                                                           kitty_canvas->height,
                                                           width_cells,
                                                           height_cells) = '\0';
-    g_string_append (out_str, seq);
+    chafa_passthrough_encoder_append (&ptenc, seq);
+    chafa_passthrough_encoder_flush (&ptenc);
 
-    build_image_chunks (kitty_canvas, term_info, out_str, CHAFA_PASSTHROUGH_NONE);
+    build_image_chunks (kitty_canvas, &ptenc);
+
+    chafa_passthrough_encoder_end (&ptenc);
 }
 
 static void
@@ -367,9 +342,11 @@ build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info,
                        gint width_cells, gint height_cells, gint placement_id,
                        ChafaPassthrough passthrough)
 {
+    ChafaPassthroughEncoder ptenc;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
-    build_begin_passthrough (term_info, out_str, passthrough);
+    chafa_passthrough_encoder_begin (&ptenc, passthrough, term_info, out_str);
+
     *chafa_term_info_emit_begin_kitty_immediate_virt_image_v1 (term_info, seq,
                                                                32,
                                                                kitty_canvas->width,
@@ -377,10 +354,14 @@ build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info,
                                                                width_cells,
                                                                height_cells,
                                                                placement_id) = '\0';
-    append_escaped (out_str, seq, passthrough);
-    build_end_passthrough (term_info, out_str, passthrough);
+    chafa_passthrough_encoder_append (&ptenc, seq);
+    chafa_passthrough_encoder_reset (&ptenc);
+    end_passthrough (&ptenc);
 
-    build_image_chunks (kitty_canvas, term_info, out_str, passthrough);
+    build_image_chunks (kitty_canvas, &ptenc);
+
+    end_passthrough (&ptenc);
+    chafa_passthrough_encoder_end (&ptenc);
 
     build_unicode_placement (term_info, out_str, width_cells, height_cells,
                              placement_id);
