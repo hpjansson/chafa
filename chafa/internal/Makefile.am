@@ -33,6 +33,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-kitty-canvas.h \
 	chafa-palette.c \
 	chafa-palette.h \
+	chafa-passthrough-encoder.c \
+	chafa-passthrough-encoder.h \
 	chafa-pca.c \
 	chafa-pca.h \
 	chafa-pixops.c \
