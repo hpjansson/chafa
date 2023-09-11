@@ -107,10 +107,14 @@ typedef enum
 }
 ChafaOptimizations;
 
+/* Passthrough modes */
+
 typedef enum
 {
     CHAFA_PASSTHROUGH_NONE,
+    CHAFA_PASSTHROUGH_SCREEN,
     CHAFA_PASSTHROUGH_TMUX,
+
     CHAFA_PASSTHROUGH_MAX
 }
 ChafaPassthrough;
