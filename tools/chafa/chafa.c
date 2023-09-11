@@ -107,6 +107,8 @@ typedef struct
     gint optimization_level;
     gint n_threads;
     ChafaOptimizations optimizations;
+    ChafaPassthrough passthrough;
+    gboolean passthrough_set;
     guint32 fg_color;
     gboolean fg_color_set;
     guint32 bg_color;
@@ -474,6 +476,8 @@ print_summary (void)
     "                     intelligently [0-9]. 0 disables, 9 enables every\n"
     "                     available optimization. Defaults to 5, except for when\n"
     "                     used with \"-c none\", where it defaults to 0.\n"
+    "      --passthrough=MODE  Graphics protocol passthrough [auto, none, screen,\n"
+    "                     tmux]. Used to show pixel graphics through multiplexers.\n"
     "      --polite=BOOL  Polite mode [on, off]. Defaults to on. Turning this off\n"
     "                     may enhance presentation and prevent interference from\n"
     "                     other programs, but risks leaving the terminal in an\n"
@@ -909,6 +913,34 @@ out:
 
     options.dither_grain_width = width;
     options.dither_grain_height = height;
+
+    return result;
+}
+
+static gboolean
+parse_passthrough_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+
+    options.passthrough_set = TRUE;
+
+    if (!g_ascii_strcasecmp (value, "none"))
+        options.passthrough = CHAFA_PASSTHROUGH_NONE;
+    else if (!g_ascii_strcasecmp (value, "screen"))
+        options.passthrough = CHAFA_PASSTHROUGH_SCREEN;
+    else if (!g_ascii_strcasecmp (value, "tmux"))
+        options.passthrough = CHAFA_PASSTHROUGH_TMUX;
+    else if (!g_ascii_strcasecmp (value, "auto"))
+    {
+        options.passthrough = CHAFA_PASSTHROUGH_NONE;
+        options.passthrough_set = FALSE;
+    }
+    else
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Passthrough must be one of [auto, none, screen, tmux].");
+        result = FALSE;
+    }
 
     return result;
 }
@@ -1443,10 +1475,12 @@ tty_options_deinit (void)
 }
 
 static void
-detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out)
+detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
+                 ChafaPixelMode *pixel_mode_out, ChafaPassthrough *passthrough_out)
 {
     ChafaCanvasMode mode;
     ChafaPixelMode pixel_mode;
+    ChafaPassthrough passthrough;
     ChafaTermInfo *term_info;
     ChafaTermInfo *fallback_info;
     gchar **envp;
@@ -1480,6 +1514,29 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, Chafa
     else
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
 
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH))
+    {
+        /* We can do passthrough for sixels and iterm too, but we won't do so
+         * automatically, since they'll break with inner TE updates. */
+        if (pixel_mode != CHAFA_PIXEL_MODE_KITTY)
+            pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+
+        passthrough = CHAFA_PASSTHROUGH_SCREEN;
+    }
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_TMUX_PASSTHROUGH))
+    {
+        /* We can do passthrough for sixels and iterm too, but we won't do so
+         * automatically, since they'll break with inner TE updates. */
+        if (pixel_mode != CHAFA_PIXEL_MODE_KITTY)
+            pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+
+        passthrough = CHAFA_PASSTHROUGH_TMUX;
+    }
+    else
+    {
+        passthrough = CHAFA_PASSTHROUGH_NONE;
+    }
+
     /* Make sure we have fallback sequences in case the user forces
      * a mode that's technically unsupported by the terminal. */
     fallback_info = chafa_term_db_get_fallback_info (chafa_term_db_get_default ());
@@ -1489,8 +1546,101 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, Chafa
     *term_info_out = term_info;
     *mode_out = mode;
     *pixel_mode_out = pixel_mode;
+    *passthrough_out = passthrough;
 
     g_strfreev (envp);
+}
+
+static gchar *tmux_allow_passthrough_original;
+static gboolean tmux_allow_passthrough_is_changed;
+
+static gboolean
+apply_passthrough_workarounds_tmux (void)
+{
+    gboolean result = FALSE;
+    gchar *standard_output = NULL;
+    gchar *standard_error = NULL;
+    gchar **strings;
+    gchar *mode = NULL;
+    gint wait_status = -1;
+
+    /* allow-passthrough can be either unset, "on" or "all". Both "on" and "all"
+     * are fine, so don't mess with it if we don't have to.
+     *
+     * Also note that we may be in a remote session inside tmux. */
+
+    if (!g_spawn_command_line_sync ("tmux show allow-passthrough",
+                                    &standard_output, &standard_error,
+                                    &wait_status, NULL))
+        goto out;
+
+    strings = g_strsplit_set (standard_output, " ", -1);
+    if (strings [0] && strings [1])
+        mode = g_ascii_strdown (strings [1], -1);
+    g_strfreev (strings);
+
+    g_free (standard_output);
+    standard_output = NULL;
+    g_free (standard_error);
+    standard_error = NULL;
+
+    if (!mode || (strcmp (mode, "on") && strcmp (mode, "all")))
+    {
+        result = g_spawn_command_line_sync ("tmux set-option allow-passthrough on",
+                                            &standard_output, &standard_error,
+                                            &wait_status, NULL);
+        if (result)
+        {
+            tmux_allow_passthrough_original = mode;
+            tmux_allow_passthrough_is_changed = TRUE;
+        }
+    }
+    else
+    {
+        g_free (mode);
+    }
+
+out:
+    g_free (standard_output);
+    g_free (standard_error);
+    return result;
+}
+
+static gboolean
+retire_passthrough_workarounds_tmux (void)
+{
+    gboolean result = FALSE;
+    gchar *standard_output = NULL;
+    gchar *standard_error = NULL;
+    gchar **strings;
+    gchar *cmd;
+    gint wait_status = -1;
+
+    if (!tmux_allow_passthrough_is_changed)
+        return TRUE;
+
+    if (tmux_allow_passthrough_original)
+    {
+        cmd = g_strdup_printf ("tmux set-option allow-passthrough %s",
+                               tmux_allow_passthrough_original);
+    }
+    else
+    {
+        cmd = g_strdup ("tmux set-option -u allow-passthrough");
+    }
+
+    result = g_spawn_command_line_sync (cmd, &standard_output, &standard_error,
+                                        &wait_status, NULL);
+    if (result)
+    {
+        g_free (tmux_allow_passthrough_original);
+        tmux_allow_passthrough_original = NULL;
+        tmux_allow_passthrough_is_changed = FALSE;
+    }
+
+    g_free (standard_output);
+    g_free (standard_error);
+    return result;
 }
 
 static gboolean
@@ -1529,6 +1679,7 @@ parse_options (int *argc, char **argv [])
         { "margin-bottom", '\0', 0, G_OPTION_ARG_INT,    &options.margin_bottom,  "Bottom margin", NULL },
         { "margin-right", '\0', 0, G_OPTION_ARG_INT,     &options.margin_right,  "Right margin", NULL },
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
+        { "passthrough", '\0', 0, G_OPTION_ARG_CALLBACK, parse_passthrough_arg, "Passthrough", NULL },
         { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "relative",    '\0', 0, G_OPTION_ARG_CALLBACK, parse_relative_arg,    "Relative", NULL },
@@ -1548,6 +1699,7 @@ parse_options (int *argc, char **argv [])
     };
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
+    ChafaPassthrough passthrough;
 
     memset (&options, 0, sizeof (options));
 
@@ -1575,7 +1727,8 @@ parse_options (int *argc, char **argv [])
     options.fill_symbol_map = chafa_symbol_map_new ();
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
-    detect_terminal (&options.term_info, &canvas_mode, &pixel_mode);
+    detect_terminal (&options.term_info, &canvas_mode, &pixel_mode, &passthrough);
+
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
@@ -1781,6 +1934,17 @@ parse_options (int *argc, char **argv [])
         if (options.scale <= 0.0)
             options.scale = 1.0;
     }
+
+    /* Apply detected passthrough if auto */
+    if (!options.passthrough_set)
+        options.passthrough = passthrough;
+
+    /* Apply tmux workarounds only if both detected and desired, and a
+     * graphics protocol is desired */
+    if (passthrough == CHAFA_PASSTHROUGH_TMUX
+        && options.passthrough == CHAFA_PASSTHROUGH_TMUX
+        && options.pixel_mode != CHAFA_PIXEL_MODE_SYMBOLS)
+        apply_passthrough_workarounds_tmux ();
 
     if (options.work_factor < 1 || options.work_factor > 9)
     {
@@ -2160,22 +2324,14 @@ static GString **
 build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
                gint src_width, gint src_height, gint src_rowstride,
                gint dest_width, gint dest_height,
-               gboolean is_animation)
+               gboolean is_animation,
+               gint placement_id)
 {
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
     ChafaFrame *frame;
     ChafaImage *image;
-    gint id = -1;
     GString **gsa;
-
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
-    {
-        if (!placement_counter)
-            placement_counter = placement_counter_new ();
-
-        id = placement_counter_get_next_id (placement_counter));
-    }
 
     config = chafa_canvas_config_new ();
 
@@ -2191,6 +2347,7 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_set_bg_color (config, options.bg_color);
     chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
     chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
+    chafa_canvas_config_set_passthrough (config, options.passthrough);
 
     if (is_animation
         && options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
@@ -2216,7 +2373,7 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
                                     src_width, src_height, src_rowstride);
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);
-    chafa_canvas_set_image (canvas, image, id);
+    chafa_canvas_set_image (canvas, image, placement_id);
 
     chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
@@ -2273,6 +2430,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     gint loop_n = 0;
     MediaLoader *media_loader;
     GString **gsa;
+    gint placement_id = -1;
+    gint frame_count = 0;
     RunResult result = FILE_FAILED;
     GError *error = NULL;
 
@@ -2291,6 +2450,15 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
     if (interrupted_by_user)
         goto out;
+
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        && options.passthrough != CHAFA_PASSTHROUGH_NONE)
+    {
+        if (!placement_counter)
+            placement_counter = placement_counter_new ();
+
+        placement_id = placement_counter_get_next_id (placement_counter);
+    }
 
     is_animation = options.animate ? media_loader_get_is_animation (media_loader) : FALSE;
     result = is_animation ? FILE_WAS_ANIMATION : FILE_WAS_STILL;
@@ -2360,7 +2528,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             gsa = build_strings (pixel_type, pixels,
                                  src_width, src_height, src_rowstride,
                                  dest_width, dest_height,
-                                 is_animation);
+                                 is_animation,
+                                 placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
 
             if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                 || !write_image (gsa, dest_width)
@@ -2400,6 +2569,12 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
            && !options.watch && anim_elapsed_s < anim_duration_s);
 
 out:
+    /* We need two IDs per animation in order to do flicker-free flips. If the
+     * final frame got the higher ID, increment the global counter so the next
+     * image doesn't clobber it. */
+    if (placement_id >= 0 && !(frame_count % 2))
+        placement_id = placement_counter_get_next_id (placement_counter);
+
     if (media_loader)
         media_loader_destroy (media_loader);
     g_timer_destroy (timer);
@@ -2535,6 +2710,8 @@ main (int argc, char *argv [])
     ret = options.watch
         ? run_watch (options.args->data)
         : run_all (options.args);
+
+    retire_passthrough_workarounds_tmux ();
 
     if (placement_counter)
         placement_counter_destroy (placement_counter);
