@@ -1515,6 +1515,9 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
 
     chafa_dither_copy (&orig->dither, &canvas->dither);
 
+    canvas->placement_id = -1;
+    canvas->image = NULL;
+
     return canvas;
 }
 
@@ -1554,6 +1557,8 @@ chafa_canvas_unref (ChafaCanvas *canvas)
 
     if (g_atomic_int_dec_and_test (&canvas->refs))
     {
+        if (canvas->image)
+            chafa_image_unref (canvas->image);
         chafa_canvas_config_deinit (&canvas->config);
         destroy_pixel_canvas (canvas);
         chafa_dither_deinit (&canvas->dither);
@@ -1584,6 +1589,18 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
     return &canvas->config;
 }
 
+/**
+ * chafa_canvas_set_image:
+ * @canvas: Canvas to place the image on
+ * @image: Image to place
+ * @placement_id: Placement ID to use, or -1 to assign it automatically
+ *
+ * Places @image on @canvas, replacing the latter's content. The image will
+ * be stretched to fit the canvas.
+ *
+ * The canvas will keep a reference to the image until it is replaced or the
+ * canvas itself is freed.
+ */
 void
 chafa_canvas_set_image (ChafaCanvas *canvas, ChafaImage *image,
                         gint placement_id)
@@ -1593,6 +1610,13 @@ chafa_canvas_set_image (ChafaCanvas *canvas, ChafaImage *image,
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);
 
+    if (placement_id == 0)
+        placement_id = -1;
+
+    chafa_image_ref (image);
+    if (canvas->image)
+        chafa_image_unref (canvas->image);
+    canvas->image = image;
     canvas->placement_id = placement_id;
 
     frame = image->frame;
