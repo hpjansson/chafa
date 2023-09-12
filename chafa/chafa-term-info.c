@@ -184,6 +184,11 @@
  * @CHAFA_TERM_SEQ_ENABLE_ALT_SCREEN: Switch to the alternate screen buffer.
  * @CHAFA_TERM_SEQ_DISABLE_ALT_SCREEN: Switch back to the regular screen buffer.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
+ * @CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH: Begins OSC passthrough for the GNU Screen multiplexer.
+ * @CHAFA_TERM_SEQ_END_SCREEN_PASSTHROUGH: Ends OSC passthrough for the GNU Screen multiplexer.
+ * @CHAFA_TERM_SEQ_BEGIN_TMUX_PASSTHROUGH: Begins OSC passthrough for the tmux multiplexer.
+ * @CHAFA_TERM_SEQ_END_TMUX_PASSTHROUGH: Ends OSC passthrough for the tmux multiplexer.
+ * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1: Begin upload of virtual Kitty image for immediate display at cursor.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
  **/
