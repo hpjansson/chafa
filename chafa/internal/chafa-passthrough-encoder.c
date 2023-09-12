@@ -26,6 +26,9 @@
 
 static const gint packet_size_max [CHAFA_PASSTHROUGH_MAX] =
 {
+    /* Screen's OSC buffer size was increased to 2560 in bfb05c34ba1f961a15ccea04c5.
+     * This was quite a while ago, but it appears it still hasn't made its way into
+     * some of the important OS distributions. */
     [CHAFA_PASSTHROUGH_SCREEN] = 200,
     [CHAFA_PASSTHROUGH_TMUX] = 1000000
 };
