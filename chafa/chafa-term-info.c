@@ -901,7 +901,7 @@ out:
 }
 
 /**
- * chafa_term_info_emit_seq:
+ * chafa_term_info_parse_seq:
  * @term_info: A #ChafaTermInfo
  * @seq: A #ChafaTermSeq to attempt to parse
  * @input: Pointer to pointer to input data
