@@ -95,6 +95,7 @@
 /**
  * ChafaPassthrough:
  * @CHAFA_PASSTHROUGH_NONE: No passthrough guards will be used.
+ * @CHAFA_PASSTHROUGH_SCREEN: Passthrough guards for GNU Screen will be used.
  * @CHAFA_PASSTHROUGH_TMUX: Passthrough guards for tmux will be used.
  * @CHAFA_PASSTHROUGH_MAX: Last supported passthrough mode plus one.
  **/
