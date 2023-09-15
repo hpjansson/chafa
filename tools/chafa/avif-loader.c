@@ -154,6 +154,10 @@ avif_loader_new_from_mapping (FileMapping *mapping)
 
     loader->decoder = avifDecoderCreate ();
 
+    /* Allow for missing PixelInformationProperty, invalid clap box and
+     * missing ImageSpatialExtentsProperty in alpha auxiliary image items */
+    loader->decoder->strictFlags = AVIF_STRICT_DISABLED;
+
     avif_result = avifDecoderSetIOMemory (loader->decoder, loader->file_data, loader->file_data_len);
     if (avif_result != AVIF_RESULT_OK)
         goto out;
