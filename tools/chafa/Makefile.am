@@ -19,6 +19,8 @@ chafa_SOURCES = \
 	png-loader.h \
 	named-colors.c \
 	named-colors.h \
+	util.c \
+	util.h \
 	xwd-loader.c \
 	xwd-loader.h
 
@@ -26,6 +28,12 @@ if HAVE_MAGICKWAND
 chafa_SOURCES += \
 	im-loader.c \
 	im-loader.h
+endif
+
+if HAVE_AVIF
+chafa_SOURCES += \
+	avif-loader.c \
+	avif-loader.h
 endif
 
 if HAVE_JPEG
@@ -58,11 +66,11 @@ endif
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(MAGICKWAND_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(AVIF_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la $(WIN32_LDADD)
+chafa_LDADD = $(GLIB_LIBS) $(MAGICKWAND_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(AVIF_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la $(WIN32_LDADD)
 
 # On Microsoft Windows, we compile a resource file with windres and link it in.
 # This enables UTF-8 support in filenames, environment variables, etc.

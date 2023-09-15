@@ -28,6 +28,7 @@
 
 #include <chafa.h>
 #include "jpeg-loader.h"
+#include "util.h"
 
 /* ----------------------- *
  * Global macros and types *
@@ -49,170 +50,6 @@ struct JpegLoader
     gpointer frame_data;
     gint width, height, rowstride;
 };
-
-/* ------------------- *
- * Rotation transforms *
- * ------------------- */
-
-typedef enum
-{
-    ROTATION_NONE = 0,
-    ROTATION_0 = 1,
-    ROTATION_0_MIRROR = 2,
-    ROTATION_180 = 3,
-    ROTATION_180_MIRROR = 4,
-    ROTATION_270_MIRROR = 5,
-    ROTATION_270 = 6,
-    ROTATION_90_MIRROR = 7,
-    ROTATION_90 = 8,
-    ROTATION_UNDEFINED = 9,
-
-    ROTATION_MAX
-}
-RotationType;
-
-static RotationType
-undo_rotation (RotationType rot)
-{
-    switch (rot)
-    {
-        case ROTATION_90:
-            rot = ROTATION_270;
-            break;
-        case ROTATION_270:
-            rot = ROTATION_90;
-            break;
-        default:
-            break;
-    }
-
-    return rot;
-}
-
-static void
-transform (const guchar *src, gint src_pixstride, gint src_rowstride,
-           guchar *dest, gint dest_pixstride, gint dest_rowstride,
-           gint src_width, gint src_height, gint pixsize)
-{
-    const guchar *src_row = src;
-    const guchar *src_row_end = src + src_pixstride * src_width;
-    const guchar *src_end = src + src_rowstride * src_height;
-    guchar *dest_row = dest;
-
-    while (src_row != src_end)
-    {
-        src = src_row;
-        dest = dest_row;
-
-        while (src != src_row_end)
-        {
-            memcpy (dest, src, pixsize);
-            src += src_pixstride;
-            dest += dest_pixstride;
-        }
-
-        src_row += src_rowstride;
-        src_row_end += src_rowstride;
-        dest_row += dest_rowstride;
-    }
-}
-
-static void
-rotate_frame (guchar **src, guint *width, guint *height, guint *rowstride, guint n_channels,
-              RotationType rot)
-{
-    gint src_width, src_height;
-    gint src_pixstride, src_rowstride;
-    guchar *dest, *dest_start;
-    gint dest_width, dest_height;
-    gint dest_pixstride, dest_rowstride, dest_trans_rowstride;
-
-    g_assert (n_channels == 3 || n_channels == 4);
-
-    if (rot <= ROTATION_NONE
-        || rot == ROTATION_0
-        || rot >= ROTATION_UNDEFINED)
-        return;
-
-    src_width = *width;
-    src_height = *height;
-    src_pixstride = n_channels;
-    src_rowstride = *rowstride;
-
-    switch (rot)
-    {
-        case ROTATION_90:
-        case ROTATION_90_MIRROR:
-        case ROTATION_270:
-        case ROTATION_270_MIRROR:
-            dest_width = src_height;
-            dest_height = src_width;
-            break;
-        case ROTATION_0_MIRROR:
-        case ROTATION_180:
-        case ROTATION_180_MIRROR:
-            dest_width = src_width;
-            dest_height = src_height;
-            break;
-        default:
-            g_assert_not_reached ();
-    }
-
-    dest_rowstride = ROWSTRIDE_PAD (dest_width * n_channels);
-    dest = g_malloc (dest_rowstride * dest_height);
-
-    switch (rot)
-    {
-        case ROTATION_0_MIRROR:
-            dest_pixstride = -n_channels;
-            dest_trans_rowstride = dest_rowstride;
-            dest_start = dest + ((dest_width - 1) * n_channels);
-            break;
-        case ROTATION_90:
-            dest_pixstride = dest_rowstride;
-            dest_trans_rowstride = -n_channels;
-            dest_start = dest + ((dest_width - 1) * n_channels);
-            break;
-        case ROTATION_90_MIRROR:
-            dest_pixstride = -dest_rowstride;
-            dest_trans_rowstride = -n_channels;
-            dest_start = dest + ((dest_height - 1) * dest_rowstride) + ((dest_width - 1) * n_channels);
-            break;
-        case ROTATION_180:
-            dest_pixstride = -n_channels;
-            dest_trans_rowstride = -dest_rowstride;
-            dest_start = dest + ((dest_height - 1) * dest_rowstride) + ((dest_width - 1) * n_channels);
-            break;
-        case ROTATION_180_MIRROR:
-            dest_pixstride = n_channels;
-            dest_trans_rowstride = -dest_rowstride;
-            dest_start = dest + ((dest_height - 1) * dest_rowstride);
-            break;
-        case ROTATION_270:
-            dest_pixstride = -dest_rowstride;
-            dest_trans_rowstride = n_channels;
-            dest_start = dest + ((dest_height - 1) * dest_rowstride);
-            break;
-        case ROTATION_270_MIRROR:
-            dest_pixstride = dest_rowstride;
-            dest_trans_rowstride = n_channels;
-            dest_start = dest;
-            break;
-        default:
-            g_assert_not_reached ();
-    }
-
-    transform (*src, src_pixstride, src_rowstride,
-               dest_start, dest_pixstride, dest_trans_rowstride,
-               src_width, src_height, n_channels);
-
-    g_free (*src);
-
-    *src = dest;
-    *width = dest_width;
-    *height = dest_height;
-    *rowstride = dest_rowstride;
-}
 
 /* ----------------------- *
  * Exif orientation reader *
@@ -513,8 +350,8 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 
     (void) jpeg_finish_decompress (&cinfo);
 
-    rotate_frame ((guchar **) &frame_data, &width, &height, &rowstride, 3,
-                  undo_rotation (read_orientation (loader)));
+    rotate_image ((guchar **) &frame_data, &width, &height, &rowstride, 3,
+                  invert_rotation (read_orientation (loader)));
 
     loader->frame_data = frame_data;
     loader->width = (gint) width;

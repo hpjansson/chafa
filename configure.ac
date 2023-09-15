@@ -111,6 +111,18 @@ AS_IF([test "$with_tools" != no], [
     with_imagemagick=no)])
   AS_IF([test "$with_imagemagick" != no], [AC_DEFINE([HAVE_MAGICKWAND], [1], [Define if we have ImageMagick support.])])
 
+  dnl libavif (optional)
+  AC_ARG_WITH(avif,
+    [AS_HELP_STRING([--without-avif], [don't build AVIF loader [default=on]])],
+    ,
+    with_avif=yes)
+  AS_IF([test "$with_avif" != no], [
+    PKG_CHECK_MODULES(AVIF, [libavif],,
+      missing_rpms="$missing_rpms libavif-devel"
+      missing_debs="$missing_debs libavif-dev"
+      with_avif=no)])
+  AS_IF([test "$with_avif" != no], [AC_DEFINE([HAVE_AVIF], [1], [Define if we have AVIF support.])])
+
   dnl libjpeg (optional)
   AC_ARG_WITH(jpeg,
     [AS_HELP_STRING([--without-jpeg], [don't build JPEG loader [default=on]])],
@@ -163,6 +175,7 @@ AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
 AM_CONDITIONAL([HAVE_SVG], [test "$with_tools" != no -a "$with_svg" != no])
 AM_CONDITIONAL([HAVE_TIFF], [test "$with_tools" != no -a "$with_tiff" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
+AM_CONDITIONAL([HAVE_AVIF], [test "$with_tools" != no -a "$with_avif" != no])
 
 # Used by gtk-doc's fixxref.
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
@@ -557,6 +570,7 @@ colorize_vars="
   with_svg
   with_tiff
   with_webp
+  with_avif
 "
 
 dnl Only use colors if the terminal supports the aixterm-style bright ones (16 total).
@@ -612,6 +626,7 @@ echo >&AS_MESSAGE_FD
 echo >&AS_MESSAGE_FD "Build command-line tool ..... $pwith_tools"
 
 if test "x$with_tools" != xno; then
+echo >&AS_MESSAGE_FD "With AVIF loader ............ $pwith_avif"
 echo >&AS_MESSAGE_FD "With GIF loader ............. $pyes (internal)"
 echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $pwith_imagemagick"
 echo >&AS_MESSAGE_FD "With JPEG loader ............ $pwith_jpeg"
