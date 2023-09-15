@@ -85,6 +85,7 @@ const char chafa_ascii_dec_u8 [256] [4] =
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunknown-warning-option"
 
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #pragma clang diagnostic ignored "-Wuninitialized"
 
