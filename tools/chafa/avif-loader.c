@@ -78,6 +78,7 @@ maybe_decode_frame (AvifLoader *loader)
     avifResult avif_result;
     avifImage *image;
     avifRGBImage rgb;
+    guint axis;
 
     if (loader->frame_is_decoded)
         return loader->frame_is_success;
@@ -106,11 +107,18 @@ maybe_decode_frame (AvifLoader *loader)
     g_free (loader->frame_data);
     loader->frame_data = rgb.pixels;
 
+#if AVIF_VERSION_MAJOR >= 1
+    axis = image->imir.axis;
+#else
+    axis = image->imir.mode;
+#endif
+
     rotate_image ((guchar **) &loader->frame_data,
                   &loader->width, &loader->height,
                   &loader->rowstride, N_CHANNELS,
                   calc_rotation (image->transformFlags,
-                                 image->irot.angle, image->imir.axis));
+                                 image->irot.angle,
+                                 axis));
 
 out:
     return loader->frame_is_success;
