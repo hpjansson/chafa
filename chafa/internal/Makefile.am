@@ -77,6 +77,14 @@ libchafa_popcnt_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mpopcnt -DCHAFA_C
 libchafa_popcnt_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
 endif
 
+if HAVE_AVX2_INTRINSICS
+noinst_LTLIBRARIES += libchafa-avx2.la
+libchafa_internal_la_LIBADD += libchafa-avx2.la
+libchafa_avx2_la_SOURCES = chafa-avx2.c
+libchafa_avx2_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mavx2 -DCHAFA_COMPILATION
+libchafa_avx2_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
+endif
+
 ## --- General ---
 
 ## Include $(top_builddir)/chafa to get generated chafaconfig.h.

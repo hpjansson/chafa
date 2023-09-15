@@ -154,6 +154,7 @@ void chafa_init (void);
 gboolean chafa_have_mmx (void) G_GNUC_PURE;
 gboolean chafa_have_sse41 (void) G_GNUC_PURE;
 gboolean chafa_have_popcnt (void) G_GNUC_PURE;
+gboolean chafa_have_avx2 (void) G_GNUC_PURE;
 
 void chafa_symbol_map_init (ChafaSymbolMap *symbol_map);
 void chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map);

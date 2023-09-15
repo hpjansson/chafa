@@ -38,6 +38,7 @@
  * @CHAFA_FEATURE_MMX: Flag indicating MMX support.
  * @CHAFA_FEATURE_SSE41: Flag indicating SSE 4.1 support.
  * @CHAFA_FEATURE_POPCNT: Flag indicating popcnt support.
+ * @CHAFA_FEATURE_AVX2: Flag indicating AVX2 support.
  **/
 
 static gboolean chafa_initialized;
@@ -45,6 +46,7 @@ static gboolean chafa_initialized;
 static gboolean have_mmx;
 static gboolean have_sse41;
 static gboolean have_popcnt;
+static gboolean have_avx2;
 
 static gint n_threads = -1;
 
@@ -67,6 +69,11 @@ init_features (void)
 # ifdef HAVE_POPCNT_INTRINSICS
     if (__builtin_cpu_supports ("popcnt"))
         have_popcnt = TRUE;
+# endif
+
+# ifdef HAVE_AVX2_INTRINSICS
+    if (__builtin_cpu_supports ("avx2"))
+        have_avx2 = TRUE;
 # endif
 #endif
 }
@@ -108,6 +115,12 @@ chafa_have_popcnt (void)
     return have_popcnt;
 }
 
+gboolean
+chafa_have_avx2 (void)
+{
+    return have_avx2;
+}
+
 /* Public API */
 
 /**
@@ -134,6 +147,10 @@ chafa_get_builtin_features (void)
     features |= CHAFA_FEATURE_POPCNT;
 #endif
 
+#ifdef HAVE_AVX2_INTRINSICS
+    features |= CHAFA_FEATURE_AVX2;
+#endif
+
     return features;
 }
 
@@ -152,7 +169,8 @@ chafa_get_supported_features (void)
 
     return (have_mmx ? CHAFA_FEATURE_MMX : 0)
       | (have_sse41 ? CHAFA_FEATURE_SSE41 : 0)
-      | (have_popcnt ? CHAFA_FEATURE_POPCNT : 0);
+      | (have_popcnt ? CHAFA_FEATURE_POPCNT : 0)
+      | (have_avx2 ? CHAFA_FEATURE_AVX2 : 0);
 }
 
 /**
@@ -176,6 +194,8 @@ chafa_describe_features (ChafaFeatures features)
         g_string_append (features_gstr, "sse4.1 ");
     if (features & CHAFA_FEATURE_POPCNT)
         g_string_append (features_gstr, "popcnt ");
+    if (features & CHAFA_FEATURE_AVX2)
+        g_string_append (features_gstr, "avx2 ");
 
     if (features_gstr->len > 0 && features_gstr->str [features_gstr->len - 1] == ' ')
         g_string_truncate (features_gstr, features_gstr->len - 1);
