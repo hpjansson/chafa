@@ -15,11 +15,14 @@ jobs:
     - uses: actions/checkout@v3
     - name: Running prerequisites
       run: >
+        sudo apt update -y
+
         sudo apt install -y
         automake
         libtool
         libglib2.0-dev
         libmagickwand-dev
+        libavif-dev
         libjpeg-dev
         librsvg2-dev
         libtiff-dev
