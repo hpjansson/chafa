@@ -19,6 +19,8 @@ chafa_SOURCES = \
 	png-loader.h \
 	named-colors.c \
 	named-colors.h \
+	qoi-loader.c \
+	qoi-loader.h \
 	util.c \
 	util.h \
 	xwd-loader.c \

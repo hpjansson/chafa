@@ -36,6 +36,7 @@
 #include "jpeg-loader.h"
 #include "media-loader.h"
 #include "png-loader.h"
+#include "qoi-loader.h"
 #include "svg-loader.h"
 #include "tiff-loader.h"
 #include "webp-loader.h"
@@ -46,6 +47,7 @@ typedef enum
     LOADER_TYPE_GIF,
     LOADER_TYPE_PNG,
     LOADER_TYPE_XWD,
+    LOADER_TYPE_QOI,
     LOADER_TYPE_JPEG,
     LOADER_TYPE_TIFF,
     LOADER_TYPE_WEBP,
@@ -106,6 +108,18 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) xwd_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) xwd_loader_get_frame_data,
         (gint (*) (gpointer)) xwd_loader_get_frame_delay
+    },
+    [LOADER_TYPE_QOI] =
+    {
+        "QOI",
+        (gpointer (*)(gpointer)) qoi_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
+        (void (*)(gpointer)) qoi_loader_destroy,
+        (gboolean (*)(gpointer)) qoi_loader_get_is_animation,
+        (void (*)(gpointer)) qoi_loader_goto_first_frame,
+        (gboolean (*)(gpointer)) qoi_loader_goto_next_frame,
+        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) qoi_loader_get_frame_data,
+        (gint (*) (gpointer)) qoi_loader_get_frame_delay
     },
 #ifdef HAVE_JPEG
     [LOADER_TYPE_JPEG] =
