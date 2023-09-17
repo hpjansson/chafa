@@ -2,5 +2,11 @@
 
 set -evx
 
-cc -g example.c $(pkg-config --libs --cflags chafa) -o example
+cc -g \
+    -fsanitize=address,undefined \
+    -fsanitize-undefined-trap-on-error \
+    $(pkg-config --libs --cflags chafa) \
+    example.c \
+    -o example
+
 ./example
