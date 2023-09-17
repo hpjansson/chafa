@@ -21,7 +21,6 @@ jobs:
         automake
         libtool
         libglib2.0-dev
-        libmagickwand-dev
         libavif-dev
         libjpeg-dev
         librsvg2-dev
@@ -35,7 +34,7 @@ jobs:
         
         mkdir build
         
-    - name: Making without ImageMagick
+    - name: Building
       working-directory: ./build
       run: >
         CFLAGS='
@@ -51,7 +50,7 @@ jobs:
         -Wno-error=unused-value 
         -Wno-error=comment 
         -Wno-error=missing-braces' 
-        ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man --without-imagemagick
+        ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man
         
         make -j4
         
@@ -59,15 +58,6 @@ jobs:
       working-directory: ./build
       run: make check
       
-    - name: Making with ImageMagick
-      working-directory: ./build
-      run: >
-        rm -Rf ../build/*
-
-        ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man
-        
-        make -j4
-        
     - name: Installing chafa
       working-directory: ./build
       run: >
