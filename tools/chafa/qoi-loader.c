@@ -81,9 +81,6 @@ qoi_loader_new_from_mapping (FileMapping *mapping)
         || desc.height < 1 || desc.height >= (1 << 16))
         goto out;
 
-    g_printerr ("desc.width=%d desc.height=%d\n",
-                desc.width, desc.height);
-
     loader->frame_data = frame_data;
     loader->width = desc.width;
     loader->height = desc.height;
