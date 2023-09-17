@@ -59,8 +59,12 @@
     <para>
       Chafa depends on the GLib library. If you want to build the
       <command>chafa</command> command-line tool in addition to the
-      libchafa library, you will also need ImageMagick (specifically
-      the MagickWand library) and its development files.
+      libchafa library, you will also need the FreeType library and
+      its development files. <command>chafa</command> has built-in
+      support for the GIF, PNG, QOI and XWD formats, and can be
+      built with optional support for many others, including AVIF,
+      JPEG, SVG, TIFF and WebP. <command>./configure</command> will
+      summarize the build features.
     </para>
   </refsect1>
   <refsect1 id="extra-configuration-options">

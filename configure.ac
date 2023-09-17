@@ -100,17 +100,6 @@ AS_IF([test "$with_tools" != no], [
   PKG_CHECK_MODULES(FREETYPE, [freetype2 >= 2.0.0],,
     [AC_MSG_ERROR([You need freetype2-devel (or libfreetype6-dev on Debian) to build command-line tools, or pass --without-tools to build without.])])
 
-  dnl ImageMagick/MagickWand (optional)
-  AC_ARG_WITH(imagemagick,
-    [AS_HELP_STRING([--without-imagemagick], [don't build ImageMagick loader [default=on]])],
-    ,
-    with_imagemagick=yes)
-  AS_IF([test "$with_imagemagick" != no], [PKG_CHECK_MODULES(MAGICKWAND, [MagickWand >= 6],,
-    missing_rpms="$missing_rpms ImageMagick-devel"
-    missing_debs="$missing_debs libmagickwand-dev"
-    with_imagemagick=no)])
-  AS_IF([test "$with_imagemagick" != no], [AC_DEFINE([HAVE_MAGICKWAND], [1], [Define if we have ImageMagick support.])])
-
   dnl libavif (optional)
   AC_ARG_WITH(avif,
     [AS_HELP_STRING([--without-avif], [don't build AVIF loader [default=on]])],
@@ -170,7 +159,6 @@ AS_IF([test "$with_tools" != no], [
 ])
 
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
-AM_CONDITIONAL([HAVE_MAGICKWAND], [test "$with_tools" != no -a "$with_imagemagick" != no])
 AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
 AM_CONDITIONAL([HAVE_SVG], [test "$with_tools" != no -a "$with_svg" != no])
 AM_CONDITIONAL([HAVE_TIFF], [test "$with_tools" != no -a "$with_tiff" != no])
@@ -426,71 +414,6 @@ AX_CHECK_COMPILE_FLAG([-ffast-math],
     ,
     [-Werror])
 
-dnl --- ImageMagick checks ---
-
-dnl ImageMagick 6 needs #include <wand/MagickWand.h>
-dnl ImageMagick 7 needs #include <MagickWand/MagickWand.h>
-
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
-AC_CHECK_HEADERS([wand/MagickWand.h])
-AC_CHECK_HEADERS([MagickWand/MagickWand.h])
-CPPFLAGS=$SAVED_CPPFLAGS
-
-AC_MSG_CHECKING(for 4-arg MagickResizeImage)
-SAVED_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#ifdef HAVE_WAND_MAGICKWAND_H
-# include <wand/MagickWand.h>
-#else
-# include <MagickWand/MagickWand.h>
-#endif
-]], [[MagickResizeImage (0, 0, 0, 0);]])],
-	AC_DEFINE([HAVE_MAGICK_RESIZE_IMAGE_4], [1], [Define if MagickResizeImage takes 4 arguments.])
-        AC_MSG_RESULT(yes),
-        AC_MSG_RESULT(no))
-CFLAGS=$SAVED_CFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-
-AC_MSG_CHECKING(for 5-arg MagickResizeImage)
-SAVED_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#ifdef HAVE_WAND_MAGICKWAND_H
-# include <wand/MagickWand.h>
-#else
-# include <MagickWand/MagickWand.h>
-#endif
-]], [[MagickResizeImage (0, 0, 0, 0, 1.0);]])],
-	AC_DEFINE([HAVE_MAGICK_RESIZE_IMAGE_5], [1], [Define if MagickResizeImage takes 5 arguments.])
-        AC_MSG_RESULT(yes),
-        AC_MSG_RESULT(no))
-CFLAGS=$SAVED_CFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-
-AC_MSG_CHECKING(for MagickAutoOrientImage)
-SAVED_CFLAGS=$CFLAGS
-CFLAGS="$CFLAGS $MAGICKWAND_CFLAGS"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$MAGICKWAND_LIBS $LDFLAGS"
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#ifdef HAVE_WAND_MAGICKWAND_H
-# include <wand/MagickWand.h>
-#else
-# include <MagickWand/MagickWand.h>
-#endif
-]], [[MagickAutoOrientImage (0);]])],
-	AC_DEFINE([HAVE_MAGICK_AUTO_ORIENT_IMAGE], [1], [Define if we have MagickAutoOrientImage.])
-        AC_MSG_RESULT(yes),
-        AC_MSG_RESULT(no))
-CFLAGS=$SAVED_CFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-
 dnl --- Set compiler flags ---
 
 dnl Disable some LodePNG features. In particular, the CRC feature, which would
@@ -565,7 +488,6 @@ colorize_vars="
   ac_cv_popcnt32_intrinsics
   ac_cv_popcnt64_intrinsics
   with_tools
-  with_imagemagick
   with_jpeg
   with_svg
   with_tiff
@@ -628,7 +550,6 @@ echo >&AS_MESSAGE_FD "Build command-line tool ..... $pwith_tools"
 if test "x$with_tools" != xno; then
 echo >&AS_MESSAGE_FD "With AVIF loader ............ $pwith_avif"
 echo >&AS_MESSAGE_FD "With GIF loader ............. $pyes (internal)"
-echo >&AS_MESSAGE_FD "With ImageMagick loader ..... $pwith_imagemagick"
 echo >&AS_MESSAGE_FD "With JPEG loader ............ $pwith_jpeg"
 echo >&AS_MESSAGE_FD "With PNG loader ............. $pyes (internal)"
 echo >&AS_MESSAGE_FD "With QOI loader ............. $pyes (internal)"

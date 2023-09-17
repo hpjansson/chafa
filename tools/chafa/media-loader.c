@@ -31,7 +31,6 @@
 #include <chafa.h>
 #include "file-mapping.h"
 #include "gif-loader.h"
-#include "im-loader.h"
 #include "xwd-loader.h"
 #include "jpeg-loader.h"
 #include "media-loader.h"
@@ -53,7 +52,6 @@ typedef enum
     LOADER_TYPE_WEBP,
     LOADER_TYPE_AVIF,
     LOADER_TYPE_SVG,
-    LOADER_TYPE_IMAGEMAGICK,
 
     LOADER_TYPE_LAST
 }
@@ -189,20 +187,6 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) avif_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) avif_loader_get_frame_data,
         (gint (*) (gpointer)) avif_loader_get_frame_delay
-    },
-#endif
-#ifdef HAVE_MAGICKWAND
-    [LOADER_TYPE_IMAGEMAGICK] =
-    {
-        "ImageMagick",
-        (gpointer (*)(gpointer)) NULL,
-        (gpointer (*)(gconstpointer)) im_loader_new,
-        (void (*)(gpointer)) im_loader_destroy,
-        (gboolean (*)(gpointer)) im_loader_get_is_animation,
-        (void (*)(gpointer)) im_loader_goto_first_frame,
-        (gboolean (*)(gpointer)) im_loader_goto_next_frame,
-        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) im_loader_get_frame_data,
-        (gint (*) (gpointer)) im_loader_get_frame_delay
     },
 #endif
 };
