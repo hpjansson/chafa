@@ -890,6 +890,35 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
 #define buf_cell_index(i) (((i) + N_BUF_CELLS * 64) % N_BUF_CELLS)
 
 static void
+try_update_with_ofs (ChafaCanvas *canvas, ChafaWorkCell *wcell, ChafaCanvasCell *ccell,
+                     gint *best_error, gint cx, gint cy,
+                     gint px_ofs_x, gint px_ofs_y)
+{
+    ChafaWorkCell wcell_temp;
+    ChafaCanvasCell ccell_temp;
+    gint64 error_temp;
+
+    chafa_work_cell_init_with_ofs (&wcell_temp, canvas->pixels,
+                                   canvas->width_pixels, canvas->height_pixels,
+                                   cx, cy,
+                                   px_ofs_x, px_ofs_y);
+
+    memset (&ccell_temp, 0, sizeof (ccell_temp));
+    ccell_temp.c = ' ';
+
+    error_temp = update_cell (canvas, &wcell_temp, &ccell_temp);
+    error_temp *= 12;
+    error_temp /= 10;
+
+    if (error_temp < *best_error)
+    {
+        *wcell = wcell_temp;
+        *ccell = ccell_temp;
+        *best_error = error_temp;
+    }
+}
+
+static void
 update_cells_row (ChafaCanvas *canvas, gint row)
 {
     ChafaCanvasCell *cells;
@@ -912,6 +941,18 @@ update_cells_row (ChafaCanvas *canvas, gint row)
 
         chafa_work_cell_init (wcell, canvas->pixels, canvas->width_pixels, cx, cy);
         cell_errors [buf_index] = update_cell (canvas, wcell, &cells [cx]);
+
+        if (canvas->wiggle)
+        {
+            try_update_with_ofs (canvas, wcell, &cells [cx], &cell_errors [buf_index],
+                                 cx, cy, -1, 0);
+            try_update_with_ofs (canvas, wcell, &cells [cx], &cell_errors [buf_index],
+                                 cx, cy, 1, 0);
+            try_update_with_ofs (canvas, wcell, &cells [cx], &cell_errors [buf_index],
+                                 cx, cy, 0, -1);
+            try_update_with_ofs (canvas, wcell, &cells [cx], &cell_errors [buf_index],
+                                 cx, cy, 0, 1);
+        }
 
         /* Try wide symbol */
 
@@ -1415,6 +1456,9 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->needs_clear = TRUE;
     canvas->have_alpha = FALSE;
     canvas->placement_id = -1;
+
+    if (g_getenv ("CHAFA_WIGGLE"))
+        canvas->wiggle = TRUE;
 
     canvas->consider_inverted = !(canvas->config.fg_only_enabled
                                   || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG);

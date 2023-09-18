@@ -74,6 +74,35 @@ fetch_canvas_pixel_block (const ChafaPixel *src_image, gint src_width,
     }
 }
 
+/* pixels_out must point to CHAFA_SYMBOL_N_PIXELS-element array */
+static void
+fetch_canvas_pixel_block_with_ofs (const ChafaPixel *src_image,
+                                   gint src_width, gint src_height,
+                                   ChafaPixel *pixels_out, gint cx, gint cy,
+                                   gint px_ofs_x, gint px_ofs_y)
+{
+    gint i, j;
+
+    for (i = 0; i < CHAFA_SYMBOL_WIDTH_PIXELS; i++)
+    {
+        gint x = cx * CHAFA_SYMBOL_WIDTH_PIXELS + px_ofs_x + i;
+
+        x = MAX (x, 0);
+        x = MIN (x, src_width - 1);
+
+        for (j = 0; j < CHAFA_SYMBOL_HEIGHT_PIXELS; j++)
+        {
+            gint y = cy * CHAFA_SYMBOL_HEIGHT_PIXELS + px_ofs_y + j;
+
+            y = MAX (y, 0);
+            y = MIN (y, src_height - 1);
+
+            pixels_out [j * CHAFA_SYMBOL_WIDTH_PIXELS + i]
+                = src_image [y * src_width + x];
+        }
+    }
+}
+
 static void
 calc_colors_plain (const ChafaPixel *block, ChafaColorAccum *accums, const guint8 *cov)
 {
@@ -190,6 +219,22 @@ chafa_work_cell_init (ChafaWorkCell *wcell, const ChafaPixel *src_image,
     memset (wcell->have_pixels_sorted_by_channel, 0,
             sizeof (wcell->have_pixels_sorted_by_channel));
     fetch_canvas_pixel_block (src_image, src_width, wcell->pixels, cx, cy);
+    wcell->dominant_channel = -1;
+}
+
+void
+chafa_work_cell_init_with_ofs (ChafaWorkCell *wcell, const ChafaPixel *src_image,
+                               gint src_width, gint src_height,
+                               gint cx, gint cy,
+                               gint px_ofs_x, gint px_ofs_y)
+{
+    memset (wcell->have_pixels_sorted_by_channel, 0,
+            sizeof (wcell->have_pixels_sorted_by_channel));
+    fetch_canvas_pixel_block_with_ofs (src_image,
+                                       src_width, src_height,
+                                       wcell->pixels,
+                                       cx, cy,
+                                       px_ofs_x, px_ofs_y);
     wcell->dominant_channel = -1;
 }
 

@@ -56,6 +56,8 @@ struct ChafaCanvas
      * yields better results in palettized modes, especially 16/8) */
     guint use_quantized_error : 1;
 
+    guint wiggle : 1;
+
     ChafaColorPair default_colors;
     guint work_factor_int;
 

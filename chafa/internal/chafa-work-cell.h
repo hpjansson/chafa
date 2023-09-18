@@ -42,6 +42,10 @@ ChafaPickFlags;
 
 void chafa_work_cell_init (ChafaWorkCell *wcell, const ChafaPixel *src_image,
                            gint src_width, gint cx, gint cy);
+void chafa_work_cell_init_with_ofs (ChafaWorkCell *wcell, const ChafaPixel *src_image,
+                                    gint src_width, gint src_height,
+                                    gint cx, gint cy,
+                                    gint px_ofs_x, gint px_ofs_y);
 
 void chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, const ChafaSymbol *sym,
                                                  ChafaColorPair *color_pair_out);
