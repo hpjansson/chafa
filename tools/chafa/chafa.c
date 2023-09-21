@@ -443,10 +443,8 @@ print_summary (void)
     "                     rows instead for e.g. 'less -R' interop. Defaults to off.\n"
     "      --passthrough=MODE  Graphics protocol passthrough [auto, none, screen,\n"
     "                     tmux]. Used to show pixel graphics through multiplexers.\n"
-    "      --polite=BOOL  Polite mode [on, off]. Defaults to on. Turning this off\n"
-    "                     may enhance presentation and prevent interference from\n"
-    "                     other programs, but risks leaving the terminal in an\n"
-    "                     altered state (rude).\n"
+    "      --polite=BOOL  Polite mode [on, off]. Inhibits escape sequences that may\n"
+    "                     confuse other programs. Defaults to off.\n"
 
     "\nSize and layout:\n"
 
@@ -1750,7 +1748,7 @@ parse_options (int *argc, char **argv [])
     options.dither_intensity = 1.0;
     options.animate = TRUE;
     options.center = FALSE;
-    options.polite = TRUE;
+    options.polite = FALSE;
     options.preprocess = TRUE;
     options.relative_set = FALSE;
     options.fg_only = FALSE;

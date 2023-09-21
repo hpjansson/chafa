@@ -112,9 +112,8 @@ option to select the appropriate graphics protocol.
 <varlistentry>
 <term><option>--polite <replaceable>bool</replaceable></option></term>
 <listitem><para>
-Polite mode [on, off]. Defaults to on. Turning this off may enhance presentation
-and prevent interference from other programs, but risks leaving the terminal in
-an altered state (rude).
+Polite mode [on, off]. Inhibits escape sequences that on rare occasions
+may confuse the terminal or other programs. Defaults to off.
 </para></listitem>
 </varlistentry>
 
