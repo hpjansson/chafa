@@ -48,25 +48,81 @@ when there is more than one input file.
 </para>
 </refsect1>
 
-<refsect1><title>Options</title>
+<refsect1><title>General options</title>
 <variablelist>
 
 <varlistentry>
-<term><option>--animate <replaceable>bool</replaceable></option></term>
+<term><option>-h, --help</option></term>
 <listitem><para>
-Whether to allow animation [on, off]. Defaults to on. When off, will show a
-still frame from each animation.
+Show a brief help text.
 </para></listitem>
 </varlistentry>
 
 <varlistentry>
-<term><option>--bg <replaceable>color</replaceable></option></term>
+<term><option>--version</option></term>
 <listitem><para>
-Background color of display (color name or hex). Partially transparent input
-will be blended with this color. Color names are based on those provided with
-X.Org. Defaults to black.
+Show version, feature and copyright information.
 </para></listitem>
 </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Output encoding</title>
+<variablelist>
+
+<varlistentry>
+<term><option>-f, --format <replaceable>format</replaceable></option></term>
+<listitem><para>
+Set output format; one of [iterm, kitty, sixels, symbols]. The default is
+iterm, kitty or sixels if the connected terminal supports one of these,
+falling back to symbols ("ANSI art") otherwise.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-O <replaceable>num</replaceable>, --optimize <replaceable>num</replaceable></option></term>
+<listitem><para>
+Compress the output by using control sequences intelligently [0-9]. 0
+disables, 9 enables every available optimization. Defaults to 5, except
+for when used with "-c none", where it defaults to 0.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--relative <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Use relative cursor positioning [on, off]. When on, control sequences will be
+used to position images relative to the cursor. When off, newlines will be used
+to separate rows instead for e.g. 'less -R' interop. Defaults to off.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--passthrough <replaceable>mode</replaceable></option></term>
+<listitem><para>
+Graphics protocol passthrough [auto, none, screen, tmux]. Used to show pixel
+graphics from within multiplexers. Defaults to auto, which will enable
+passthrough if the Kitty terminal is detected along with one of the supported
+multiplexers. Other combinations must be enabled manually; use with the -f
+option to select the appropriate graphics protocol.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--polite <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Polite mode [on, off]. Defaults to on. Turning this off may enhance presentation
+and prevent interference from other programs, but risks leaving the terminal in
+an altered state (rude).
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Size and layout</title>
+<variablelist>
 
 <varlistentry>
 <term><option>-C <replaceable>bool</replaceable>, --center <replaceable>bool</replaceable></option></term>
@@ -79,6 +135,129 @@ Center images horizontally in the view [on, off]. Defaults to off.
 <term><option>--clear</option></term>
 <listitem><para>
 Clear screen before processing each file.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--fit-width</option></term>
+<listitem><para>
+Fit images to the view's width, potentially exceeding its height.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--font-ratio <replaceable>width</replaceable>/<replaceable>height</replaceable></option></term>
+<listitem><para>
+Target font's width/height ratio. Can be specified as a real number or a
+fraction. Defaults to 1/2.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--margin-bottom <replaceable>num</replaceable></option></term>
+<listitem><para>
+When terminal size is detected, reserve at least this many rows at the bottom
+as a safety margin. Can be used to prevent images from scrolling out.
+Defaults to 1.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--margin-right <replaceable>num</replaceable></option></term>
+<listitem><para>
+When terminal size is detected, reserve at least this many columns on the
+right-hand side as a safety margin. Defaults to 0.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--scale <replaceable>NUM</replaceable></option></term>
+<listitem><para>
+Scale image, respecting terminal's maximum dimensions. 1.0 approximates
+original pixel dimensions. Specify "max" to use all available space. Defaults
+to 1.0 for pixel graphics and 4.0 for symbols.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
+<listitem><para>
+Set maximum output image dimensions in columns and rows. By default this will
+be equal to the view size (see --view-size).
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--stretch</option></term>
+<listitem><para>
+Stretch image to fit output dimensions; ignore aspect. Implies --scale max.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--view-size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
+<listitem><para>
+Set the view size in columns and rows. By default this will be the size of your
+terminal, or 80x25 if size detection fails. If one dimension is omitted (by
+providing a size of e.g. 80x or x25), it will be set to a reasonable approximation
+of infinity.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Animation and timing</title>
+<variablelist>
+
+<varlistentry>
+<term><option>--animate <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Whether to allow animation [on, off]. Defaults to on. When off, will show a
+still frame from each animation.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-d, --duration <replaceable>seconds</replaceable></option></term>
+<listitem><para>
+Time to show each file, in seconds. Defaults to zero for still images and for
+animations when multiple files are specified. If a single animation is
+specified, defaults to infinite, or "inf". Animations will always be played
+through at least once, even if duration is e.g. zero. See the "Duration" section
+for more.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--speed <replaceable>speed</replaceable></option></term>
+<listitem><para>
+Set the speed animations will play at. This can be either a unitless
+multiplier (fractions are allowed), or a real number followed by "fps"
+to apply a specific framerate.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--watch</option></term>
+<listitem><para>
+Watch a single input file, redisplaying it whenever its contents change. Will run
+until manually interrupted or, if --duration is set, until it expires.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Colors and processing</title>
+<variablelist>
+
+<varlistentry>
+<term><option>--bg <replaceable>color</replaceable></option></term>
+<listitem><para>
+Background color of display (color name or hex). Partially transparent input
+will be blended with this color. Color names are based on those provided with
+X.Org. Defaults to black.
 </para></listitem>
 </varlistentry>
 
@@ -153,17 +332,6 @@ useful results.
 </varlistentry>
 
 <varlistentry>
-<term><option>-d, --duration <replaceable>seconds</replaceable></option></term>
-<listitem><para>
-Time to show each file, in seconds. Defaults to zero for still images and for
-animations when multiple files are specified. If a single animation is
-specified, defaults to infinite, or "inf". Animations will always be played
-through at least once, even if duration is e.g. zero. See the "Duration" section
-for more.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
 <term><option>--fg <replaceable>color</replaceable></option></term>
 <listitem><para>
 Foreground color of display (color name or hex). Together with the background
@@ -172,6 +340,61 @@ and none. Color names are based on those provided with X.Org. Defaults to
 white.
 </para></listitem>
 </varlistentry>
+
+<varlistentry>
+<term><option>--invert</option></term>
+<listitem><para>
+Invert video. For display with bright backgrounds in color modes 2 and
+none. Swaps --fg and --bg.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-p <replaceable>bool</replaceable>, --preprocess <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off
+otherwise. This enhances colors and contrast prior to conversion, which can be
+useful in low-color modes.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-t <replaceable>threshold</replaceable>, --threshold
+<replaceable>threshold</replaceable></option></term>
+<listitem><para>
+Threshold above which full transparency will be used [0.0 - 1.0]. Setting this
+to 0.0 will render a blank image, while a value of 1.0 will replace any
+transparency with the background color (configurable with --bg).
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Resource allocation</title>
+<variablelist>
+
+<varlistentry>
+<term><option>--threads <replaceable>num</replaceable></option></term>
+<listitem><para>
+Maximum number of CPU threads to use. If left unspecified or negative,
+this will equal available CPU cores.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-w <replaceable>num</replaceable>, --work <replaceable>num</replaceable></option></term>
+<listitem><para>
+How hard to work in terms of CPU and memory [1-9]. 1 is the cheapest, 9 is the
+most accurate. Defaults to 5.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>Extra options for symbol encoding</title>
+<variablelist>
 
 <varlistentry>
 <term><option>--fg-only</option></term>
@@ -191,30 +414,6 @@ Usage is similar to that of --symbols; see below.
 </varlistentry>
 
 <varlistentry>
-<term><option>--fit-width</option></term>
-<listitem><para>
-Fit images to the view's width, potentially exceeding its height.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--font-ratio <replaceable>width</replaceable>/<replaceable>height</replaceable></option></term>
-<listitem><para>
-Target font's width/height ratio. Can be specified as a real number or a
-fraction. Defaults to 1/2.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>-f, --format <replaceable>format</replaceable></option></term>
-<listitem><para>
-Set output format; one of [iterm, kitty, sixels, symbols]. The default is
-iterm, kitty or sixels if the connected terminal supports one of these,
-falling back to symbols ("ANSI art") otherwise.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
 <term><option>--glyph-file <replaceable>file</replaceable></option></term>
 <listitem><para>
 Load glyph information from file, which can be any font file supported by
@@ -227,173 +426,10 @@ specified multiple times.
 </varlistentry>
 
 <varlistentry>
-<term><option>-h, --help</option></term>
-<listitem><para>
-Show a brief help text.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--invert</option></term>
-<listitem><para>
-Invert video. For display with bright backgrounds in color modes 2 and
-none. Swaps --fg and --bg.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--margin-bottom <replaceable>num</replaceable></option></term>
-<listitem><para>
-When terminal size is detected, reserve at least this many rows at the bottom
-as a safety margin. Can be used to prevent images from scrolling out.
-Defaults to 1.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--margin-right <replaceable>num</replaceable></option></term>
-<listitem><para>
-When terminal size is detected, reserve at least this many columns on the
-right-hand side as a safety margin. Defaults to 0.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>-O <replaceable>num</replaceable>, --optimize <replaceable>num</replaceable></option></term>
-<listitem><para>
-Compress the output by using control sequences intelligently [0-9]. 0
-disables, 9 enables every available optimization. Defaults to 5, except
-for when used with "-c none", where it defaults to 0.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--passthrough <replaceable>mode</replaceable></option></term>
-<listitem><para>
-Graphics protocol passthrough [auto, none, screen, tmux]. Used to show pixel
-graphics from within multiplexers. Defaults to auto, which will enable
-passthrough if the Kitty terminal is detected along with one of the supported
-multiplexers. Other combinations must be enabled manually; use with the -f
-option to select the appropriate graphics protocol.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--polite <replaceable>bool</replaceable></option></term>
-<listitem><para>
-Polite mode [on, off]. Defaults to on. Turning this off may enhance presentation
-and prevent interference from other programs, but risks leaving the terminal in
-an altered state (rude).
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>-p <replaceable>bool</replaceable>, --preprocess <replaceable>bool</replaceable></option></term>
-<listitem><para>
-Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off
-otherwise. This enhances colors and contrast prior to conversion, which can be
-useful in low-color modes.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--relative <replaceable>bool</replaceable></option></term>
-<listitem><para>
-Use relative cursor positioning [on, off]. When on, control sequences will be
-used to position images relative to the cursor. When off, newlines will be used
-to separate rows instead for e.g. 'less -R' interop. Defaults to off.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--scale <replaceable>NUM</replaceable></option></term>
-<listitem><para>
-Scale image, respecting terminal's maximum dimensions. 1.0 approximates
-original pixel dimensions. Specify "max" to use all available space. Defaults
-to 1.0 for pixel graphics and 4.0 for symbols.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
-<listitem><para>
-Set maximum output image dimensions in columns and rows. By default this will
-be equal to the view size (see --view-size).
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--speed <replaceable>speed</replaceable></option></term>
-<listitem><para>
-Set the speed animations will play at. This can be either a unitless
-multiplier (fractions are allowed), or a real number followed by "fps"
-to apply a specific framerate.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--stretch</option></term>
-<listitem><para>
-Stretch image to fit output dimensions; ignore aspect. Implies --scale max.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
 <term><option>--symbols <replaceable>symbols</replaceable></option></term>
 <listitem><para>
 Specify character symbols to employ in final output. See below for full usage
 and a list of symbol classes.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--threads <replaceable>num</replaceable></option></term>
-<listitem><para>
-Maximum number of CPU threads to use. If left unspecified or negative,
-this will equal available CPU cores.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>-t <replaceable>threshold</replaceable>, --threshold
-<replaceable>threshold</replaceable></option></term>
-<listitem><para>
-Threshold above which full transparency will be used [0.0 - 1.0]. Setting this
-to 0.0 will render a blank image, while a value of 1.0 will replace any
-transparency with the background color (configurable with --bg).
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--version</option></term>
-<listitem><para>
-Show version, feature and copyright information.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--view-size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
-<listitem><para>
-Set the view size in columns and rows. By default this will be the size of your
-terminal, or 80x25 if size detection fails. If one dimension is omitted (by
-providing a size of e.g. 80x or x25), it will be set to a reasonable approximation
-of infinity.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>--watch</option></term>
-<listitem><para>
-Watch a single input file, redisplaying it whenever its contents change. Will run
-until manually interrupted or, if --duration is set, until it expires.
-</para></listitem>
-</varlistentry>
-
-<varlistentry>
-<term><option>-w <replaceable>num</replaceable>, --work <replaceable>num</replaceable></option></term>
-<listitem><para>
-How hard to work in terms of CPU and memory [1-9]. 1 is the cheapest, 9 is the
-most accurate. Defaults to 5.
 </para></listitem>
 </varlistentry>
 
