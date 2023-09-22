@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2022 Hans Petter Jansson
+/* Copyright (C) 2021-2023 Hans Petter Jansson
  *
- * This file is part of Chafa, a program that turns images into character art.
+ * This file is part of Chafa, a program that shows pictures on text terminals.
  *
  * Chafa is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
