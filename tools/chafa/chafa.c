@@ -129,6 +129,10 @@ typedef struct
     gboolean have_parking_row;
 
     ChafaTermInfo *term_info;
+    
+    gboolean output_utf_16_on_windows;
+    gchar * output_codepage;
+    
 }
 GlobalOptions;
 
@@ -219,6 +223,45 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
     return TRUE;
 }
 
+//static gboolean has_dom_been_written = FALSE;
+static gboolean
+safe_WriteConsoleW (HANDLE chd, const wchar_t *data, gsize len)
+{
+    gsize total_written = 0;
+
+    if (chd == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    while (total_written < len)
+    {
+        DWORD n_written = 0;
+
+        if (win32_stdout_is_file)
+        {
+            /* WriteFile() and fwrite() seem to work equally well despite various
+             * claims that the former does poorly in a UTF-8 environment. The
+             * resulting files look good in my tests, but note that catting them
+             * out with 'type' introduces lots of artefacts. */
+#if 0
+            if (!WriteFile (chd, data, (len - total_written)*2, &n_written, NULL))
+                return FALSE;
+#else
+            if ((n_written = fwrite (data, 2, len - total_written, stdout)) < 1)
+                return FALSE;
+#endif
+        }
+        else
+        {
+            if (!WriteConsoleW (chd, data, len - total_written, &n_written, NULL))
+                return FALSE;
+        }
+
+        data += n_written;
+        total_written += n_written;
+    }
+
+    return TRUE;
+}
 #endif
 
 static gboolean
@@ -226,52 +269,97 @@ write_to_stdout (gconstpointer buf, gsize len)
 {
     if (len == 0)
         return TRUE;
+    gsize converted_len;
+    gchar * converted_buf = g_convert(
+        buf, 
+        len,
+        #ifdef G_OS_WIN32
+            options.output_utf_16_on_windows?
+            "UTF-16LE":
+        #endif 
+            options.output_codepage,
+        "UTF-8",
+        NULL,
+        &converted_len,
+        NULL
+    );
 
 #ifdef G_OS_WIN32
     {
-        const gchar *p0, *p1, *end;
-        gsize total_written = 0;
-
-        /* In order for UTF-8 to be handled correctly, we need to use WriteConsoleA()
-         * on MS Windows. We also convert line feeds to DOS-style CRLF as we go. */
-
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
+        gsize total_written = 0;
+        if (options.output_utf_16_on_windows){
 
-        for (p0 = buf, end = p0 + len;
-             chd != INVALID_HANDLE_VALUE && total_written < len;
-             p0 = p1)
-        {
-            p1 = memchr (p0, '\n', end - p0);
-            if (!p1)
-                p1 = end;
-
-            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
-                break;
-
-            total_written += p1 - p0;
-
-            if (p1 != end)
+            /*
+             **/
+            converted_len /= 2;
+            const wchar_t *p0, *p1, *end;
+            for (p0 = (const wchar_t *) converted_buf, end = p0 + converted_len;
+                chd != INVALID_HANDLE_VALUE && total_written < converted_len;
+                p0 = p1)
             {
-                if (!safe_WriteConsoleA (chd, "\r\n", 2))
+                p1 = wmemchr (p0, L'\n', end - p0);
+                if (!p1)
+                    p1 = end;
+
+                if (!safe_WriteConsoleW (chd, p0, p1 - p0))
                     break;
 
-                p1++;
-                total_written += 1;
-            }
-        }
+                total_written += p1 - p0;
 
-        return total_written == len ? TRUE : FALSE;
+                if (p1 != end)
+                {
+                    if (!safe_WriteConsoleW (chd, L"\r\n", 2))
+                        break;
+
+                    p1++;
+                    total_written += 1;
+                }
+            }
+
+        } else {
+
+            /* In order for UTF-8 to be handled correctly, we need to use WriteConsoleA()
+             * on MS Windows. We also convert line feeds to DOS-style CRLF as we go. */
+
+            const gchar *p0, *p1, *end;
+            for (p0 = converted_buf, end = p0 + converted_len;
+                chd != INVALID_HANDLE_VALUE && total_written < converted_len;
+                p0 = p1)
+            {
+                p1 = memchr (p0, '\n', end - p0);
+                if (!p1)
+                    p1 = end;
+
+                if (!safe_WriteConsoleA (chd, p0, p1 - p0))
+                    break;
+
+                total_written += p1 - p0;
+
+                if (p1 != end)
+                {
+                    if (!safe_WriteConsoleA (chd, "\r\n", 2))
+                        break;
+
+                    p1++;
+                    total_written += 1;
+                }
+            }
+
+        }
+        return total_written == converted_len ? TRUE : FALSE;
     }
 #else
     {
         gsize total_written;
 
-        for (total_written = 0; total_written < len; )
+        for (total_written = 0; total_written < converted_len; )
         {
-            gsize n_written = fwrite (((const gchar *) buf) + total_written, 1,
-                                      len - total_written, stdout);
+
+            gsize n_written = fwrite (((const gchar *) converted_buf) + total_written, 1,
+                                      converted_len - total_written, stdout);
             total_written += n_written;
-            if (total_written < len && n_written == 0 && errno != EINTR)
+            if (total_written < converted_len && n_written == 0 && errno != EINTR)
                 return FALSE;
         }
     }
@@ -447,6 +535,9 @@ print_summary (void)
     "      --polite=BOOL  Polite mode [on, off]. Inhibits escape sequences that may\n"
     "                     confuse other programs. Defaults to off.\n"
 
+    "      --encoding=ENCODING  Set Output Encoding to any encoding supported by iconv\n"
+    "      --utf16             Windows only, output using UTF16 functions,\n"
+    "                          required for compatibility with older versions of Windows\n"
     "\nSize and layout:\n"
 
     "  -C, --center=BOOL  Center images horizontally in view [on, off]. Default off.\n"
@@ -1408,12 +1499,20 @@ tty_options_init (void)
                                  | DISABLE_NEWLINE_AUTO_RETURN))
                 win32_stdout_is_file = TRUE;
         }
+        if (options.output_codepage != NULL){
+            /* Set UTF-8 code page output */
+            SetConsoleOutputCP (65001);
 
-        /* Set UTF-8 code page output */
-        SetConsoleOutputCP (65001);
+            /* Set UTF-8 code page input, for good measure */
+            SetConsoleCP (65001);
+        }
+        if (
+            options.write_utf_16_on_windows && 
+            (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
 
-        /* Set UTF-8 code page input, for good measure */
-        SetConsoleCP (65001);
+        )
+            safe_WriteConsoleW (chd, L"\xfeff", 1);
+        
     }
 #endif
 
@@ -1673,6 +1772,7 @@ parse_options (int *argc, char **argv [])
         { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
         { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_CALLBACK, parse_duration_arg,    "Duration", NULL },
+        { "encoding",    '\0', 0, G_OPTION_ARG_STRING,   &options.output_codepage,        "Encoding", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
@@ -1696,6 +1796,7 @@ parse_options (int *argc, char **argv [])
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
+        { "utf16",       '\0', 0, G_OPTION_ARG_NONE, &options.output_utf_16_on_windows, "Use WriteConsoleW instead of WriteConsoleA", NULL},
         { "view-size",   '\0', 0, G_OPTION_ARG_CALLBACK, parse_view_size_arg,   "View size", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         /* Deprecated: Equivalent to --scale max */
@@ -1766,6 +1867,9 @@ parse_options (int *argc, char **argv [])
     options.file_duration_s = -1.0;  /* Unset */
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
+
+    options.output_codepage = NULL;
+    options.output_utf_16_on_windows = FALSE;
 
     if (!g_option_context_parse (context, argc, argv, &error))
     {
@@ -2074,6 +2178,16 @@ parse_options (int *argc, char **argv [])
 
     chafa_set_n_threads (options.n_threads);
 
+    if (options.output_codepage != NULL){
+        /* I don't know of a better way of checking for a valid codepage */
+        GIConv converter=g_iconv_open(options.output_codepage, "UTF-8");
+        if (result == -1) {
+            g_printerr ("conversion to '%s' not supported by iconv.\n", options.output_codepage);
+            goto out;
+        } else 
+            g_iconv_close(converter);
+    }
+    
     result = TRUE;
 
 out:
