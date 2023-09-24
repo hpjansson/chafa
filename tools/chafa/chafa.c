@@ -1500,7 +1500,7 @@ tty_options_init (void)
                                  | DISABLE_NEWLINE_AUTO_RETURN))
                 win32_stdout_is_file = TRUE;
         }
-        if (options.output_codepage != NULL){
+        if (options.output_codepage == NULL){
             /* Set UTF-8 code page output */
             SetConsoleOutputCP (65001);
 
