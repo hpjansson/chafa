@@ -49,6 +49,7 @@
 #ifdef G_OS_WIN32
 # ifdef HAVE_WINDOWS_H
 #  include <windows.h>
+#include <wchar.h>
 # endif
 # include <io.h>
 #endif
@@ -1507,7 +1508,7 @@ tty_options_init (void)
             SetConsoleCP (65001);
         }
         if (
-            options.write_utf_16_on_windows && 
+            options.output_utf_16_on_windows && 
             (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
 
         )
