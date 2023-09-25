@@ -229,7 +229,6 @@ static gboolean
 safe_WriteConsoleW (HANDLE chd, const wchar_t *data, gsize len)
 {
     gsize total_written = 0;
-
     if (chd == INVALID_HANDLE_VALUE)
         return FALSE;
 
@@ -270,20 +269,29 @@ write_to_stdout (gconstpointer buf, gsize len)
 {
     if (len == 0)
         return TRUE;
-    gsize converted_len;
-    gchar * converted_buf = g_convert(
-        buf, 
-        len,
-        #ifdef G_OS_WIN32
+    //gsize converted_len;
+    //const gchar * converted_buf;
+    #ifndef G_OS_WIN32
+    /*Make all utf16 checks compile time on non windows platforms*/
+    if (options.output_utf_16_on_windows) __builtin_unreachable();
+    //options.output_utf_16_on_windows = FALSE;
+    #endif
+    gsize tmp;
+    if (options.output_codepage!=NULL ||  options.output_utf_16_on_windows ){
+        buf = g_convert(
+            buf, 
+            len,
             options.output_utf_16_on_windows?
             "UTF-16LE":
-        #endif 
             options.output_codepage,
-        "UTF-8",
-        NULL,
-        &converted_len,
-        NULL
-    );
+            "UTF-8",
+            NULL,
+            &tmp,
+            NULL
+        );
+        len=tmp;
+    }
+    //g_printf("%p %p %s %d\n", buf, converted_buf,options.output_codepage, options.output_utf_16_on_windows);
 
 #ifdef G_OS_WIN32
     {
@@ -2188,7 +2196,10 @@ parse_options (int *argc, char **argv [])
         } else 
             g_iconv_close(converter);
     }
-    
+    #ifndef G_OS_WIN32
+    /*Force it to not output UTF16 when not Windows*/
+    options.output_utf_16_on_windows = FALSE;
+    #endif
     result = TRUE;
 
 out:
