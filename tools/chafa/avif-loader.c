@@ -83,9 +83,11 @@ maybe_decode_frame (AvifLoader *loader)
     if (loader->frame_is_decoded)
         return loader->frame_is_success;
 
+    loader->frame_is_success = FALSE;
+    rgb.pixels = NULL;
+
     avif_result = avifDecoderNextImage (loader->decoder);
-    loader->frame_is_success = (avif_result == AVIF_RESULT_OK ? TRUE : FALSE);
-    if (!loader->frame_is_success)
+    if (avif_result != AVIF_RESULT_OK)
         goto out;
 
     image = loader->decoder->image;
@@ -120,7 +122,14 @@ maybe_decode_frame (AvifLoader *loader)
                                  image->irot.angle,
                                  axis));
 
+    loader->frame_is_success = TRUE;
+
 out:
+    if (!loader->frame_is_success)
+    {
+        g_free (rgb.pixels);
+    }
+
     return loader->frame_is_success;
 }
 
@@ -249,8 +258,14 @@ avif_loader_get_frame_delay (AvifLoader *loader)
     g_return_val_if_fail (loader != NULL, 0);
 
     duration_s = loader->decoder->imageTiming.duration;
-    if (duration_s < 0.000001)
+
+    /* NaN or very small? */
+    if (duration_s != duration_s || duration_s < 0.000001)
         duration_s = 0.05;
+
+    /* Infinite or very big? Set frame duration to a bit more than a day's time. */
+    if (duration_s > 99999.0)
+        duration_s = 99999.0;
 
     return duration_s * 1000.0;
 }
