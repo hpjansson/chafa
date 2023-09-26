@@ -136,6 +136,11 @@ typedef struct
     
 }
 GlobalOptions;
+#ifdef G_OS_WIN32
+#define OUTPUT_UTF_16_ON_WINDOWS options.output_utf_16_on_windows
+#else
+#define OUTPUT_UTF_16_ON_WINDOWS FALSE
+#endif 
 
 typedef struct
 {
@@ -269,19 +274,15 @@ write_to_stdout (gconstpointer buf, gsize len)
 {
     if (len == 0)
         return TRUE;
-    //gsize converted_len;
-    //const gchar * converted_buf;
-    #ifndef G_OS_WIN32
-    /*Make all utf16 checks compile time on non windows platforms*/
-    if (options.output_utf_16_on_windows) __builtin_unreachable();
-    //options.output_utf_16_on_windows = FALSE;
-    #endif
-    gsize tmp;
-    if (options.output_codepage!=NULL ||  options.output_utf_16_on_windows ){
+     
+    gboolean did_convert = FALSE;
+    gboolean result = TRUE;
+    if (options.output_codepage!=NULL ||  OUTPUT_UTF_16_ON_WINDOWS ){
+        gsize tmp;
         buf = g_convert(
             buf, 
             len,
-            options.output_utf_16_on_windows?
+            OUTPUT_UTF_16_ON_WINDOWS?
             "UTF-16LE":
             options.output_codepage,
             "UTF-8",
@@ -290,9 +291,9 @@ write_to_stdout (gconstpointer buf, gsize len)
             NULL
         );
         len=tmp;
+        did_convert = TRUE;
     }
-    //g_printf("%p %p %s %d\n", buf, converted_buf,options.output_codepage, options.output_utf_16_on_windows);
-
+    
 #ifdef G_OS_WIN32
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
@@ -301,10 +302,10 @@ write_to_stdout (gconstpointer buf, gsize len)
 
             /*
              **/
-            converted_len /= 2;
+            len /= 2;
             const wchar_t *p0, *p1, *end;
-            for (p0 = (const wchar_t *) converted_buf, end = p0 + converted_len;
-                chd != INVALID_HANDLE_VALUE && total_written < converted_len;
+            for (p0 = (const wchar_t *) buf, end = p0 + len;
+                chd != INVALID_HANDLE_VALUE && total_written < len;
                 p0 = p1)
             {
                 p1 = wmemchr (p0, L'\n', end - p0);
@@ -332,8 +333,8 @@ write_to_stdout (gconstpointer buf, gsize len)
              * on MS Windows. We also convert line feeds to DOS-style CRLF as we go. */
 
             const gchar *p0, *p1, *end;
-            for (p0 = converted_buf, end = p0 + converted_len;
-                chd != INVALID_HANDLE_VALUE && total_written < converted_len;
+            for (p0 = buf, end = p0 + len;
+                chd != INVALID_HANDLE_VALUE && total_written < len;
                 p0 = p1)
             {
                 p1 = memchr (p0, '\n', end - p0);
@@ -356,25 +357,27 @@ write_to_stdout (gconstpointer buf, gsize len)
             }
 
         }
-        return total_written == converted_len ? TRUE : FALSE;
+        result = total_written == len ? TRUE : FALSE;
     }
 #else
     {
         gsize total_written;
 
-        for (total_written = 0; total_written < converted_len; )
+        for (total_written = 0; total_written < len; )
         {
 
-            gsize n_written = fwrite (((const gchar *) converted_buf) + total_written, 1,
-                                      converted_len - total_written, stdout);
+            gsize n_written = fwrite (((const gchar *) buf) + total_written, 1,
+                                      len - total_written, stdout);
             total_written += n_written;
-            if (total_written < converted_len && n_written == 0 && errno != EINTR)
-                return FALSE;
+            if (total_written < len && n_written == 0 && errno != EINTR)
+                result = FALSE;
         }
     }
 
-    return TRUE;
+
 #endif
+    if (did_convert) g_free((gchar *)buf);
+    return result;
 }
 
 static guchar
