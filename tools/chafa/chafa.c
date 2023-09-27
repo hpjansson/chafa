@@ -49,7 +49,6 @@
 #ifdef G_OS_WIN32
 # ifdef HAVE_WINDOWS_H
 #  include <windows.h>
-#include <wchar.h>
 # endif
 # include <io.h>
 #endif
@@ -190,7 +189,7 @@ interruptible_usleep (gdouble us)
  * different set of I/O functions. */
 static gboolean win32_stdout_is_file = FALSE;
 
-static gboolean
+gboolean
 safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 {
     gsize total_written = 0;
@@ -229,9 +228,8 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
     return TRUE;
 }
 
-//static gboolean has_dom_been_written = FALSE;
-static gboolean
-safe_WriteConsoleW (HANDLE chd, const wchar_t *data, gsize len)
+gboolean
+safe_WriteConsoleW (HANDLE chd, const guintchar2 *data, gsize len)
 {
     gsize total_written = 0;
     if (chd == INVALID_HANDLE_VALUE)
@@ -277,7 +275,7 @@ write_to_stdout (gconstpointer buf, gsize len)
      
     gboolean did_convert = FALSE;
     gboolean result = TRUE;
-    if (options.output_codepage!=NULL ||  OUTPUT_UTF_16_ON_WINDOWS ){
+    if (options.output_codepage!=NULL || OUTPUT_UTF_16_ON_WINDOWS ){
         gsize tmp;
         buf = g_convert(
             buf, 
@@ -298,64 +296,49 @@ write_to_stdout (gconstpointer buf, gsize len)
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
+        gboolean (*safe_WriteConsole)(HANDLE, void *, gsize);
+        gint stride;
+        void * newline;
+        /* We need to select whether to use the UTF-8 (Codepage 65001) or UTF-16 semantics */
         if (options.output_utf_16_on_windows){
 
-            /*
-             **/
-            len /= 2;
-            const wchar_t *p0, *p1, *end;
-            for (p0 = (const wchar_t *) buf, end = p0 + len;
-                chd != INVALID_HANDLE_VALUE && total_written < len;
-                p0 = p1)
-            {
-                p1 = wmemchr (p0, L'\n', end - p0);
-                if (!p1)
-                    p1 = end;
-
-                if (!safe_WriteConsoleW (chd, p0, p1 - p0))
-                    break;
-
-                total_written += p1 - p0;
-
-                if (p1 != end)
-                {
-                    if (!safe_WriteConsoleW (chd, L"\r\n", 2))
-                        break;
-
-                    p1++;
-                    total_written += 1;
-                }
-            }
-
+            stride=2;
+            safe_WriteConsole=safe_WriteConsoleW;
+            newline=L"\r\n";
         } else {
+            stride=1;
+            safe_WriteConsole=safe_WriteConsoleA;
+            newline="\r\n";
+        }
+        {
 
-            /* In order for UTF-8 to be handled correctly, we need to use WriteConsoleA()
-             * on MS Windows. We also convert line feeds to DOS-style CRLF as we go. */
-
+            /* on MS Windows. We convert line feeds to DOS-style CRLF as we go. */
             const gchar *p0, *p1, *end;
             for (p0 = buf, end = p0 + len;
                 chd != INVALID_HANDLE_VALUE && total_written < len;
                 p0 = p1)
             {
-                p1 = memchr (p0, '\n', end - p0);
+                if (options.output_utf_16_on_windows)
+                    p1 = wmemchr (p0, L'\n', end - p0);
+                else 
+                    p1 = memchr (p0, '\n', end - p0);
                 if (!p1)
                     p1 = end;
 
-                if (!safe_WriteConsoleA (chd, p0, p1 - p0))
+                if (!safe_WriteConsole (chd, p0, p1 - p0))
                     break;
 
-                total_written += p1 - p0;
+                total_written += (p1 - p0)*stride;
 
                 if (p1 != end)
                 {
-                    if (!safe_WriteConsoleA (chd, "\r\n", 2))
+                    if (!safe_WriteConsole (chd, newline, 2))
                         break;
 
-                    p1++;
-                    total_written += 1;
+                    p1 += stride;
+                    total_written += stride;
                 }
             }
-
         }
         result = total_written == len ? TRUE : FALSE;
     }
@@ -889,6 +872,14 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
              || !strcasecmp (value, "iterm2"))
     {
         pixel_mode = CHAFA_PIXEL_MODE_ITERM2;
+    }
+    else if (!strcasecmp (value, "conhost"))
+    {
+        #ifdef G_OS_WIN32
+        pixel_mode = CHAFA_PIXEL_MODE_CONHOST;
+        #else 
+        pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+        #endif
     }
     else
     {
@@ -1503,12 +1494,11 @@ tty_options_init (void)
 
         /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
         if (chd != INVALID_HANDLE_VALUE)
-        {
-            if (!SetConsoleMode (chd,
-                                 ENABLE_PROCESSED_OUTPUT
-                                 | ENABLE_WRAP_AT_EOL_OUTPUT
-                                 | ENABLE_VIRTUAL_TERMINAL_PROCESSING
-                                 | DISABLE_NEWLINE_AUTO_RETURN))
+        {   
+            DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
+            if (options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST) 
+                bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+            if (!SetConsoleMode (chd, bitmask))
                 win32_stdout_is_file = TRUE;
         }
         if (options.output_codepage == NULL){
@@ -2202,7 +2192,13 @@ parse_options (int *argc, char **argv [])
     #ifndef G_OS_WIN32
     /*Force it to not output UTF16 when not Windows*/
     options.output_utf_16_on_windows = FALSE;
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST &&
+            (options.mode == CHAFA_CANVAS_MODE_INDEXED_240 || 
+            options.mode == CHAFA_CANVAS_MODE_INDEXED_256 || 
+            options.mode == CHAFA_CANVAS_MODE_TRUECOLOR)
+    ) options.mode=CHAFA_CANVAS_MODE_INDEXED_16;
     #endif
+
     result = TRUE;
 
 out:
