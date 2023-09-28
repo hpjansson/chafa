@@ -1617,7 +1617,6 @@ retire_passthrough_workarounds_tmux (void)
     gboolean result = FALSE;
     gchar *standard_output = NULL;
     gchar *standard_error = NULL;
-    gchar **strings;
     gchar *cmd;
     gint wait_status = -1;
 
