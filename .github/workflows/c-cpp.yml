@@ -42,6 +42,7 @@ jobs:
         -O2 
         -fsanitize=address,undefined 
         -fsanitize-undefined-trap-on-error 
+        -fstack-protector-all 
         -Werror -Wno-error=unused 
         -Wno-error=unused-function 
         -Wno-error=unused-parameter 
