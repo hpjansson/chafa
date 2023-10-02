@@ -2392,22 +2392,20 @@ write_image (GString **gsa, gint dest_width)
     gboolean result = FALSE;
 
     left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
+    left_space = MAX (left_space, 0);
 
     /* Indent top left corner: Common for all modes */
 
-    if (left_space > 0)
+    if (options.relative && left_space > 0)
     {
-        if (options.relative)
-        {
-            p0 = chafa_term_info_emit_cursor_right (options.term_info, buf, left_space);
-            if (!write_to_stdout (buf, p0 - buf))
-                goto out;
-        }
-        else
-        {
-            if (!write_pad_spaces (left_space))
-                goto out;
-        }
+        p0 = chafa_term_info_emit_cursor_right (options.term_info, buf, left_space);
+        if (!write_to_stdout (buf, p0 - buf))
+            goto out;
+    }
+    else
+    {
+        if (!write_pad_spaces (left_space))
+            goto out;
     }
 
     if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
