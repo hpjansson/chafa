@@ -128,6 +128,10 @@ typedef struct
      * zero bottom margin. */
     gboolean have_parking_row;
 
+    /* Whether to perturb the options based on a seed read from the first
+     * input file. This improves coverage when fuzzing. */
+    gboolean fuzz_options;
+
     ChafaTermInfo *term_info;
 }
 GlobalOptions;
@@ -544,6 +548,125 @@ print_summary (void)
     g_print ("Usage:\n  %s [OPTION...] [FILE...]\n\n%s",
              options.executable_name,
              summary);
+}
+
+/* ---------------------------------- *
+ * Option fuzzing with --fuzz-options *
+ * ---------------------------------- */
+
+#define FUZZ_SEED_LEN 150
+
+static gboolean
+fuzz_seed_get_bool (gconstpointer seed, gint seed_len, gint *ofs)
+{
+    const guchar *seed_u8 = seed;
+ 
+    return seed_u8 [(*ofs)++ % seed_len] < 128 ? TRUE : FALSE;
+}
+
+static guint32
+fuzz_seed_get_u32 (gconstpointer seed, gint seed_len, gint *ofs)
+{
+    const guchar *seed_u8 = seed;
+    guint32 u32 = 0;
+    gint i;
+
+    for (i = 0; i < 4; i++)
+    {
+        u32 |= seed_u8 [(*ofs)++ % seed_len];
+        u32 <<= 8;
+    }
+
+    return u32;
+}
+
+static guint32
+fuzz_seed_get_uint (gconstpointer seed, gint seed_len, gint *ofs,
+                    guint32 min, guint32 max)
+{
+    guint32 u32;
+
+    u32 = fuzz_seed_get_u32 (seed, seed_len, ofs);
+    return min + (u32 % (max - min));
+}
+
+static gdouble
+fuzz_seed_get_double (gconstpointer seed, gint seed_len, gint *ofs,
+                      gdouble min, gdouble max)
+{
+    guint32 u32;
+
+    u32 = fuzz_seed_get_u32 (seed, seed_len, ofs);
+    return min + (u32 % 65536) * ((max - min) / 65535.0);
+}
+
+static void
+fuzz_options_with_seed (GlobalOptions *opt, gconstpointer seed, gint seed_len)
+{
+    gint ofs = 0;
+
+    if (seed_len < 1)
+        return;
+
+    /* Fuzz as many options as possible, but avoid those needed to control
+     * the fuzzing process -- e.g. n_threads, duration, animation speed, watch. */
+
+    opt->mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_CANVAS_MODE_MAX);
+    opt->color_extractor = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_COLOR_EXTRACTOR_MAX);
+    opt->color_space = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_COLOR_SPACE_MAX);
+    opt->dither_mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_DITHER_MODE_MAX);
+    opt->pixel_mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_PIXEL_MODE_MAX);
+    opt->dither_grain_width = 1 << (fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 4));
+    opt->dither_grain_height = 1 << (fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 4));
+    opt->dither_intensity = fuzz_seed_get_double (seed, seed_len, &ofs, 0.0, 10.0);
+    opt->clear = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->verbose = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->invert = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->preprocess = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->polite = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->stretch = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->zoom = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->fg_only = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->animate = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->center = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->relative = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->relative_set = TRUE;
+    opt->fit_to_width = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->view_width = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 32);
+    opt->view_height = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 32);
+    opt->width = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 32);
+    opt->height = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 32);
+    opt->cell_width = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 32);
+    opt->cell_height = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 32);
+    opt->margin_bottom = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 16);
+    opt->margin_right = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 16);
+    opt->scale = fuzz_seed_get_double (seed, seed_len, &ofs, 0.0, 10000.0);
+    opt->work_factor = fuzz_seed_get_uint (seed, seed_len, &ofs, 1, 10);
+    opt->optimization_level = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 10);
+    opt->passthrough = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_PASSTHROUGH_MAX);
+    opt->passthrough_set = TRUE;
+    opt->transparency_threshold = fuzz_seed_get_double (seed, seed_len, &ofs, 0.0, 1.0);
+    opt->transparency_threshold_set = TRUE;
+}
+
+static void
+fuzz_options_with_file (GlobalOptions *opt, const gchar *filename)
+{
+    FILE *fhd;
+    guchar seed [FUZZ_SEED_LEN];
+    gint seed_len;
+
+    fhd = fopen (filename, "rb");
+    if (!fhd)
+        return;
+
+    /* Read seed from the file's tail to avoid correlation with image
+     * format headers etc. */
+    fseek (fhd, -FUZZ_SEED_LEN, SEEK_END);
+    seed_len = fread (seed, sizeof (guchar), FUZZ_SEED_LEN, fhd);
+    fclose (fhd);
+
+    fuzz_options_with_seed (opt, seed, seed_len);
 }
 
 static gboolean
@@ -1678,6 +1801,7 @@ parse_options (int *argc, char **argv [])
         { "fit-width",   '\0', 0, G_OPTION_ARG_NONE,     &options.fit_to_width, "Fit to width", NULL },
         { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
+        { "fuzz-options", '\0', 0, G_OPTION_ARG_NONE,    &options.fuzz_options, "Fuzz the options", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "margin-bottom", '\0', 0, G_OPTION_ARG_INT,    &options.margin_bottom,  "Bottom margin", NULL },
@@ -1792,6 +1916,13 @@ parse_options (int *argc, char **argv [])
     {
         result = TRUE;
         goto out;
+    }
+
+    /* Optionally fuzz the options */
+
+    if (options.fuzz_options && *argc > 1)
+    {
+        fuzz_options_with_file (&options, (*argv) [1]);
     }
 
     /* Detect terminal geometry */
