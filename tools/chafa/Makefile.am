@@ -73,6 +73,9 @@ chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(
 
 if IS_WIN32_BUILD
 WIN32_LDADD = manifest.o
+chafa_SOURCES += \
+	character_canvas_to_conhost.c \
+	character_canvas_to_conhost.h
 manifest.o: $(srcdir)/manifest.rc
 	$(WINDRES) -o $@ $(srcdir)/manifest.rc
 else

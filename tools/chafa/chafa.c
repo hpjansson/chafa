@@ -49,6 +49,8 @@
 #ifdef G_OS_WIN32
 # ifdef HAVE_WINDOWS_H
 #  include <windows.h>
+#  include <wchar.h>
+#  include "character_canvas_to_conhost.h"
 # endif
 # include <io.h>
 #endif
@@ -229,7 +231,7 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 }
 
 gboolean
-safe_WriteConsoleW (HANDLE chd, const guintchar2 *data, gsize len)
+safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
 {
     gsize total_written = 0;
     if (chd == INVALID_HANDLE_VALUE)
@@ -270,11 +272,11 @@ safe_WriteConsoleW (HANDLE chd, const guintchar2 *data, gsize len)
 static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
-    if (len == 0)
-        return TRUE;
-     
     gboolean did_convert = FALSE;
     gboolean result = TRUE;
+
+    if (len == 0)
+        return TRUE;
     if (options.output_codepage!=NULL || OUTPUT_UTF_16_ON_WINDOWS ){
         gsize tmp;
         buf = g_convert(
@@ -296,12 +298,11 @@ write_to_stdout (gconstpointer buf, gsize len)
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
-        gboolean (*safe_WriteConsole)(HANDLE, void *, gsize);
+        gboolean (*safe_WriteConsole)(HANDLE, const void *, gsize);
         gint stride;
-        void * newline;
+        const void * newline;
         /* We need to select whether to use the UTF-8 (Codepage 65001) or UTF-16 semantics */
         if (options.output_utf_16_on_windows){
-
             stride=2;
             safe_WriteConsole=safe_WriteConsoleW;
             newline=L"\r\n";
@@ -313,13 +314,13 @@ write_to_stdout (gconstpointer buf, gsize len)
         {
 
             /* on MS Windows. We convert line feeds to DOS-style CRLF as we go. */
-            const gchar *p0, *p1, *end;
+            const gchar * p0, * p1, * end;
             for (p0 = buf, end = p0 + len;
                 chd != INVALID_HANDLE_VALUE && total_written < len;
                 p0 = p1)
             {
                 if (options.output_utf_16_on_windows)
-                    p1 = wmemchr (p0, L'\n', end - p0);
+                    p1 = (const gchar *) wmemchr ((const gunichar2 *) p0, L'\n', end - p0);
                 else 
                     p1 = memchr (p0, '\n', end - p0);
                 if (!p1)
@@ -1513,7 +1514,7 @@ tty_options_init (void)
             (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
 
         )
-            safe_WriteConsoleW (chd, L"\xfeff", 1);
+            safe_WriteConsoleW (chd, u"\xfeff", 1);
         
     }
 #endif
@@ -2015,7 +2016,8 @@ parse_options (int *argc, char **argv [])
 
     /* Now we've established the pixel mode, apply dependent defaults */
 
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS ||
+        options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
     {
         /* Character cell defaults */
 
@@ -2189,14 +2191,21 @@ parse_options (int *argc, char **argv [])
         } else 
             g_iconv_close(converter);
     }
-    #ifndef G_OS_WIN32
+    #ifdef G_OS_WIN32
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST){
+        
+        options.output_utf_16_on_windows = TRUE;
+        if (options.mode == CHAFA_CANVAS_MODE_INDEXED_240 || 
+        options.mode == CHAFA_CANVAS_MODE_INDEXED_256 || 
+        options.mode == CHAFA_CANVAS_MODE_TRUECOLOR )
+            options.mode=CHAFA_CANVAS_MODE_INDEXED_16;
+        
+    }
+
+    #else 
     /*Force it to not output UTF16 when not Windows*/
     options.output_utf_16_on_windows = FALSE;
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST &&
-            (options.mode == CHAFA_CANVAS_MODE_INDEXED_240 || 
-            options.mode == CHAFA_CANVAS_MODE_INDEXED_256 || 
-            options.mode == CHAFA_CANVAS_MODE_TRUECOLOR)
-    ) options.mode=CHAFA_CANVAS_MODE_INDEXED_16;
+
     #endif
 
     result = TRUE;
@@ -2449,7 +2458,7 @@ write_image (GString **gsa, gint dest_width)
 out:
     return result;
 }
-
+#if 0
 static GString **
 build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
                gint src_width, gint src_height, gint src_rowstride,
@@ -2504,7 +2513,6 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);
     chafa_canvas_set_image (canvas, image, placement_id);
-
     chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
     chafa_image_unref (image);
@@ -2513,7 +2521,74 @@ build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_canvas_config_unref (config);
     return gsa;
 }
+#endif
+static ChafaCanvasConfig *
+build_config (
+               gint dest_width, gint dest_height,
+               gboolean is_animation)
+{
+    ChafaCanvasConfig *config;
+    config = chafa_canvas_config_new ();
 
+    chafa_canvas_config_set_geometry (config, dest_width, dest_height);
+    chafa_canvas_config_set_canvas_mode (config, options.mode);
+    chafa_canvas_config_set_pixel_mode (config, options.pixel_mode);
+    chafa_canvas_config_set_dither_mode (config, options.dither_mode);
+    chafa_canvas_config_set_dither_grain_size (config, options.dither_grain_width, options.dither_grain_height);
+    chafa_canvas_config_set_dither_intensity (config, options.dither_intensity);
+    chafa_canvas_config_set_color_extractor (config, options.color_extractor);
+    chafa_canvas_config_set_color_space (config, options.color_space);
+    chafa_canvas_config_set_fg_color (config, options.fg_color);
+    chafa_canvas_config_set_bg_color (config, options.bg_color);
+    chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
+    chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
+    chafa_canvas_config_set_passthrough (config, options.passthrough);
+    if (is_animation
+        && options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        && !options.transparency_threshold_set)
+        chafa_canvas_config_set_transparency_threshold (config, 1.0f);
+    else if (options.transparency_threshold >= 0.0)
+        chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
+
+    if (options.cell_width > 0 && options.cell_height > 0)
+        chafa_canvas_config_set_cell_geometry (config, options.cell_width, options.cell_height);
+
+    chafa_canvas_config_set_symbol_map (config, options.symbol_map);
+    chafa_canvas_config_set_fill_symbol_map (config, options.fill_symbol_map);
+
+    /* Work switch takes values [1..9], we normalize to [0.0..1.0] to
+     * get the work factor. */
+    chafa_canvas_config_set_work_factor (config, (options.work_factor - 1) / 8.0f);
+
+    chafa_canvas_config_set_optimizations (config, options.optimizations);
+    return config;
+}
+static ChafaCanvas *
+build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
+               gint src_width, gint src_height, gint src_rowstride,
+               const ChafaCanvasConfig * config,
+               gint placement_id)
+{
+    ChafaFrame *frame;
+    ChafaImage *image;
+    ChafaCanvas *canvas;
+
+    canvas = chafa_canvas_new (config);
+    frame = chafa_frame_new_borrow ((gpointer) pixels, pixel_type,
+                                    src_width, src_height, src_rowstride);
+    image = chafa_image_new ();
+    chafa_image_set_frame (image, frame);
+    chafa_canvas_set_image (canvas, image, placement_id);
+    return canvas;
+    
+}
+/*
+void destroy_canvas(ChafaCanvas * canvas){
+    chafa_frame_unref (canvas->image->frame);
+    chafa_image_unref (canvas->image);
+    chafa_canvas_unref (canvas);
+}
+*/
 static void
 pixel_to_cell_dimensions (gdouble scale,
                           gint cell_width, gint cell_height,
@@ -2654,21 +2729,41 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                         options.font_ratio,
                                         options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
-
+            ChafaCanvasConfig * cfg = build_config(
+                dest_width,
+                dest_height,
+                is_animation
+            );
+            ChafaCanvas * canvas = build_canvas(
+                pixel_type, pixels,
+                src_width, src_height, src_rowstride, cfg,
+                placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1
+            );
+            /*
             gsa = build_strings (pixel_type, pixels,
-                                 src_width, src_height, src_rowstride,
-                                 dest_width, dest_height,
-                                 is_animation,
-                                 placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
+                                src_width, src_height, src_rowstride,
+                                dest_width, dest_height,
+                                is_animation,
+                                placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
+            */
+            if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST){
+                CONHOST_LINE * lines;
+                gsize s;
+                s=canvas_to_conhost(canvas, &lines);
+                write_image_conhost(lines, s);
+            } else {
+                chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
+                if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
+                    || !write_image (gsa, dest_width)
+                    || !write_image_epilogue (dest_width)
+                    || fflush (stdout) != 0){
+                        chafa_free_gstring_array (gsa);
+                        goto out;
+                    }
 
-            if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
-                || !write_image (gsa, dest_width)
-                || !write_image_epilogue (dest_width)
-                || fflush (stdout) != 0)
-                goto out;
-
-            chafa_free_gstring_array (gsa);
-
+                chafa_free_gstring_array (gsa);
+            }
+            chafa_canvas_unref(canvas);
             if (is_animation)
             {
                 /* Account for time spent converting and printing frame */
