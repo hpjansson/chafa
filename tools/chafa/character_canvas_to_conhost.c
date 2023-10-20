@@ -63,7 +63,7 @@ gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
 void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 	HANDLE outh;
 	COORD curpos;
-	outh = GetStdHandle(STD_OUTPUT_HANDLE)
+	outh = GetStdHandle(STD_OUTPUT_HANDLE);
 	{
 		CONSOLE_SCREEN_BUFFER_INFO bufinfo;
 		GetConsoleScreenBufferInfo(outh, &bufinfo);
