@@ -2897,7 +2897,10 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
                 chafa_free_gstring_array (gsa);
             }
+            chafa_frame_unref (canvas->image->frame);
+            chafa_image_unref (canvas->image);
             chafa_canvas_unref(canvas);
+            
             if (is_animation)
             {
                 /* Account for time spent converting and printing frame */
