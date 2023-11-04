@@ -57,7 +57,7 @@ jobs:
         
     - name: Running tests
       working-directory: ./build
-      run: make check
+      run: make check || { RET=$$?; find . -name "test-suite.log" -exec cat {} + ; exit $$RET; }
       
     - name: Installing chafa
       working-directory: ./build
