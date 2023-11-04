@@ -2714,13 +2714,7 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
     return canvas;
     
 }
-/*
-void destroy_canvas(ChafaCanvas * canvas){
-    chafa_frame_unref (canvas->image->frame);
-    chafa_image_unref (canvas->image);
-    chafa_canvas_unref (canvas);
-}
-*/
+
 static void
 pixel_to_cell_dimensions (gdouble scale,
                           gint cell_width, gint cell_height,
@@ -2900,6 +2894,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 chafa_free_gstring_array (gsa);
             }
             chafa_canvas_unref(canvas);
+            chafa_canvas_config_unref(cfg);
             if (is_animation)
             {
                 /* Account for time spent converting and printing frame */
