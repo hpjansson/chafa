@@ -2882,6 +2882,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 gsize s;
                 s=canvas_to_conhost(canvas, &lines);
                 write_image_conhost(lines, s);
+                destroy_lines(lines,s);
             } else 
             #endif
             {

@@ -89,3 +89,11 @@ void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 		
 	}
 }
+
+void destroy_lines(const CONHOST_LINE * lines, gsize s){
+	for (gsize i=0; i<s; i++){
+		g_free(lines[i].attributes);
+		g_free(lines[i].str);
+	}
+	g_free(lines);
+}
