@@ -91,7 +91,7 @@ void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 		WriteConsoleOutputAttribute(outh, line.attributes, line.length, curpos, &idc);
 		/* WriteConsoleOutput family doesn't scroll the screen
 	 	* so we have to make another API call to scroll */
-		WriteConsoleA(outh,"\n",1, NULL, NULL);
+		WriteConsoleA(outh,"\r\n",2, NULL, NULL);
 		curpos.Y++;
 		
 	}
