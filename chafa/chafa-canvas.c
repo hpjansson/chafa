@@ -1277,7 +1277,7 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
 
     destroy_pixel_canvas (canvas);
 
-    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || canvas->config.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
     {
         /* Symbol mode */
 
@@ -1386,7 +1386,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
 
     canvas->refs = 1;
 
-    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || canvas->config.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
     {
         /* ANSI art */
         canvas->width_pixels = canvas->config.width * CHAFA_SYMBOL_WIDTH_PIXELS;

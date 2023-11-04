@@ -233,7 +233,6 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 
     return TRUE;
 }
-
 gboolean
 safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
 {
@@ -244,7 +243,6 @@ safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
     while (total_written < len)
     {
         DWORD n_written = 0;
-
         if (win32_stdout_is_file)
         {
             /* WriteFile() and fwrite() seem to work equally well despite various
@@ -276,14 +274,15 @@ safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
 static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
-    gboolean did_convert = FALSE;
     gboolean result = TRUE;
-
+    char * converted_buf=NULL;
+    const char * chrptr=buf;
     if (len == 0)
         return TRUE;
     if (options.output_codepage!=NULL || OUTPUT_UTF_16_ON_WINDOWS ){
         gsize tmp;
-        buf = g_convert(
+        
+        chrptr=buf=converted_buf=g_convert(
             buf, 
             len,
             OUTPUT_UTF_16_ON_WINDOWS?
@@ -295,7 +294,6 @@ write_to_stdout (gconstpointer buf, gsize len)
             NULL
         );
         len=tmp;
-        did_convert = TRUE;
     }
     
 #ifdef G_OS_WIN32
@@ -323,17 +321,17 @@ write_to_stdout (gconstpointer buf, gsize len)
                 chd != INVALID_HANDLE_VALUE && total_written < len;
                 p0 = p1)
             {
-                if (options.output_utf_16_on_windows)
-                    p1 = (const gchar *) wmemchr ((const gunichar2 *) p0, L'\n', end - p0);
+                if (options.output_utf_16_on_windows) 
+                    p1 = (const gchar *) wmemchr ((const gunichar2 *) p0, L'\n', (end - p0)/2);
                 else 
                     p1 = memchr (p0, '\n', end - p0);
                 if (!p1)
                     p1 = end;
 
-                if (!safe_WriteConsole (chd, p0, p1 - p0))
+                if (!safe_WriteConsole (chd, p0, (p1 - p0)/stride))
                     break;
 
-                total_written += (p1 - p0)*stride;
+                total_written += p1 - p0;
 
                 if (p1 != end)
                 {
@@ -364,7 +362,7 @@ write_to_stdout (gconstpointer buf, gsize len)
 
 
 #endif
-    if (did_convert) g_free((gchar *)buf);
+    g_free(converted_buf);
     return result;
 }
 
@@ -518,7 +516,7 @@ print_summary (void)
 
     "\nOutput encoding:\n"
 
-    "  -f, --format=FORMAT  Set output format; one of [iterm, kitty, sixels,\n"
+    "  -f, --format=FORMAT  Set output format; one of [conhost,iterm, kitty, sixels,\n"
     "                     symbols]. Iterm, kitty and sixels yield much higher\n"
     "                     quality but enjoy limited support. Symbols mode yields\n"
     "                     beautiful character art.\n"
@@ -1622,22 +1620,29 @@ tty_options_init (void)
             DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
             if (options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST) 
                 bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
-            if (!SetConsoleMode (chd, bitmask))
-                win32_stdout_is_file = TRUE;
+            if (!SetConsoleMode (chd, bitmask) ){
+                if (GetLastError() == ERROR_INVALID_HANDLE)
+                    win32_stdout_is_file = TRUE;
+                else 
+                    /* Compatibility with older Windowses */
+                    SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+                
+            }
+            
         }
-        if (options.output_codepage == NULL){
+        if (!options.output_utf_16_on_windows && options.output_codepage == NULL){
             /* Set UTF-8 code page output */
             SetConsoleOutputCP (65001);
 
             /* Set UTF-8 code page input, for good measure */
             SetConsoleCP (65001);
         }
-        if (
+        
+        if (win32_stdout_is_file &&
             options.output_utf_16_on_windows && 
             (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
 
-        )
-            safe_WriteConsoleW (chd, u"\xfeff", 1);
+        ) safe_WriteConsoleW (chd, u"\xfeff", 1);
         
     }
 #endif
@@ -1659,7 +1664,7 @@ tty_options_init (void)
         }
 #endif
 
-        if (options.mode != CHAFA_CANVAS_MODE_FGBG)
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG && options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST)
         {
             p0 = chafa_term_info_emit_disable_cursor (options.term_info, buf);
             write_to_stdout (buf, p0 - buf);
@@ -1686,7 +1691,7 @@ tty_options_deinit (void)
 
     if (!options.polite)
     {
-        if (options.mode != CHAFA_CANVAS_MODE_FGBG)
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG && options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST)
         {
             gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
             gchar *p0;
@@ -2329,13 +2334,11 @@ parse_options (int *argc, char **argv [])
         options.mode == CHAFA_CANVAS_MODE_INDEXED_256 || 
         options.mode == CHAFA_CANVAS_MODE_TRUECOLOR )
             options.mode=CHAFA_CANVAS_MODE_INDEXED_16;
-        
     }
 
     #else 
     /*Force it to not output UTF16 when not Windows*/
     options.output_utf_16_on_windows = FALSE;
-
     #endif
 
     result = TRUE;
@@ -3054,7 +3057,6 @@ int
 main (int argc, char *argv [])
 {
     int ret;
-
     proc_init ();
 
     if (!parse_options (&argc, &argv))

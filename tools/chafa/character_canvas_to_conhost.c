@@ -18,17 +18,18 @@ static gsize unichar_to_utf16(gunichar c, gunichar2 * str){
 
 #define FOREGROUND_ALL FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
 gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
-	
 	gint width, height;
 	ChafaCanvasConfig * config;
 	ChafaCanvasMode canvas_mode;
-	
 
 	config = chafa_canvas_peek_config(canvas);
 	canvas_mode = chafa_canvas_config_get_canvas_mode(config);
 	chafa_canvas_config_get_geometry(config, &width, &height);
 	(*lines)=g_malloc(height*sizeof(CONHOST_LINE));
-
+	static const gchar color_lut[16] = {
+		0,4,2,6,1,5,3,7,
+		8,12,10,14,9,13,11,15
+	};
 	for (int y=0; y<height; y++){
 		CONHOST_LINE * const line = (*lines)+y;
 		*line=(CONHOST_LINE) {
@@ -46,13 +47,19 @@ gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
 				line->str[line->utf16_string_length++]=*utf16_codes;
 			if (s==2)
 				line->str[line->utf16_string_length++]=utf16_codes[1];
-			if (canvas_mode != CHAFA_CANVAS_MODE_FGBG){
+
+			if (canvas_mode == CHAFA_CANVAS_MODE_FGBG)
+				line->attributes[x]=FOREGROUND_ALL;
+			else{
 				gint fg_out, bg_out;
 				chafa_canvas_get_raw_colors_at(canvas,x,y,&fg_out, &bg_out);
 				if (canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG) 
-					line->attributes[x]=bg_out?COMMON_LVB_REVERSE_VIDEO|FOREGROUND_ALL:FOREGROUND_ALL;	
-				else 
+					line->attributes[x]=bg_out?FOREGROUND_ALL:COMMON_LVB_REVERSE_VIDEO|FOREGROUND_ALL;	
+				else {
+					fg_out=color_lut[fg_out];
+					bg_out=color_lut[bg_out];
 					line->attributes[x]=(bg_out<<4)|fg_out;
+				}
 				
 			}
 		}
@@ -63,6 +70,7 @@ gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
 void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 	HANDLE outh;
 	COORD curpos;
+	DWORD idc;
 	outh = GetStdHandle(STD_OUTPUT_HANDLE);
 	{
 		CONSOLE_SCREEN_BUFFER_INFO bufinfo;
@@ -72,12 +80,12 @@ void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 	
 	for (gsize y=0 ;y<s ; y++){
 		const CONHOST_LINE line = lines[y];
-		WriteConsoleOutputCharacterW(outh, line.str, line.utf16_string_length, curpos,NULL);
-		WriteConsoleOutputAttribute(outh, line.attributes, line.length, curpos, NULL);
+		WriteConsoleOutputCharacterW(outh, line.str, line.utf16_string_length, curpos,&idc);
+		WriteConsoleOutputAttribute(outh, line.attributes, line.length, curpos, &idc);
+		/* WriteConsoleOutput family doesn't scroll the screen
+	 	* so we have to make another API call to scroll */
+		WriteConsoleA(outh,"\n",1, NULL, NULL);
 		curpos.Y++;
 		
 	}
-	/* WriteConsoleOutput family doesn't scroll the screen
-	 * so we have to make another API call to scroll */
-	SetConsoleCursorPosition(outh, curpos);
 }
