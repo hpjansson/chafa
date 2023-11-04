@@ -2709,6 +2709,8 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);
     chafa_canvas_set_image (canvas, image, placement_id);
+    chafa_image_unref (image);
+    chafa_frame_unref (frame);
     return canvas;
     
 }
