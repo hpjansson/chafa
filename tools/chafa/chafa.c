@@ -276,13 +276,12 @@ write_to_stdout (gconstpointer buf, gsize len)
 {
     gboolean result = TRUE;
     char * converted_buf=NULL;
-    const char * chrptr=buf;
     if (len == 0)
         return TRUE;
     if (options.output_codepage!=NULL || OUTPUT_UTF_16_ON_WINDOWS ){
         gsize tmp;
         
-        chrptr=buf=converted_buf=g_convert(
+        buf=converted_buf=g_convert(
             buf, 
             len,
             OUTPUT_UTF_16_ON_WINDOWS?
@@ -2877,12 +2876,15 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                 is_animation,
                                 placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
             */
+            #ifdef G_OS_WIN32
             if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST){
                 CONHOST_LINE * lines;
                 gsize s;
                 s=canvas_to_conhost(canvas, &lines);
                 write_image_conhost(lines, s);
-            } else {
+            } else 
+            #endif
+            {
                 chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
                 if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                     || !write_image (gsa, dest_width)
