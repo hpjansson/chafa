@@ -22,6 +22,12 @@ gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
 	ChafaCanvasConfig * config;
 	ChafaCanvasMode canvas_mode;
 
+	if (
+		canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240 ||
+		canvas_mode == CHAFA_CANVAS_MODE_INDEXED_256 ||
+		canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR 
+	) return (gsize) -1;
+
 	config = chafa_canvas_peek_config(canvas);
 	canvas_mode = chafa_canvas_config_get_canvas_mode(config);
 	chafa_canvas_config_get_geometry(config, &width, &height);
