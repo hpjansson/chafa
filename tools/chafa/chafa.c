@@ -189,80 +189,7 @@ interruptible_usleep (gdouble us)
  * different set of I/O functions. */
 static gboolean win32_stdout_is_file = FALSE;
 
-gboolean
-safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
-{
-    gsize total_written = 0;
 
-    if (chd == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    while (total_written < len)
-    {
-        DWORD n_written = 0;
-
-        if (win32_stdout_is_file)
-        {
-            /* WriteFile() and fwrite() seem to work equally well despite various
-             * claims that the former does poorly in a UTF-8 environment. The
-             * resulting files look good in my tests, but note that catting them
-             * out with 'type' introduces lots of artefacts. */
-#if 0
-            if (!WriteFile (chd, data, len - total_written, &n_written, NULL))
-                return FALSE;
-#else
-            if ((n_written = fwrite (data, 1, len - total_written, stdout)) < 1)
-                return FALSE;
-#endif
-        }
-        else
-        {
-            if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
-                return FALSE;
-        }
-
-        data += n_written;
-        total_written += n_written;
-    }
-
-    return TRUE;
-}
-gboolean
-safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
-{
-    gsize total_written = 0;
-    if (chd == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    while (total_written < len)
-    {
-        DWORD n_written = 0;
-        if (win32_stdout_is_file)
-        {
-            /* WriteFile() and fwrite() seem to work equally well despite various
-             * claims that the former does poorly in a UTF-8 environment. The
-             * resulting files look good in my tests, but note that catting them
-             * out with 'type' introduces lots of artefacts. */
-#if 0
-            if (!WriteFile (chd, data, (len - total_written)*2, &n_written, NULL))
-                return FALSE;
-#else
-            if ((n_written = fwrite (data, 2, len - total_written, stdout)) < 1)
-                return FALSE;
-#endif
-        }
-        else
-        {
-            if (!WriteConsoleW (chd, data, len - total_written, &n_written, NULL))
-                return FALSE;
-        }
-
-        data += n_written;
-        total_written += n_written;
-    }
-
-    return TRUE;
-}
 #endif
 
 static gboolean
@@ -275,7 +202,7 @@ write_to_stdout (gconstpointer buf, gsize len)
 #ifdef G_OS_WIN32
     if (options.output_utf_16_on_windows){
         gsize tmp;   
-        buf=converted_buf=g_convert(
+        buf=converted_buf=g_convert (
             buf, 
             len,
             "UTF-16LE",
@@ -289,7 +216,7 @@ write_to_stdout (gconstpointer buf, gsize len)
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
-        gboolean (*safe_WriteConsole)(HANDLE, const void *, gsize);
+        gboolean (*safe_WriteConsole) (HANDLE, const void *, gsize);
         gint stride;
         const void * newline;
         /* We need to select whether to use the UTF-8 (Codepage 65001) or UTF-16 semantics */
@@ -351,7 +278,7 @@ write_to_stdout (gconstpointer buf, gsize len)
 
 
 #endif
-    g_free(converted_buf);
+    if (converted_buf) g_free (converted_buf);
     return result;
 }
 
@@ -985,9 +912,9 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     }
     else if (!strcasecmp (value, "conhost"))
     {
-        #ifdef G_OS_WIN32
+#ifdef G_OS_WIN32
         options.is_conhost_mode=true;
-        #endif 
+#endif 
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
         
     }
@@ -2302,7 +2229,7 @@ parse_options (int *argc, char **argv [])
 
     chafa_set_n_threads (options.n_threads);
 
-    #ifdef G_OS_WIN32
+#ifdef G_OS_WIN32
     if (options.is_conhost_mode){
         
         options.output_utf_16_on_windows = TRUE;
@@ -2312,11 +2239,11 @@ parse_options (int *argc, char **argv [])
             options.mode=CHAFA_CANVAS_MODE_INDEXED_16;
     }
 
-    #else 
+#else 
     /*Force it to not output UTF16 when not Windows*/
     options.output_utf_16_on_windows = FALSE;
     options.is_conhost_mode = FALSE;
-    #endif
+#endif
 
     result = TRUE;
 
@@ -2566,70 +2493,7 @@ write_image (GString **gsa, gint dest_width)
 out:
     return result;
 }
-#if 0
-static GString **
-build_strings (ChafaPixelType pixel_type, const guint8 *pixels,
-               gint src_width, gint src_height, gint src_rowstride,
-               gint dest_width, gint dest_height,
-               gboolean is_animation,
-               gint placement_id)
-{
-    ChafaCanvasConfig *config;
-    ChafaCanvas *canvas;
-    ChafaFrame *frame;
-    ChafaImage *image;
-    GString **gsa;
 
-    config = chafa_canvas_config_new ();
-
-    chafa_canvas_config_set_geometry (config, dest_width, dest_height);
-    chafa_canvas_config_set_canvas_mode (config, options.mode);
-    chafa_canvas_config_set_pixel_mode (config, options.pixel_mode);
-    chafa_canvas_config_set_dither_mode (config, options.dither_mode);
-    chafa_canvas_config_set_dither_grain_size (config, options.dither_grain_width, options.dither_grain_height);
-    chafa_canvas_config_set_dither_intensity (config, options.dither_intensity);
-    chafa_canvas_config_set_color_extractor (config, options.color_extractor);
-    chafa_canvas_config_set_color_space (config, options.color_space);
-    chafa_canvas_config_set_fg_color (config, options.fg_color);
-    chafa_canvas_config_set_bg_color (config, options.bg_color);
-    chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
-    chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
-    chafa_canvas_config_set_passthrough (config, options.passthrough);
-
-    if (is_animation
-        && options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-        && !options.transparency_threshold_set)
-        chafa_canvas_config_set_transparency_threshold (config, 1.0f);
-    else if (options.transparency_threshold >= 0.0)
-        chafa_canvas_config_set_transparency_threshold (config, options.transparency_threshold);
-
-    if (options.cell_width > 0 && options.cell_height > 0)
-        chafa_canvas_config_set_cell_geometry (config, options.cell_width, options.cell_height);
-
-    chafa_canvas_config_set_symbol_map (config, options.symbol_map);
-    chafa_canvas_config_set_fill_symbol_map (config, options.fill_symbol_map);
-
-    /* Work switch takes values [1..9], we normalize to [0.0..1.0] to
-     * get the work factor. */
-    chafa_canvas_config_set_work_factor (config, (options.work_factor - 1) / 8.0f);
-
-    chafa_canvas_config_set_optimizations (config, options.optimizations);
-
-    canvas = chafa_canvas_new (config);
-    frame = chafa_frame_new_borrow ((gpointer) pixels, pixel_type,
-                                    src_width, src_height, src_rowstride);
-    image = chafa_image_new ();
-    chafa_image_set_frame (image, frame);
-    chafa_canvas_set_image (canvas, image, placement_id);
-    chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
-
-    chafa_image_unref (image);
-    chafa_frame_unref (frame);
-    chafa_canvas_unref (canvas);
-    chafa_canvas_config_unref (config);
-    return gsa;
-}
-#endif
 static ChafaCanvasConfig *
 build_config (
                gint dest_width, gint dest_height,
@@ -2833,32 +2697,26 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                         options.font_ratio,
                                         options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
-            ChafaCanvasConfig * cfg = build_config(
+            ChafaCanvasConfig * cfg = build_config (
                 dest_width,
                 dest_height,
                 is_animation
             );
-            ChafaCanvas * canvas = build_canvas(
+            ChafaCanvas * canvas = build_canvas (
                 pixel_type, pixels,
                 src_width, src_height, src_rowstride, cfg,
                 placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1
             );
-            /*
-            gsa = build_strings (pixel_type, pixels,
-                                src_width, src_height, src_rowstride,
-                                dest_width, dest_height,
-                                is_animation,
-                                placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
-            */
-            #ifdef G_OS_WIN32
+
+#ifdef G_OS_WIN32
             if (options.is_conhost_mode){
                 ConhostRow * lines;
                 gsize s;
-                s=canvas_to_conhost(canvas, &lines);
-                write_image_conhost(lines, s);
-                destroy_lines(lines,s);
+                s=canvas_to_conhost (canvas, &lines);
+                write_image_conhost (lines, s);
+                destroy_lines (lines,s);
             } else 
-            #endif
+#endif
             {
                 chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
                 if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
@@ -2871,8 +2729,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
                 chafa_free_gstring_array (gsa);
             }
-            chafa_canvas_unref(canvas);
-            chafa_canvas_config_unref(cfg);
+            chafa_canvas_unref (canvas);
+            chafa_canvas_config_unref (cfg);
             if (is_animation)
             {
                 /* Account for time spent converting and printing frame */
