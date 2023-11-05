@@ -183,26 +183,19 @@ interruptible_usleep (gdouble us)
     }
 }
 
-#ifdef G_OS_WIN32
 
-/* We must determine if stdout is redirected to a file, and if so, use a
- * different set of I/O functions. */
-static gboolean win32_stdout_is_file = FALSE;
-
-
-#endif
 
 static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
     gboolean result = TRUE;
-    char * converted_buf=NULL;
+    char * converted_buf = NULL;
     if (len == 0)
         return TRUE;
 #ifdef G_OS_WIN32
     if (options.output_utf_16_on_windows){
         gsize tmp;   
-        buf=converted_buf=g_convert (
+        buf = converted_buf = g_convert (
             buf, 
             len,
             "UTF-16LE",
@@ -211,7 +204,7 @@ write_to_stdout (gconstpointer buf, gsize len)
             &tmp,
             NULL
         );
-        len=tmp;
+        len = tmp;
     }
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
@@ -221,13 +214,13 @@ write_to_stdout (gconstpointer buf, gsize len)
         const void * newline;
         /* We need to select whether to use the UTF-8 (Codepage 65001) or UTF-16 semantics */
         if (options.output_utf_16_on_windows){
-            stride=2;
-            safe_WriteConsole=safe_WriteConsoleW;
-            newline=L"\r\n";
+            stride = 2;
+            safe_WriteConsole = safe_WriteConsoleW;
+            newline = L"\r\n";
         } else {
-            stride=1;
-            safe_WriteConsole=safe_WriteConsoleA;
-            newline="\r\n";
+            stride = 1;
+            safe_WriteConsole = safe_WriteConsoleA;
+            newline = "\r\n";
         }
         {
 
@@ -913,7 +906,7 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else if (!strcasecmp (value, "conhost"))
     {
 #ifdef G_OS_WIN32
-        options.is_conhost_mode=true;
+        options.is_conhost_mode = TRUE;
 #endif 
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
         
@@ -1914,7 +1907,7 @@ parse_options (int *argc, char **argv [])
     options.anim_speed_multiplier = 1.0;
 
     options.output_utf_16_on_windows = FALSE;
-    options.is_conhost_mode=FALSE;
+    options.is_conhost_mode = FALSE;
     if (!g_option_context_parse (context, argc, argv, &error))
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);

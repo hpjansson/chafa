@@ -6,12 +6,12 @@ unichar_to_utf16 (gunichar c, gunichar2 * str){
         (c<0xe000 && c>=0xd800) ||
         (c%0x10000 >= 0xfffe)) return 0;
     if (c<0x10000){
-        *str=(gunichar2)c;
+        *str = (gunichar2)c;
         return 1;
     } else {
         const gunichar temp=c-0x10000;
-        str[0]=(temp>>10)+0xd800;
-        str[1]=(temp&0x3ff)+0xdc00;
+        str[0] = (temp>>10)+0xd800;
+        str[1] = (temp&0x3ff)+0xdc00;
         return 2;
     }
 }
@@ -21,7 +21,7 @@ unichar_to_utf16 (gunichar c, gunichar2 * str){
 gsize
 canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines){
     gint width, height;
-    ChafaCanvasConfig * config;
+    const ChafaCanvasConfig * config;
     ChafaCanvasMode canvas_mode;
 
 
@@ -34,28 +34,28 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines){
         canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR 
     ) return (gsize) -1;
     chafa_canvas_config_get_geometry (config, &width, &height);
-    (*lines)=g_malloc (height*sizeof(ConhostRow));
+    (*lines) = g_malloc (height*sizeof(ConhostRow));
     static const gchar color_lut[16] = {
         0,4,2,6,1,5,3,7,
         8,12,10,14,9,13,11,15
     };
-    for (int y=0; y<height; y++){
+    for (gint y = 0; y<height; y++){
         ConhostRow * const line = (*lines)+y;
         *line=(ConhostRow) {
-            .attributes=g_malloc (width*sizeof(attribute)),
-            .str=g_malloc (width*sizeof(gunichar2)*2),
-            .length=width,
-            .utf16_string_length=0
+            .attributes = g_malloc (width*sizeof(attribute)),
+            .str = g_malloc (width*sizeof(gunichar2)*2),
+            .length = width,
+            .utf16_string_length = 0
         };
         
         for (int x=0; x<width; x++){
-            gunichar c=chafa_canvas_get_char_at (canvas,x,y);
+            gunichar c = chafa_canvas_get_char_at (canvas,x,y);
             gunichar2 utf16_codes[2];
-            gsize s=unichar_to_utf16 (c, utf16_codes);
+            gsize s = unichar_to_utf16 (c, utf16_codes);
             if (s>0)
-                line->str[line->utf16_string_length++]=*utf16_codes;
+                line->str[line->utf16_string_length++] = *utf16_codes;
             if (s==2)
-                line->str[line->utf16_string_length++]=utf16_codes[1];
+                line->str[line->utf16_string_length++] = utf16_codes[1];
 
             if (canvas_mode == CHAFA_CANVAS_MODE_FGBG)
                 line->attributes[x]=FOREGROUND_ALL;
@@ -63,11 +63,11 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines){
                 gint fg_out, bg_out;
                 chafa_canvas_get_raw_colors_at (canvas,x,y,&fg_out, &bg_out);
                 if (canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG) 
-                    line->attributes[x]=bg_out?FOREGROUND_ALL:COMMON_LVB_REVERSE_VIDEO|FOREGROUND_ALL;	
+                    line->attributes[x] = bg_out?FOREGROUND_ALL:COMMON_LVB_REVERSE_VIDEO|FOREGROUND_ALL;	
                 else {
                     fg_out=color_lut[fg_out];
                     bg_out=color_lut[bg_out];
-                    line->attributes[x]=(bg_out<<4)|fg_out;
+                    line->attributes[x] = (bg_out<<4)|fg_out;
                 }
                 
             }
@@ -109,6 +109,8 @@ destroy_lines (ConhostRow * lines, gsize s){
     g_free (lines);
 }
 
+#include <stdio.h>
+gboolean win32_stdout_is_file = FALSE;
 gboolean
 safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 {
