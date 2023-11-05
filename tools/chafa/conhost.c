@@ -1,4 +1,4 @@
-#include "character_canvas_to_conhost.h"
+#include "conhost.h"
 
 static gsize unichar_to_utf16(gunichar c, gunichar2 * str){
 	if (c>=0x110000 ||
@@ -17,7 +17,7 @@ static gsize unichar_to_utf16(gunichar c, gunichar2 * str){
 
 
 #define FOREGROUND_ALL FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
-gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
+gsize canvas_to_conhost(ChafaCanvas * canvas, ConhostRow ** lines){
 	gint width, height;
 	ChafaCanvasConfig * config;
 	ChafaCanvasMode canvas_mode;
@@ -32,14 +32,14 @@ gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
 		canvas_mode == CHAFA_CANVAS_MODE_TRUECOLOR 
 	) return (gsize) -1;
 	chafa_canvas_config_get_geometry(config, &width, &height);
-	(*lines)=g_malloc(height*sizeof(CONHOST_LINE));
+	(*lines)=g_malloc(height*sizeof(ConhostRow));
 	static const gchar color_lut[16] = {
 		0,4,2,6,1,5,3,7,
 		8,12,10,14,9,13,11,15
 	};
 	for (int y=0; y<height; y++){
-		CONHOST_LINE * const line = (*lines)+y;
-		*line=(CONHOST_LINE) {
+		ConhostRow * const line = (*lines)+y;
+		*line=(ConhostRow) {
 			.attributes=g_malloc(width*sizeof(attribute)),
 			.str=g_malloc(width*sizeof(gunichar2)*2),
 			.length=width,
@@ -74,7 +74,7 @@ gsize canvas_to_conhost(ChafaCanvas * canvas, CONHOST_LINE ** lines){
 	}
 	return height;
 }
-void write_image_conhost(const CONHOST_LINE * lines, gsize s){
+void write_image_conhost(const ConhostRow * lines, gsize s){
 	HANDLE outh;
 	COORD curpos;
 	DWORD idc;
@@ -86,7 +86,7 @@ void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 	}
 	
 	for (gsize y=0 ;y<s ; y++){
-		const CONHOST_LINE line = lines[y];
+		const ConhostRow line = lines[y];
 		WriteConsoleOutputCharacterW(outh, line.str, line.utf16_string_length, curpos,&idc);
 		WriteConsoleOutputAttribute(outh, line.attributes, line.length, curpos, &idc);
 		/* WriteConsoleOutput family doesn't scroll the screen
@@ -97,7 +97,7 @@ void write_image_conhost(const CONHOST_LINE * lines, gsize s){
 	}
 }
 
-void destroy_lines(CONHOST_LINE * lines, gsize s){
+void destroy_lines(ConhostRow * lines, gsize s){
 	for (gsize i=0; i<s; i++){
 		g_free(lines[i].attributes);
 		g_free(lines[i].str);

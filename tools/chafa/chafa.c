@@ -50,7 +50,7 @@
 # ifdef HAVE_WINDOWS_H
 #  include <windows.h>
 #  include <wchar.h>
-#  include "character_canvas_to_conhost.h"
+#  include "conhost.h"
 # endif
 # include <io.h>
 #endif
@@ -137,7 +137,7 @@ typedef struct
     ChafaTermInfo *term_info;
     
     gboolean output_utf_16_on_windows;
-    
+    gboolean is_conhost_mode;
 }
 GlobalOptions;
 
@@ -986,10 +986,10 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else if (!strcasecmp (value, "conhost"))
     {
         #ifdef G_OS_WIN32
-        pixel_mode = CHAFA_PIXEL_MODE_CONHOST;
-        #else 
+        options.is_conhost_mode=true;
+        #endif 
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-        #endif
+        
     }
     else
     {
@@ -1606,7 +1606,7 @@ tty_options_init (void)
         if (chd != INVALID_HANDLE_VALUE)
         {   
             DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-            if (options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST) 
+            if (!options.is_conhost_mode) 
                 bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
             if (!SetConsoleMode (chd, bitmask) ){
                 if (GetLastError() == ERROR_INVALID_HANDLE)
@@ -1628,7 +1628,7 @@ tty_options_init (void)
         
         if (win32_stdout_is_file &&
             options.output_utf_16_on_windows && 
-            (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS || options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
+            (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
 
         ) safe_WriteConsoleW (chd, u"\xfeff", 1);
         
@@ -1652,7 +1652,7 @@ tty_options_init (void)
         }
 #endif
 
-        if (options.mode != CHAFA_CANVAS_MODE_FGBG && options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST)
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
         {
             p0 = chafa_term_info_emit_disable_cursor (options.term_info, buf);
             write_to_stdout (buf, p0 - buf);
@@ -1679,7 +1679,7 @@ tty_options_deinit (void)
 
     if (!options.polite)
     {
-        if (options.mode != CHAFA_CANVAS_MODE_FGBG && options.pixel_mode != CHAFA_PIXEL_MODE_CONHOST)
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
         {
             gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
             gchar *p0;
@@ -1987,7 +1987,7 @@ parse_options (int *argc, char **argv [])
     options.anim_speed_multiplier = 1.0;
 
     options.output_utf_16_on_windows = FALSE;
-
+    options.is_conhost_mode=FALSE;
     if (!g_option_context_parse (context, argc, argv, &error))
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
@@ -2137,8 +2137,7 @@ parse_options (int *argc, char **argv [])
 
     /* Now we've established the pixel mode, apply dependent defaults */
 
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS ||
-        options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST)
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
         /* Character cell defaults */
 
@@ -2304,7 +2303,7 @@ parse_options (int *argc, char **argv [])
     chafa_set_n_threads (options.n_threads);
 
     #ifdef G_OS_WIN32
-    if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST){
+    if (options.is_conhost_mode){
         
         options.output_utf_16_on_windows = TRUE;
         if (options.mode == CHAFA_CANVAS_MODE_INDEXED_240 || 
@@ -2316,6 +2315,7 @@ parse_options (int *argc, char **argv [])
     #else 
     /*Force it to not output UTF16 when not Windows*/
     options.output_utf_16_on_windows = FALSE;
+    options.is_conhost_mode = FALSE;
     #endif
 
     result = TRUE;
@@ -2851,8 +2851,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                 placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
             */
             #ifdef G_OS_WIN32
-            if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST){
-                CONHOST_LINE * lines;
+            if (options.is_conhost_mode){
+                ConhostRow * lines;
                 gsize s;
                 s=canvas_to_conhost(canvas, &lines);
                 write_image_conhost(lines, s);
