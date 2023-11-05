@@ -1,7 +1,8 @@
 #include "conhost.h"
 
 static gsize
-unichar_to_utf16 (gunichar c, gunichar2 * str){
+unichar_to_utf16 (gunichar c, gunichar2 * str)
+{
     if (c>=0x110000 ||
         (c<0xe000 && c>=0xd800) ||
         (c%0x10000 >= 0xfffe)) return 0;
@@ -19,7 +20,8 @@ unichar_to_utf16 (gunichar c, gunichar2 * str){
 
 #define FOREGROUND_ALL FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
 gsize
-canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines){
+canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
+{
     gint width, height;
     const ChafaCanvasConfig * config;
     ChafaCanvasMode canvas_mode;
@@ -77,10 +79,12 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines){
     return height;
 }
 void
-write_image_conhost (const ConhostRow * lines, gsize s){
+write_image_conhost (const ConhostRow * lines, gsize s)
+{
     HANDLE outh;
     COORD curpos;
     DWORD idc;
+
     outh = GetStdHandle (STD_OUTPUT_HANDLE);
     {
         CONSOLE_SCREEN_BUFFER_INFO bufinfo;
@@ -92,16 +96,18 @@ write_image_conhost (const ConhostRow * lines, gsize s){
         const ConhostRow line = lines[y];
         WriteConsoleOutputCharacterW (outh, line.str, line.utf16_string_length, curpos,&idc);
         WriteConsoleOutputAttribute (outh, line.attributes, line.length, curpos, &idc);
-        /* WriteConsoleOutput family doesn't scroll the screen
-         * so we have to make another API call to scroll */
-        WriteConsoleA (outh,"\r\n",2, NULL, NULL);
         curpos.Y++;
-        
     }
+    
+    /* WriteConsoleOutput family doesn't scroll the screen
+     * so we have to make another API call to scroll */
+
+    SetConsoleCursorPosition(outh, curpos);
 }
 
 void
-destroy_lines (ConhostRow * lines, gsize s){
+destroy_lines (ConhostRow * lines, gsize s)
+{
     for (gsize i=0; i<s; i++){
         g_free (lines[i].attributes);
         g_free (lines[i].str);
