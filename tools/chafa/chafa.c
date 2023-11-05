@@ -137,15 +137,9 @@ typedef struct
     ChafaTermInfo *term_info;
     
     gboolean output_utf_16_on_windows;
-    gchar * output_codepage;
     
 }
 GlobalOptions;
-#ifdef G_OS_WIN32
-#define OUTPUT_UTF_16_ON_WINDOWS options.output_utf_16_on_windows
-#else
-#define OUTPUT_UTF_16_ON_WINDOWS FALSE
-#endif 
 
 typedef struct
 {
@@ -278,15 +272,13 @@ write_to_stdout (gconstpointer buf, gsize len)
     char * converted_buf=NULL;
     if (len == 0)
         return TRUE;
-    if (options.output_codepage!=NULL || OUTPUT_UTF_16_ON_WINDOWS ){
-        gsize tmp;
-        
+#ifdef G_OS_WIN32
+    if (options.output_utf_16_on_windows){
+        gsize tmp;   
         buf=converted_buf=g_convert(
             buf, 
             len,
-            OUTPUT_UTF_16_ON_WINDOWS?
-            "UTF-16LE":
-            options.output_codepage,
+            "UTF-16LE",
             "UTF-8",
             NULL,
             &tmp,
@@ -294,8 +286,6 @@ write_to_stdout (gconstpointer buf, gsize len)
         );
         len=tmp;
     }
-    
-#ifdef G_OS_WIN32
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
@@ -532,7 +522,6 @@ print_summary (void)
     "      --polite=BOOL  Polite mode [on, off]. Inhibits escape sequences that may\n"
     "                     confuse other programs. Defaults to off.\n"
 
-    "      --encoding=ENCODING  Set Output Encoding to any encoding supported by iconv\n"
     "      --utf16             Windows only, output using UTF16 functions,\n"
     "                          required for compatibility with older versions of Windows\n"
     "\nSize and layout:\n"
@@ -1629,7 +1618,7 @@ tty_options_init (void)
             }
             
         }
-        if (!options.output_utf_16_on_windows && options.output_codepage == NULL){
+        if (!options.output_utf_16_on_windows){
             /* Set UTF-8 code page output */
             SetConsoleOutputCP (65001);
 
@@ -1901,7 +1890,6 @@ parse_options (int *argc, char **argv [])
         { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
         { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_CALLBACK, parse_duration_arg,    "Duration", NULL },
-        { "encoding",    '\0', 0, G_OPTION_ARG_STRING,   &options.output_codepage,        "Encoding", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
@@ -1998,7 +1986,6 @@ parse_options (int *argc, char **argv [])
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
 
-    options.output_codepage = NULL;
     options.output_utf_16_on_windows = FALSE;
 
     if (!g_option_context_parse (context, argc, argv, &error))
@@ -2316,15 +2303,6 @@ parse_options (int *argc, char **argv [])
 
     chafa_set_n_threads (options.n_threads);
 
-    if (options.output_codepage != NULL){
-        /* I don't know of a better way of checking for a valid codepage */
-        GIConv converter=g_iconv_open(options.output_codepage, "UTF-8");
-        if (result == -1) {
-            g_printerr ("conversion to '%s' not supported by iconv.\n", options.output_codepage);
-            goto out;
-        } else 
-            g_iconv_close(converter);
-    }
     #ifdef G_OS_WIN32
     if (options.pixel_mode == CHAFA_PIXEL_MODE_CONHOST){
         
