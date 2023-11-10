@@ -235,7 +235,6 @@ write_to_stdout (gconstpointer buf, gsize len)
 
         for (total_written = 0; total_written < len; )
         {
-
             gsize n_written = fwrite (((const gchar *) buf) + total_written, 1,
                                       len - total_written, stdout);
             total_written += n_written;
@@ -243,8 +242,6 @@ write_to_stdout (gconstpointer buf, gsize len)
                 result = FALSE;
         }
     }
-
-
 #endif
     return result;
 }
@@ -883,7 +880,6 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
         options.is_conhost_mode = TRUE;
 #endif 
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-        
     }
     else
     {
@@ -1502,17 +1498,22 @@ tty_options_init (void)
             DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
             if (!options.is_conhost_mode) 
                 bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
-            if (!SetConsoleMode (chd, bitmask) ){
+            if (!SetConsoleMode (chd, bitmask))
+            {
                 if (GetLastError() == ERROR_INVALID_HANDLE)
                     win32_stdout_is_file = TRUE;
                 else 
                     /* Compatibility with older Windowses */
                     SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
                 
-            }
-            
+            }   
         }
-        
+
+        /* Set UTF-8 code page output */
+        SetConsoleOutputCP (65001);
+
+        /* Set UTF-8 code page input, for good measure */
+        SetConsoleCP (65001);
     }
 #endif
 
@@ -1617,7 +1618,6 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
     else
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-
     if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH))
     {
         /* We can do passthrough for sixels and iterm too, but we won't do so
@@ -1866,9 +1866,9 @@ parse_options (int *argc, char **argv [])
     options.file_duration_s = -1.0;  /* Unset */
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
-
     options.output_utf_16_on_windows = FALSE;
     options.is_conhost_mode = FALSE;
+
     if (!g_option_context_parse (context, argc, argv, &error))
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
@@ -2184,8 +2184,8 @@ parse_options (int *argc, char **argv [])
     chafa_set_n_threads (options.n_threads);
 
 #ifdef G_OS_WIN32
-    if (options.is_conhost_mode){
-        
+    if (options.is_conhost_mode)
+    {    
         options.output_utf_16_on_windows = TRUE;
         if (options.mode == CHAFA_CANVAS_MODE_INDEXED_240 || 
         options.mode == CHAFA_CANVAS_MODE_INDEXED_256 || 
@@ -2449,13 +2449,12 @@ out:
 }
 
 static ChafaCanvasConfig *
-build_config (
-               gint dest_width, gint dest_height,
+build_config (gint dest_width, gint dest_height,
                gboolean is_animation)
 {
     ChafaCanvasConfig *config;
-    config = chafa_canvas_config_new ();
 
+    config = chafa_canvas_config_new ();
     chafa_canvas_config_set_geometry (config, dest_width, dest_height);
     chafa_canvas_config_set_canvas_mode (config, options.mode);
     chafa_canvas_config_set_pixel_mode (config, options.pixel_mode);
@@ -2489,6 +2488,7 @@ build_config (
     chafa_canvas_config_set_optimizations (config, options.optimizations);
     return config;
 }
+
 static ChafaCanvas *
 build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
                gint src_width, gint src_height, gint src_rowstride,
@@ -2850,6 +2850,7 @@ int
 main (int argc, char *argv [])
 {
     int ret;
+    
     proc_init ();
 
     if (!parse_options (&argc, &argv))
