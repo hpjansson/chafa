@@ -1,7 +1,7 @@
 #include "conhost.h"
 
 static gsize
-unichar_to_utf16 (gunichar c, gunichar2 * str)
+unichar_to_utf16 (gunichar c, gunichar2 *str)
 {
     if (c>=0x110000 ||
         (c<0xe000 && c>=0xd800) ||
@@ -20,10 +20,10 @@ unichar_to_utf16 (gunichar c, gunichar2 * str)
 
 #define FOREGROUND_ALL FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE
 gsize
-canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
+canvas_to_conhost (ChafaCanvas *canvas, ConhostRow **lines)
 {
     gint width, height;
-    const ChafaCanvasConfig * config;
+    const ChafaCanvasConfig *config;
     ChafaCanvasMode canvas_mode;
 
     config = chafa_canvas_peek_config (canvas);
@@ -41,7 +41,7 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
     };
     for (gint y = 0; y<height; y++)
     {
-        ConhostRow * const line = (*lines)+y;
+        ConhostRow *const line = (*lines)+y;
         *line=(ConhostRow) {
             .attributes = g_malloc (width*sizeof(attribute)),
             .str = g_malloc (width*sizeof(gunichar2)*2),
