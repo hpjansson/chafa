@@ -189,39 +189,17 @@ static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
     gboolean result = TRUE;
-    char * converted_buf = NULL;
+
     if (len == 0)
         return TRUE;
+
 #ifdef G_OS_WIN32
-    if (options.output_utf_16_on_windows){
-        gsize tmp;   
-        buf = converted_buf = g_convert (
-            buf, 
-            len,
-            "UTF-16LE",
-            "UTF-8",
-            NULL,
-            &tmp,
-            NULL
-        );
-        len = tmp;
-    }
+
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
-        gboolean (*safe_WriteConsole) (HANDLE, const void *, gsize);
-        gint stride;
-        const void * newline;
-        /* We need to select whether to use the UTF-8 (Codepage 65001) or UTF-16 semantics */
-        if (options.output_utf_16_on_windows){
-            stride = 2;
-            safe_WriteConsole = safe_WriteConsoleW;
-            newline = L"\r\n";
-        } else {
-            stride = 1;
-            safe_WriteConsole = safe_WriteConsoleA;
-            newline = "\r\n";
-        }
+        const void *const newline = "\r\n";
+
         {
 
             /* on MS Windows. We convert line feeds to DOS-style CRLF as we go. */
@@ -230,25 +208,22 @@ write_to_stdout (gconstpointer buf, gsize len)
                 chd != INVALID_HANDLE_VALUE && total_written < len;
                 p0 = p1)
             {
-                if (options.output_utf_16_on_windows) 
-                    p1 = (const gchar *) wmemchr ((const gunichar2 *) p0, L'\n', (end - p0)/2);
-                else 
-                    p1 = memchr (p0, '\n', end - p0);
+                p1 = memchr (p0, '\n', end - p0);
                 if (!p1)
                     p1 = end;
 
-                if (!safe_WriteConsole (chd, p0, (p1 - p0)/stride))
+                if (!safe_WriteConsoleA (chd, p0, p1 - p0))
                     break;
 
                 total_written += p1 - p0;
 
                 if (p1 != end)
                 {
-                    if (!safe_WriteConsole (chd, newline, 2))
+                    if (!safe_WriteConsoleA (chd, newline, 2))
                         break;
 
-                    p1 += stride;
-                    total_written += stride;
+                    p1 += 1;
+                    total_written += 1;
                 }
             }
         }
@@ -271,7 +246,6 @@ write_to_stdout (gconstpointer buf, gsize len)
 
 
 #endif
-    if (converted_buf) g_free (converted_buf);
     return result;
 }
 
@@ -442,8 +416,8 @@ print_summary (void)
     "      --polite=BOOL  Polite mode [on, off]. Inhibits escape sequences that may\n"
     "                     confuse other programs. Defaults to off.\n"
 
-    "      --utf16             Windows only, output using UTF16 functions,\n"
-    "                          required for compatibility with older versions of Windows\n"
+    /*"      --utf16             Windows only, output using UTF16 functions,\n"
+    "                          required for compatibility with older versions of Windows\n"*/
     "\nSize and layout:\n"
 
     "  -C, --center=BOOL  Center images horizontally in view [on, off]. Default off.\n"
@@ -1538,19 +1512,6 @@ tty_options_init (void)
             }
             
         }
-        if (!options.output_utf_16_on_windows){
-            /* Set UTF-8 code page output */
-            SetConsoleOutputCP (65001);
-
-            /* Set UTF-8 code page input, for good measure */
-            SetConsoleCP (65001);
-        }
-        
-        if (win32_stdout_is_file &&
-            options.output_utf_16_on_windows && 
-            (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
-
-        ) safe_WriteConsoleW (chd, u"\xfeff", 1);
         
     }
 #endif
@@ -1834,7 +1795,7 @@ parse_options (int *argc, char **argv [])
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
-        { "utf16",       '\0', 0, G_OPTION_ARG_NONE, &options.output_utf_16_on_windows, "Use WriteConsoleW instead of WriteConsoleA", NULL},
+        /*{ "utf16",       '\0', 0, G_OPTION_ARG_NONE, &options.output_utf_16_on_windows, "Use WriteConsoleW instead of WriteConsoleA", NULL},*/
         { "view-size",   '\0', 0, G_OPTION_ARG_CALLBACK, parse_view_size_arg,   "View size", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         /* Deprecated: Equivalent to --scale max */
@@ -2547,7 +2508,6 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
     chafa_image_unref (image);
     chafa_frame_unref (frame);
     return canvas;
-    
 }
 
 static void
@@ -2702,20 +2662,24 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             );
 
 #ifdef G_OS_WIN32
-            if (options.is_conhost_mode){
-                ConhostRow * lines;
+            if (options.is_conhost_mode)
+            {
+                ConhostRow *lines;
                 gsize s;
-                s=canvas_to_conhost (canvas, &lines);
+
+                s = canvas_to_conhost (canvas, &lines);
                 write_image_conhost (lines, s);
                 destroy_lines (lines,s);
-            } else 
+            }
+            else 
 #endif
             {
                 chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
                 if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                     || !write_image (gsa, dest_width)
                     || !write_image_epilogue (dest_width)
-                    || fflush (stdout) != 0){
+                    || fflush (stdout) != 0)
+                    {
                         chafa_free_gstring_array (gsa);
                         goto out;
                     }

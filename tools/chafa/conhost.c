@@ -26,8 +26,6 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
     const ChafaCanvasConfig * config;
     ChafaCanvasMode canvas_mode;
 
-
-
     config = chafa_canvas_peek_config (canvas);
     canvas_mode = chafa_canvas_config_get_canvas_mode (config);
     if (
@@ -41,7 +39,8 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
         0,4,2,6,1,5,3,7,
         8,12,10,14,9,13,11,15
     };
-    for (gint y = 0; y<height; y++){
+    for (gint y = 0; y<height; y++)
+    {
         ConhostRow * const line = (*lines)+y;
         *line=(ConhostRow) {
             .attributes = g_malloc (width*sizeof(attribute)),
@@ -50,7 +49,8 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
             .utf16_string_length = 0
         };
         
-        for (int x=0; x<width; x++){
+        for (int x=0; x<width; x++)
+        {
             gunichar c = chafa_canvas_get_char_at (canvas,x,y);
             gunichar2 utf16_codes[2];
             gsize s = unichar_to_utf16 (c, utf16_codes);
@@ -61,12 +61,14 @@ canvas_to_conhost (ChafaCanvas * canvas, ConhostRow ** lines)
 
             if (canvas_mode == CHAFA_CANVAS_MODE_FGBG)
                 line->attributes[x]=FOREGROUND_ALL;
-            else{
+            else
+            {
                 gint fg_out, bg_out;
                 chafa_canvas_get_raw_colors_at (canvas,x,y,&fg_out, &bg_out);
                 if (canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG) 
                     line->attributes[x] = bg_out?FOREGROUND_ALL:COMMON_LVB_REVERSE_VIDEO|FOREGROUND_ALL;	
-                else {
+                else
+                {
                     fg_out=color_lut[fg_out];
                     bg_out=color_lut[bg_out];
                     line->attributes[x] = (bg_out<<4)|fg_out;
@@ -92,7 +94,8 @@ write_image_conhost (const ConhostRow * lines, gsize s)
         curpos = bufinfo.dwCursorPosition;
     }
     
-    for (gsize y=0 ;y<s ; y++){
+    for (gsize y=0 ;y<s ; y++)
+    {
         const ConhostRow line = lines[y];
         WriteConsoleOutputCharacterW (outh, line.str, line.utf16_string_length, curpos,&idc);
         WriteConsoleOutputAttribute (outh, line.attributes, line.length, curpos, &idc);
@@ -108,7 +111,8 @@ write_image_conhost (const ConhostRow * lines, gsize s)
 void
 destroy_lines (ConhostRow * lines, gsize s)
 {
-    for (gsize i=0; i<s; i++){
+    for (gsize i=0; i<s; i++)
+    {
         g_free (lines[i].attributes);
         g_free (lines[i].str);
     }
@@ -155,6 +159,7 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 
     return TRUE;
 }
+#if 0
 gboolean
 safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
 {
@@ -191,3 +196,4 @@ safe_WriteConsoleW (HANDLE chd, const gunichar2 *data, gsize len)
 
     return TRUE;
 }
+#endif
