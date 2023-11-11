@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <chafa.h>
 #ifdef G_OS_WIN32
 # include <stdio.h>
 # include <io.h>
