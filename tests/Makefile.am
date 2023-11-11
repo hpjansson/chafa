@@ -13,6 +13,7 @@ term_info_test_SOURCES = \
 
 ## --- Frontend tests ---
 
+if WANT_TOOLS
 TOOL_CHECKS = \
 	chafa-tool-bad-test.sh \
 	chafa-tool-cmode-test.sh \
@@ -20,6 +21,9 @@ TOOL_CHECKS = \
 	chafa-tool-loader-test.sh \
 	chafa-tool-options-test.sh \
 	chafa-tool-pipe-test.sh
+else
+TOOL_CHECKS =
+endif
 
 TESTS = \
 	term-info-test \
