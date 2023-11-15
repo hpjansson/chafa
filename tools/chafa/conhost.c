@@ -43,7 +43,7 @@ canvas_to_conhost (ChafaCanvas *canvas, ConhostRow **lines)
     {
         ConhostRow *const line = (*lines)+y;
         *line=(ConhostRow) {
-            .attributes = g_malloc (width*sizeof(attribute)),
+            .attributes = g_malloc (width*sizeof(ConhostAttribute)),
             .str = g_malloc (width*sizeof(gunichar2)*2),
             .length = width,
             .utf16_string_length = 0
