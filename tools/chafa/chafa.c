@@ -183,8 +183,6 @@ interruptible_usleep (gdouble us)
     }
 }
 
-
-
 static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
@@ -194,39 +192,37 @@ write_to_stdout (gconstpointer buf, gsize len)
         return TRUE;
 
 #ifdef G_OS_WIN32
-
     {
         HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
-        const void *const newline = "\r\n";
+        const void * const newline = "\r\n";
+        const gchar *p0, *p1, *end;
 
+        /* On MS Windows, we convert line feeds to DOS-style CRLF as we go. */
+
+        for (p0 = buf, end = p0 + len;
+             chd != INVALID_HANDLE_VALUE && total_written < len;
+             p0 = p1)
         {
+            p1 = memchr (p0, '\n', end - p0);
+            if (!p1)
+                p1 = end;
 
-            /* on MS Windows. We convert line feeds to DOS-style CRLF as we go. */
-            const gchar * p0, * p1, * end;
-            for (p0 = buf, end = p0 + len;
-                chd != INVALID_HANDLE_VALUE && total_written < len;
-                p0 = p1)
+            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
+                break;
+
+            total_written += p1 - p0;
+
+            if (p1 != end)
             {
-                p1 = memchr (p0, '\n', end - p0);
-                if (!p1)
-                    p1 = end;
-
-                if (!safe_WriteConsoleA (chd, p0, p1 - p0))
+                if (!safe_WriteConsoleA (chd, newline, 2))
                     break;
 
-                total_written += p1 - p0;
-
-                if (p1 != end)
-                {
-                    if (!safe_WriteConsoleA (chd, newline, 2))
-                        break;
-
-                    p1 += 1;
-                    total_written += 1;
-                }
+                p1 += 1;
+                total_written += 1;
             }
         }
+
         result = total_written == len ? TRUE : FALSE;
     }
 #else
@@ -243,6 +239,7 @@ write_to_stdout (gconstpointer buf, gsize len)
         }
     }
 #endif
+
     return result;
 }
 
@@ -417,8 +414,6 @@ print_summary (void)
     "      --polite=BOOL  Polite mode [on, off]. Inhibits escape sequences that may\n"
     "                     confuse other programs. Defaults to off.\n"
 
-    /*"      --utf16             Windows only, output using UTF16 functions,\n"
-    "                          required for compatibility with older versions of Windows\n"*/
     "\nSize and layout:\n"
 
     "  -C, --center=BOOL  Center images horizontally in view [on, off]. Default off.\n"
@@ -1508,16 +1503,21 @@ tty_options_init (void)
         if (chd != INVALID_HANDLE_VALUE)
         {   
             DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
+
             if (!options.is_conhost_mode) 
                 bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+
             if (!SetConsoleMode (chd, bitmask))
             {
-                if (GetLastError() == ERROR_INVALID_HANDLE)
+                if (GetLastError () == ERROR_INVALID_HANDLE)
+                {
                     win32_stdout_is_file = TRUE;
-                else 
-                    /* Compatibility with older Windowses */
+                }
+                else
+                {
+                    /* Compatibility with older MS Windows versions */
                     SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-                
+                }
             }   
         }
 
@@ -1567,8 +1567,8 @@ static void
 tty_options_deinit (void)
 {
 #ifdef G_OS_WIN32
-        SetConsoleOutputCP (saved_console_output_cp);
-        SetConsoleCP (saved_console_input_cp);
+    SetConsoleOutputCP (saved_console_output_cp);
+    SetConsoleCP (saved_console_input_cp);
 #endif
 
     if (!options.polite)
@@ -1807,7 +1807,6 @@ parse_options (int *argc, char **argv [])
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
         { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
-        /*{ "utf16",       '\0', 0, G_OPTION_ARG_NONE, &options.output_utf_16_on_windows, "Use WriteConsoleW instead of WriteConsoleA", NULL},*/
         { "view-size",   '\0', 0, G_OPTION_ARG_CALLBACK, parse_view_size_arg,   "View size", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         /* Deprecated: Equivalent to --scale max */
@@ -2199,14 +2198,14 @@ parse_options (int *argc, char **argv [])
     if (options.is_conhost_mode)
     {    
         options.output_utf_16_on_windows = TRUE;
-        if (options.mode == CHAFA_CANVAS_MODE_INDEXED_240 || 
-        options.mode == CHAFA_CANVAS_MODE_INDEXED_256 || 
-        options.mode == CHAFA_CANVAS_MODE_TRUECOLOR )
-            options.mode=CHAFA_CANVAS_MODE_INDEXED_16;
+        if (options.mode == CHAFA_CANVAS_MODE_INDEXED_240
+            || options.mode == CHAFA_CANVAS_MODE_INDEXED_256
+            || options.mode == CHAFA_CANVAS_MODE_TRUECOLOR)
+            options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
     }
 
 #else 
-    /*Force it to not output UTF16 when not Windows*/
+    /* Force it to not output UTF16 when not Windows */
     options.output_utf_16_on_windows = FALSE;
     options.is_conhost_mode = FALSE;
 #endif
@@ -2461,8 +2460,7 @@ out:
 }
 
 static ChafaCanvasConfig *
-build_config (gint dest_width, gint dest_height,
-               gboolean is_animation)
+build_config (gint dest_width, gint dest_height, gboolean is_animation)
 {
     ChafaCanvasConfig *config;
 
@@ -2480,6 +2478,9 @@ build_config (gint dest_width, gint dest_height,
     chafa_canvas_config_set_preprocessing_enabled (config, options.preprocess);
     chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
     chafa_canvas_config_set_passthrough (config, options.passthrough);
+
+    /* With Kitty, animation frames should have an opaque background. Otherwise,
+     * previous frames will show through transparent areas. */
     if (is_animation
         && options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
         && !options.transparency_threshold_set)
@@ -2503,9 +2504,9 @@ build_config (gint dest_width, gint dest_height,
 
 static ChafaCanvas *
 build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
-               gint src_width, gint src_height, gint src_rowstride,
-               const ChafaCanvasConfig * config,
-               gint placement_id)
+              gint src_width, gint src_height, gint src_rowstride,
+              const ChafaCanvasConfig *config,
+              gint placement_id)
 {
     ChafaFrame *frame;
     ChafaImage *image;
@@ -2620,6 +2621,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             gint virt_src_width, virt_src_height;
             gint dest_width, dest_height;
             const guint8 *pixels;
+            ChafaCanvasConfig *config;
+            ChafaCanvas *canvas;
 
             g_timer_start (timer);
 
@@ -2662,44 +2665,44 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                         options.font_ratio,
                                         options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
-            ChafaCanvasConfig * cfg = build_config (
-                dest_width,
-                dest_height,
-                is_animation
-            );
-            ChafaCanvas * canvas = build_canvas (
-                pixel_type, pixels,
-                src_width, src_height, src_rowstride, cfg,
-                placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1
-            );
+
+            config = build_config (dest_width, dest_height, is_animation);
+            canvas = build_canvas (pixel_type, pixels,
+                                   src_width, src_height, src_rowstride, config,
+                                   placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
 
 #ifdef G_OS_WIN32
             if (options.is_conhost_mode)
             {
                 ConhostRow *lines;
-                gsize s;
+                gssize s;
 
                 s = canvas_to_conhost (canvas, &lines);
-                write_image_conhost (lines, s);
-                destroy_lines (lines,s);
+                g_assert (s >= 0);
+
+                write_image_conhost (lines, (gsize) s);
+                destroy_lines (lines, (gsize) s);
             }
-            else 
+            else
 #endif
             {
                 chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
+
                 if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                     || !write_image (gsa, dest_width)
                     || !write_image_epilogue (dest_width)
                     || fflush (stdout) != 0)
-                    {
-                        chafa_free_gstring_array (gsa);
-                        goto out;
-                    }
+                {
+                    chafa_free_gstring_array (gsa);
+                    goto out;
+                }
 
                 chafa_free_gstring_array (gsa);
             }
+
             chafa_canvas_unref (canvas);
-            chafa_canvas_config_unref (cfg);
+            chafa_canvas_config_unref (config);
+
             if (is_animation)
             {
                 /* Account for time spent converting and printing frame */
