@@ -49,10 +49,10 @@
 #ifdef G_OS_WIN32
 # ifdef HAVE_WINDOWS_H
 #  include <windows.h>
-#  include <wchar.h>
-#  include "conhost.h"
 # endif
+# include <wchar.h>
 # include <io.h>
+# include "conhost.h"
 #endif
 
 /* Maximum size of stack-allocated read/write buffer */
