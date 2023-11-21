@@ -396,7 +396,11 @@ print_summary (void)
 
     "\nOutput encoding:\n"
 
-    "  -f, --format=FORMAT  Set output format; one of [conhost,iterm, kitty, sixels,\n"
+#ifdef G_OS_WIN32
+    "  -f, --format=FORMAT  Set output format; one of [conhost, iterm, kitty, sixels,\n"
+#else
+    "  -f, --format=FORMAT  Set output format; one of [iterm, kitty, sixels,\n"
+#endif
     "                     symbols]. Iterm, kitty and sixels yield much higher\n"
     "                     quality but enjoy limited support. Symbols mode yields\n"
     "                     beautiful character art.\n"
@@ -878,13 +882,21 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     {
 #ifdef G_OS_WIN32
         options.is_conhost_mode = TRUE;
-#endif 
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+#else
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Conhost output is only available on MS Windows.");
+        result = FALSE;
+#endif 
     }
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+#ifdef G_OS_WIN32
+                     "Output format given as '%s'. Must be one of [conhost, iterm, kitty, sixels, symbols].",
+#else
                      "Output format given as '%s'. Must be one of [iterm, kitty, sixels, symbols].",
+#endif
                      value);
         result = FALSE;
     }
