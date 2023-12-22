@@ -45,6 +45,7 @@ jobs:
         -fstack-protector-all 
         -Werror -Wno-error=unused 
         -Wno-error=unused-function 
+        -Wno-error=unused-macros
         -Wno-error=unused-parameter 
         -Wno-error=unused-variable 
         -Wno-error=unused-const-variable 
