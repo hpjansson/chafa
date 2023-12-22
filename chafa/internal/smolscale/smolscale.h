@@ -11,6 +11,23 @@
 extern "C" {
 #endif
 
+#define SMOL_SUBPIXEL_SHIFT 8
+#define SMOL_SUBPIXEL_MUL (1 << (SMOL_SUBPIXEL_SHIFT))
+
+/* Applies modulo twice, yielding a positive fraction for negative offsets */
+#define SMOL_SUBPIXEL_MOD(n) ((((n) % SMOL_SUBPIXEL_MUL) + SMOL_SUBPIXEL_MUL) % SMOL_SUBPIXEL_MUL)
+
+#define SMOL_PX_TO_SPX(px) ((px) * (SMOL_SUBPIXEL_MUL))
+#define SMOL_SPX_TO_PX(spx) (((spx) + (SMOL_SUBPIXEL_MUL) - 1) / (SMOL_SUBPIXEL_MUL))
+
+typedef enum
+{
+    SMOL_NO_FLAGS                   = 0,
+    SMOL_DISABLE_ACCELERATION       = (1 << 0),
+    SMOL_DISABLE_SRGB_LINEARIZATION = (1 << 1)
+}
+SmolFlags;
+
 typedef enum
 {
     /* 32 bits per pixel */
@@ -34,7 +51,15 @@ typedef enum
 }
 SmolPixelType;
 
-typedef void (SmolPostRowFunc) (uint32_t *row_inout,
+typedef enum
+{
+    SMOL_COMPOSITE_SRC,
+    SMOL_COMPOSITE_SRC_CLEAR_DEST,
+    SMOL_COMPOSITE_SRC_OVER_DEST
+}
+SmolCompositeOp;
+
+typedef void (SmolPostRowFunc) (void *row_inout,
                                 int width,
                                 void *user_data);
 
@@ -44,23 +69,52 @@ typedef struct SmolScaleCtx SmolScaleCtx;
  * the source memory and an existing allocation to receive the output data.
  * This interface can only be used from a single thread. */
 
-void smol_scale_simple (SmolPixelType pixel_type_in, const void *pixels_in,
-                        uint32_t width_in, uint32_t height_in, uint32_t rowstride_in,
-                        SmolPixelType pixel_type_out, void *pixels_out,
-                        uint32_t width_out, uint32_t height_out, uint32_t rowstride_out);
+void smol_scale_simple (const void *src_pixels,
+                        SmolPixelType src_pixel_type,
+                        uint32_t src_width,
+                        uint32_t src_height,
+                        uint32_t src_rowstride,
+                        void *dest_pixels,
+                        SmolPixelType dest_pixel_type,
+                        uint32_t dest_width,
+                        uint32_t dest_height,
+                        uint32_t dest_rowstride,
+                        SmolFlags flags);
 
 /* Batch API: Allows scaling a few rows at a time. Suitable for multithreading. */
 
-SmolScaleCtx *smol_scale_new (SmolPixelType pixel_type_in, const void *pixels_in,
-                              uint32_t width_in, uint32_t height_in, uint32_t rowstride_in,
-                              SmolPixelType pixel_type_out, void *pixels_out,
-                              uint32_t width_out, uint32_t height_out, uint32_t rowstride_out);
+SmolScaleCtx *smol_scale_new_simple (const void *src_pixels,
+                                     SmolPixelType src_pixel_type,
+                                     uint32_t src_width,
+                                     uint32_t src_height,
+                                     uint32_t src_rowstride,
+                                     void *dest_pixels,
+                                     SmolPixelType dest_pixel_type,
+                                     uint32_t dest_width,
+                                     uint32_t dest_height,
+                                     uint32_t dest_rowstride,
+                                     SmolFlags flags);
 
-SmolScaleCtx *smol_scale_new_full (SmolPixelType pixel_type_in, const void *pixels_in,
-                                   uint32_t width_in, uint32_t height_in, uint32_t rowstride_in,
-                                   SmolPixelType pixel_type_out, void *pixels_out,
-                                   uint32_t width_out, uint32_t height_out, uint32_t rowstride_out,
-                                   SmolPostRowFunc post_row_func, void *user_data);
+SmolScaleCtx *smol_scale_new_full (const void *src_pixels,
+                                   SmolPixelType src_pixel_type,
+                                   uint32_t src_width,
+                                   uint32_t src_height,
+                                   uint32_t src_rowstride,
+                                   const void *color_pixel,
+                                   SmolPixelType color_pixel_type,
+                                   void *dest_pixels,
+                                   SmolPixelType dest_pixel_type,
+                                   uint32_t dest_width,
+                                   uint32_t dest_height,
+                                   uint32_t dest_rowstride,
+                                   int32_t placement_x,
+                                   int32_t placement_y,
+                                   uint32_t placement_width,
+                                   uint32_t placement_height,
+                                   SmolCompositeOp composite_op,
+                                   SmolFlags flags,
+                                   SmolPostRowFunc post_row_func,
+                                   void *user_data);
 
 void smol_scale_destroy (SmolScaleCtx *scale_ctx);
 
@@ -68,7 +122,7 @@ void smol_scale_destroy (SmolScaleCtx *scale_ctx);
  * threads, as long as the outrows do not overlap. Make sure all workers are
  * finished before you call smol_scale_destroy(). */
 
-void smol_scale_batch (const SmolScaleCtx *scale_ctx, uint32_t first_outrow, uint32_t n_outrows);
+void smol_scale_batch (const SmolScaleCtx *scale_ctx, int32_t first_outrow, int32_t n_outrows);
 
 /* Like smol_scale_batch(), but will write the output rows to outrows_dest
  * instead of relative to pixels_out address handed to smol_scale_new(). The
@@ -76,7 +130,7 @@ void smol_scale_batch (const SmolScaleCtx *scale_ctx, uint32_t first_outrow, uin
 
 void smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
                             void *outrows_dest,
-                            uint32_t first_outrow, uint32_t n_outrows);
+                            int32_t first_outrow, int32_t n_outrows);
 
 #ifdef __cplusplus
 }

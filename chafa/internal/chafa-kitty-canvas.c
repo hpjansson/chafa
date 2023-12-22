@@ -41,8 +41,6 @@ typedef struct
 {
     ChafaKittyCanvas *kitty_canvas;
     SmolScaleCtx *scale_ctx;
-    ChafaColor bg_color;
-    gboolean flatten_alpha;
 }
 DrawCtx;
 
@@ -130,14 +128,6 @@ draw_pixels_worker (ChafaBatchInfo *batch, const DrawCtx *ctx)
                            ((guint32 *) ctx->kitty_canvas->rgba_image) + (ctx->kitty_canvas->width * batch->first_row),
                            batch->first_row,
                            batch->n_rows);
-
-    /* FIXME: Smolscale should be able to do this */
-    if (ctx->flatten_alpha)
-        chafa_composite_rgba_on_solid_color (ctx->bg_color,
-                                             ctx->kitty_canvas->rgba_image,
-                                             ctx->kitty_canvas->width,
-                                             batch->first_row,
-                                             batch->n_rows);
 }
 
 void
@@ -146,7 +136,9 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                                     gint src_width, gint src_height, gint src_rowstride,
                                     ChafaColor bg_color)
 {
+    uint8_t bg_color_rgba [4];
     DrawCtx ctx;
+    gboolean flatten_alpha;
 
     g_return_if_fail (kitty_canvas != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
@@ -157,22 +149,36 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
     if (src_width == 0 || src_height == 0)
         return;
 
+    flatten_alpha = bg_color.ch [3] == 0;
+    bg_color.ch [3] = 0xff;
+    chafa_color8_store_to_rgba8 (bg_color, bg_color_rgba);
+
     ctx.kitty_canvas = kitty_canvas;
-    ctx.scale_ctx = smol_scale_new_full ((SmolPixelType) src_pixel_type,
+    ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
+                                         (SmolPixelType) src_pixel_type,
                                          src_width,
                                          src_height,
                                          src_rowstride,
-                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+                                         /* Fill */
+                                         flatten_alpha ? bg_color_rgba : NULL,
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                         /* Destination */
                                          NULL,
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Opaque? */
                                          kitty_canvas->width,
                                          kitty_canvas->height,
                                          kitty_canvas->width * sizeof (guint32),
+                                         /* Placement */
+                                         0,
+                                         0,
+                                         kitty_canvas->width * SMOL_SUBPIXEL_MUL,
+                                         kitty_canvas->height * SMOL_SUBPIXEL_MUL,
+                                         /* Extra args */
+                                         SMOL_COMPOSITE_SRC,
+                                         SMOL_NO_FLAGS,
                                          NULL,
                                          &ctx);
-    ctx.bg_color = bg_color;
-    ctx.flatten_alpha = bg_color.ch [3] == 0;
-
     chafa_process_batches (&ctx,
                            (GFunc) draw_pixels_worker,
                            NULL,

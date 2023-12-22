@@ -14,6 +14,7 @@ libsmolscale_la_LIBADD =
 libsmolscale_la_SOURCES = \
 	smolscale.c \
 	smolscale.h \
+	smolscale-generic.c \
 	smolscale-private.h
 
 if HAVE_AVX2_INTRINSICS

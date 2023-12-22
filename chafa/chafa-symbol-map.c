@@ -279,11 +279,12 @@ glyph_to_bitmap (gint width, gint height,
 
     /* Scale to cell dimensions */
 
-    smol_scale_simple ((SmolPixelType) pixel_format, pixels, width, height, rowstride,
-                       SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+    smol_scale_simple (pixels, (SmolPixelType) pixel_format, width, height, rowstride,
                        (gpointer) scaled_pixels,
+                       SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
                        CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS,
-                       CHAFA_SYMBOL_WIDTH_PIXELS * 4);
+                       CHAFA_SYMBOL_WIDTH_PIXELS * 4,
+                       SMOL_NO_FLAGS);
 
     /* Generate coverage map */
 
@@ -308,11 +309,12 @@ glyph_to_bitmap_wide (gint width, gint height,
 
     /* Scale to cell dimensions */
 
-    smol_scale_simple ((SmolPixelType) pixel_format, pixels, width, height, rowstride,
-                       SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+    smol_scale_simple (pixels, (SmolPixelType) pixel_format, width, height, rowstride,
                        (gpointer) scaled_pixels,
+                       SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
                        CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS,
-                       CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
+                       CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2,
+                       SMOL_NO_FLAGS);
 
     /* Generate coverage map */
 
@@ -1872,10 +1874,11 @@ chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
         gpointer temp_pixels = g_malloc (width * CHAFA_SYMBOL_HEIGHT_PIXELS * 4);
 
         /* Convert to desired pixel format */
-        smol_scale_simple (SMOL_PIXEL_ARGB8_PREMULTIPLIED, *pixels_out,
+        smol_scale_simple (*pixels_out, SMOL_PIXEL_ARGB8_UNASSOCIATED,  /* FIXME: Premul */
                            width, height, rowstride,
-                           (SmolPixelType) pixel_format, temp_pixels,
-                           width, height, rowstride);
+                           temp_pixels, (SmolPixelType) pixel_format,
+                           width, height, rowstride,
+                           SMOL_NO_FLAGS);
         g_free (*pixels_out);
         *pixels_out = temp_pixels;
     }

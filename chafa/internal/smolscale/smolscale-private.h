@@ -2,6 +2,15 @@
 
 /* Copyright © 2019-2023 Hans Petter Jansson. See COPYING for details. */
 
+/* If you're just going to use Smolscale in your project, you don't have to
+ * worry about anything in here. The public API and documentation, such as
+ * it is, lives in smolscale.h.
+ *
+ * If, on the other hand, you're here to hack on Smolscale itself, this file
+ * contains all the internal shared declarations. */
+
+#undef SMOL_ENABLE_ASSERTS
+
 #include <stdint.h>
 #include "smolscale.h"
 
@@ -12,8 +21,16 @@
 extern "C" {
 #endif
 
-#include "config.h"
+#ifdef SMOL_ENABLE_ASSERTS
+# include <assert.h>
+# define SMOL_ASSERT(x) assert (x)
+#else
+# define SMOL_ASSERT(x)
+#endif
 
+/* We'll use at most ~4MB of scratch space. That won't fit on the stack
+ * everywhere, so we default to malloc(). If you know better, you can define
+ * SMOL_USE_ALLOCA. */
 #ifdef SMOL_USE_ALLOCA
 # define _SMOL_ALLOC(n) alloca (n)
 # define _SMOL_FREE(p)
@@ -70,7 +87,10 @@ typedef unsigned int SmolBool;
 
 #define SMOL_ALIGNMENT 64
 
-#define SMOL_ASSUME_ALIGNED_TO(x, t, n) (x) = (t) __builtin_assume_aligned ((x), (n))
+#define SMOL_ASSIGN_ALIGNED_TO(x, t, n) (t) __builtin_assume_aligned ((x), (n))
+#define SMOL_ASSIGN_ALIGNED(x, t) SMOL_ASSIGN_ALIGNED_TO ((x), t, SMOL_ALIGNMENT)
+
+#define SMOL_ASSUME_ALIGNED_TO(x, t, n) (x) = SMOL_ASSIGN_ALIGNED_TO ((x), t, (n))
 #define SMOL_ASSUME_ALIGNED(x, t) SMOL_ASSUME_ALIGNED_TO ((x), t, SMOL_ALIGNMENT)
 
 /* Pointer to beginning of storage is stored in *r. This must be passed to smol_free() later. */
@@ -81,8 +101,11 @@ typedef unsigned int SmolBool;
 
 typedef enum
 {
+    SMOL_STORAGE_24BPP,
+    SMOL_STORAGE_32BPP,
     SMOL_STORAGE_64BPP,
     SMOL_STORAGE_128BPP,
+
     SMOL_STORAGE_MAX
 }
 SmolStorageType;
@@ -104,92 +127,281 @@ typedef enum
 }
 SmolFilterType;
 
+typedef enum
+{
+    SMOL_REORDER_1234_TO_1234,
+
+    SMOL_REORDER_1234_TO_2341,
+    SMOL_REORDER_1234_TO_3214,
+    SMOL_REORDER_1234_TO_4123,
+    SMOL_REORDER_1234_TO_4321,
+    SMOL_REORDER_1234_TO_123,
+    SMOL_REORDER_1234_TO_321,
+    SMOL_REORDER_123_TO_1234,
+
+    SMOL_REORDER_1234_TO_1324,
+    SMOL_REORDER_1234_TO_2314,
+    SMOL_REORDER_1234_TO_2431,
+    SMOL_REORDER_1234_TO_4132,
+    SMOL_REORDER_1234_TO_4231,
+    SMOL_REORDER_1234_TO_132,
+    SMOL_REORDER_1234_TO_231,
+    SMOL_REORDER_123_TO_1324,
+
+    SMOL_REORDER_1234_TO_324,
+    SMOL_REORDER_1234_TO_423,
+
+    SMOL_REORDER_1234_TO_1423,
+    SMOL_REORDER_1234_TO_3241,
+
+    SMOL_REORDER_MAX
+}
+SmolReorderType;
+
+typedef enum
+{
+    SMOL_ALPHA_UNASSOCIATED,
+    SMOL_ALPHA_PREMUL8,
+    SMOL_ALPHA_PREMUL16,
+
+    SMOL_ALPHA_MAX
+}
+SmolAlphaType;
+
+typedef enum
+{
+    SMOL_GAMMA_SRGB_COMPRESSED,
+    SMOL_GAMMA_SRGB_LINEAR,
+
+    SMOL_GAMMA_MAX
+}
+SmolGammaType;
+
+typedef struct
+{
+    unsigned char src [4];
+    unsigned char dest [4];
+}
+SmolReorderMeta;
+
+typedef struct
+{
+    unsigned char storage;
+    unsigned char pixel_stride;
+    unsigned char alpha;
+    unsigned char order [4];
+}
+SmolPixelTypeMeta;
+
 /* For reusing rows that have already undergone horizontal scaling */
 typedef struct
 {
-    uint32_t in_ofs;
+    uint32_t src_ofs;
     uint64_t *parts_row [4];
     uint64_t *row_storage [4];
-    uint32_t *in_aligned;
-    uint32_t *in_aligned_storage;
+    uint32_t *src_aligned;
+    uint32_t *src_aligned_storage;
 }
-SmolVerticalCtx;
+SmolLocalCtx;
 
-typedef void (SmolUnpackRowFunc) (const uint32_t *row_in,
-                                  uint64_t *row_out,
+typedef void (SmolInitFunc) (SmolScaleCtx *scale_ctx);
+typedef void (SmolRepackRowFunc) (const void *src_row,
+                                  void *dest_row,
                                   uint32_t n_pixels);
-typedef void (SmolPackRowFunc) (const uint64_t *row_in,
-                                uint32_t *row_out,
-                                uint32_t n_pixels);
 typedef void (SmolHFilterFunc) (const SmolScaleCtx *scale_ctx,
-                                const uint64_t *row_limbs_in,
-                                uint64_t *row_limbs_out);
-typedef void (SmolVFilterFunc) (const SmolScaleCtx *scale_ctx,
-                                SmolVerticalCtx *vertical_ctx,
-                                uint32_t outrow_index,
-                                uint32_t *row_out);
+                                const uint64_t *src_row_limbs,
+                                uint64_t *dest_row_limbs);
+typedef int (SmolVFilterFunc) (const SmolScaleCtx *scale_ctx,
+                               SmolLocalCtx *local_ctx,
+                               uint32_t dest_row_index);
+typedef void (SmolCompositeOverColorFunc) (uint64_t *srcdest_row,
+                                           const uint64_t *color_pixel,
+                                           uint32_t n_pixels);
+typedef void (SmolCompositeOverDestFunc) (const uint64_t *src_row,
+                                          uint64_t *dest_row,
+                                          uint32_t n_pixels);
+typedef void (SmolClearFunc) (const void *src_pixel_batch,
+                              void *dest_row,
+                              uint32_t n_pixels);
 
-#define SMOL_CONV_UNDEFINED { 0, NULL, NULL }
-#define SMOL_CONV(un_from_order, un_from_type, un_to_order, un_to_type, pk_from_order, pk_from_type, pk_to_order, pk_to_type, storage_bits) \
-{ storage_bits / 8, (SmolUnpackRowFunc *) unpack_row_##un_from_order##_##un_from_type##_to_##un_to_order##_##un_to_type##_##storage_bits##bpp, \
-(SmolPackRowFunc *) pack_row_##pk_from_order##_##pk_from_type##_to_##pk_to_order##_##pk_to_type##_##storage_bits##bpp }
+#define SMOL_REPACK_SIGNATURE_GET_REORDER(sig) ((sig) >> (2 * (SMOL_GAMMA_BITS + SMOL_ALPHA_BITS + SMOL_STORAGE_BITS)))
+
+#define SMOL_REORDER_BITS 6
+#define SMOL_STORAGE_BITS 2
+#define SMOL_ALPHA_BITS 2
+#define SMOL_GAMMA_BITS 1
+
+#define SMOL_MAKE_REPACK_SIGNATURE_ANY_ORDER(src_storage, src_alpha, src_gamma, \
+                                             dest_storage, dest_alpha, dest_gamma) \
+    (((src_storage) << (SMOL_GAMMA_BITS + SMOL_ALPHA_BITS + SMOL_STORAGE_BITS + SMOL_GAMMA_BITS + SMOL_ALPHA_BITS)) \
+     | ((src_alpha) << (SMOL_GAMMA_BITS + SMOL_ALPHA_BITS + SMOL_STORAGE_BITS + SMOL_GAMMA_BITS)) \
+     | ((src_gamma) << (SMOL_GAMMA_BITS + SMOL_ALPHA_BITS + SMOL_STORAGE_BITS)) \
+     | ((dest_storage) << (SMOL_GAMMA_BITS + SMOL_ALPHA_BITS))           \
+     | ((dest_alpha) << (SMOL_GAMMA_BITS))                               \
+     | ((dest_gamma) << 0))                                              \
+
+#define MASK_ITEM(m, n_bits) ((m) ? (1 << (n_bits)) - 1 : 0)
+
+#define SMOL_REPACK_SIGNATURE_ANY_ORDER_MASK(src_storage, src_alpha, src_gamma, \
+                                             dest_storage, dest_alpha, dest_gamma) \
+    SMOL_MAKE_REPACK_SIGNATURE_ANY_ORDER(MASK_ITEM (src_storage, SMOL_STORAGE_BITS), \
+                                         MASK_ITEM (src_alpha, SMOL_ALPHA_BITS), \
+                                         MASK_ITEM (src_gamma, SMOL_GAMMA_BITS), \
+                                         MASK_ITEM (dest_storage, SMOL_STORAGE_BITS), \
+                                         MASK_ITEM (dest_alpha, SMOL_ALPHA_BITS), \
+                                         MASK_ITEM (dest_gamma, SMOL_GAMMA_BITS))
+
+#define SMOL_REPACK_META(src_order, src_storage, src_alpha, src_gamma,      \
+                         dest_order, dest_storage, dest_alpha, dest_gamma)  \
+    { (((SMOL_REORDER_##src_order##_TO_##dest_order) << 10)               \
+       | ((SMOL_STORAGE_##src_storage##BPP) << 8) | ((SMOL_ALPHA_##src_alpha) << 6) \
+       | ((SMOL_GAMMA_SRGB_##src_gamma) << 5)                            \
+       | ((SMOL_STORAGE_##dest_storage##BPP) << 3) | ((SMOL_ALPHA_##dest_alpha) << 1) \
+       | ((SMOL_GAMMA_SRGB_##dest_gamma) << 0)), \
+    (SmolRepackRowFunc *) repack_row_##src_order##_##src_storage##_##src_alpha##_##src_gamma##_to_##dest_order##_##dest_storage##_##dest_alpha##_##dest_gamma }
+
+#define SMOL_REPACK_META_LAST { 0xffff, NULL }
 
 typedef struct
 {
-    uint8_t n_bytes_per_pixel;
-    SmolUnpackRowFunc *unpack_row_func;
-    SmolPackRowFunc *pack_row_func;
+    uint16_t signature;
+    SmolRepackRowFunc *repack_row_func;
 }
-SmolConversion;
+SmolRepackMeta;
+
+#define SMOL_REPACK_ROW_DEF(src_order, src_storage, src_limb_bits, src_alpha, src_gamma, \
+                            dest_order, dest_storage, dest_limb_bits, dest_alpha, dest_gamma) \
+    static void repack_row_##src_order##_##src_storage##_##src_alpha##_##src_gamma##_to_##dest_order##_##dest_storage##_##dest_alpha##_##dest_gamma \
+    (const uint##src_limb_bits##_t * SMOL_RESTRICT src_row,               \
+     uint##dest_limb_bits##_t * SMOL_RESTRICT dest_row,                   \
+     uint32_t n_pixels)                                                 \
+    {                                                                   \
+        uint##dest_limb_bits##_t *dest_row_max = dest_row + n_pixels * (dest_storage / dest_limb_bits); \
+        SMOL_ASSUME_ALIGNED_TO (src_row, uint##src_limb_bits##_t *, src_limb_bits / 8); \
+        SMOL_ASSUME_ALIGNED_TO (dest_row, uint##dest_limb_bits##_t *, dest_limb_bits / 8);
+
+#define SMOL_REPACK_ROW_DEF_END }
 
 typedef struct
 {
-    SmolConversion conversions [SMOL_STORAGE_MAX] [SMOL_PIXEL_MAX] [SMOL_PIXEL_MAX];
-}
-SmolConversionTable;
-
-typedef struct
-{
+    SmolInitFunc *init_h_func;
+    SmolInitFunc *init_v_func;
     SmolHFilterFunc *hfilter_funcs [SMOL_STORAGE_MAX] [SMOL_FILTER_MAX];
     SmolVFilterFunc *vfilter_funcs [SMOL_STORAGE_MAX] [SMOL_FILTER_MAX];
-
-    /* Can be a NULL pointer if the implementation does not override any
-     * conversions. */
-    const SmolConversionTable *ctab;
+    SmolCompositeOverColorFunc *composite_over_color_funcs [SMOL_STORAGE_MAX];
+    SmolCompositeOverDestFunc *composite_over_dest_funcs [SMOL_STORAGE_MAX];
+    SmolClearFunc *clear_funcs [SMOL_STORAGE_MAX];
+    const SmolRepackMeta *repack_meta;
 }
 SmolImplementation;
+
+typedef struct
+{
+    void *precalc;
+    SmolFilterType filter_type;
+
+    uint32_t src_size_px, src_size_spx;
+    uint32_t dest_size_px, dest_size_spx;
+
+    unsigned int n_halvings;
+
+    int32_t placement_ofs_px, placement_ofs_spx;
+    uint32_t placement_size_px, placement_size_spx;
+    uint32_t placement_size_prehalving_px, placement_size_prehalving_spx;
+
+    uint32_t span_step;  /* For box filter, in spx */
+    uint32_t span_mul;  /* For box filter */
+
+    /* Opacity of first and last column or row. Used for subpixel placement
+     * and applied after each scaling step. */
+    uint16_t first_opacity, last_opacity;
+
+    /* Rows or cols to add consisting of unbroken pixel_color. This is done
+     * after scaling but before conversion to output pixel format. */
+    uint16_t clear_before_px, clear_after_px;
+
+    uint16_t clip_before_px, clip_after_px;
+}
+SmolDim;
+
+#define SMOL_CLEAR_BATCH_SIZE 96
 
 struct SmolScaleCtx
 {
     /* <private> */
 
-    const uint32_t *pixels_in;
-    uint32_t *pixels_out;
-    uint32_t width_in, height_in, rowstride_in;
-    uint32_t width_out, height_out, rowstride_out;
+    const char *src_pixels;
+    char *dest_pixels;
 
-    SmolPixelType pixel_type_in, pixel_type_out;
-    SmolFilterType filter_h, filter_v;
+    uint32_t src_rowstride;
+    uint32_t dest_rowstride;
+
+    SmolPixelType src_pixel_type, dest_pixel_type;
     SmolStorageType storage_type;
+    SmolGammaType gamma_type;
+    SmolCompositeOp composite_op;
 
-    SmolUnpackRowFunc *unpack_row_func;
-    SmolPackRowFunc *pack_row_func;
+    /* Raw flags passed in by user */
+    SmolFlags flags;
+
+    SmolRepackRowFunc *src_unpack_row_func;
+    SmolRepackRowFunc *dest_unpack_row_func;
+    SmolRepackRowFunc *pack_row_func;
     SmolHFilterFunc *hfilter_func;
     SmolVFilterFunc *vfilter_func;
+    SmolCompositeOverColorFunc *composite_over_color_func;
+    SmolCompositeOverDestFunc *composite_over_dest_func;
+    SmolClearFunc *clear_dest_func;
 
     /* User specified, can be NULL */
     SmolPostRowFunc *post_row_func;
     void *user_data;
 
-    /* Each offset is split in two uint16s: { pixel index, fraction }. These
-     * are relative to the image after halvings have taken place. */
-    uint16_t *offsets_x, *offsets_y;
-    uint32_t span_mul_x, span_mul_y;  /* For box filter */
+    /* Storage for dimensions' precalc arrays. Single allocation. */
+    void *precalc_storage;
 
-    uint32_t width_bilin_out, height_bilin_out;
-    unsigned int width_halvings, height_halvings;
+    /* Specifics for each dimension */
+    SmolDim hdim, vdim;
+
+    /* TRUE if input rows can be copied directly to output. */
+    unsigned int is_noop : 1;
+
+    /* TRUE if we have a color_pixel to composite on. */
+    unsigned int have_composite_color : 1;
+
+    /* Unpacked color to composite on */
+    uint64_t color_pixel [2];
+
+    /* A batch of color pixels in dest storage format. The batch size
+     * is in bytes, and chosen as an even multiple of 3, allowing 32 bytes wide
+     * operations (e.g. AVX2) to be used to clear packed RGB pixels. */
+    unsigned char color_pixels_clear_batch [SMOL_CLEAR_BATCH_SIZE];
 };
 
+/* Number of pixels to convert per batch. For some conversions, we perform
+ * an alpha test per batch to avoid the expensive premul path when the image
+ * data is opaque.
+ *
+ * FIXME: Unimplemented. */
+#define PIXEL_BATCH_SIZE 32
+
+#define SRGB_LINEAR_BITS 11
+#define SRGB_LINEAR_MAX (1 << (SRGB_LINEAR_BITS))
+
+extern const uint16_t _smol_from_srgb_lut [256];
+extern const uint8_t _smol_to_srgb_lut [SRGB_LINEAR_MAX];
+
+#define INVERTED_DIV_SHIFT_P8 (21 - 8)
+#define INVERTED_DIV_SHIFT_P8L (22 - SRGB_LINEAR_BITS)
+#define INVERTED_DIV_SHIFT_P16 (24 - 8)
+#define INVERTED_DIV_SHIFT_P16L (30 - SRGB_LINEAR_BITS)
+
+extern const uint32_t _smol_inv_div_p8_lut [256];
+extern const uint32_t _smol_inv_div_p8l_lut [256];
+extern const uint32_t _smol_inv_div_p16_lut [256];
+extern const uint32_t _smol_inv_div_p16l_lut [256];
+
+const SmolImplementation *_smol_get_generic_implementation (void);
 #ifdef SMOL_WITH_AVX2
 const SmolImplementation *_smol_get_avx2_implementation (void);
 #endif

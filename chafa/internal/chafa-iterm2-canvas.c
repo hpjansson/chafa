@@ -76,10 +76,17 @@ typedef enum
 }
 TiffTagId;
 
+typedef enum
+{
+    TIFF_EXTRA_SAMPLE_UNSPECIFIED = 0,
+    TIFF_EXTRA_SAMPLE_ASSOC_ALPHA = 1,
+    TIFF_EXTRA_SAMPLE_UNASSOC_ALPHA = 2
+}
+TiffExtraSampleType;
+
 #define TIFF_PHOTOMETRIC_INTERPRETATION_RGB 2
 #define TIFF_ORIENTATION_TOPLEFT 1
 #define TIFF_PLANAR_CONFIGURATION_CONTIGUOUS 1
-#define TIFF_EXTRA_SAMPLE_ASSOC_ALPHA 1
 
 typedef struct
 {
@@ -150,16 +157,29 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
         return;
 
     ctx.iterm2_canvas = iterm2_canvas;
-    ctx.scale_ctx = smol_scale_new_full ((SmolPixelType) src_pixel_type,
+    ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
+                                         (SmolPixelType) src_pixel_type,
                                          src_width,
                                          src_height,
                                          src_rowstride,
-                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+                                         /* Fill */
                                          NULL,
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                         /* Destination */
+                                         NULL,
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul? */
                                          iterm2_canvas->width,
                                          iterm2_canvas->height,
                                          iterm2_canvas->width * sizeof (guint32),
+                                         /* Placement */
+                                         0,
+                                         0,
+                                         iterm2_canvas->width * SMOL_SUBPIXEL_MUL,
+                                         iterm2_canvas->height * SMOL_SUBPIXEL_MUL,
+                                         /* Extra args */
+                                         SMOL_COMPOSITE_SRC,
+                                         SMOL_DISABLE_SRGB_LINEARIZATION,
                                          NULL,
                                          &ctx);
 
@@ -246,7 +266,7 @@ chafa_iterm2_canvas_build_ansi (ChafaIterm2Canvas *iterm2_canvas, ChafaTermInfo 
     generate_tag (&base64, out_str, TIFF_TAG_STRIP_BYTE_COUNTS, TIFF_TYPE_LONG, 1,
                   iterm2_canvas->width * iterm2_canvas->height * 4);
     generate_tag (&base64, out_str, TIFF_TAG_PLANAR_CONFIGURATION, TIFF_TYPE_SHORT, 1, TIFF_PLANAR_CONFIGURATION_CONTIGUOUS);
-    generate_tag (&base64, out_str, TIFF_TAG_EXTRA_SAMPLES, TIFF_TYPE_SHORT, 1, TIFF_EXTRA_SAMPLE_ASSOC_ALPHA);
+    generate_tag (&base64, out_str, TIFF_TAG_EXTRA_SAMPLES, TIFF_TYPE_SHORT, 1, TIFF_EXTRA_SAMPLE_UNASSOC_ALPHA);
 
     /* Next IFD offset (terminator) */
 

@@ -427,6 +427,7 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                  gint dest_width, gint dest_height)
 {
     DrawPixelsCtx ctx;
+    ChafaColor bg;
 
     g_return_if_fail (dest_width == indexed_image->width);
     g_return_if_fail (dest_height <= indexed_image->height);
@@ -444,23 +445,54 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
     ctx.dest_width = dest_width;
     ctx.dest_height = dest_height;
 
+#if 0
+    /* FIXME: Need a new smolscale compositing mode that preserves src
+     * alpha before this can be implemented */
+    bg = *chafa_palette_get_color (&indexed_image->palette,
+                                   CHAFA_COLOR_SPACE_RGB,
+                                   CHAFA_PALETTE_INDEX_BG);
+    bg.ch [3] = 0xff;
+#else
     gen_color_lut_rgba8 (ctx.bg_color_lut,
                          *chafa_palette_get_color (&indexed_image->palette,
                                                    CHAFA_COLOR_SPACE_RGB,
                                                    CHAFA_PALETTE_INDEX_BG));
+#endif
 
     ctx.scaled_data = g_new (guint32, dest_width * dest_height);
-    ctx.scale_ctx = smol_scale_new_full ((SmolPixelType) src_pixel_type,
+    ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
+                                         (SmolPixelType) src_pixel_type,
                                          src_width,
                                          src_height,
                                          src_rowstride,
-                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+                                         /* Fill */
+#if 0
+                                         bg.ch,
+#else
                                          NULL,
+#endif
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                         /* Destination */
+                                         NULL,
+                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
                                          dest_width,
                                          dest_height,
                                          dest_width * sizeof (guint32),
+                                         /* Placement */
+                                         0,
+                                         0,
+                                         dest_width * SMOL_SUBPIXEL_MUL,
+                                         dest_height * SMOL_SUBPIXEL_MUL,
+                                         /* Extra args */
+                                         SMOL_COMPOSITE_SRC_CLEAR_DEST,
+#if 0
+                                         SMOL_NO_FLAGS,
+                                         NULL,
+#else
+                                         SMOL_DISABLE_SRGB_LINEARIZATION,
                                          post_scale_row,
+#endif
                                          &ctx);
 
     draw_pixels (&ctx);

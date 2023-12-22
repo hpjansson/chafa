@@ -620,33 +620,6 @@ composite_alpha_on_bg (ChafaColor bg_color,
     }
 }
 
-/* FIXME: Could we always destroy the alpha channel and eliminate the other
- * variant? */
-static void
-composite_alpha_on_solid (ChafaColor bg_color,
-                          ChafaPixel *pixels, gint width, gint first_row, gint n_rows)
-{
-    ChafaPixel *p0, *p1;
-
-    p0 = pixels + first_row * width;
-    p1 = p0 + n_rows * width;
-
-    for ( ; p0 < p1; p0++)
-    {
-        p0->col.ch [0] += (bg_color.ch [0] * (255 - (guint32) p0->col.ch [3])) / 255;
-        p0->col.ch [1] += (bg_color.ch [1] * (255 - (guint32) p0->col.ch [3])) / 255;
-        p0->col.ch [2] += (bg_color.ch [2] * (255 - (guint32) p0->col.ch [3])) / 255;
-        p0->col.ch [3] = 0xff;
-    }
-}
-
-void
-chafa_composite_rgba_on_solid_color (ChafaColor color,
-                                     ChafaPixel *pixels, gint width, gint first_row, gint n_rows)
-{
-    composite_alpha_on_solid (color, pixels, width, first_row, n_rows);
-}
-
 static void
 prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 {
@@ -798,16 +771,17 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
     prep_ctx.dest_width = dest_width;
     prep_ctx.dest_height = dest_height;
 
-    prep_ctx.scale_ctx = smol_scale_new ((SmolPixelType) prep_ctx.src_pixel_type,
-                                         (const guint32 *) prep_ctx.src_pixels,
-                                         prep_ctx.src_width,
-                                         prep_ctx.src_height,
-                                         prep_ctx.src_rowstride,
-                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
-                                         NULL,
-                                         prep_ctx.dest_width,
-                                         prep_ctx.dest_height,
-                                         prep_ctx.dest_width * sizeof (guint32));
+    prep_ctx.scale_ctx = smol_scale_new_simple (prep_ctx.src_pixels,
+                                                (SmolPixelType) prep_ctx.src_pixel_type,
+                                                prep_ctx.src_width,
+                                                prep_ctx.src_height,
+                                                prep_ctx.src_rowstride,
+                                                NULL,
+                                                SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
+                                                prep_ctx.dest_width,
+                                                prep_ctx.dest_height,
+                                                prep_ctx.dest_width * sizeof (guint32),
+                                                SMOL_NO_FLAGS);
 
     prepare_pixels_pass_1 (&prep_ctx);
     prepare_pixels_pass_2 (&prep_ctx);
