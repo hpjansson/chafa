@@ -60,17 +60,18 @@ gen_color_lut_rgba8 (guint32 *color_lut, ChafaColor col)
 }
 
 static void
-post_scale_row (guint32 *row_inout, int width, void *user_data)
+post_scale_row (gpointer row_inout, int width, void *user_data)
 {
     const DrawPixelsCtx *ctx = user_data;
-    guint32 *row_inout_end = row_inout + width;
+    guint32 *row_inout_u32 = row_inout;
+    guint32 *row_inout_end = row_inout_u32 + width;
 
     /* Composite on solid background color */
 
-    for ( ; row_inout < row_inout_end; row_inout++)
+    for ( ; row_inout_u32 < row_inout_end; row_inout_u32++)
     {
-        ChafaColor c = chafa_color8_fetch_from_rgba8 (row_inout);
-        *row_inout += ctx->bg_color_lut [c.ch [3]];
+        ChafaColor c = chafa_color8_fetch_from_rgba8 (row_inout_u32);
+        *row_inout_u32 += ctx->bg_color_lut [c.ch [3]];
     }
 }
 
