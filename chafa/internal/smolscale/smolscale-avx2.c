@@ -1523,31 +1523,31 @@ apply_horiz_edge_opacity (const SmolScaleCtx *scale_ctx,
  * Horizontal scaling *
  * ------------------ */
 
+#define CONTROL_4X2BIT_1_0_3_2 (SMOL_4X2BIT (1, 0, 3, 2))
+#define CONTROL_4X2BIT_3_1_2_0 (SMOL_4X2BIT (3, 1, 2, 0))
+#define CONTROL_8X1BIT_1_1_0_0_1_1_0_0 (SMOL_8X1BIT (1, 1, 0, 0, 1, 1, 0, 0))
+
 static SMOL_INLINE void
 hadd_pixels_16x_to_8x_64bpp (__m256i i0, __m256i i1, __m256i i2, __m256i i3,
                              __m256i * SMOL_RESTRICT o0, __m256i * SMOL_RESTRICT o1)
 {
     __m256i t0, t1, t2, t3;
-    int control_bits;
 
-    control_bits = SMOL_4X2BIT (1, 0, 3, 2);
-    t0 = _mm256_shuffle_epi32 (i0, control_bits);
-    t1 = _mm256_shuffle_epi32 (i1, control_bits);
-    t2 = _mm256_shuffle_epi32 (i2, control_bits);
-    t3 = _mm256_shuffle_epi32 (i3, control_bits);
+    t0 = _mm256_shuffle_epi32 (i0, CONTROL_4X2BIT_1_0_3_2);
+    t1 = _mm256_shuffle_epi32 (i1, CONTROL_4X2BIT_1_0_3_2);
+    t2 = _mm256_shuffle_epi32 (i2, CONTROL_4X2BIT_1_0_3_2);
+    t3 = _mm256_shuffle_epi32 (i3, CONTROL_4X2BIT_1_0_3_2);
 
     t0 = _mm256_add_epi16 (t0, i0);
     t1 = _mm256_add_epi16 (t1, i1);
     t2 = _mm256_add_epi16 (t2, i2);
     t3 = _mm256_add_epi16 (t3, i3);
 
-    control_bits = SMOL_8X1BIT (1, 1, 0, 0, 1, 1, 0, 0);
-    t0 = _mm256_blend_epi32 (t0, t1, control_bits);
-    t1 = _mm256_blend_epi32 (t2, t3, control_bits);
+    t0 = _mm256_blend_epi32 (t0, t1, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    t1 = _mm256_blend_epi32 (t2, t3, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
 
-    control_bits = SMOL_4X2BIT (3, 1, 2, 0);
-    t0 = _mm256_permute4x64_epi64 (t0, control_bits);
-    t1 = _mm256_permute4x64_epi64 (t1, control_bits);
+    t0 = _mm256_permute4x64_epi64 (t0, CONTROL_4X2BIT_3_1_2_0);
+    t1 = _mm256_permute4x64_epi64 (t1, CONTROL_4X2BIT_3_1_2_0);
 
     *o0 = t0;
     *o1 = t1;
@@ -1557,20 +1557,16 @@ static SMOL_INLINE __m256i
 hadd_pixels_8x_to_4x_64bpp (__m256i i0, __m256i i1)
 {
     __m256i t0, t1;
-    int control_bits;
 
-    control_bits = SMOL_4X2BIT (1, 0, 3, 2);
-    t0 = _mm256_shuffle_epi32 (i0, control_bits);
-    t1 = _mm256_shuffle_epi32 (i1, control_bits);
+    t0 = _mm256_shuffle_epi32 (i0, CONTROL_4X2BIT_1_0_3_2);
+    t1 = _mm256_shuffle_epi32 (i1, CONTROL_4X2BIT_1_0_3_2);
 
     t0 = _mm256_add_epi16 (t0, i0);
     t1 = _mm256_add_epi16 (t1, i1);
 
-    control_bits = SMOL_8X1BIT (1, 1, 0, 0, 1, 1, 0, 0);
-    t0 = _mm256_blend_epi32 (t0, t1, control_bits);
+    t0 = _mm256_blend_epi32 (t0, t1, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
 
-    control_bits = SMOL_4X2BIT (3, 1, 2, 0);
-    t0 = _mm256_permute4x64_epi64 (t0, control_bits);
+    t0 = _mm256_permute4x64_epi64 (t0, CONTROL_4X2BIT_3_1_2_0);
 
     return t0;
 }
@@ -1599,7 +1595,6 @@ interp_horizontal_bilinear_batch_64bpp (const uint64_t * SMOL_RESTRICT row_parts
     __m256i q01, q11, q21, q31, q41, q51, q61, q71;
     __m256i p00, p01, p10, p11, p20, p21, p30, p31;
     __m256i f;
-    int control_bits;
 
     /* Fetch pixel pairs to interpolate between, two pairs per ymm register.
      * This looks clumsy, but it's a lot faster than using _mm256_i32gather_epi64(),
@@ -1635,30 +1630,26 @@ interp_horizontal_bilinear_batch_64bpp (const uint64_t * SMOL_RESTRICT row_parts
 
     /* 0123 -> 0x2x, 1x3x. 4567 -> x4x6, x5x7. Etc. */
 
-    control_bits = SMOL_4X2BIT (1, 0, 3, 2);
-
-    q01 = _mm256_shuffle_epi32 (q00, control_bits);
-    q11 = _mm256_shuffle_epi32 (q10, control_bits);
-    q21 = _mm256_shuffle_epi32 (q20, control_bits);
-    q31 = _mm256_shuffle_epi32 (q30, control_bits);
-    q41 = _mm256_shuffle_epi32 (q40, control_bits);
-    q51 = _mm256_shuffle_epi32 (q50, control_bits);
-    q61 = _mm256_shuffle_epi32 (q60, control_bits);
-    q71 = _mm256_shuffle_epi32 (q70, control_bits);
+    q01 = _mm256_shuffle_epi32 (q00, CONTROL_4X2BIT_1_0_3_2);
+    q11 = _mm256_shuffle_epi32 (q10, CONTROL_4X2BIT_1_0_3_2);
+    q21 = _mm256_shuffle_epi32 (q20, CONTROL_4X2BIT_1_0_3_2);
+    q31 = _mm256_shuffle_epi32 (q30, CONTROL_4X2BIT_1_0_3_2);
+    q41 = _mm256_shuffle_epi32 (q40, CONTROL_4X2BIT_1_0_3_2);
+    q51 = _mm256_shuffle_epi32 (q50, CONTROL_4X2BIT_1_0_3_2);
+    q61 = _mm256_shuffle_epi32 (q60, CONTROL_4X2BIT_1_0_3_2);
+    q71 = _mm256_shuffle_epi32 (q70, CONTROL_4X2BIT_1_0_3_2);
 
     /* 0x2x, x4x6 -> 0426. 1x3x, x5x7 -> 1537. Etc. */
 
-    control_bits = SMOL_8X1BIT (1, 1, 0, 0, 1, 1, 0, 0);
+    p00 = _mm256_blend_epi32 (q00, q11, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    p10 = _mm256_blend_epi32 (q20, q31, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    p20 = _mm256_blend_epi32 (q40, q51, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    p30 = _mm256_blend_epi32 (q60, q71, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
 
-    p00 = _mm256_blend_epi32 (q00, q11, control_bits);
-    p10 = _mm256_blend_epi32 (q20, q31, control_bits);
-    p20 = _mm256_blend_epi32 (q40, q51, control_bits);
-    p30 = _mm256_blend_epi32 (q60, q71, control_bits);
-
-    p01 = _mm256_blend_epi32 (q01, q10, control_bits);
-    p11 = _mm256_blend_epi32 (q21, q30, control_bits);
-    p21 = _mm256_blend_epi32 (q41, q50, control_bits);
-    p31 = _mm256_blend_epi32 (q61, q70, control_bits);
+    p01 = _mm256_blend_epi32 (q01, q10, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    p11 = _mm256_blend_epi32 (q21, q30, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    p21 = _mm256_blend_epi32 (q41, q50, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
+    p31 = _mm256_blend_epi32 (q61, q70, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
 
     /* Interpolation. 0426 vs 1537. Etc. */
 
@@ -1694,12 +1685,10 @@ interp_horizontal_bilinear_batch_64bpp (const uint64_t * SMOL_RESTRICT row_parts
 
     /* [0426/1537] -> [0246/1357]. Etc. */
 
-    control_bits = SMOL_4X2BIT (3, 1, 2, 0);
-
-    *o0 = _mm256_permute4x64_epi64 (m0, control_bits);
-    *o1 = _mm256_permute4x64_epi64 (m1, control_bits);
-    *o2 = _mm256_permute4x64_epi64 (m2, control_bits);
-    *o3 = _mm256_permute4x64_epi64 (m3, control_bits);
+    *o0 = _mm256_permute4x64_epi64 (m0, CONTROL_4X2BIT_3_1_2_0);
+    *o1 = _mm256_permute4x64_epi64 (m1, CONTROL_4X2BIT_3_1_2_0);
+    *o2 = _mm256_permute4x64_epi64 (m2, CONTROL_4X2BIT_3_1_2_0);
+    *o3 = _mm256_permute4x64_epi64 (m3, CONTROL_4X2BIT_3_1_2_0);
 }
 
 static __m256i
