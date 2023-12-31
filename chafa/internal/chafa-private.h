@@ -137,6 +137,18 @@ struct ChafaImage
     ChafaFrame *frame;
 };
 
+/* Placement */
+
+struct ChafaPlacement
+{
+    gint refs;
+
+    ChafaImage *image;
+    gint id;
+    ChafaAlign halign, valign;
+    ChafaTuck tuck;
+};
+
 /* Canvas */
 
 typedef struct ChafaCanvasCell ChafaCanvasCell;

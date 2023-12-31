@@ -24,10 +24,12 @@
 /**
  * SECTION:chafa-image
  * @title: ChafaImage
- * @short_description: An image that can be placed on a ChafaCanvas
+ * @short_description: An image to be placed on a #ChafaCanvas
  *
  * A #ChafaImage represents a raster image for placement on a #ChafaCanvas. It
  * can currently hold a single #ChafaFrame.
+ *
+ * To place an image on a canvas, it must first be assigned to a #ChafaPlacement.
  **/
 
 /**

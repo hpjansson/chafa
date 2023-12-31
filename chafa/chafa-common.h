@@ -68,6 +68,49 @@ typedef enum
 }
 ChafaPixelType;
 
+/**
+ * ChafaAlign:
+ * @CHAFA_ALIGN_START: Align flush with beginning of the area (top or left in LTR locales).
+ * @CHAFA_ALIGN_END: Align flush with end of the area (bottom or right in LTR locales).
+ * @CHAFA_ALIGN_CENTER: Align in the middle of the area.
+ *
+ * Alignment options when placing an element within an area.
+ *
+ * Since: 1.14
+ **/
+
+typedef enum
+{
+    CHAFA_ALIGN_START,
+    CHAFA_ALIGN_END,
+    CHAFA_ALIGN_CENTER,
+
+    CHAFA_ALIGN_MAX
+}
+ChafaAlign;
+
+/**
+ * ChafaTuck:
+ * @CHAFA_TUCK_STRETCH: Resize element to fit the area exactly, changing its aspect ratio.
+ * @CHAFA_TUCK_FIT: Resize element to fit the area, preserving its aspect ratio by adding padding.
+ * @CHAFA_TUCK_SHRINK_TO_FIT: Like @CHAFA_TUCK_FIT, but prohibit enlargement.
+ *
+ * Resizing options when placing an element within an area. Usually used in conjunction
+ * with #ChafaAlign to control the padding.
+ *
+ * Since: 1.14
+ **/
+
+typedef enum
+{
+    CHAFA_TUCK_STRETCH,
+    CHAFA_TUCK_FIT,
+    CHAFA_TUCK_SHRINK_TO_FIT,
+
+    CHAFA_TUCK_MAX
+}
+ChafaTuck;
+
 G_END_DECLS
 
 #endif /* __CHAFA_COMMON_H__ */
