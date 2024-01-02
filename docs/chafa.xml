@@ -138,6 +138,18 @@ Clear screen before processing each file.
 </varlistentry>
 
 <varlistentry>
+<term><option>--exact-size <replaceable>mode</replaceable></option></term>
+<listitem><para>
+Try to match the input's size exactly [on, off, auto]. When on, this will
+override other sizing options and produce output images at the exact pixel size
+of the inputs. In auto mode, scaling will be avoided (in exchange for padding)
+if the output size is equal to or slightly bigger than the input. When off,
+padding will never be added, and the image is scaled to fit the containing
+cell extent. Defaults to auto.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--fit-width</option></term>
 <listitem><para>
 Fit images to the view's width, potentially exceeding its height.

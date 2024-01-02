@@ -64,6 +64,14 @@
 #define CELL_EXTENT_AUTO_MAX 65535
 #define PIXEL_EXTENT_MAX 32767
 
+typedef enum
+{
+    TRISTATE_FALSE = 0,
+    TRISTATE_TRUE,
+    TRISTATE_AUTO
+}
+Tristate;
+
 typedef struct
 {
     gchar *executable_name;
@@ -125,6 +133,8 @@ typedef struct
     /* Applied after FPS is determined. If final value >= ANIM_FPS_MAX,
      * eliminate interframe delay altogether. */
     gdouble anim_speed_multiplier;
+
+    Tristate use_exact_size;
 
     /* Automatically set if terminal size is detected and there is
      * zero bottom margin. */
@@ -418,6 +428,7 @@ print_summary (void)
 
     "  -C, --center=BOOL  Center images horizontally in view [on, off]. Default off.\n"
     "      --clear        Clear screen before processing each file.\n"
+    "      --exact-size=MODE  Try to match the input's size exactly [on, off, auto].\n"
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
@@ -523,8 +534,19 @@ static gboolean
 fuzz_seed_get_bool (gconstpointer seed, gint seed_len, gint *ofs)
 {
     const guchar *seed_u8 = seed;
- 
+
     return seed_u8 [(*ofs)++ % seed_len] < 128 ? TRUE : FALSE;
+}
+
+static Tristate
+fuzz_seed_get_tristate (gconstpointer seed, gint seed_len, gint *ofs)
+{
+    const guchar *seed_u8 = seed;
+    guint v = seed_u8 [(*ofs)++ % seed_len];
+
+    return (v < 256 / 3) ? TRISTATE_FALSE
+        : (v < (256 * 2) / 3) ? TRISTATE_TRUE
+        : TRISTATE_AUTO;
 }
 
 static guint32
@@ -610,6 +632,7 @@ fuzz_options_with_seed (GlobalOptions *opt, gconstpointer seed, gint seed_len)
     opt->passthrough_set = TRUE;
     opt->transparency_threshold = fuzz_seed_get_double (seed, seed_len, &ofs, 0.0, 1.0);
     opt->transparency_threshold_set = TRUE;
+    opt->use_exact_size = fuzz_seed_get_tristate (seed, seed_len, &ofs);
 }
 
 static void
@@ -630,6 +653,60 @@ fuzz_options_with_file (GlobalOptions *opt, const gchar *filename)
     fclose (fhd);
 
     fuzz_options_with_seed (opt, seed, seed_len);
+}
+
+static gboolean
+parse_boolean_token (const gchar *token, gboolean *value_out)
+{
+    gboolean success = FALSE;
+
+    if (!g_ascii_strcasecmp (token, "on")
+        || !g_ascii_strcasecmp (token, "yes")
+        || !g_ascii_strcasecmp (token, "true"))
+    {
+        *value_out = TRUE;
+    }
+    else if (!g_ascii_strcasecmp (token, "off")
+             || !g_ascii_strcasecmp (token, "no")
+             || !g_ascii_strcasecmp (token, "false"))
+    {
+        *value_out = FALSE;
+    }
+    else
+    {
+        goto out;
+    }
+
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
+parse_tristate_token (const gchar *token, Tristate *value_out)
+{
+    gboolean success = FALSE;
+    gboolean value_bool = FALSE;
+
+    if (!g_ascii_strcasecmp (token, "auto")
+        || !g_ascii_strcasecmp (token, "default"))
+    {
+        *value_out = TRISTATE_AUTO;
+    }
+    else
+    {
+        success = parse_boolean_token (token, &value_bool);
+        if (!success)
+            goto out;
+
+        *value_out = value_bool ? TRISTATE_TRUE : TRISTATE_FALSE;
+    }
+
+    success = TRUE;
+
+out:
+    return success;
 }
 
 static gboolean
@@ -978,6 +1055,21 @@ parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
 }
 
 static gboolean
+parse_exact_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_tristate_token (value, &options.use_exact_size);
+    if (!result)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Exact size selector must be one of [on, off, auto].");
+    }
+
+    return result;
+}
+
+static gboolean
 parse_dither_grain_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
@@ -1205,34 +1297,6 @@ out:
     if (temp_map)
         chafa_symbol_map_unref (temp_map);
     return result;
-}
-
-static gboolean
-parse_boolean_token (const gchar *token, gboolean *value_out)
-{
-    gboolean success = FALSE;
-
-    if (!g_ascii_strcasecmp (token, "on")
-        || !g_ascii_strcasecmp (token, "yes")
-        || !g_ascii_strcasecmp (token, "true"))
-    {
-        *value_out = TRUE;
-    }
-    else if (!g_ascii_strcasecmp (token, "off")
-             || !g_ascii_strcasecmp (token, "no")
-             || !g_ascii_strcasecmp (token, "false"))
-    {
-        *value_out = FALSE;
-    }
-    else
-    {
-        goto out;
-    }
-
-    success = TRUE;
-
-out:
-    return success;
 }
 
 static gboolean
@@ -1783,6 +1847,7 @@ parse_options (int *argc, char **argv [])
         { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
         { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_CALLBACK, parse_duration_arg,    "Duration", NULL },
+        { "exact-size",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_exact_size_arg,  "Whether to prefer the original image size", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
@@ -1877,6 +1942,7 @@ parse_options (int *argc, char **argv [])
     options.file_duration_s = -1.0;  /* Unset */
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
+    options.use_exact_size = TRISTATE_AUTO;
     options.output_utf_16_on_windows = FALSE;
     options.is_conhost_mode = FALSE;
 
@@ -1931,7 +1997,7 @@ parse_options (int *argc, char **argv [])
             && options.cell_width > 0
             && options.cell_height > 0)
         {
-            options.font_ratio = (gfloat) options.cell_width / (gfloat) options.cell_height;
+            options.font_ratio = (gdouble) options.cell_width / (gdouble) options.cell_height;
         }
     }
 
@@ -2216,6 +2282,38 @@ out:
     g_option_context_free (context);
 
     return result;
+}
+
+static void
+pixel_to_cell_dimensions (gdouble scale,
+                          gint cell_width, gint cell_height,
+                          gint width, gint height,
+                          gint *width_out, gint *height_out)
+{
+    gint extra_height;
+
+    /* Scale can't be zero or negative */
+    scale = MAX (scale, 0.00001);
+
+    /* Zero or negative cell dimensions -> presumably unknown, use 8x8 */
+    if (cell_width < 1)
+        cell_width = 8;
+    if (cell_height < 1)
+        cell_height = 8;
+
+    extra_height = options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS ? 5 : 0;
+
+    if (width_out)
+    {
+        *width_out = ((int) (width * scale) + cell_width - 1) / cell_width;
+        *width_out = MAX (*width_out, 1);
+    }
+
+    if (height_out)
+    {
+        *height_out = ((int) (height * scale) + cell_height - 1 + extra_height) / cell_height;
+        *height_out = MAX (*height_out, 1);
+    }
 }
 
 static gchar *
@@ -2506,10 +2604,12 @@ static ChafaCanvas *
 build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
               gint src_width, gint src_height, gint src_rowstride,
               const ChafaCanvasConfig *config,
-              gint placement_id)
+              gint placement_id,
+              ChafaTuck tuck)
 {
     ChafaFrame *frame;
     ChafaImage *image;
+    ChafaPlacement *placement;
     ChafaCanvas *canvas;
 
     canvas = chafa_canvas_new (config);
@@ -2517,38 +2617,16 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
                                     src_width, src_height, src_rowstride);
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);
-    chafa_canvas_set_image (canvas, image, placement_id);
+
+    placement = chafa_placement_new (image, placement_id);
+    chafa_placement_set_tuck (placement, tuck);
+    chafa_placement_set_halign (placement, options.center ? CHAFA_ALIGN_CENTER : CHAFA_ALIGN_START);
+    chafa_canvas_set_placement (canvas, placement);
+
+    chafa_placement_unref (placement);
     chafa_image_unref (image);
     chafa_frame_unref (frame);
     return canvas;
-}
-
-static void
-pixel_to_cell_dimensions (gdouble scale,
-                          gint cell_width, gint cell_height,
-                          gint width, gint height,
-                          gint *width_out, gint *height_out)
-{
-    /* Scale can't be zero or negative */
-    scale = MAX (scale, 0.00001);
-
-    /* Zero or negative cell dimensions -> presumably unknown, use 8x8 */
-    if (cell_width < 1)
-        cell_width = 8;
-    if (cell_height < 1)
-        cell_height = 8;
-
-    if (width_out)
-    {
-        *width_out = (gdouble) width * scale / cell_width + 0.5;
-        *width_out = MAX (*width_out, 1);
-    }
-
-    if (height_out)
-    {
-        *height_out = (gdouble) height * scale / cell_width + 0.5;
-        *height_out = MAX (*height_out, 1);
-    }
 }
 
 typedef enum
@@ -2618,13 +2696,33 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             gint delay_ms;
             ChafaPixelType pixel_type;
             gint src_width, src_height, src_rowstride;
+            gint uncorrected_src_width, uncorrected_src_height;
             gint virt_src_width, virt_src_height;
             gint dest_width, dest_height;
             const guint8 *pixels;
             ChafaCanvasConfig *config;
             ChafaCanvas *canvas;
+            ChafaTuck tuck;
 
             g_timer_start (timer);
+
+            if (options.use_exact_size == TRISTATE_TRUE)
+            {
+                /* True */
+                tuck = CHAFA_TUCK_SHRINK_TO_FIT;
+            }
+            else
+            {
+                /* False/auto */
+                if (options.stretch)
+                {
+                    tuck = CHAFA_TUCK_STRETCH;
+                }
+                else
+                {
+                    tuck = CHAFA_TUCK_FIT;
+                }
+            }
 
             pixels = media_loader_get_frame_data (media_loader,
                                                   &pixel_type,
@@ -2647,16 +2745,30 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 pixel_to_cell_dimensions (options.scale,
                                           options.cell_width, options.cell_height,
                                           src_width, src_height,
-                                          &virt_src_width, &virt_src_height);
+                                          &uncorrected_src_width, &uncorrected_src_height);
+
+                virt_src_width = uncorrected_src_width;
+                if (options.cell_width > 0 && options.cell_height > 0)
+                    virt_src_height = uncorrected_src_height / options.font_ratio;
+                else
+                    virt_src_height = uncorrected_src_height;
             }
             else
             {
-                virt_src_width = src_width;
-                virt_src_height = src_height;
+                virt_src_width = uncorrected_src_width = src_width;
+                virt_src_height = uncorrected_src_height = src_height;
             }
 
-            dest_width = options.width;
-            dest_height = options.height;
+            if (options.use_exact_size == TRISTATE_TRUE)
+            {
+                dest_width = virt_src_width;
+                dest_height = virt_src_height;
+            }
+            else
+            {
+                dest_width = options.width;
+                dest_height = options.height;
+            }
 
             chafa_calc_canvas_geometry (virt_src_width,
                                         virt_src_height,
@@ -2666,10 +2778,28 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                                         options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
 
+            if (options.use_exact_size == TRISTATE_AUTO
+                && dest_width == uncorrected_src_width
+                && dest_height == uncorrected_src_height)
+            {
+                tuck = CHAFA_TUCK_SHRINK_TO_FIT;
+            }
+
+#if 0
+            /* The size calculations are too convoluted, so we may need this to
+             * debug --exact-size. */
+            g_printerr ("src=(%dx%d) unc=(%dx%d) virt=(%dx%d) dest=(%dx%d)\n",
+                        src_width, src_height,
+                        uncorrected_src_width, uncorrected_src_height,
+                        virt_src_width, virt_src_height,
+                        dest_width, dest_height);
+#endif
+
             config = build_config (dest_width, dest_height, is_animation);
             canvas = build_canvas (pixel_type, pixels,
                                    src_width, src_height, src_rowstride, config,
-                                   placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1);
+                                   placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1,
+                                   tuck);
 
 #ifdef G_OS_WIN32
             if (options.is_conhost_mode)
