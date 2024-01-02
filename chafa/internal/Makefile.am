@@ -31,6 +31,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-iterm2-canvas.h \
 	chafa-kitty-canvas.c \
 	chafa-kitty-canvas.h \
+	chafa-math-util.c \
+	chafa-math-util.h \
 	chafa-palette.c \
 	chafa-palette.h \
 	chafa-passthrough-encoder.c \

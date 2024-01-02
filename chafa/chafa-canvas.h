@@ -43,8 +43,7 @@ CHAFA_AVAILABLE_IN_ALL
 const ChafaCanvasConfig *chafa_canvas_peek_config (ChafaCanvas *canvas);
 
 CHAFA_AVAILABLE_IN_1_14
-void chafa_canvas_set_image (ChafaCanvas *canvas, ChafaImage *image,
-                             gint placement_id);
+void chafa_canvas_set_placement (ChafaCanvas *canvas, ChafaPlacement *placement);
 
 CHAFA_AVAILABLE_IN_1_2
 void chafa_canvas_draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,

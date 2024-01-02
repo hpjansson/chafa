@@ -38,12 +38,15 @@ ChafaIndexedImage *chafa_indexed_image_new (gint width, gint height,
                                             const ChafaPalette *palette,
                                             const ChafaDither *dither);
 void chafa_indexed_image_destroy (ChafaIndexedImage *indexed_image);
+
 void chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                       ChafaColorSpace color_space,
                                       ChafaPixelType src_pixel_type,
                                       gconstpointer src_pixels,
                                       gint src_width, gint src_height, gint src_rowstride,
-                                      gint dest_width, gint dest_height);
+                                      gint dest_width, gint dest_height,
+                                      ChafaAlign halign, ChafaAlign valign,
+                                      ChafaTuck tuck);
 
 G_END_DECLS
 

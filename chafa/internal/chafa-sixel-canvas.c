@@ -86,7 +86,9 @@ chafa_sixel_canvas_destroy (ChafaSixelCanvas *sixel_canvas)
 void
 chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelType src_pixel_type,
                                     gconstpointer src_pixels,
-                                    gint src_width, gint src_height, gint src_rowstride)
+                                    gint src_width, gint src_height, gint src_rowstride,
+                                    ChafaAlign halign, ChafaAlign valign,
+                                    ChafaTuck tuck)
 {
     g_return_if_fail (sixel_canvas != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
@@ -102,7 +104,9 @@ chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelTy
                                      src_pixel_type,
                                      src_pixels,
                                      src_width, src_height, src_rowstride,
-                                     sixel_canvas->width, sixel_canvas->height);
+                                     sixel_canvas->width, sixel_canvas->height,
+                                     halign, valign,
+                                     tuck);
 }
 
 #define FILTER_BANK_WIDTH 64

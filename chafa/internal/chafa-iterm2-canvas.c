@@ -26,6 +26,7 @@
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-iterm2-canvas.h"
+#include "internal/chafa-math-util.h"
 #include "internal/chafa-string-util.h"
 
 /* We support iTerm2 images by embedding them as uncompressed TIFF files.
@@ -142,10 +143,14 @@ draw_pixels_worker (ChafaBatchInfo *batch, const DrawCtx *ctx)
 
 void
 chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixelType src_pixel_type,
-                                    gconstpointer src_pixels,
-                                    gint src_width, gint src_height, gint src_rowstride)
+                                     gconstpointer src_pixels,
+                                     gint src_width, gint src_height, gint src_rowstride,
+                                     ChafaAlign halign, ChafaAlign valign,
+                                     ChafaTuck tuck)
 {
     DrawCtx ctx;
+    gint placement_x, placement_y;
+    gint placement_width, placement_height;
 
     g_return_if_fail (iterm2_canvas != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
@@ -155,6 +160,13 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
 
     if (src_width == 0 || src_height == 0)
         return;
+
+    chafa_tuck_and_align (src_width, src_height,
+                          iterm2_canvas->width, iterm2_canvas->height,
+                          halign, valign,
+                          tuck,
+                          &placement_x, &placement_y,
+                          &placement_width, &placement_height);
 
     ctx.iterm2_canvas = iterm2_canvas;
     ctx.scale_ctx = smol_scale_new_full (/* Source */
@@ -173,12 +185,12 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                                          iterm2_canvas->height,
                                          iterm2_canvas->width * sizeof (guint32),
                                          /* Placement */
-                                         0,
-                                         0,
-                                         iterm2_canvas->width * SMOL_SUBPIXEL_MUL,
-                                         iterm2_canvas->height * SMOL_SUBPIXEL_MUL,
+                                         placement_x * SMOL_SUBPIXEL_MUL,
+                                         placement_y * SMOL_SUBPIXEL_MUL,
+                                         placement_width * SMOL_SUBPIXEL_MUL,
+                                         placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
-                                         SMOL_COMPOSITE_SRC,
+                                         SMOL_COMPOSITE_SRC_CLEAR_DEST,
                                          SMOL_DISABLE_SRGB_LINEARIZATION,
                                          NULL,
                                          &ctx);

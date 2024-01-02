@@ -36,7 +36,9 @@ void chafa_iterm2_canvas_destroy (ChafaIterm2Canvas *iterm2_canvas);
 
 void chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixelType src_pixel_type,
                                           gconstpointer src_pixels,
-                                          gint src_width, gint src_height, gint src_rowstride);
+                                          gint src_width, gint src_height, gint src_rowstride,
+                                          ChafaAlign halign, ChafaAlign valign,
+                                          ChafaTuck tuck);
 void chafa_iterm2_canvas_build_ansi (ChafaIterm2Canvas *iterm2_canvas, ChafaTermInfo *term_info, GString *out_str,
                                      gint width_cells, gint height_cells);
 

@@ -25,6 +25,7 @@
 #include "internal/chafa-batch.h"
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
+#include "internal/chafa-math-util.h"
 #include "internal/chafa-kitty-canvas.h"
 #include "internal/chafa-passthrough-encoder.h"
 #include "internal/chafa-pixops.h"
@@ -134,11 +135,15 @@ void
 chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelType src_pixel_type,
                                     gconstpointer src_pixels,
                                     gint src_width, gint src_height, gint src_rowstride,
-                                    ChafaColor bg_color)
+                                    ChafaColor bg_color,
+                                    ChafaAlign halign, ChafaAlign valign,
+                                    ChafaTuck tuck)
 {
     uint8_t bg_color_rgba [4];
     DrawCtx ctx;
     gboolean flatten_alpha;
+    gint placement_x, placement_y;
+    gint placement_width, placement_height;
 
     g_return_if_fail (kitty_canvas != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
@@ -152,6 +157,13 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
     flatten_alpha = bg_color.ch [3] == 0;
     bg_color.ch [3] = 0xff;
     chafa_color8_store_to_rgba8 (bg_color, bg_color_rgba);
+
+    chafa_tuck_and_align (src_width, src_height,
+                          kitty_canvas->width, kitty_canvas->height,
+                          halign, valign,
+                          tuck,
+                          &placement_x, &placement_y,
+                          &placement_width, &placement_height);
 
     ctx.kitty_canvas = kitty_canvas;
     ctx.scale_ctx = smol_scale_new_full (/* Source */
@@ -170,12 +182,12 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                                          kitty_canvas->height,
                                          kitty_canvas->width * sizeof (guint32),
                                          /* Placement */
-                                         0,
-                                         0,
-                                         kitty_canvas->width * SMOL_SUBPIXEL_MUL,
-                                         kitty_canvas->height * SMOL_SUBPIXEL_MUL,
+                                         placement_x * SMOL_SUBPIXEL_MUL,
+                                         placement_y * SMOL_SUBPIXEL_MUL,
+                                         placement_width * SMOL_SUBPIXEL_MUL,
+                                         placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
-                                         SMOL_COMPOSITE_SRC,
+                                         SMOL_COMPOSITE_SRC_CLEAR_DEST,
                                          SMOL_NO_FLAGS,
                                          NULL,
                                          &ctx);

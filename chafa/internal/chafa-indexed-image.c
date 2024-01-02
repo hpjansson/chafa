@@ -22,6 +22,7 @@
 #include "smolscale/smolscale.h"
 #include "chafa.h"
 #include "internal/chafa-batch.h"
+#include "internal/chafa-math-util.h"
 #include "internal/chafa-private.h"
 
 typedef struct
@@ -425,10 +426,14 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                  ChafaPixelType src_pixel_type,
                                  gconstpointer src_pixels,
                                  gint src_width, gint src_height, gint src_rowstride,
-                                 gint dest_width, gint dest_height)
+                                 gint dest_width, gint dest_height,
+                                 ChafaAlign halign, ChafaAlign valign,
+                                 ChafaTuck tuck)
 {
     DrawPixelsCtx ctx;
     ChafaColor bg;
+    gint placement_x, placement_y;
+    gint placement_width, placement_height;
 
     g_return_if_fail (dest_width == indexed_image->width);
     g_return_if_fail (dest_height <= indexed_image->height);
@@ -460,6 +465,13 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                                    CHAFA_PALETTE_INDEX_BG));
 #endif
 
+    chafa_tuck_and_align (src_width, src_height,
+                          dest_width, dest_height,
+                          halign, valign,
+                          tuck,
+                          &placement_x, &placement_y,
+                          &placement_width, &placement_height);
+
     ctx.scaled_data = g_new (guint32, dest_width * dest_height);
     ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
@@ -481,10 +493,10 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                          dest_height,
                                          dest_width * sizeof (guint32),
                                          /* Placement */
-                                         0,
-                                         0,
-                                         dest_width * SMOL_SUBPIXEL_MUL,
-                                         dest_height * SMOL_SUBPIXEL_MUL,
+                                         placement_x * SMOL_SUBPIXEL_MUL,
+                                         placement_y * SMOL_SUBPIXEL_MUL,
+                                         placement_width * SMOL_SUBPIXEL_MUL,
+                                         placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
                                          SMOL_COMPOSITE_SRC_CLEAR_DEST,
 #if 0

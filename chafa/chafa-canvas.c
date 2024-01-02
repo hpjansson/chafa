@@ -1266,8 +1266,18 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                  const guint8 *src_pixels,
                  gint src_width, gint src_height, gint src_rowstride)
 {
+    ChafaAlign halign = CHAFA_ALIGN_START, valign = CHAFA_ALIGN_START;
+    ChafaTuck tuck = CHAFA_TUCK_STRETCH;
+
     if (src_width == 0 || src_height == 0)
         return;
+
+    if (canvas->placement)
+    {
+        halign = chafa_placement_get_halign (canvas->placement);
+        valign = chafa_placement_get_valign (canvas->placement);
+        tuck = chafa_placement_get_tuck (canvas->placement);
+    }
 
     if (canvas->pixels)
     {
@@ -1317,7 +1327,9 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                             src_pixel_type,
                                             src_pixels,
                                             src_width, src_height,
-                                            src_rowstride);
+                                            src_rowstride,
+                                            halign, valign,
+                                            tuck);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
@@ -1336,7 +1348,9 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                             src_pixels,
                                             src_width, src_height,
                                             src_rowstride,
-                                            bg_color);
+                                            bg_color,
+                                            halign, valign,
+                                            tuck);
     }
     else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2) */
     {
@@ -1349,7 +1363,9 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                              src_pixel_type,
                                              src_pixels,
                                              src_width, src_height,
-                                             src_rowstride);
+                                             src_rowstride,
+                                             halign, valign,
+                                             tuck);
     }
 }
 
@@ -1414,7 +1430,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5f;
     canvas->needs_clear = TRUE;
     canvas->have_alpha = FALSE;
-    canvas->placement_id = -1;
+    canvas->placement = NULL;
 
     canvas->consider_inverted = !(canvas->config.fg_only_enabled
                                   || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG);
@@ -1515,8 +1531,7 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
 
     chafa_dither_copy (&orig->dither, &canvas->dither);
 
-    canvas->placement_id = -1;
-    canvas->image = NULL;
+    canvas->placement = NULL;
 
     return canvas;
 }
@@ -1557,8 +1572,8 @@ chafa_canvas_unref (ChafaCanvas *canvas)
 
     if (g_atomic_int_dec_and_test (&canvas->refs))
     {
-        if (canvas->image)
-            chafa_image_unref (canvas->image);
+        if (canvas->placement)
+            chafa_placement_unref (canvas->placement);
         chafa_canvas_config_deinit (&canvas->config);
         destroy_pixel_canvas (canvas);
         chafa_dither_deinit (&canvas->dither);
@@ -1590,34 +1605,32 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
 }
 
 /**
- * chafa_canvas_set_image:
- * @canvas: Canvas to place the image on
- * @image: Image to place
- * @placement_id: Placement ID to use, or -1 to assign it automatically
+ * chafa_canvas_set_placement:
+ * @canvas: Canvas to place the placement on
+ * @placement: Placement to place
  *
- * Places @image on @canvas, replacing the latter's content. The image will
- * be stretched to fit the canvas.
+ * Places @placement on @canvas, replacing the latter's content. The placement
+ * will cover the entire canvas.
  *
- * The canvas will keep a reference to the image until it is replaced or the
+ * The canvas will keep a reference to the placement until it is replaced or the
  * canvas itself is freed.
  */
 void
-chafa_canvas_set_image (ChafaCanvas *canvas, ChafaImage *image,
-                        gint placement_id)
+chafa_canvas_set_placement (ChafaCanvas *canvas, ChafaPlacement *placement)
 {
+    ChafaImage *image;
     ChafaFrame *frame;
 
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);
 
-    if (placement_id == 0)
-        placement_id = -1;
+    chafa_placement_ref (placement);
+    if (canvas->placement)
+        chafa_placement_unref (canvas->placement);
+    canvas->placement = placement;
 
-    chafa_image_ref (image);
-    if (canvas->image)
-        chafa_image_unref (canvas->image);
-    canvas->image = image;
-    canvas->placement_id = placement_id;
+    image = placement->image;
+    g_assert (image != NULL);
 
     frame = image->frame;
     if (!frame)
@@ -1756,7 +1769,7 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
         str = g_string_new ("");
         chafa_kitty_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
                                        canvas->config.width, canvas->config.height,
-                                       canvas->placement_id,
+                                       canvas->placement ? canvas->placement->id : -1,
                                        canvas->config.passthrough);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)

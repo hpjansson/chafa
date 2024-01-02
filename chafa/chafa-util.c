@@ -132,16 +132,23 @@ chafa_calc_canvas_geometry (gint src_width,
         }
         else if (src_aspect > dest_aspect)
         {
-            dest_height = dest_width * (font_ratio / src_aspect);
+            dest_height = dest_width * (font_ratio / src_aspect) + 0.5;
         }
         else
         {
-            dest_width = dest_height * (src_aspect / font_ratio);
+            dest_width = dest_height * (src_aspect / font_ratio) + 0.5;
         }
     }
 
+    /* Clamp dest dimensions */
+
     dest_width = MAX (dest_width, 1);
     dest_height = MAX (dest_height, 1);
+
+    if (dest_width_inout && *dest_width_inout > 0)
+        dest_width = MIN (dest_width, *dest_width_inout);
+    if (dest_height_inout && *dest_height_inout > 0)
+        dest_height = MIN (dest_height, *dest_height_inout);
 
     if (dest_width_inout)
         *dest_width_inout = dest_width;
