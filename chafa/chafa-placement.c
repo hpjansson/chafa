@@ -104,6 +104,7 @@ chafa_placement_unref (ChafaPlacement *placement)
 
     if (g_atomic_int_dec_and_test (&placement->refs))
     {
+        chafa_image_unref (placement->image);
         g_free (placement);
     }
 }
