@@ -1694,6 +1694,7 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
     else
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+
     if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH))
     {
         /* We can do passthrough for sixels and iterm too, but we won't do so
