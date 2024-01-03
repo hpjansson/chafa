@@ -110,7 +110,18 @@ chafa_kitty_canvas_new (gint width, gint height)
     kitty_canvas = g_new0 (ChafaKittyCanvas, 1);
     kitty_canvas->width = width;
     kitty_canvas->height = height;
-    kitty_canvas->rgba_image = g_malloc (width * height * sizeof (guint32));
+    kitty_canvas->rgba_image = g_try_malloc ((gsize) width * height * sizeof (guint32));
+
+    if (!kitty_canvas->rgba_image)
+    {
+#if 0
+        g_warning ("ChafaKittyCanvas: Out of memory allocating %ux%u pixels.",
+                   width, height);
+#endif
+
+        g_free (kitty_canvas);
+        kitty_canvas = NULL;
+    }
 
     return kitty_canvas;
 }

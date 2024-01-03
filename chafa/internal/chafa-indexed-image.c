@@ -402,7 +402,18 @@ chafa_indexed_image_new (gint width, gint height,
     indexed_image = g_new0 (ChafaIndexedImage, 1);
     indexed_image->width = width;
     indexed_image->height = height;
-    indexed_image->pixels = g_malloc (width * height);
+
+    indexed_image->pixels = g_try_malloc ((gsize) width * height);
+    if (!indexed_image->pixels)
+    {
+#if 0
+        g_warning ("ChafaIndexedImage: Out of memory allocating %ux%u pixels.",
+                   width, height);
+#endif
+
+        g_free (indexed_image);
+        return NULL;
+    }
 
     chafa_palette_copy (palette, &indexed_image->palette);
     chafa_palette_set_transparent_index (&indexed_image->palette, 255);
@@ -472,7 +483,18 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                           &placement_x, &placement_y,
                           &placement_width, &placement_height);
 
-    ctx.scaled_data = g_new (guint32, dest_width * dest_height);
+    /* FIXME: Save temp memory by sampling the image in strips. ChafaPalette
+     * will need a batch API for this. */
+    ctx.scaled_data = g_try_new (guint32, (gsize) dest_width * dest_height);
+    if (!ctx.scaled_data)
+    {
+#if 0
+        g_warning ("ChafaIndexedImage: Out of memory allocating %ux%u temp pixels.",
+                   dest_width, dest_height);
+#endif
+        return;
+    }
+
     ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
                                          (SmolPixelType) src_pixel_type,

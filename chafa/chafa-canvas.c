@@ -1291,27 +1291,45 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     {
         /* Symbol mode */
 
-        canvas->pixels = g_new (ChafaPixel, canvas->width_pixels * canvas->height_pixels);
+        /* FIXME: The allocation can fail if the canvas is ridiculously large.
+         * Since there's no way to report an error from here, we'll silently
+         * skip the update instead.
+         *
+         * We really shouldn't need this much temporary memory in the first place;
+         * it'd be possible to process the image in cell_height strips and hand
+         * each strip off to the update_cells() pass independently. The pipelining
+         * would improve throughput too. */
 
-        chafa_prepare_pixel_data_for_symbols (&canvas->fg_palette, &canvas->dither,
-                                              canvas->config.color_space,
-                                              canvas->config.preprocessing_enabled,
-                                              canvas->work_factor_int,
-                                              src_pixel_type,
-                                              src_pixels,
-                                              src_width, src_height,
-                                              src_rowstride,
-                                              canvas->pixels,
-                                              canvas->width_pixels, canvas->height_pixels);
+        canvas->pixels = g_try_new (ChafaPixel, (gsize) canvas->width_pixels * canvas->height_pixels);
+        if (canvas->pixels)
+        {
+            chafa_prepare_pixel_data_for_symbols (&canvas->fg_palette, &canvas->dither,
+                                                  canvas->config.color_space,
+                                                  canvas->config.preprocessing_enabled,
+                                                  canvas->work_factor_int,
+                                                  src_pixel_type,
+                                                  src_pixels,
+                                                  src_width, src_height,
+                                                  src_rowstride,
+                                                  canvas->pixels,
+                                                  canvas->width_pixels, canvas->height_pixels);
 
-        if (canvas->config.alpha_threshold == 0)
-            canvas->have_alpha = FALSE;
+            if (canvas->config.alpha_threshold == 0)
+                canvas->have_alpha = FALSE;
 
-        update_cells (canvas);
-        canvas->needs_clear = FALSE;
+            update_cells (canvas);
+            canvas->needs_clear = FALSE;
 
-        g_free (canvas->pixels);
-        canvas->pixels = NULL;
+            g_free (canvas->pixels);
+            canvas->pixels = NULL;
+        }
+        else
+        {
+#if 0
+            g_warning ("ChafaCanvas: Out of memory allocating %ux%u pixels.",
+                       canvas->width_pixels, canvas->height_pixels);
+#endif
+        }
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
     {
@@ -1343,14 +1361,16 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
         canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
         canvas->pixel_canvas = chafa_kitty_canvas_new (canvas->width_pixels,
                                                        canvas->height_pixels);
-        chafa_kitty_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                            src_pixel_type,
-                                            src_pixels,
-                                            src_width, src_height,
-                                            src_rowstride,
-                                            bg_color,
-                                            halign, valign,
-                                            tuck);
+
+        if (canvas->pixel_canvas)
+            chafa_kitty_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                                src_pixel_type,
+                                                src_pixels,
+                                                src_width, src_height,
+                                                src_rowstride,
+                                                bg_color,
+                                                halign, valign,
+                                                tuck);
     }
     else  /* if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2) */
     {
@@ -1359,13 +1379,15 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
         canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
         canvas->pixel_canvas = chafa_iterm2_canvas_new (canvas->width_pixels,
                                                         canvas->height_pixels);
-        chafa_iterm2_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                             src_pixel_type,
-                                             src_pixels,
-                                             src_width, src_height,
-                                             src_rowstride,
-                                             halign, valign,
-                                             tuck);
+
+        if (canvas->pixel_canvas)
+            chafa_iterm2_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                                 src_pixel_type,
+                                                 src_pixels,
+                                                 src_width, src_height,
+                                                 src_rowstride,
+                                                 halign, valign,
+                                                 tuck);
     }
 }
 
@@ -1753,7 +1775,8 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
         str = chafa_canvas_print_symbols (canvas, term_info);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS
-             && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS))
+             && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
+             && canvas->pixel_canvas)
     {
         /* Sixel mode */
 
@@ -1762,7 +1785,8 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
                                        canvas->config.passthrough);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY
-             && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
+             && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1)
+             && canvas->pixel_canvas)
     {
         /* Kitty mode */
 
@@ -1772,7 +1796,8 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
                                        canvas->placement ? canvas->placement->id : -1,
                                        canvas->config.passthrough);
     }
-    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+    else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2
+             && canvas->pixel_canvas)
     {
         /* iTerm2 mode */
 
