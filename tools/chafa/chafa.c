@@ -428,7 +428,7 @@ print_summary (void)
 
     "  -C, --center=BOOL  Center images horizontally in view [on, off]. Default off.\n"
     "      --clear        Clear screen before processing each file.\n"
-    "      --exact-size=MODE  Try to match the input's size exactly [on, off, auto].\n"
+    "      --exact-size=MODE  Try to match the input's size exactly [auto, on, off].\n"
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
