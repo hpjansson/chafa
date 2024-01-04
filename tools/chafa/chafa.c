@@ -2455,7 +2455,7 @@ write_cursor_down_scroll_n (gint n)
     gchar buf [BUFFER_MAX];
     gchar *p0 = buf;
 
-    if (n == 0)
+    if (n < 1)
         return TRUE;
 
     for ( ; n; n--)
@@ -2463,7 +2463,8 @@ write_cursor_down_scroll_n (gint n)
         p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
         if (p0 - buf + CHAFA_TERM_SEQ_LENGTH_MAX > BUFFER_MAX)
         {
-            write_to_stdout (buf, p0 - buf);
+            if (!write_to_stdout (buf, p0 - buf))
+                return FALSE;
             p0 = buf;
         }
     }
