@@ -103,10 +103,11 @@ typedef struct
     gboolean watch;
     gboolean fg_only;
     gboolean animate;
-    gboolean center;
     gboolean relative;
     gboolean relative_set;
     gboolean fit_to_width;
+    ChafaAlign horiz_align;
+    ChafaAlign vert_align;
     gint view_width, view_height;
     gint width, height;
     gint cell_width, cell_height;
@@ -426,7 +427,7 @@ print_summary (void)
 
     "\nSize and layout:\n"
 
-    "  -C, --center=BOOL  Center images horizontally in view [on, off]. Default off.\n"
+    "      --align=ALIGN  Horizontal and vertical alignment (e.g. \"top,left\").\n"
     "      --clear        Clear screen before processing each file.\n"
     "      --exact-size=MODE  Try to match the input's size exactly [auto, on, off].\n"
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
@@ -613,7 +614,8 @@ fuzz_options_with_seed (GlobalOptions *opt, gconstpointer seed, gint seed_len)
     opt->zoom = fuzz_seed_get_bool (seed, seed_len, &ofs);
     opt->fg_only = fuzz_seed_get_bool (seed, seed_len, &ofs);
     opt->animate = fuzz_seed_get_bool (seed, seed_len, &ofs);
-    opt->center = fuzz_seed_get_bool (seed, seed_len, &ofs);
+    opt->horiz_align = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 3);
+    opt->vert_align = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 3);
     opt->relative = fuzz_seed_get_bool (seed, seed_len, &ofs);
     opt->relative_set = TRUE;
     opt->fit_to_width = fuzz_seed_get_bool (seed, seed_len, &ofs);
@@ -840,6 +842,80 @@ parse_fraction_or_real (const gchar *str, gdouble *real_out)
     success = TRUE;
 
 out:
+    return success;
+}
+
+static gboolean
+parse_align_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean success = FALSE;
+    gchar **tokens = NULL;
+    ChafaAlign halign = CHAFA_ALIGN_MAX;
+    ChafaAlign valign = CHAFA_ALIGN_MAX;
+    gint i;
+
+    tokens = g_strsplit (value, ",", -1);
+
+    for (i = 0; tokens [i]; i++)
+    {
+        gchar *t = tokens [i];
+
+        if (i >= 2)
+        {
+            g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                         "Too many alignment specifiers in \"%s\". Must be at most two.",
+                         value);
+            goto out;
+        }
+
+        if (!strcasecmp (t, "left"))
+            halign = CHAFA_ALIGN_START;
+        else if (!strcasecmp (t, "right"))
+            halign = CHAFA_ALIGN_END;
+        else if (!strcasecmp (t, "hcenter") || !strcasecmp (t, "hmid"))
+            halign = CHAFA_ALIGN_CENTER;
+        else if (!strcasecmp (t, "top") || !strcasecmp (t, "up"))
+            valign = CHAFA_ALIGN_START;
+        else if (!strcasecmp (t, "bottom") || !strcasecmp (t, "down"))
+            valign = CHAFA_ALIGN_END;
+        else if (!strcasecmp (t, "vcenter") || !strcasecmp (t, "vmid"))
+            valign = CHAFA_ALIGN_CENTER;
+        else if (!strcasecmp (t, "center") || !strcasecmp (t, "mid"))
+            ;  /* Skip */
+        else
+        {
+            g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                         "Unknown alignment specifier \"%s\".", t);
+            goto out;
+        }
+    }
+
+    /* Process "center" in a second pass to allow both e.g. "center,left"
+     * and "left,center" */
+
+    for (i = 0; tokens [i]; i++)
+    {
+        gchar *t = tokens [i];
+
+        if (!strcasecmp (t, "center") || !strcasecmp (t, "mid"))
+        {
+            /* Allow "center,center" to center in both dimensions */
+            if (halign == CHAFA_ALIGN_MAX)
+                halign = CHAFA_ALIGN_CENTER;
+            else
+                valign = CHAFA_ALIGN_CENTER;
+        }
+    }
+
+    if (halign != CHAFA_ALIGN_MAX)
+        options.horiz_align = halign;
+    if (valign != CHAFA_ALIGN_MAX)
+        options.vert_align = valign;
+
+    success = TRUE;
+
+out:
+    g_strfreev (tokens);
     return success;
 }
 
@@ -1315,10 +1391,13 @@ parse_animate_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G
 static gboolean
 parse_center_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
+    gboolean center = FALSE;
     gboolean result;
 
-    result = parse_boolean_token (value, &options.center);
-    if (!result)
+    result = parse_boolean_token (value, &center);
+    if (result)
+        options.horiz_align = center ? CHAFA_ALIGN_CENTER : CHAFA_ALIGN_START;
+    else
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Centering mode must be one of [on, off].");
 
@@ -1836,6 +1915,7 @@ parse_options (int *argc, char **argv [])
         { "help",        'h',  0, G_OPTION_ARG_NONE,     &options.show_help,    "Show help", NULL },
         { "version",     '\0', 0, G_OPTION_ARG_NONE,     &options.show_version, "Show version", NULL },
         { "verbose",     'v',  0, G_OPTION_ARG_NONE,     &options.verbose,      "Be verbose", NULL },
+        { "align",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_align_arg,       "Align", NULL },
         { "animate",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_animate_arg,     "Animate", NULL },
         { "bg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_bg_color_arg,    "Background color of display", NULL },
         { "center",      'C',  0, G_OPTION_ARG_CALLBACK, parse_center_arg,      "Center", NULL },
@@ -1918,7 +1998,8 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
     options.animate = TRUE;
-    options.center = FALSE;
+    options.horiz_align = CHAFA_ALIGN_START;
+    options.vert_align = CHAFA_ALIGN_START;
     options.polite = FALSE;
     options.preprocess = TRUE;
     options.relative_set = FALSE;
@@ -2092,7 +2173,8 @@ parse_options (int *argc, char **argv [])
         }
     }
 
-    options.have_parking_row = (using_detected_size && options.margin_bottom == 0) ? FALSE : TRUE;
+    options.have_parking_row = ((using_detected_size || options.vert_align == CHAFA_ALIGN_END)
+                                && options.margin_bottom == 0) ? FALSE : TRUE;
 
     /* Now we've established the pixel mode, apply dependent defaults */
 
@@ -2390,6 +2472,28 @@ write_cursor_down_scroll_n (gint n)
 }
 
 static gboolean
+write_vertical_spaces (gint n)
+{
+    gchar buf [BUFFER_MAX];
+
+    if (n < 1)
+        return TRUE;
+
+    if (options.relative)
+        return write_cursor_down_scroll_n (n);
+
+    memset (buf, '\n', MIN (n, BUFFER_MAX));
+
+    for ( ; n > 0; n -= BUFFER_MAX)
+    {
+        if (!write_to_stdout (buf, MIN (n, BUFFER_MAX)))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
 write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
                       gboolean is_animation, gint dest_height)
 {
@@ -2418,8 +2522,21 @@ write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
 
         /* Home cursor between frames */
         p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
+
+        if (!write_to_stdout (buf, p0 - buf))
+            return FALSE;
+        p0 = buf;
     }
-    else if (is_first_frame && is_animation)
+
+    /* Insert space for vertical alignment */
+    if ((options.clear || is_first_frame) &&
+        !write_vertical_spaces (options.vert_align == CHAFA_ALIGN_START ? 0
+                                : options.vert_align == CHAFA_ALIGN_CENTER
+                                ? ((options.view_height - dest_height - options.margin_bottom) / 2)
+                                : (options.view_height - dest_height - options.margin_bottom)))
+        return FALSE;
+
+    if (!options.clear && is_animation && is_first_frame)
     {
         /* Start animation: reserve space and save image origin */
         if (!write_cursor_down_scroll_n (dest_height))
@@ -2428,7 +2545,7 @@ write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
         p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height);
         p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, p0);
     }
-    else if (!is_first_frame)
+    else if (!options.clear && !is_first_frame)
     {
         /* Subsequent animation frames: cursor to image origin */
         p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, p0);
@@ -2444,7 +2561,10 @@ write_image_epilogue (gint dest_width)
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
     gchar *p0 = buf;
 
-    left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
+    left_space = options.horiz_align == CHAFA_ALIGN_START ? 0
+        : options.horiz_align == CHAFA_ALIGN_CENTER
+        ? ((options.view_width - dest_width - options.margin_right) / 2)
+        : (options.view_width - dest_width - options.margin_right);
 
     /* These modes leave cursor to the right of the bottom row */
     if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
@@ -2496,7 +2616,10 @@ write_image (GString **gsa, gint dest_width)
     gint left_space;
     gboolean result = FALSE;
 
-    left_space = options.center ? (options.view_width - dest_width) / 2 : 0;
+    left_space = options.horiz_align == CHAFA_ALIGN_START ? 0
+        : options.horiz_align == CHAFA_ALIGN_CENTER
+        ? ((options.view_width - dest_width - options.margin_right) / 2)
+        : (options.view_width - dest_width - options.margin_right);
     left_space = MAX (left_space, 0);
 
     /* Indent top left corner: Common for all modes */
@@ -2621,7 +2744,8 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
 
     placement = chafa_placement_new (image, placement_id);
     chafa_placement_set_tuck (placement, tuck);
-    chafa_placement_set_halign (placement, options.center ? CHAFA_ALIGN_CENTER : CHAFA_ALIGN_START);
+    chafa_placement_set_halign (placement, options.horiz_align);
+    chafa_placement_set_valign (placement, options.vert_align);
     chafa_canvas_set_placement (canvas, placement);
 
     chafa_placement_unref (placement);

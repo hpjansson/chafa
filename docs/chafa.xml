@@ -124,9 +124,26 @@ may confuse the terminal or other programs. Defaults to off.
 <variablelist>
 
 <varlistentry>
+<term><option>--align <replaceable>ALIGN</replaceable></option></term>
+<listitem><para>
+Align images in viewport. The following alignments are understood: left, right,
+top, bottom, hcenter, vcenter, center. Two orthogonal alignments can be
+separated by a comma, e.g. "center,right". The meaning of "center" depends on
+context, and defaults to "hcenter" if ambiguous. "center,center" will center
+along both axes.
+</para>
+<para>
+Centering vertically makes sense when used together with "--clear", or possibly
+as part of a scheme where the cursor is pre-positioned at the top-left corner
+of the view, or a subview (when used with "--relative on").
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-C <replaceable>bool</replaceable>, --center <replaceable>bool</replaceable></option></term>
 <listitem><para>
-Center images horizontally in the view [on, off]. Defaults to off.
+Center images horizontally in the view [on, off]. Defaults to off. This option
+is deprecated; use "--align center" instead.
 </para></listitem>
 </varlistentry>
 
@@ -182,7 +199,7 @@ right-hand side as a safety margin. Defaults to 0.
 </varlistentry>
 
 <varlistentry>
-<term><option>--scale <replaceable>NUM</replaceable></option></term>
+<term><option>--scale <replaceable>num</replaceable></option></term>
 <listitem><para>
 Scale image, respecting terminal's maximum dimensions. 1.0 approximates
 original pixel dimensions. Specify "max" to use all available space. Defaults
