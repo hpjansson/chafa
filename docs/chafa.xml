@@ -135,7 +135,7 @@ along both axes.
 <para>
 Centering vertically makes sense when used together with "--clear", or possibly
 as part of a scheme where the cursor is pre-positioned at the top-left corner
-of the view, or a subview (when used with "--relative on").
+of the view, or a subview when used with "--relative on".
 </para></listitem>
 </varlistentry>
 

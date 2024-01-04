@@ -2,20 +2,20 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
                "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 ]>
-<refentry id="chafa-using" revision="10 Apr 2018">
+<refentry id="chafa-using" revision="04 Jan 2024">
 <refmeta>
-<refentrytitle>Using Chafa in your Application</refentrytitle>
+<refentrytitle>Using Chafa in your application</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>Chafa Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-  <refname>Using Chafa in your Application</refname>
+  <refname>Using Chafa in your application</refname>
   <refpurpose>How to use Chafa</refpurpose>
 </refnamediv>
 
 <refsect1>
-<title>Compiling your Application</title>
+<title>Compiling your application</title>
 
 <para>
 To compile an application using Chafa, you need to tell the compiler
@@ -61,7 +61,7 @@ header <filename>chafa.h</filename>.
 </refsect1>
 
 <refsect1>
-<title>An Example</title>
+<title>An example</title>
 
 <para>
 The following program turns a 3x3 red X stored in a const array into an
