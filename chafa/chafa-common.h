@@ -73,6 +73,7 @@ ChafaPixelType;
  * @CHAFA_ALIGN_START: Align flush with beginning of the area (top or left in LTR locales).
  * @CHAFA_ALIGN_END: Align flush with end of the area (bottom or right in LTR locales).
  * @CHAFA_ALIGN_CENTER: Align in the middle of the area.
+ * @CHAFA_ALIGN_MAX: Last supported alignment, plus one.
  *
  * Alignment options when placing an element within an area.
  *
@@ -94,6 +95,7 @@ ChafaAlign;
  * @CHAFA_TUCK_STRETCH: Resize element to fit the area exactly, changing its aspect ratio.
  * @CHAFA_TUCK_FIT: Resize element to fit the area, preserving its aspect ratio by adding padding.
  * @CHAFA_TUCK_SHRINK_TO_FIT: Like @CHAFA_TUCK_FIT, but prohibit enlargement.
+ * @CHAFA_TUCK_MAX: Last supported tucking policy, plus one.
  *
  * Resizing options when placing an element within an area. Usually used in conjunction
  * with #ChafaAlign to control the padding.

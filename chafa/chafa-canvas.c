@@ -1636,6 +1636,8 @@ chafa_canvas_peek_config (ChafaCanvas *canvas)
  *
  * The canvas will keep a reference to the placement until it is replaced or the
  * canvas itself is freed.
+ *
+ * Since: 1.14
  */
 void
 chafa_canvas_set_placement (ChafaCanvas *canvas, ChafaPlacement *placement)
