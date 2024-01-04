@@ -661,7 +661,7 @@ unpack_pixel_a234_u_to_234a_pl_128bpp (uint32_t p,
     uint8_t alpha = p >> 24;
 
     out [0] = ((p64 & 0x00ff0000) << 16) | ((p64 & 0x0000ff00) >> 8);
-    out [1] = ((p64 & 0x000000ff) << 32);
+    out [1] = ((p64 & 0x000000ff) << 32) | alpha;
 
     from_srgb_pixel_xxxa_128bpp (out);
     premul_ul_to_p8l_128bpp (out, alpha);
@@ -754,7 +754,7 @@ unpack_pixel_123a_u_to_123a_pl_128bpp (uint32_t p,
     uint8_t alpha = p;
 
     out [0] = ((p64 & 0xff000000) << 8) | ((p64 & 0x00ff0000) >> 16);
-    out [1] = ((p64 & 0x0000ff00) << 24);
+    out [1] = ((p64 & 0x0000ff00) << 24) | alpha;
 
     from_srgb_pixel_xxxa_128bpp (out);
     premul_ul_to_p8l_128bpp (out, alpha);
