@@ -6,7 +6,7 @@ chafa_canvas_new_similar
 chafa_canvas_ref
 chafa_canvas_unref
 chafa_canvas_peek_config
-chafa_canvas_set_image
+chafa_canvas_set_placement
 chafa_canvas_draw_all_pixels
 chafa_canvas_print
 chafa_canvas_print_rows
@@ -298,6 +298,22 @@ chafa_term_db_unref
 chafa_term_db_get_default
 chafa_term_db_detect
 chafa_term_db_get_fallback_info
+</SECTION>
+
+<SECTION>
+<FILE>chafa-placement</FILE>
+ChafaTuck
+ChafaAlign
+ChafaPlacement
+chafa_placement_new
+chafa_placement_ref
+chafa_placement_unref
+chafa_placement_get_tuck
+chafa_placement_set_tuck
+chafa_placement_get_halign
+chafa_placement_set_halign
+chafa_placement_get_valign
+chafa_placement_set_valign
 </SECTION>
 
 <SECTION>

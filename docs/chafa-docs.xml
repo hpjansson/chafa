@@ -27,8 +27,9 @@
     <title>Chafa C API</title>
     <xi:include href="xml/chafa-canvas.xml"/>
     <xi:include href="xml/chafa-canvas-config.xml"/>
-    <xi:include href="xml/chafa-frame.xml"/>
+    <xi:include href="xml/chafa-placement.xml"/>
     <xi:include href="xml/chafa-image.xml"/>
+    <xi:include href="xml/chafa-frame.xml"/>
     <xi:include href="xml/chafa-symbol-map.xml"/>
     <xi:include href="xml/chafa-term-db.xml"/>
     <xi:include href="xml/chafa-term-info.xml"/>
