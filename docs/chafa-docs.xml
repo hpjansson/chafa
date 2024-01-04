@@ -41,10 +41,45 @@
     <title>API Index</title>
     <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
   </index>
-<!--
-  <index id="deprecated-api-index" role="deprecated">
+
+  <index id="new-api-index-1.2">
+    <title>Index of new API in version 1.2</title>
+    <xi:include href="xml/api-index-1.2.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="new-api-index-1.4">
+    <title>Index of new API in version 1.4</title>
+    <xi:include href="xml/api-index-1.4.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="new-api-index-1.6">
+    <title>Index of new API in version 1.6</title>
+    <xi:include href="xml/api-index-1.6.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="new-api-index-1.8">
+    <title>Index of new API in version 1.8</title>
+    <xi:include href="xml/api-index-1.8.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="new-api-index-1.10">
+    <title>Index of new API in version 1.10</title>
+    <xi:include href="xml/api-index-1.10.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="new-api-index-1.12">
+    <title>Index of new API in version 1.12</title>
+    <xi:include href="xml/api-index-1.12.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="new-api-index-1.14">
+    <title>Index of new API in version 1.14</title>
+    <xi:include href="xml/api-index-1.14.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="api-index-deprecated">
     <title>Index of deprecated API</title>
     <xi:include href="xml/api-index-deprecated.xml"><xi:fallback /></xi:include>
   </index>
--->
+
 </book>
