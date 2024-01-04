@@ -515,7 +515,7 @@ print_summary (void)
     "\nExamples:\n"
 
     "  $ chafa --scale max in.jpg                         # As big as will fit\n"
-    "  $ chafa --clear -C on -d 5 *.gif                   # A well-paced slideshow\n"
+    "  $ chafa --clear --align mid,mid -d 5 *.gif         # A well-paced slideshow\n"
     "  $ chafa -f symbols --symbols ascii -c none in.png  # Old-school ASCII art\n\n"
 
     "If your OS comes with manual pages, you can type 'man chafa' for more.\n";
