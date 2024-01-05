@@ -191,7 +191,7 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                                          placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
                                          SMOL_COMPOSITE_SRC_CLEAR_DEST,
-                                         SMOL_DISABLE_SRGB_LINEARIZATION,
+                                         SMOL_NO_FLAGS,
                                          NULL,
                                          &ctx);
 
