@@ -24,7 +24,7 @@
 /**
  * SECTION:chafa-placement
  * @title: ChafaPlacement
- * @short_description: How an image is placed on a #ChafaCanvas
+ * @short_description: Placement of a #ChafaImage on a #ChafaCanvas
  *
  * A #ChafaPlacement describes how an image is placed on a #ChafaCanvas. It
  * contains information about the image, its alignment and tucking policy.
