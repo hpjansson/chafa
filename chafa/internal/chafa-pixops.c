@@ -612,11 +612,17 @@ composite_alpha_on_bg (ChafaColor bg_color,
     p0 = pixels + first_row * width;
     p1 = p0 + n_rows * width;
 
+    /* FIXME: This is slow and bad. We should fix it with a new Smolscale
+     * compositing mode. */
+
     for ( ; p0 < p1; p0++)
     {
-        p0->col.ch [0] += (bg_color.ch [0] * (255 - (guint32) p0->col.ch [3])) / 255;
-        p0->col.ch [1] += (bg_color.ch [1] * (255 - (guint32) p0->col.ch [3])) / 255;
-        p0->col.ch [2] += (bg_color.ch [2] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [0] = (p0->col.ch [0] * (guint32) p0->col.ch [3]
+                          + bg_color.ch [0] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [1] = (p0->col.ch [1] * (guint32) p0->col.ch [3]
+                          + bg_color.ch [1] * (255 - (guint32) p0->col.ch [3])) / 255;
+        p0->col.ch [2] = (p0->col.ch [2] * (guint32) p0->col.ch [3]
+                          + bg_color.ch [2] * (255 - (guint32) p0->col.ch [3])) / 255;
     }
 }
 
