@@ -1,6 +1,74 @@
 Chafa releases
 ==============
 
+1.14.0 (2024-01-08)
+-------------------
+
+This is a feature release with mostly practical improvements and bug fixes.
+It also adds a modest amount of new API in preparation for things to come.
+
+* Removed ImageMagick loader support. Packagers can now remove this dependency
+  (github#157).
+
+* Polite mode is now off by default. The new default eliminates cursor flicker
+  and makes the output more robust against unusual terminal settings. The old
+  behavior can be restored with "--polite on".
+
+* Added image loaders for the AVIF and QOI formats. Thanks to @jerch for
+  suggesting the latter.
+
+* sRGB gamma is now handled correctly in scaling operations.
+
+* New option: --passthrough=<auto|none|screen|tmux>. This allows passing
+  graphics protocols like Sixels, iTerm and Kitty through a terminal
+  multiplexer. It will be enabled automatically for Kitty, and can be enabled
+  manually for other protocols with more limited support (github#116,
+  github#162, thanks to Samantha Collins and @m040601).
+
+* New option: --view-size=<WxH>. Specifies width and height of the viewport,
+  overriding the detected terminal size (github#140, reported by Jamin
+  Thornsberry).
+
+* New option: --fit-width. Fits images to the width of the viewport, allowing
+  them to be taller than the viewport's height (github#115, thanks to
+  @SuperDuperDeou).
+
+* New option: --relative=<bool>. Enables relative cursor positioning. Useful if
+  you've pre-positioned the cursor at a particular offset where you want frames
+  to appear, but tends to make the output illegible in pagers, e.g. 'less -R'
+  (github#146, thanks to @Delgan and @AnonymouX47).
+
+* New option: --exact-size=<auto|on|off>. Preserves the input pixel size when
+  possible. Useful to avoid artifacts caused by resampling (github#119,
+  reported by @ErrorNoInternet).
+
+* New symbol selector: "imported". This selects glyphs loaded with
+  --glyph-file (github#124, reported by @clort81).
+
+* MS Windows: Experimental support for ConHost output (-f conhost). This allows
+  direct output on older versions of MS Windows (github#170, @oshaboy).
+
+* Fontgen: Added a BDF font writer (Mo Zhou).
+
+* Fontgen: Cleanup and modernization (Mo Zhou).
+
+* The help text and manual page were overhauled for readability, and the API
+  documentation now includes symbol indexes by version and deprecation status.
+
+* Added a zsh completion script (Wu Zhenyu).
+
+* Installation methods added: Scoop (Launch Lee) and Winget (@sitiom).
+
+* CI: Ported to GitHub actions (Erica Ferrua Edwardsdóttir).
+
+* Bug fixes:
+  github#107  "Unknown file format" when using AVIF on stdin (found by @ndren).
+  github#152  Broken linking with libwebp-1.3.1 (found by Vladimír Čunát).
+  [unfiled]   Fix make check with --without-tools (Samuel Thibault).
+  [unfiled]   Fix --duration not working well with still images (@Delgan).
+  [unfiled]   Fix sixel rendering of animations (@Delgan).
+  [unfiled]   Fix operator precedence in geometry calculation (Johan Mattsson).
+
 1.12.5 (2023-05-21)
 -------------------
 
