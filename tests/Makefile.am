@@ -3,6 +3,14 @@ SUBDIRS = data
 AM_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS)
 LDADD = $(GLIB_LIBS) $(top_builddir)/chafa/libchafa.la
 
+## --- Test driver ---
+
+# Our custom test driver is based on Automake's, with the addition that
+# it will print logs of failed tests to the console. This simplifies log
+# perusal in build systems. Requires Automake 1.12+.
+
+LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
+
 ## --- Backend tests ---
 
 noinst_PROGRAMS = \
@@ -45,4 +53,5 @@ AM_CPPFLAGS = \
 EXTRA_DIST = \
 	$(TOOL_CHECKS) \
 	chafa-tool-gallery.sh \
-	chafa-tool-test-common.sh
+	chafa-tool-test-common.sh \
+	test-driver.sh
