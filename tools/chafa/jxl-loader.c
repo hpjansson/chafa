@@ -1,19 +1,21 @@
-/* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+/* -*- Mode: C; tab-width: 4; ent su: nil; c-basic-offset: 4 -*- */
 
 #include "chafa.h"
 #include "file-mapping.h"
 #include "glib.h"
-#include <chafa.h>
 #include <jxl/codestream_header.h>
 #include <jxl/decode.h>
-#include <jxl/jxl_export.h>
 #include <jxl/resizable_parallel_runner.h>
-#include <jxl/thread_parallel_runner.h>
 #include <stdio.h>
 
 #include "jxl-loader.h"
 
 #define BUFFER_SIZE (1024)
+
+GList *jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
+                       struct FileMapping *mapping);
+
+void jxl_cleanup_frame_list (GList *frame_list);
 
 struct JxlLoader
 {
@@ -31,9 +33,6 @@ typedef struct JxlFrame
     int frame_duration;
 } JxlFrame;
 
-GList *get_frames (JxlDecoder * dec, JxlParallelRunner * runner,
-                   struct FileMapping *mapping);
-
 static JxlLoader *
 jxl_loader_new (void)
 {
@@ -41,24 +40,24 @@ jxl_loader_new (void)
 }
 
 GList *
-get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
-            struct FileMapping *mapping)
+jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
+                FileMapping *mapping)
 {
-    if (JXL_DEC_SUCCESS !=
-        JxlDecoderSetParallelRunner (dec, JxlResizableParallelRunner, runner))
+    if (JXL_DEC_SUCCESS
+        != JxlDecoderSetParallelRunner (dec, JxlResizableParallelRunner,
+                                        runner))
         {
             return NULL;
         }
 
-    if (JXL_DEC_SUCCESS !=
-        JxlDecoderSubscribeEvents (dec,
-                                   JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE |
-                                   JXL_DEC_FRAME))
+    if (JXL_DEC_SUCCESS
+        != JxlDecoderSubscribeEvents (
+            dec, JXL_DEC_BASIC_INFO | JXL_DEC_FULL_IMAGE | JXL_DEC_FRAME))
         {
             return NULL;
         }
 
-    JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
+    const JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
 
     JxlDecoderStatus decode_status = JXL_DEC_NEED_MORE_INPUT;
     uint8_t buffer[BUFFER_SIZE];
@@ -70,20 +69,18 @@ get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
 
     int read = 0;
 
-    for (;;)
+    while (JXL_DEC_ERROR != decode_status)
         {
-            if (JXL_DEC_ERROR == decode_status)
-                {
-                    break;
-                }
-            else if (JXL_DEC_NEED_MORE_INPUT == decode_status)
+            if (JXL_DEC_NEED_MORE_INPUT == decode_status)
                 {
                     JxlDecoderReleaseInput (dec);
-                    gsize nbr = file_mapping_read (mapping, buffer, read, BUFFER_SIZE);
+                    const gsize nbr = file_mapping_read (mapping, buffer, read,
+                                                         BUFFER_SIZE);
                     read += nbr;
                     if (nbr > 0)
                         {
-                            if (JXL_DEC_SUCCESS != JxlDecoderSetInput (dec, buffer, nbr))
+                            if (JXL_DEC_SUCCESS
+                                != JxlDecoderSetInput (dec, buffer, nbr))
                                 {
                                     break;
                                 }
@@ -99,49 +96,53 @@ get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
                         {
                             break;
                         }
-                    image_buffer = g_malloc0 (info.xsize * info.ysize * 4);
+                    image_buffer = g_malloc (info.xsize * info.ysize * 4);
                 }
             else if (JXL_DEC_NEED_IMAGE_OUT_BUFFER == decode_status)
                 {
-                    if (JXL_DEC_SUCCESS !=
-                        JxlDecoderSetImageOutBuffer (dec, &format, image_buffer,
-                                                     info.xsize * info.ysize * 4))
+                    if (JXL_DEC_SUCCESS
+                        != JxlDecoderSetImageOutBuffer (
+                            dec, &format, image_buffer,
+                            info.xsize * info.ysize * 4))
                         {
                             break;
                         }
                 }
             else if (JXL_DEC_FRAME == decode_status)
                 {
-                    if (JXL_DEC_SUCCESS !=
-                        JxlDecoderGetFrameHeader (dec, &frame_header))
+                    if (JXL_DEC_SUCCESS
+                        != JxlDecoderGetFrameHeader (dec, &frame_header))
                         {
                             break;
                         }
                 }
             else if (JXL_DEC_FULL_IMAGE == decode_status)
                 {
-                    uint32_t num = (info.animation.tps_numerator == 0)
-                        ? 1 : info.animation.tps_numerator;
+                    const uint32_t num = info.animation.tps_numerator == 0
+                                             ? 1
+                                             : info.animation.tps_numerator;
                     JxlFrame *frame = g_new (JxlFrame, 1);
                     frame->buffer = image_buffer;
                     frame->width = info.xsize;
                     frame->height = info.ysize;
                     frame->is_premul = info.alpha_premultiplied;
-                    frame->frame_duration =
-                        frame_header.duration * 1000 * info.animation.tps_denominator /
-                        num;
-                    frame_list = g_list_append (frame_list, frame);
+                    frame->frame_duration = frame_header.duration * 1000
+                                            * info.animation.tps_denominator
+                                            / num;
+                    frame_list = g_list_prepend (frame_list, frame);
 
-                    image_buffer = g_malloc0 (info.xsize * info.ysize * 4);
+                    image_buffer = g_malloc (info.xsize * info.ysize * 4);
                 }
             else if (JXL_DEC_SUCCESS == decode_status)
                 {
-                    return frame_list;	// TODO;
+                    frame_list = g_list_reverse (frame_list);
+                    return frame_list;
                 }
 
             decode_status = JxlDecoderProcessInput (dec);
         }
 
+    // Decoding failed
     if (image_buffer != NULL)
         {
             g_free (image_buffer);
@@ -149,14 +150,7 @@ get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
 
     if (frame_list != NULL)
         {
-            GList *list = frame_list;
-            g_free (((JxlFrame *) list->data)->buffer);
-            g_free (list->data);
-            while ((list = g_list_next (list)) != NULL)
-                {
-                    g_free (((JxlFrame *) list->data)->buffer);
-                    g_free (list->data);
-                }
+            jxl_cleanup_frame_list (frame_list);
             g_list_free (frame_list);
         }
 
@@ -164,19 +158,19 @@ get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
 }
 
 JxlLoader *
-jxl_loader_new_from_mapping (struct FileMapping *mapping)
+jxl_loader_new_from_mapping (FileMapping *mapping)
 {
     JxlLoader *loader = NULL;
     gboolean success = FALSE;
 
     g_return_val_if_fail (mapping != NULL, NULL);
 
-    if (!file_mapping_has_magic (mapping, 0, "\xFF\x0A", 2) &&
-        !file_mapping_has_magic (mapping, 0,
-                                 "\x00\x00\x00\x0C\x4A\x58\x4C\x20\x0D\x0A\x87\x0A",
-                                 12))
+    if (!file_mapping_has_magic (mapping, 0, "\xFF\x0A", 2)
+        && !file_mapping_has_magic (
+            mapping, 0, "\x00\x00\x00\x0C\x4A\x58\x4C\x20\x0D\x0A\x87\x0A",
+            12))
         {
-            goto out;
+            return NULL;
         }
 
     loader = jxl_loader_new ();
@@ -184,7 +178,8 @@ jxl_loader_new_from_mapping (struct FileMapping *mapping)
     JxlDecoder *decoder = JxlDecoderCreate (NULL);
     JxlParallelRunner *runner = JxlResizableParallelRunnerCreate (NULL);
 
-    GList *frames = get_frames (decoder, runner, mapping);
+    GList *frames = jxl_get_frames (decoder, runner, mapping);
+
     JxlDecoderDestroy (decoder);
     JxlResizableParallelRunnerDestroy (runner);
 
@@ -196,8 +191,7 @@ jxl_loader_new_from_mapping (struct FileMapping *mapping)
             loader->frame_count = g_list_length (frames);
             loader->index = 0;
         }
- out:
-    if (!success)
+    else
         {
             if (loader)
                 {
@@ -210,16 +204,28 @@ jxl_loader_new_from_mapping (struct FileMapping *mapping)
 };
 
 void
+jxl_cleanup_frame_list (GList *frame_list)
+{
+    GList *frame = frame_list;
+
+    while (frame != NULL)
+        {
+            if (frame->data != NULL)
+                {
+                    JxlFrame *jxl_frame = frame->data;
+                    g_free (jxl_frame->buffer);
+                    g_free (jxl_frame);
+                    frame->data = NULL;
+                }
+            frame = frame->next;
+        }
+}
+
+void
 jxl_loader_destroy (JxlLoader *loader)
 {
     GList *list = loader->frames;
-    g_free (((JxlFrame *) list->data)->buffer);
-    g_free (list->data);
-    while ((list = g_list_next (list)) != NULL)
-        {
-            g_free (((JxlFrame *) list->data)->buffer);
-            g_free (list->data);
-        }
+    jxl_cleanup_frame_list (list);
     g_list_free (loader->frames);
     g_free (loader);
 }
@@ -231,16 +237,15 @@ jxl_loader_get_is_animation (JxlLoader *loader)
 }
 
 gconstpointer
-jxl_loader_get_frame_data (JxlLoader *loader,
-                           ChafaPixelType *pixel_type_out,
+jxl_loader_get_frame_data (JxlLoader *loader, ChafaPixelType *pixel_type_out,
                            gint *width_out, gint *height_out,
                            gint *rowstride_out)
 {
     g_return_val_if_fail (loader != NULL, NULL);
-    JxlFrame *frame = g_list_nth_data (loader->frames, loader->index);
+    const JxlFrame *frame = g_list_nth_data (loader->frames, loader->index);
 
-    *pixel_type_out = (frame->is_premul) ? CHAFA_PIXEL_RGBA8_PREMULTIPLIED
-        : CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+    *pixel_type_out = frame->is_premul ? CHAFA_PIXEL_RGBA8_PREMULTIPLIED
+                                       : CHAFA_PIXEL_RGBA8_UNASSOCIATED;
 
     *width_out = frame->width;
     *height_out = frame->height;
@@ -253,8 +258,8 @@ gint
 jxl_loader_get_frame_delay (JxlLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, 0);
-    return ((JxlFrame *)
-            g_list_nth_data (loader->frames, loader->index))->frame_duration;
+    return ((JxlFrame *)g_list_nth_data (loader->frames, loader->index))
+        ->frame_duration;
 }
 
 void
