@@ -40,6 +40,7 @@
 #include "tiff-loader.h"
 #include "webp-loader.h"
 #include "avif-loader.h"
+#include "jxl-loader.h"
 
 typedef enum
 {
@@ -52,6 +53,7 @@ typedef enum
     LOADER_TYPE_WEBP,
     LOADER_TYPE_AVIF,
     LOADER_TYPE_SVG,
+    LOADER_TYPE_JXL,
 
     LOADER_TYPE_LAST
 }
@@ -187,6 +189,20 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) avif_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) avif_loader_get_frame_data,
         (gint (*) (gpointer)) avif_loader_get_frame_delay
+    },
+#endif
+#ifdef HAVE_JXL
+    [LOADER_TYPE_JXL] =
+    {
+    "JXL",
+    (gpointer (*)(gpointer)) jxl_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
+    (void (*)(gpointer)) jxl_loader_destroy,
+    (gboolean (*)(gpointer)) jxl_loader_get_is_animation,
+    (void (*)(gpointer)) jxl_loader_goto_first_frame,
+    (gboolean (*)(gpointer)) jxl_loader_goto_next_frame,
+    (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) jxl_loader_get_frame_data,
+    (gint (*) (gpointer)) jxl_loader_get_frame_delay
     },
 #endif
 };
