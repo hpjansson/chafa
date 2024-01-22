@@ -29,6 +29,7 @@ typedef struct JxlFrame
     uint8_t *buffer;
     int width;
     int height;
+    gboolean have_alpha;
     gboolean is_premul;
     int frame_duration;
 } JxlFrame;
@@ -57,7 +58,7 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
             return NULL;
         }
 
-    const JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
+    JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
 
     JxlDecoderStatus decode_status = JXL_DEC_NEED_MORE_INPUT;
     uint8_t buffer[BUFFER_SIZE];
@@ -96,14 +97,19 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
                         {
                             break;
                         }
-                    image_buffer = g_malloc (info.xsize * info.ysize * 4);
+                    if (!info.alpha_bits)
+                        {
+                            format.num_channels = 3;
+                        }
+                    image_buffer = g_malloc (info.xsize * info.ysize
+                                             * format.num_channels);
                 }
             else if (JXL_DEC_NEED_IMAGE_OUT_BUFFER == decode_status)
                 {
                     if (JXL_DEC_SUCCESS
                         != JxlDecoderSetImageOutBuffer (
                             dec, &format, image_buffer,
-                            info.xsize * info.ysize * 4))
+                            info.xsize * info.ysize * format.num_channels))
                         {
                             break;
                         }
@@ -125,13 +131,15 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner,
                     frame->buffer = image_buffer;
                     frame->width = info.xsize;
                     frame->height = info.ysize;
+                    frame->have_alpha = format.num_channels == 4;
                     frame->is_premul = info.alpha_premultiplied;
                     frame->frame_duration = frame_header.duration * 1000
                                             * info.animation.tps_denominator
                                             / num;
                     frame_list = g_list_prepend (frame_list, frame);
 
-                    image_buffer = g_malloc (info.xsize * info.ysize * 4);
+                    image_buffer = g_malloc (info.xsize * info.ysize
+                                             * format.num_channels);
                 }
             else if (JXL_DEC_SUCCESS == decode_status)
                 {
@@ -244,12 +252,23 @@ jxl_loader_get_frame_data (JxlLoader *loader, ChafaPixelType *pixel_type_out,
     g_return_val_if_fail (loader != NULL, NULL);
     const JxlFrame *frame = g_list_nth_data (loader->frames, loader->index);
 
-    *pixel_type_out = frame->is_premul ? CHAFA_PIXEL_RGBA8_PREMULTIPLIED
-                                       : CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+    int num_channels;
+    if (frame->have_alpha)
+        {
+            num_channels = 4;
+            *pixel_type_out = frame->is_premul
+                                  ? CHAFA_PIXEL_RGBA8_PREMULTIPLIED
+                                  : CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+        }
+    else
+        {
+            num_channels = 3;
+            *pixel_type_out = CHAFA_PIXEL_RGB8;
+        }
 
     *width_out = frame->width;
     *height_out = frame->height;
-    *rowstride_out = frame->width * 4;
+    *rowstride_out = frame->width * num_channels;
 
     return frame->buffer;
 }
