@@ -156,6 +156,18 @@ AS_IF([test "$with_tools" != no], [
       missing_debs="$missing_debs libwebp-dev"
       with_webp=no)])
   AS_IF([test "$with_webp" != no], [AC_DEFINE([HAVE_WEBP], [1], [Define if we have WebP support.])])
+
+  dnl libjxl (optional)
+  AC_ARG_WITH(jxl,
+    [AS_HELP_STRING([--without-jxl], [don't build JXL loader [default=on]])],
+    ,
+    with_jxl=yes)
+  AS_IF([test "$with_jxl" != no], [
+    PKG_CHECK_MODULES(JXL, [libjxl libjxl_threads],,
+      missing_rpms="$missing_rpms libjxl-devel"
+      missing_debs="$missing_debs libjxl-dev"
+      with_jxl=no)])
+  AS_IF([test "$with_jxl" != no], [AC_DEFINE([HAVE_JXL], [1], [Define if we have JXL support.])])
 ])
 
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
@@ -164,6 +176,7 @@ AM_CONDITIONAL([HAVE_SVG], [test "$with_tools" != no -a "$with_svg" != no])
 AM_CONDITIONAL([HAVE_TIFF], [test "$with_tools" != no -a "$with_tiff" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 AM_CONDITIONAL([HAVE_AVIF], [test "$with_tools" != no -a "$with_avif" != no])
+AM_CONDITIONAL([HAVE_JXL], [test "$with_tools" != no -a "$with_jxl" != no])
 
 # Used by gtk-doc's fixxref.
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
@@ -492,6 +505,7 @@ colorize_vars="
   with_svg
   with_tiff
   with_webp
+  with_jxl
   with_avif
 "
 
@@ -556,6 +570,7 @@ echo >&AS_MESSAGE_FD "With QOI loader ............. $pyes (internal)"
 echo >&AS_MESSAGE_FD "With SVG loader ............. $pwith_svg"
 echo >&AS_MESSAGE_FD "With TIFF loader ............ $pwith_tiff"
 echo >&AS_MESSAGE_FD "With WebP loader ............ $pwith_webp"
+echo >&AS_MESSAGE_FD "With JXL loader ............. $pwith_jxl"
 echo >&AS_MESSAGE_FD "With XWD loader ............. $pyes (internal)"
 fi
 
