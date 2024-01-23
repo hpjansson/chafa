@@ -67,3 +67,10 @@ That should do it!
 [excellent Python bindings](https://chafapy.mage.black/) for Chafa. If
 Python's your thing, check them out. They are easy to use and come with a
 [detailed tutorial](https://chafapy.mage.black/usage/tutorial.html).
+
+## JavaScript bindings
+
+[Héctor Molinero Fernández](https://hector.molinero.dev/) maintains
+[wonderful JavaScript bindings](https://github.com/hectorm/chafa-wasm)
+built around his WebAssembly port. These are available from NPM and can
+be used in Node.js, web browsers, and more.
