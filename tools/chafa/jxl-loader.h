@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2023 Hans Petter Jansson
+/* Copyright (C) 2024 oupson
  *
  * This file is part of Chafa, a program that shows pictures on text terminals.
  *
@@ -33,9 +33,8 @@ void jxl_loader_destroy (JxlLoader *loader);
 gboolean jxl_loader_get_is_animation (JxlLoader *loader);
 
 gconstpointer jxl_loader_get_frame_data (JxlLoader *loader,
-                                         ChafaPixelType *pixel_type_out,
-                                         gint *width_out, gint *height_out,
-                                         gint *rowstride_out);
+                                         ChafaPixelType *pixel_type_out, gint *width_out,
+                                         gint *height_out, gint *rowstride_out);
 gint jxl_loader_get_frame_delay (JxlLoader *loader);
 
 void jxl_loader_goto_first_frame (JxlLoader *loader);

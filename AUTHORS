@@ -7,7 +7,7 @@ git log. For a complete list, you could try:
 
 git log --pretty="format:%an <%ae>" | sort -f | uniq
 
-Per 2024-01-08, this yields the following (sans duplicates):
+Per 2024-01-23, this yields the following (sans duplicates):
 
 alkahest <cyphergothic@protonmail.com>
 begasus <begasus@gmail.com>
@@ -35,3 +35,4 @@ Sudhakar Verma <svermaiiti@gmail.com>
 Tim Gates <tim.gates@iress.com>
 Wu Zhenyu <wuzhenyu@ustc.edu>
 Øyvind Kolås <pippin@gimp.org>
+oupson <oupson1er@gmail.com>
