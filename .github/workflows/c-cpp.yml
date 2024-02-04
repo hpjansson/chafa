@@ -23,7 +23,6 @@ jobs:
         libglib2.0-dev
         libavif-dev
         libjpeg-dev
-        libjxl-dev
         librsvg2-dev
         libtiff-dev
         libwebp-dev
