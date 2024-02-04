@@ -1920,6 +1920,7 @@ chafa_canvas_print_rows_strv (ChafaCanvas *canvas, ChafaTermInfo *term_info)
     }
 
     strv [gsa_len] = NULL;
+    g_free (gsa);
     return strv;
 }
 
