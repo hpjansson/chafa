@@ -163,22 +163,13 @@ static const guint8 *
 work_cell_get_sorted_pixels (ChafaWorkCell *wcell, gint ch)
 {
     guint8 *index;
-    const guint8 index_init [CHAFA_SYMBOL_N_PIXELS] =
-    {
-        0,   1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
-        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63
-    };
 
     index = &wcell->pixels_sorted_index [ch] [0];
 
     if (wcell->have_pixels_sorted_by_channel [ch])
         return index;
 
-    memcpy (index, index_init, CHAFA_SYMBOL_N_PIXELS);
     chafa_sort_pixel_index_by_channel (index, wcell->pixels, CHAFA_SYMBOL_N_PIXELS, ch);
-
     wcell->have_pixels_sorted_by_channel [ch] = TRUE;
     return index;
 }
