@@ -27,21 +27,6 @@
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-work-cell.h"
 
-typedef struct
-{
-    ChafaPixel fg;
-    ChafaPixel bg;
-    gint error;
-}
-SymbolEval;
-
-typedef struct
-{
-    ChafaPixel fg;
-    ChafaPixel bg;
-    gint error [2];
-}
-SymbolEval2;
 
 static void
 accum_to_color (const ChafaColorAccum *accum, ChafaColor *color)
