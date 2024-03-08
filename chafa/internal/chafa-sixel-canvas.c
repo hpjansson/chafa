@@ -373,7 +373,6 @@ build_sixel_row_ansi (const ChafaSixelCanvas *scanvas, const SixelRow *srow, gch
     }
     while (++pen < chafa_palette_get_n_colors (&scanvas->image->palette));
 
-    *(p++) = '-';
     return p;
 }
 
@@ -393,14 +392,21 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
 
     for (i = 0; i < n_sixel_rows; i++)
     {
+        gboolean is_global_first_row = batch->first_row + i == 0;
+        gboolean is_global_last_row = batch->first_row + (i + 1) * SIXEL_CELL_HEIGHT >= ctx->sixel_canvas->height;
+
         fetch_sixel_row (&srow,
                          ctx->sixel_canvas->image->pixels
                          + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
                          ctx->sixel_canvas->image->width);
         p = build_sixel_row_ansi (ctx->sixel_canvas, &srow, p,
-                                  (i == 0) || (i == n_sixel_rows - 1)
+                                  (is_global_first_row) || (is_global_last_row)
                                   ? TRUE : FALSE);
         chafa_bitfield_clear (&srow.filter_bits);
+
+        /* GNL after every row except final */
+        if (!is_global_last_row)
+            *(p++) = '-';
     }
 
     batch->ret_p = sixel_ansi;
