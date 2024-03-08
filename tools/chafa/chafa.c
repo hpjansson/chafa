@@ -2590,19 +2590,19 @@ write_image_epilogue (gint dest_width)
     }
     else /* CHAFA_PIXEL_MODE_SIXELS */
     {
-        /* Sixel mode leaves cursor somewhere at or below the leftmost column */
+        /* Sixel mode leaves the cursor in the leftmost column of the final band */
 
-        if (left_space > 0)
+        if (options.relative)
         {
-            if (options.relative)
-            {
+            p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
+
+            if (left_space > 0)
                 p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
                                                        left_space);
-            }
-            else
-            {
-                *(p0++) = '\r';
-            }
+        }
+        else
+        {
+            *(p0++) = '\n';
         }
     }
 
