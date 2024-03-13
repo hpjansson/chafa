@@ -50,6 +50,35 @@ chafa_pop_count_vu64_builtin (const guint64 *vv, gint *vc, gint n)
 }
 
 void
+chafa_intersection_count_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gint n)
+{
+#if defined(HAVE_POPCNT64_INTRINSICS)
+    while (n >= 4)
+    {
+        n -= 4;
+        *(vc++) = _mm_popcnt_u64 (a & *(vb++));
+        *(vc++) = _mm_popcnt_u64 (a & *(vb++));
+        *(vc++) = _mm_popcnt_u64 (a & *(vb++));
+        *(vc++) = _mm_popcnt_u64 (a & *(vb++));
+    }
+
+    while (n--)
+    {
+        *(vc++) = _mm_popcnt_u64 (a & *(vb++));
+    }
+#else /* HAVE_POPCNT32_INTRINSICS */
+    const guint32 *aa = (const guint32 *) &a;
+    const guint32 *wb = (const guint32 *) vb;
+
+    while (n--)
+    {
+        *(vc++) = _mm_popcnt_u32 (aa [0] & wb [0]) + _mm_popcnt_u32 (aa [1] & wb [1]);
+        wb += 2;
+    }
+#endif
+}
+
+void
 chafa_hamming_distance_vu64_builtin (guint64 a, const guint64 *vb, gint *vc, gint n)
 {
 #if defined(HAVE_POPCNT64_INTRINSICS)

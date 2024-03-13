@@ -17,6 +17,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-canvas-internal.h \
 	chafa-canvas-printer.c \
 	chafa-canvas-printer.h \
+	chafa-cell-facets.c \
+	chafa-cell-facets.h \
 	chafa-color.c \
 	chafa-color.h \
 	chafa-color-hash.c \
