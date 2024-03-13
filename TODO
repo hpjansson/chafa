@@ -11,7 +11,6 @@ Minor Features/UX
 - Verbose output. Show file names. Call it --annotate.
 - Add a --test option to print a test page.
 - Add a --show-symbols op to print matching symbols.
-- Strv building API in addition to GString?
 - If FG color is transparent, see if we can use an inverted symbol and swap
   with BG.
   - Avoid using transparent foreground due to XFCE Terminal (other terminals?)
@@ -27,9 +26,6 @@ Minor Features/UX
   - Come up with some kind of support matrix.
 - More symbols/symbol aliases:
   - CP437.
-- Control sequences:
-  - Screen buffer: CSI ?1047l (normal) and CSI ?1047h (alternate). Or use
-    CSI ?47l and CSI ?47h ?
 - Output to retro art formats:
   - RexPaint.
   - lvllvl.com.
