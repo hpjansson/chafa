@@ -117,7 +117,6 @@ chafa_work_cell_calc_mean_color (const ChafaWorkCell *wcell, ChafaColor *color_o
     accum_to_color (&accum, color_out);
 }
 
-/* colors must point to an array of two elements */
 guint64
 chafa_work_cell_to_bitmap (const ChafaWorkCell *wcell, const ChafaColorPair *color_pair)
 {
