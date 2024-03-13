@@ -541,6 +541,7 @@ free_symbol (gpointer sym_p)
 
     g_free (sym->coverage);
     g_free (sym->mask_u32);
+    g_free (sym->facets);
     g_free (sym);
 }
 
@@ -551,8 +552,10 @@ free_symbol_wide (gpointer sym_p)
 
     g_free (sym->sym [0].coverage);
     g_free (sym->sym [0].mask_u32);
+    g_free (sym->sym [0].facets);
     g_free (sym->sym [1].coverage);
     g_free (sym->sym [1].mask_u32);
+    g_free (sym->sym [1].facets);
     g_free (sym);
 }
 
@@ -582,6 +585,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
 
                 *sym = chafa_symbols [i];
                 sym->coverage = g_memdup (sym->coverage, CHAFA_SYMBOL_N_PIXELS);
+                sym->facets = NULL;
                 g_hash_table_replace (desired_syms,
                                       GUINT_TO_POINTER (chafa_symbols [i].c),
                                       sym);
@@ -603,7 +607,9 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
 
                 *sym = chafa_symbols2 [i];
                 sym->sym [0].coverage = g_memdup (sym->sym [0].coverage, CHAFA_SYMBOL_N_PIXELS);
+                sym->sym [0].facets = NULL;
                 sym->sym [1].coverage = g_memdup (sym->sym [1].coverage, CHAFA_SYMBOL_N_PIXELS);
+                sym->sym [1].facets = NULL;
                 g_hash_table_replace (desired_syms_wide,
                                       GUINT_TO_POINTER (chafa_symbols2 [i].sym [0].c),
                                       sym);
@@ -627,6 +633,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->c = glyph->c;
             sym->bitmap = glyph->bitmap;
             sym->coverage = (gchar *) bitmap_to_bytes (glyph->bitmap);
+            sym->facets = NULL;
             sym->popcount = chafa_population_count_u64 (glyph->bitmap);
             sym->fg_weight = sym->popcount;
             sym->bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->popcount;
@@ -654,6 +661,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->sym [0].c = glyph->c;
             sym->sym [0].bitmap = glyph->bitmap [0];
             sym->sym [0].coverage = (gchar *) bitmap_to_bytes (glyph->bitmap [0]);
+            sym->sym [0].facets = NULL;
             sym->sym [0].popcount = chafa_population_count_u64 (glyph->bitmap [0]);
             sym->sym [0].fg_weight = sym->sym [0].popcount;
             sym->sym [0].bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->sym [0].popcount;
@@ -662,6 +670,7 @@ rebuild_symbols (ChafaSymbolMap *symbol_map)
             sym->sym [1].c = glyph->c;
             sym->sym [1].bitmap = glyph->bitmap [1];
             sym->sym [1].coverage = (gchar *) bitmap_to_bytes (glyph->bitmap [1]);
+            sym->sym [1].facets = NULL;
             sym->sym [1].popcount = chafa_population_count_u64 (glyph->bitmap [1]);
             sym->sym [1].fg_weight = sym->sym [1].popcount;
             sym->sym [1].bg_weight = CHAFA_SYMBOL_N_PIXELS - sym->sym [1].popcount;
@@ -1068,14 +1077,17 @@ chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map)
     {
         g_free (symbol_map->symbols [i].coverage);
         g_free (symbol_map->symbols [i].mask_u32);
+        g_free (symbol_map->symbols [i].facets);
     }
 
     for (i = 0; i < symbol_map->n_symbols2; i++)
     {
         g_free (symbol_map->symbols2 [i].sym [0].coverage);
         g_free (symbol_map->symbols2 [i].sym [0].mask_u32);
+        g_free (symbol_map->symbols2 [i].sym [0].facets);
         g_free (symbol_map->symbols2 [i].sym [1].coverage);
         g_free (symbol_map->symbols2 [i].sym [1].mask_u32);
+        g_free (symbol_map->symbols2 [i].sym [1].facets);
     }
 
     g_hash_table_destroy (symbol_map->glyphs);

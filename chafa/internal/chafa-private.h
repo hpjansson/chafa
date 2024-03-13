@@ -22,6 +22,7 @@
 
 #include <glib.h>
 #include "internal/chafa-bitfield.h"
+#include "internal/chafa-cell-facets.h"
 #include "internal/chafa-color-hash.h"
 #include "internal/chafa-dither.h"
 #include "internal/chafa-indexed-image.h"
@@ -47,6 +48,7 @@ typedef struct
     gint fg_weight, bg_weight;
     guint64 bitmap;
     gint popcount;
+    ChafaCellFacets *facets;
 }
 ChafaSymbol;
 
