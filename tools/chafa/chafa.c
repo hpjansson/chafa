@@ -1837,7 +1837,10 @@ apply_passthrough_workarounds_tmux (void)
 
     strings = g_strsplit_set (standard_output, " ", -1);
     if (strings [0] && strings [1])
+    {
         mode = g_ascii_strdown (strings [1], -1);
+        g_strstrip (mode);
+    }
     g_strfreev (strings);
 
     g_free (standard_output);
