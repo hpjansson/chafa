@@ -1772,6 +1772,9 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
     else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
              && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS))
         pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_ITERM2_IMAGE)
+             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_ITERM2_IMAGE))
+        pixel_mode = CHAFA_PIXEL_MODE_ITERM2;
     else
         pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
 
