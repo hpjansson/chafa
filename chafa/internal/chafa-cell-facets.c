@@ -190,10 +190,10 @@ chafa_cell_facets_distance (const ChafaCellFacets *a, const ChafaCellFacets *b)
     for (i = 0; i < CHAFA_CELL_FACETS_N_FACETS; i++)
     {
         gint e = (gint) a->facets [i] - (gint) b->facets [i];
-#if 1
+#if 0
         badness += e * e;
 #else
-        badness += e;
+        badness += abs (e);
 #endif
 
 #if 0
@@ -201,9 +201,11 @@ chafa_cell_facets_distance (const ChafaCellFacets *a, const ChafaCellFacets *b)
 #endif
     }
 
-#if 0
+#if 1
     return badness;
-#else
+#elif 0
     return (badness >> 6);  /* 28 bits */
+#else
+    return badness * badness;
 #endif
 }
