@@ -266,6 +266,31 @@ bitmap_to_argb (guint64 bitmap, guint8 *argb, gint rowstride)
     }
 }
 
+static gpointer
+bitmap_to_argb_alloc (guint64 bitmap)
+{
+    gpointer argb;
+
+    argb = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4);
+    bitmap_to_argb (bitmap, argb, CHAFA_SYMBOL_WIDTH_PIXELS * 4);
+    return argb;
+}
+
+static gpointer
+bitmap2_to_argb_alloc (guint64 bitmap_0, guint64 bitmap_1)
+{
+    gpointer argb;
+
+    argb = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4 * 2);
+
+    bitmap_to_argb (bitmap_0, argb,
+                    CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
+    bitmap_to_argb (bitmap_1, ((guint8 *) argb) + CHAFA_SYMBOL_WIDTH_PIXELS * 4,
+                    CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
+
+    return argb;
+}
+
 static guint64
 glyph_to_bitmap (gint width, gint height,
                  gint rowstride,
@@ -363,7 +388,10 @@ compile_symbols (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
     gint i;
 
     for (i = 0; i < symbol_map->n_symbols; i++)
+    {
         g_free (symbol_map->symbols [i].coverage);
+        g_free (symbol_map->symbols [i].mask_u32);
+    }
 
     g_free (symbol_map->symbols);
     g_free (symbol_map->packed_bitmaps);
@@ -380,6 +408,7 @@ compile_symbols (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
         symbol_map->symbols [i] = *sym;
         symbol_map->symbols [i].coverage = g_memdup (symbol_map->symbols [i].coverage,
                                                      CHAFA_SYMBOL_N_PIXELS);
+        symbol_map->symbols [i].mask_u32 = bitmap_to_argb_alloc (symbol_map->symbols [i].bitmap);
         i++;
     }
 
@@ -404,7 +433,9 @@ compile_symbols_wide (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
     for (i = 0; i < symbol_map->n_symbols2; i++)
     {
         g_free (symbol_map->symbols2 [i].sym [0].coverage);
+        g_free (symbol_map->symbols2 [i].sym [0].mask_u32);
         g_free (symbol_map->symbols2 [i].sym [1].coverage);
+        g_free (symbol_map->symbols2 [i].sym [1].mask_u32);
     }
 
     g_free (symbol_map->symbols2);
@@ -421,8 +452,10 @@ compile_symbols_wide (ChafaSymbolMap *symbol_map, GHashTable *desired_symbols)
         symbol_map->symbols2 [i] = *sym;
         symbol_map->symbols2 [i].sym [0].coverage = g_memdup (symbol_map->symbols2 [i].sym [0].coverage,
                                                               CHAFA_SYMBOL_N_PIXELS);
+        symbol_map->symbols2 [i].sym [0].mask_u32 = bitmap_to_argb_alloc (symbol_map->symbols2 [i].sym [0].bitmap);
         symbol_map->symbols2 [i].sym [1].coverage = g_memdup (symbol_map->symbols2 [i].sym [1].coverage,
                                                               CHAFA_SYMBOL_N_PIXELS);
+        symbol_map->symbols2 [i].sym [1].mask_u32 = bitmap_to_argb_alloc (symbol_map->symbols2 [i].sym [1].bitmap);
         i++;
     }
 
@@ -507,6 +540,7 @@ free_symbol (gpointer sym_p)
     ChafaSymbol *sym = sym_p;
 
     g_free (sym->coverage);
+    g_free (sym->mask_u32);
     g_free (sym);
 }
 
@@ -516,7 +550,9 @@ free_symbol_wide (gpointer sym_p)
     ChafaSymbol2 *sym = sym_p;
 
     g_free (sym->sym [0].coverage);
+    g_free (sym->sym [0].mask_u32);
     g_free (sym->sym [1].coverage);
+    g_free (sym->sym [1].mask_u32);
     g_free (sym);
 }
 
@@ -1028,12 +1064,17 @@ chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map)
     g_return_if_fail (symbol_map != NULL);
 
     for (i = 0; i < symbol_map->n_symbols; i++)
+    {
         g_free (symbol_map->symbols [i].coverage);
+        g_free (symbol_map->symbols [i].mask_u32);
+    }
 
     for (i = 0; i < symbol_map->n_symbols2; i++)
     {
         g_free (symbol_map->symbols2 [i].sym [0].coverage);
+        g_free (symbol_map->symbols2 [i].sym [0].mask_u32);
         g_free (symbol_map->symbols2 [i].sym [1].coverage);
+        g_free (symbol_map->symbols2 [i].sym [1].mask_u32);
     }
 
     g_hash_table_destroy (symbol_map->glyphs);
@@ -1829,13 +1870,7 @@ chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
         g_assert (glyph2->c == code_point);
 
         if (pixels_out)
-        {
-            *pixels_out = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4 * 2);
-            bitmap_to_argb (glyph2->bitmap [0], *pixels_out,
-                            CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
-            bitmap_to_argb (glyph2->bitmap [1], ((guint8 *) *pixels_out) + CHAFA_SYMBOL_WIDTH_PIXELS * 4,
-                            CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2);
-        }
+            *pixels_out = bitmap2_to_argb_alloc (glyph2->bitmap [0], glyph2->bitmap [1]);
 
         width = CHAFA_SYMBOL_WIDTH_PIXELS * 2;        
         height = CHAFA_SYMBOL_HEIGHT_PIXELS;
@@ -1852,10 +1887,7 @@ chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
         g_assert (glyph->c == code_point);
 
         if (pixels_out)
-        {
-            *pixels_out = g_malloc (CHAFA_SYMBOL_N_PIXELS * 4);
-            bitmap_to_argb (glyph->bitmap, *pixels_out, CHAFA_SYMBOL_WIDTH_PIXELS * 4);
-        }
+            *pixels_out = bitmap_to_argb_alloc (glyph->bitmap);
 
         width = CHAFA_SYMBOL_WIDTH_PIXELS;
         height = CHAFA_SYMBOL_HEIGHT_PIXELS;
