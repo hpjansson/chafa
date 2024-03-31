@@ -25,6 +25,169 @@
 
 G_BEGIN_DECLS
 
+/* --- 2D vectors --- */
+
+#define CHAFA_VEC2F32_INIT(x, y) { { (x), (y) } }
+#define CHAFA_VEC2F32_INIT_ZERO CHAFA_VEC2F32_INIT (0.0f, 0.0f)
+
+typedef struct
+{
+    gfloat v [2];
+}
+ChafaVec2f32;
+
+static inline void
+chafa_vec2f32_set (ChafaVec2f32 *v, gfloat x, gfloat y)
+{
+    v->v [0] = x;
+    v->v [1] = y;
+}
+
+static inline void
+chafa_vec2f32_set_zero (ChafaVec2f32 *v)
+{
+    chafa_vec2f32_set (v, 0.0f, 0.0f);
+}
+
+static inline void
+chafa_vec2f32_copy (ChafaVec2f32 *dest, const ChafaVec2f32 *src)
+{
+    *dest = *src;
+}
+
+static inline void
+chafa_vec2f32_add (ChafaVec2f32 *out, const ChafaVec2f32 *a, const ChafaVec2f32 *b)
+{
+    out->v [0] = a->v [0] + b->v [0];
+    out->v [1] = a->v [1] + b->v [1];
+}
+
+static inline void
+chafa_vec2f32_sub (ChafaVec2f32 *out, const ChafaVec2f32 *a, const ChafaVec2f32 *b)
+{
+    out->v [0] = a->v [0] - b->v [0];
+    out->v [1] = a->v [1] - b->v [1];
+}
+
+static inline void
+chafa_vec2f32_mul_scalar (ChafaVec2f32 *out, const ChafaVec2f32 *in, gfloat s)
+{
+    out->v [0] = in->v [0] * s;
+    out->v [1] = in->v [1] * s;
+}
+
+static inline gfloat
+chafa_vec2f32_dot (const ChafaVec2f32 *v, const ChafaVec2f32 *u)
+{
+    return v->v [0] * u->v [0] + v->v [1] * u->v [1];
+}
+
+static inline gfloat
+chafa_vec2f32_cross (const ChafaVec2f32 *a, const ChafaVec2f32 *b)
+{
+    return a->v [0] * b->v [1] - a->v [1] * b->v [0];
+}
+
+static inline void
+chafa_vec2f32_hadamard (ChafaVec2f32 *out, const ChafaVec2f32 *a, const ChafaVec2f32 *b)
+{
+    out->v [0] = a->v [0] * b->v [0];
+    out->v [1] = a->v [1] * b->v [1];
+}
+
+static inline gfloat
+chafa_vec2f32_get_magnitude (const ChafaVec2f32 *v)
+{
+    return sqrtf (v->v [0] * v->v [0] + v->v [1] * v->v [1]);
+}
+
+static inline gfloat
+chafa_vec2f32_get_squared_magnitude (const ChafaVec2f32 *v)
+{
+    return v->v [0] * v->v [0] + v->v [1] * v->v [1];
+}
+
+static inline void
+chafa_vec2f32_add_from_array (ChafaVec2f32 *accum, const ChafaVec2f32 *v, gint n)
+{
+    gint i;
+
+    for (i = 0; i < n; i++)
+    {
+        chafa_vec2f32_add (accum, accum, &v [i]);
+    }
+}
+
+static inline void
+chafa_vec2f32_add_to_array (ChafaVec2f32 *v, const ChafaVec2f32 *in, gint n)
+{
+    gint i;
+
+    for (i = 0; i < n; i++)
+    {
+        chafa_vec2f32_add (&v [i], &v [i], in);
+    }
+}
+
+static inline void
+chafa_vec2f32_average_array (ChafaVec2f32 *out, const ChafaVec2f32 *v, gint n)
+{
+    chafa_vec2f32_set_zero (out);
+    chafa_vec2f32_add_from_array (out, v, n);
+    chafa_vec2f32_mul_scalar (out, out, 1.0f / (gfloat) n);
+}
+
+/* a0 = Start point a, a1 = vector relative to a0.
+   b0 = Start point b, b1 = vector relative to b0. */
+static inline gint
+chafa_vec2f32_intersect_segments (ChafaVec2f32 *out,
+                                  const ChafaVec2f32 *a0, const ChafaVec2f32 *a1,
+                                  const ChafaVec2f32 *b0, const ChafaVec2f32 *b1)
+{
+    ChafaVec2f32 c;
+    gfloat u [2];
+
+    chafa_vec2f32_sub (&c, b0, a0);
+    u [0] = chafa_vec2f32_cross (&c, a1);
+    u [1] = chafa_vec2f32_cross (a1, b1);
+
+    if (u [1] == .0f)
+    {
+        /* Colinear (possibly overlapping) or parallel and non-intersecting*/
+        return -1;
+    }
+
+    u [0] /= u [1];
+
+    if (u [0] < .0f || u [0] > 1.f)
+    {
+        /* Not parallel and non-intersecting */
+        return 1;
+    }
+
+    chafa_vec2f32_mul_scalar (out, b1, u [0]);
+    chafa_vec2f32_add (out, out, b0);
+    return 0;
+}
+
+static inline gfloat
+chafa_vec2f32_distance_to_line (const ChafaVec2f32 *p,
+                                const ChafaVec2f32 *a0, const ChafaVec2f32 *a1)
+{
+    ChafaVec2f32 b;
+    ChafaVec2f32 c;
+    gfloat n, d;
+
+    chafa_vec2f32_sub (&b, a1, a0);
+    chafa_vec2f32_sub (&c, a0, p);
+    n = chafa_vec2f32_cross (&b, &c);
+    d = sqrtf (b.v [0] * b.v [0] + b.v [1] * b.v [1]);
+
+    return n / d;
+}
+
+/* --- 3D vectors --- */
+
 #define CHAFA_VEC3F32_INIT(x, y, z) { { (x), (y), (z) } }
 #define CHAFA_VEC3F32_INIT_ZERO CHAFA_VEC3F32_INIT (0.0f, 0.0f, 0.0f)
 
