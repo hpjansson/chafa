@@ -26,6 +26,7 @@
 #include "internal/chafa-batch.h"
 #include "internal/chafa-canvas-internal.h"
 #include "internal/chafa-canvas-printer.h"
+#include "internal/chafa-mesh-solver.h"
 #include "internal/chafa-private.h"
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-work-cell.h"
@@ -1217,6 +1218,26 @@ update_cells (ChafaCanvas *canvas)
                            1);
 }
 
+static gint
+update_cell_cb (ChafaWorkCell *work_cell, ChafaCanvasCell *cell_out,
+                gpointer user_data)
+{
+    return update_cell ((ChafaCanvas *) user_data, work_cell, cell_out);
+}
+
+static void
+update_cells_with_solver (ChafaCanvas *canvas)
+{
+    ChafaMeshSolver *solver;
+
+    solver = chafa_mesh_solver_new (canvas->pixels, canvas->width_pixels,
+                                    canvas->height_pixels, canvas->width_pixels * 4,
+                                    canvas->cells, canvas->config.width,
+                                    canvas->config.height, canvas->config.width,
+                                    update_cell_cb, canvas);
+    chafa_mesh_solver_solve (solver);
+}
+
 static void
 differentiate_channel (guint8 *dest_channel, guint8 reference_channel, gint min_diff)
 {
@@ -1467,6 +1488,8 @@ destroy_pixel_canvas (ChafaCanvas *canvas)
     }
 }
 
+#define USE_SOLVER 0
+
 static void
 draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                  const guint8 *src_pixels,
@@ -1497,6 +1520,11 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     {
         /* Symbol mode */
 
+#if USE_SOLVER
+        canvas->width_pixels = src_width;
+        canvas->height_pixels = src_height;
+#endif
+
         /* FIXME: The allocation can fail if the canvas is ridiculously large.
          * Since there's no way to report an error from here, we'll silently
          * skip the update instead.
@@ -1523,7 +1551,11 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
             if (canvas->config.alpha_threshold == 0)
                 canvas->have_alpha = FALSE;
 
+#if USE_SOLVER
+            update_cells_with_solver (canvas);
+#else
             update_cells (canvas);
+#endif
             canvas->needs_clear = FALSE;
 
             g_free (canvas->pixels);
