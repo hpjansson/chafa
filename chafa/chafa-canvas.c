@@ -496,6 +496,118 @@ pick_symbol_and_colors_fast (ChafaCanvas *canvas,
 }
 
 static void
+eval_symbol_facets (ChafaCanvas *canvas, const ChafaCellFacets *cell_facets,
+                    const ChafaColorPair *color_pair,
+                    gint sym_index, gint *best_sym_index_out, SymbolEval *best_eval_inout)
+{
+    ChafaSymbol *sym;
+    SymbolEval eval = { 0 };
+
+    sym = &canvas->config.symbol_map.symbols [sym_index];
+    eval.error = chafa_cell_facets_distance (cell_facets, sym->facets);
+    eval.colors = *color_pair;
+
+    if (eval.error < best_eval_inout->error)
+    {
+        *best_sym_index_out = sym_index;
+        *best_eval_inout = eval;
+    }
+}
+
+static void
+eval_symbol_wide_facets (ChafaCanvas *canvas,
+                         const ChafaCellFacets *cell_facets_a,
+                         const ChafaCellFacets *cell_facets_b,
+                         const ChafaColorPair *color_pair,
+                         gint sym_index, gint *best_sym_index_out, SymbolEval2 *best_eval_inout)
+{
+    ChafaSymbol2 *sym;
+    SymbolEval2 eval = { 0 };
+
+    sym = &canvas->config.symbol_map.symbols2 [sym_index];
+    eval.error [0] = chafa_cell_facets_distance (cell_facets_a, sym->sym [0].facets);
+    eval.error [1] = chafa_cell_facets_distance (cell_facets_b, sym->sym [1].facets);
+
+    eval.colors = *color_pair;
+
+    if (eval.error [0] + eval.error [1] < best_eval_inout->error [0] + best_eval_inout->error [1])
+    {
+        *best_sym_index_out = sym_index;
+        *best_eval_inout = eval;
+    }
+}
+
+static void
+chafa_color_pair_swap (ChafaColorPair *color_pair)
+{
+    ChafaColor c = color_pair->colors [0];
+    color_pair->colors [0] = color_pair->colors [1];
+    color_pair->colors [1] = c;
+}
+
+static void
+pick_symbol_and_colors_facets (ChafaCanvas *canvas,
+                               ChafaWorkCell *wcell,
+                               gunichar *sym_out,
+                               ChafaColorPair *color_pair_out,
+                               gint *error_out)
+{
+    ChafaColorPair color_pair;
+    guint64 bitmap;
+    ChafaCandidate candidates [N_CANDIDATES_MAX];
+    gint n_candidates = 0;
+    SymbolEval best_eval;
+    gint best_symbol;
+    gint i;
+    guint64 cell_bitmap;
+    ChafaCellFacets cell_facets;
+
+    if (canvas->extract_colors && !canvas->config.fg_only_enabled)
+    {
+        chafa_work_cell_get_k_means_color_pair (wcell, &color_pair);
+    }
+    else
+    {
+        color_pair = canvas->default_colors;
+    }
+
+    cell_bitmap = chafa_work_cell_to_bitmap (wcell, &color_pair);
+    chafa_cell_facets_from_bitmap (&cell_facets, cell_bitmap);
+
+    /* Find best candidate */
+
+    best_symbol = -1;
+    best_eval.error = SYMBOL_ERROR_MAX;
+
+    for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
+        eval_symbol_facets (canvas, &cell_facets,
+                            &color_pair, i, &best_symbol, &best_eval);
+
+    if (canvas->consider_inverted)
+    {
+        chafa_color_pair_swap (&color_pair);
+        cell_bitmap = ~cell_bitmap;
+        chafa_cell_facets_from_bitmap (&cell_facets, cell_bitmap);
+
+        for (i = 0; canvas->config.symbol_map.symbols [i].c != 0; i++)
+            eval_symbol_facets (canvas, &cell_facets,
+                                &color_pair, i, &best_symbol, &best_eval);
+    }
+
+    chafa_leave_mmx ();  /* Make FPU happy again */
+
+    /* Output */
+
+    g_assert (best_symbol >= 0);
+
+    *sym_out = canvas->config.symbol_map.symbols [best_symbol].c;
+    *color_pair_out = best_eval.colors;
+
+    if (error_out)
+        *error_out = best_eval.error;
+}
+
+static void
 pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
                                   ChafaWorkCell *wcell_a,
                                   ChafaWorkCell *wcell_b,
@@ -561,6 +673,89 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [0],
                                  &canvas->config.symbol_map.symbols2 [best_symbol].sym [1],
                                  &best_eval);
+
+    *sym_out = canvas->config.symbol_map.symbols2 [best_symbol].sym [0].c;
+    *color_pair_out = best_eval.colors;
+
+    if (error_a_out)
+        *error_a_out = best_eval.error [0];
+    if (error_b_out)
+        *error_b_out = best_eval.error [1];
+}
+
+static void
+pick_symbol_and_colors_wide_facets (ChafaCanvas *canvas,
+                                    ChafaWorkCell *wcell_a,
+                                    ChafaWorkCell *wcell_b,
+                                    gunichar *sym_out,
+                                    ChafaColorPair *color_pair_out,
+                                    gint *error_a_out,
+                                    gint *error_b_out)
+{
+    ChafaColorPair color_pair;
+    guint64 bitmaps [2];
+    ChafaCandidate candidates [N_CANDIDATES_MAX];
+    gint n_candidates = 0;
+    SymbolEval2 best_eval;
+    gint best_symbol;
+    gint i;
+    guint64 cell_bitmap [2];
+    ChafaCellFacets cell_facets [2];
+
+    if (canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+    {
+        color_pair = canvas->default_colors;
+    }
+    else
+    {
+#if 0
+        ChafaColorPair color_pair_part [2];
+
+        chafa_work_cell_get_k_means_color_pair (wcell_a, &color_pair_part [0]);
+        chafa_work_cell_get_k_means_color_pair (wcell_b, &color_pair_part [1]);
+
+        /* FIXME: Probably not correct */
+        color_pair.colors [0] = chafa_color_average_2 (color_pair_part [0].colors [0], color_pair_part [1].colors [0]);
+        color_pair.colors [1] = chafa_color_average_2 (color_pair_part [0].colors [1], color_pair_part [1].colors [1]);
+#else
+        chafa_work_cell_get_k_means_color_pair_2 (wcell_a, wcell_b, &color_pair);
+#endif
+    }
+
+    cell_bitmap [0] = chafa_work_cell_to_bitmap (wcell_a, &color_pair);
+    cell_bitmap [1] = chafa_work_cell_to_bitmap (wcell_b, &color_pair);
+
+    chafa_cell_facets_from_bitmap (&cell_facets [0], cell_bitmap [0]);
+    chafa_cell_facets_from_bitmap (&cell_facets [1], cell_bitmap [1]);
+
+    /* Find best candidate */
+
+    best_symbol = -1;
+    best_eval.error [0] = best_eval.error [1] = SYMBOL_ERROR_MAX;
+
+    for (i = 0; canvas->config.symbol_map.symbols2 [i].sym [0].c != 0; i++)
+        eval_symbol_wide_facets (canvas, &cell_facets [0], &cell_facets [1],
+                                 &color_pair, i, &best_symbol, &best_eval);
+
+    if (canvas->consider_inverted)
+    {
+        chafa_color_pair_swap (&color_pair);
+        cell_bitmap [0] = ~cell_bitmap [0];
+        cell_bitmap [1] = ~cell_bitmap [1];
+        chafa_cell_facets_from_bitmap (&cell_facets [0], cell_bitmap [0]);
+        chafa_cell_facets_from_bitmap (&cell_facets [1], cell_bitmap [1]);
+
+        for (i = 0; canvas->config.symbol_map.symbols2 [i].sym [0].c != 0; i++)
+            eval_symbol_wide_facets (canvas, &cell_facets [0], &cell_facets [1],
+                                     &color_pair, i, &best_symbol, &best_eval);
+    }
+
+    chafa_leave_mmx ();  /* Make FPU happy again */
+
+    /* Output */
+
+    g_assert (best_symbol >= 0);
 
     *sym_out = canvas->config.symbol_map.symbols2 [best_symbol].sym [0].c;
     *color_pair_out = best_eval.colors;
@@ -838,7 +1033,9 @@ update_cell (ChafaCanvas *canvas, ChafaWorkCell *work_cell, ChafaCanvasCell *cel
     if (canvas->config.symbol_map.n_symbols == 0)
         return SYMBOL_ERROR_MAX;
 
-    if (canvas->work_factor_int >= 8)
+    if (canvas->use_facets)
+        pick_symbol_and_colors_facets (canvas, work_cell, &sym, &color_pair, &sym_error);
+    else if (canvas->work_factor_int >= 8)
         pick_symbol_and_colors_slow (canvas, work_cell, &sym, &color_pair, &sym_error);
     else
         pick_symbol_and_colors_fast (canvas, work_cell, &sym, &color_pair, &sym_error);
@@ -865,7 +1062,11 @@ update_cells_wide (ChafaCanvas *canvas, ChafaWorkCell *work_cell_a, ChafaWorkCel
     if (canvas->config.symbol_map.n_symbols2 == 0)
         return;
 
-    if (canvas->work_factor_int >= 8)
+    if (canvas->use_facets)
+        pick_symbol_and_colors_wide_facets (canvas, work_cell_a, work_cell_b,
+                                            &sym, &color_pair,
+                                            error_a_out, error_b_out);
+    else if (canvas->work_factor_int >= 8)
         pick_symbol_and_colors_wide_slow (canvas, work_cell_a, work_cell_b,
                                           &sym, &color_pair,
                                           error_a_out, error_b_out);
@@ -1475,6 +1676,11 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
 
     chafa_symbol_map_prepare (&canvas->config.symbol_map);
     chafa_symbol_map_prepare (&canvas->config.fill_symbol_map);
+
+    canvas->use_facets = g_getenv ("CHAFA_USE_FACETS") ? TRUE : FALSE;
+
+    if (canvas->use_facets)
+        chafa_symbol_map_populate_facets (&canvas->config.symbol_map);
 
     canvas->blank_char = find_best_blank_char (canvas);
     canvas->solid_char = find_best_solid_char (canvas);

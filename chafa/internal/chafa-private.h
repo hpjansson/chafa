@@ -176,6 +176,7 @@ void chafa_symbol_map_init (ChafaSymbolMap *symbol_map);
 void chafa_symbol_map_deinit (ChafaSymbolMap *symbol_map);
 void chafa_symbol_map_copy_contents (ChafaSymbolMap *dest, const ChafaSymbolMap *src);
 void chafa_symbol_map_prepare (ChafaSymbolMap *symbol_map);
+void chafa_symbol_map_populate_facets (ChafaSymbolMap *symbol_map);
 gboolean chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol);
 void chafa_symbol_map_find_candidates (const ChafaSymbolMap *symbol_map,
                                        guint64 bitmap,

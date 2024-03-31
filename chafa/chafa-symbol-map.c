@@ -1132,6 +1132,35 @@ chafa_symbol_map_prepare (ChafaSymbolMap *symbol_map)
     rebuild_symbols (symbol_map);
 }
 
+void
+chafa_symbol_map_populate_facets (ChafaSymbolMap *symbol_map)
+{
+    gint i;
+
+    g_return_if_fail (symbol_map != NULL);
+
+    for (i = 0; i < symbol_map->n_symbols; i++)
+    {
+        ChafaSymbol *sym = &symbol_map->symbols [i];
+
+        sym->facets = g_new (ChafaCellFacets, 1);
+        chafa_cell_facets_from_bitmap (sym->facets, sym->bitmap);
+    }
+
+    for (i = 0; i < symbol_map->n_symbols2; i++)
+    {
+        ChafaSymbol *sym = &symbol_map->symbols2 [i].sym [0];
+
+        sym->facets = g_new (ChafaCellFacets, 1);
+        chafa_cell_facets_from_bitmap (sym->facets, sym->bitmap);
+
+        sym = &symbol_map->symbols2 [i].sym [1];
+
+        sym->facets = g_new (ChafaCellFacets, 1);
+        chafa_cell_facets_from_bitmap (sym->facets, sym->bitmap);
+    }
+}
+
 gboolean
 chafa_symbol_map_has_symbol (const ChafaSymbolMap *symbol_map, gunichar symbol)
 {

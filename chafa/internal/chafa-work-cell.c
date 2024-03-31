@@ -27,6 +27,9 @@
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-work-cell.h"
 
+/* ================ *
+ * Color extraction *
+ * ================ */
 
 static void
 accum_to_color (const ChafaColorAccum *accum, ChafaColor *color)
@@ -304,6 +307,165 @@ chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair
 
     color_pair_out->colors [CHAFA_COLOR_PAIR_BG] = wcell->pixels [sorted_pixels [0]].col;
     color_pair_out->colors [CHAFA_COLOR_PAIR_FG] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS - 1]].col;
+}
+
+void
+chafa_work_cell_get_k_means_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out)
+{
+    guint8 cluster_index [CHAFA_SYMBOL_N_PIXELS];
+    ChafaColor means [2];
+    gint n_changed = CHAFA_SYMBOL_N_PIXELS;
+    gint single_cluster = -1;
+    gint iter_done = 0;
+    gint i;
+
+    memset (cluster_index, 0, CHAFA_SYMBOL_N_PIXELS / 2);
+    memset (cluster_index + CHAFA_SYMBOL_N_PIXELS / 2, 1, CHAFA_SYMBOL_N_PIXELS / 2);
+
+    for (iter_done = 0; iter_done < 1024 && n_changed > 0; iter_done++)
+    {
+        ChafaColorAccum accum [2] = { 0 };
+        gint cluster_size [2] = { 0 };
+
+        n_changed = 0;
+
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            guint8 ci = cluster_index [i];
+            chafa_color_accum_add (&accum [ci], &wcell->pixels [i].col);
+            cluster_size [ci]++;
+        }
+
+        for (i = 0; i < 2; i++)
+        {
+            if (cluster_size [i] == 0)
+            {
+                single_cluster = (i + 1) % 2;
+                continue;
+            }
+
+            chafa_color_accum_div_scalar (&accum [i], cluster_size [i]);
+            accum_to_color (&accum [i], &means [i]);
+        }
+
+        if (single_cluster >= 0)
+        {
+            means [(single_cluster + 1) % 2] = means [single_cluster];
+            break;
+        }
+
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            gint error [2];
+            guint8 new_ci;
+            gint j;
+
+            for (j = 0; j < 2; j++)
+                error [j] = chafa_color_diff_fast (&means [j], &wcell->pixels [i].col);
+
+            new_ci = (error [0] < error [1]) ? 0 : 1;
+            if (new_ci != cluster_index [i])
+            {
+                cluster_index [i] = new_ci;
+                n_changed++;
+            }
+        }
+    }
+
+    color_pair_out->colors [0] = means [0];
+    color_pair_out->colors [1] = means [1];
+}
+
+void
+chafa_work_cell_get_k_means_color_pair_2 (ChafaWorkCell *wcell_a, ChafaWorkCell *wcell_b,
+                                          ChafaColorPair *color_pair_out)
+{
+    guint8 cluster_index [CHAFA_SYMBOL_N_PIXELS * 2];
+    ChafaColor means [2];
+    gint n_changed = CHAFA_SYMBOL_N_PIXELS * 2;
+    gint single_cluster = -1;
+    gint iter_done = 0;
+    gint i;
+
+    memset (cluster_index, 0, CHAFA_SYMBOL_N_PIXELS);
+    memset (cluster_index + CHAFA_SYMBOL_N_PIXELS, 1, CHAFA_SYMBOL_N_PIXELS);
+
+    for (iter_done = 0; iter_done < 1024 && n_changed > 0; iter_done++)
+    {
+        ChafaColorAccum accum [2] = { 0 };
+        gint cluster_size [2] = { 0 };
+
+        n_changed = 0;
+
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            guint8 ci = cluster_index [i];
+            chafa_color_accum_add (&accum [ci], &wcell_a->pixels [i].col);
+            cluster_size [ci]++;
+        }
+
+        for ( ; i < CHAFA_SYMBOL_N_PIXELS * 2; i++)
+        {
+            guint8 ci = cluster_index [i];
+            chafa_color_accum_add (&accum [ci], &wcell_b->pixels [i - CHAFA_SYMBOL_N_PIXELS].col);
+            cluster_size [ci]++;
+        }
+
+        for (i = 0; i < 2; i++)
+        {
+            if (cluster_size [i] == 0)
+            {
+                single_cluster = (i + 1) % 2;
+                continue;
+            }
+
+            chafa_color_accum_div_scalar (&accum [i], cluster_size [i]);
+            accum_to_color (&accum [i], &means [i]);
+        }
+
+        if (single_cluster >= 0)
+        {
+            means [(single_cluster + 1) % 2] = means [single_cluster];
+            break;
+        }
+
+        for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
+        {
+            gint error [2];
+            guint8 new_ci;
+            gint j;
+
+            for (j = 0; j < 2; j++)
+                error [j] = chafa_color_diff_fast (&means [j], &wcell_a->pixels [i].col);
+
+            new_ci = (error [0] < error [1]) ? 0 : 1;
+            if (new_ci != cluster_index [i])
+            {
+                cluster_index [i] = new_ci;
+                n_changed++;
+            }
+        }
+
+        for ( ; i < CHAFA_SYMBOL_N_PIXELS * 2; i++)
+        {
+            gint error [2];
+            guint8 new_ci;
+            gint j;
+
+            for (j = 0; j < 2; j++)
+                error [j] = chafa_color_diff_fast (&means [j], &wcell_b->pixels [i - CHAFA_SYMBOL_N_PIXELS].col);
+
+            new_ci = (error [0] < error [1]) ? 0 : 1;
+            if (new_ci != cluster_index [i])
+            {
+                cluster_index [i] = new_ci;
+                n_changed++;
+            }
+        }
+    }
+
+    color_pair_out->colors [0] = means [0];
+    color_pair_out->colors [1] = means [1];
 }
 
 static const ChafaPixel *

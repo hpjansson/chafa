@@ -48,6 +48,9 @@ void chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, con
 void chafa_work_cell_get_median_colors_for_symbol (ChafaWorkCell *wcell, const ChafaSymbol *sym,
                                                    ChafaColorPair *color_pair_out);
 void chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out);
+void chafa_work_cell_get_k_means_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out);
+void chafa_work_cell_get_k_means_color_pair_2 (ChafaWorkCell *wcell_a, ChafaWorkCell *wcell_b,
+                                               ChafaColorPair *color_pair_out);
 void chafa_work_cell_calc_mean_color (const ChafaWorkCell *wcell, ChafaColor *color_out);
 guint64 chafa_work_cell_to_bitmap (const ChafaWorkCell *wcell, const ChafaColorPair *color_pair);
 
