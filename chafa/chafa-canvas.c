@@ -638,6 +638,7 @@ pick_symbol_and_colors_wide_fast (ChafaCanvas *canvas,
         chafa_work_cell_get_contrasting_color_pair (wcell_a, &color_pair_part [0]);
         chafa_work_cell_get_contrasting_color_pair (wcell_b, &color_pair_part [1]);
 
+        /* FIXME: Probably not correct */
         color_pair.colors [0] = chafa_color_average_2 (color_pair_part [0].colors [0], color_pair_part [1].colors [0]);
         color_pair.colors [1] = chafa_color_average_2 (color_pair_part [0].colors [1], color_pair_part [1].colors [1]);
     }
