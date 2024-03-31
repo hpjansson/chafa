@@ -42,6 +42,7 @@ typedef struct
     ChafaSymbolTags sc;
     gunichar c;
     gchar *coverage;
+    guint32 *mask_u32;
     gint fg_weight, bg_weight;
     guint64 bitmap;
     gint popcount;
@@ -211,6 +212,11 @@ void chafa_leave_mmx (void);
 
 #ifdef HAVE_SSE41_INTRINSICS
 gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov) G_GNUC_PURE;
+#endif
+
+#ifdef HAVE_AVX2_INTRINSICS
+gint calc_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
+                      const guint32 *sym_mask_u32) G_GNUC_PURE;
 #endif
 
 #if defined(HAVE_POPCNT64_INTRINSICS) || defined(HAVE_POPCNT32_INTRINSICS)
