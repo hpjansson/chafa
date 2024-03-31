@@ -37,6 +37,8 @@ libchafa_internal_la_SOURCES = \
 	chafa-math-util.h \
 	chafa-mesh.c \
 	chafa-mesh.h \
+	chafa-mesh-solver.c \
+	chafa-mesh-solver.h \
 	chafa-palette.c \
 	chafa-palette.h \
 	chafa-passthrough-encoder.c \
