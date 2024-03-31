@@ -26,7 +26,7 @@
 G_BEGIN_DECLS
 
 #define CHAFA_VEC3F32_INIT(x, y, z) { { (x), (y), (z) } }
-#define CHAFA_VEC3F32_INIT_ZERO CHAFA_VEC3F32_INIT (0.0, 0.0, 0.0)
+#define CHAFA_VEC3F32_INIT_ZERO CHAFA_VEC3F32_INIT (0.0f, 0.0f, 0.0f)
 
 typedef struct
 {
