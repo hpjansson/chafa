@@ -107,6 +107,19 @@ chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, const Ch
     accum_to_color (&accums [1], &color_pair_out->colors [CHAFA_COLOR_PAIR_FG]);
 }
 
+static void
+average_colors (ChafaColor *color_out, const ChafaColor *colors_in, gint n)
+{
+    ChafaColorAccum accum = { 0 };
+    gint i;
+
+    for (i = 0; i < n; i++)
+        chafa_color_accum_add (&accum, &colors_in [i]);
+
+    chafa_color_accum_div_scalar (&accum, n);
+    accum_to_color (&accum, color_out);
+}
+
 void
 chafa_work_cell_calc_mean_color (const ChafaWorkCell *wcell, ChafaColor *color_out)
 {
@@ -172,6 +185,15 @@ chafa_work_cell_init (ChafaWorkCell *wcell, const ChafaPixel *src_image,
     memset (wcell->have_pixels_sorted_by_channel, 0,
             sizeof (wcell->have_pixels_sorted_by_channel));
     fetch_canvas_pixel_block (src_image, src_width, wcell->pixels, cx, cy);
+    wcell->dominant_channel = -1;
+}
+
+/* Caller must fetch pixels */
+void
+chafa_work_cell_init_empty (ChafaWorkCell *wcell)
+{
+    memset (wcell->have_pixels_sorted_by_channel, 0,
+            sizeof (wcell->have_pixels_sorted_by_channel));
     wcell->dominant_channel = -1;
 }
 
@@ -296,6 +318,48 @@ work_cell_get_dominant_channels_for_symbol (ChafaWorkCell *wcell, const ChafaSym
     *fg_ch_out = best_ch [1];
 }
 
+gint32
+chafa_work_cell_get_local_contrast (ChafaWorkCell *wcell)
+{
+    gint32 contrast = 0;
+    gint x, y;
+
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS - 1; y++)
+    {
+        contrast += chafa_color_diff_fast (&wcell->pixels [0 + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                           &wcell->pixels [1 + y * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+        contrast += chafa_color_diff_fast (&wcell->pixels [0 + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                           &wcell->pixels [0 + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+        contrast += chafa_color_diff_fast (&wcell->pixels [0 + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                           &wcell->pixels [(0 + 1) + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+
+        for (x = 1; x < CHAFA_SYMBOL_WIDTH_PIXELS - 1; x++)
+        {
+            contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                               &wcell->pixels [(x + 1) + y * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+            contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                               &wcell->pixels [x + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+            contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                               &wcell->pixels [(x + 1) + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+            contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                               &wcell->pixels [(x - 1) + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+        }
+
+        contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                           &wcell->pixels [x + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+        contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                           &wcell->pixels [(x - 1) + (y + 1) * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+    }
+
+    for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS - 1; x++)
+    {
+        contrast += chafa_color_diff_fast (&wcell->pixels [x + y * CHAFA_SYMBOL_WIDTH_PIXELS].col,
+                                           &wcell->pixels [(x + 1) + y * CHAFA_SYMBOL_WIDTH_PIXELS].col);
+    }
+
+    return contrast;
+}
+
 void
 chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out)
 {
@@ -305,8 +369,16 @@ chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair
 
     /* Choose two colors by median cut */
 
+#if 0
     color_pair_out->colors [CHAFA_COLOR_PAIR_BG] = wcell->pixels [sorted_pixels [0]].col;
     color_pair_out->colors [CHAFA_COLOR_PAIR_FG] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS - 1]].col;
+#elif 1
+    color_pair_out->colors [CHAFA_COLOR_PAIR_BG] = wcell->pixels [sorted_pixels [16]].col;
+    color_pair_out->colors [CHAFA_COLOR_PAIR_FG] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS - 17]].col;
+#else
+    average_colors (&color_pair_out->colors [CHAFA_COLOR_PAIR_BG], &wcell->pixels [sorted_pixels [0]].col, 2);
+    average_colors (&color_pair_out->colors [CHAFA_COLOR_PAIR_FG], &wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS - 2]].col, 2);
+#endif
 }
 
 void

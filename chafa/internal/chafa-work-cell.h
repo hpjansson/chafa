@@ -42,11 +42,13 @@ ChafaPickFlags;
 
 void chafa_work_cell_init (ChafaWorkCell *wcell, const ChafaPixel *src_image,
                            gint src_width, gint cx, gint cy);
+void chafa_work_cell_init_empty (ChafaWorkCell *wcell);
 
 void chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, const ChafaSymbol *sym,
                                                  ChafaColorPair *color_pair_out);
 void chafa_work_cell_get_median_colors_for_symbol (ChafaWorkCell *wcell, const ChafaSymbol *sym,
                                                    ChafaColorPair *color_pair_out);
+gint32 chafa_work_cell_get_local_contrast (ChafaWorkCell *wcell);
 void chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out);
 void chafa_work_cell_get_k_means_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out);
 void chafa_work_cell_get_k_means_color_pair_2 (ChafaWorkCell *wcell_a, ChafaWorkCell *wcell_b,
