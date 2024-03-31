@@ -29,7 +29,6 @@
 #include "internal/chafa-private.h"
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-work-cell.h"
-#include "internal/smolscale/smolscale.h"
 
 /**
  * SECTION:chafa-canvas
