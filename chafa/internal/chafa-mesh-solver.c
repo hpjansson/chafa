@@ -59,6 +59,13 @@ sigmoid_iter (const ChafaMeshSolver *solver)
     return sigmoid_ascent (solver->iterations, GLOBAL_ITERS);
 }
 
+static gint64
+total_error (const ChafaMeshSolver *solver, const ChafaCellStats *stats)
+{
+    return stats->shape_error + stats->color_error + (sigmoid_iter (solver) * stats->mesh_error * 1024)
+        / (GLOBAL_ITERS * 32);
+}
+
 static gint
 color_diff_linear (const ChafaColor *a, const ChafaColor *b)
 {
@@ -260,7 +267,7 @@ sample_cell (ChafaMeshSolver *solver, gint cell_x, gint cell_y,
         + 1200.f * chafa_mesh_get_cell_misalign (solver->mesh, cell_x, cell_y));
 #endif
 
-    return stats_out->shape_error + stats_out->color_error + sigmoid_iter (solver) * stats_out->mesh_error;
+    return total_error (solver, stats_out);
 }
 
 static int 
@@ -315,10 +322,10 @@ compare_priority (const void *av, const void *bv, void *data)
     const ChafaCellIndex *a = av, *b = bv;
     const ChafaCellStats *sa = &solver->stats [a->x + a->y * solver->cells_width];
     const ChafaCellStats *sb = &solver->stats [b->x + b->y * solver->cells_width];
-    gint64 ea = sa->shape_error + sa->color_error + sigmoid_iter (solver) * sa->mesh_error
-        + (1LL << (MIN (solver->iterations - sa->attempt_stamp, 30)));
-    gint64 eb = sb->shape_error + sb->color_error + sigmoid_iter (solver) * sb->mesh_error
-        + (1LL << (MIN (solver->iterations - sb->attempt_stamp, 30)));
+    gint64 ea = total_error (solver, sa)
+        + (1LL << (MIN ((solver->iterations - sa->attempt_stamp) / 4, 30)));
+    gint64 eb = total_error (solver, sb)
+        + (1LL << (MIN ((solver->iterations - sb->attempt_stamp) / 4, 30)));
 
     if (ea > eb)
         return -1;
@@ -877,7 +884,7 @@ Stats3x3;
 static gint64
 sample_3x3 (ChafaMeshSolver *solver, gint x, gint y, Stats3x3 *stats3x3_out)
 {
-    gint64 total_error = 0;
+    gint64 sum_error = 0;
     gint u, v;
 
     memset (stats3x3_out, 0, sizeof (*stats3x3_out));
@@ -889,18 +896,18 @@ sample_3x3 (ChafaMeshSolver *solver, gint x, gint y, Stats3x3 *stats3x3_out)
             ChafaCanvasCell *cell = &solver->cells [u + v * solver->cells_rowstride];
             ChafaWorkCell wcell;
 
-            total_error += sample_cell (solver, u, v, cell, &wcell,
+            sum_error += sample_cell (solver, u, v, cell, &wcell,
                 &stats3x3_out->stats [v - y + 1] [u - x + 1]);
         }
     }
 
-    return total_error;
+    return sum_error;
 }
 
 static gint64
 fetch_3x3 (ChafaMeshSolver *solver, gint x, gint y, Stats3x3 *stats3x3_out)
 {
-    gint64 total_error = 0;
+    gint64 sum_error = 0;
     gint u, v;
 
     for (v = MAX (y - 1, 0); v <= MIN (y + 1, solver->cells_height - 1); v++)
@@ -915,13 +922,11 @@ fetch_3x3 (ChafaMeshSolver *solver, gint x, gint y, Stats3x3 *stats3x3_out)
             stats_out->color_error = stats->color_error;
             stats_out->mesh_error = stats->mesh_error;
 
-            total_error += stats->shape_error;
-            total_error += stats->color_error;
-            total_error += sigmoid_iter (solver) * stats->mesh_error;
+            sum_error += total_error (solver, stats);
         }
     }
 
-    return total_error;
+    return sum_error;
 }
 
 static void
