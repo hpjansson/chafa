@@ -59,6 +59,9 @@ struct ChafaCanvas
     /* Whether to use alignment-insensitive facet matching */
     guint use_facets : 1;
 
+    /* Whether to use adaptive mesh (very slow) */
+    guint use_solver : 1;
+
     ChafaColorPair default_colors;
     guint work_factor_int;
 

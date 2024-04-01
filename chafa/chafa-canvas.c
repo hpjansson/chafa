@@ -1488,8 +1488,6 @@ destroy_pixel_canvas (ChafaCanvas *canvas)
     }
 }
 
-#define USE_SOLVER 0
-
 static void
 draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                  const guint8 *src_pixels,
@@ -1520,10 +1518,11 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     {
         /* Symbol mode */
 
-#if USE_SOLVER
-        canvas->width_pixels = src_width;
-        canvas->height_pixels = src_height;
-#endif
+        if (canvas->use_solver)
+        {
+            canvas->width_pixels = src_width;
+            canvas->height_pixels = src_height;
+        }
 
         /* FIXME: The allocation can fail if the canvas is ridiculously large.
          * Since there's no way to report an error from here, we'll silently
@@ -1551,11 +1550,11 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
             if (canvas->config.alpha_threshold == 0)
                 canvas->have_alpha = FALSE;
 
-#if USE_SOLVER
-            update_cells_with_solver (canvas);
-#else
-            update_cells (canvas);
-#endif
+            if (canvas->use_solver)
+                update_cells_with_solver (canvas);
+            else
+                update_cells (canvas);
+
             canvas->needs_clear = FALSE;
 
             g_free (canvas->pixels);
@@ -1710,6 +1709,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     chafa_symbol_map_prepare (&canvas->config.fill_symbol_map);
 
     canvas->use_facets = g_getenv ("CHAFA_USE_FACETS") ? TRUE : FALSE;
+    canvas->use_solver = g_getenv ("CHAFA_USE_SOLVER") ? TRUE : FALSE;
 
     if (canvas->use_facets)
         chafa_symbol_map_populate_facets (&canvas->config.symbol_map);
