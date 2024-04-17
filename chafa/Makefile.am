@@ -50,7 +50,7 @@ DISTCLEANFILES += chafa-term-seq-doc.h
 BUILT_SOURCES += chafa-term-seq-doc.h
 
 chafa-term-seq-doc.h: $(srcdir)/chafa-term-seq-doc-in.h
-	$(CPP) -CC $< -o $@
+	$(CPP) $(CPPFLAGS) -CC $< -o $@
 
 # Generate chafaconfig.h
 #
