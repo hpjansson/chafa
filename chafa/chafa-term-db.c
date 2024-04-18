@@ -267,6 +267,17 @@ static const SeqStr *color_16_list [] =
     NULL
 };
 
+static const SeqStr *color_8_list [] =
+{
+    color_8_seqs,
+    NULL
+};
+
+static const SeqStr *color_mono_list [] =
+{
+    NULL
+};
+
 static const SeqStr color_fbterm_seqs [] =
 {
     { CHAFA_TERM_SEQ_SET_COLOR_FG_16, "\033[1;%1}" },
@@ -550,6 +561,16 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
      * Eat also sets EAT_SHELL_INTEGRATION_DIR in the environment. */
     if (!strncmp (term, "eat-", 4) || strcmp (eat_shell_integration_dir, ""))
         gfx_seqs = sixel_seqs;
+    if (!strcmp (term, "eat-truecolor"))
+        color_seq_list = color_direct_list;
+    if (!strcmp (term, "eat-256color"))
+        color_seq_list = color_256_list;
+    if (!strcmp (term, "eat-16color"))
+        color_seq_list = color_16_list;
+    if (!strcmp (term, "eat-color"))
+        color_seq_list = color_8_list;
+    if (!strcmp (term, "eat-mono"))
+        color_seq_list = color_mono_list;
 
     /* 'screen' does not like truecolor at all, but 256 colors works fine.
      * Sometimes we'll see the outer terminal appended to the TERM string,
