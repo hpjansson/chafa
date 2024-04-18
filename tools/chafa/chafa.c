@@ -1761,6 +1761,10 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
         && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_16)
         && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_16))
         mode = CHAFA_CANVAS_MODE_INDEXED_16;
+    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_8)
+        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_8)
+             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_8))
+        mode = CHAFA_CANVAS_MODE_INDEXED_8;
     else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_INVERT_COLORS)
              && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_RESET_ATTRIBUTES))
         mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
