@@ -392,6 +392,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *mlterm;
     const gchar *nvim;
     const gchar *nvim_tui_enable_true_color;
+    const gchar *eat_shell_integration_dir;
     gchar *comspec = NULL;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
@@ -411,6 +412,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     mlterm = getenv_or_blank (envp, "MLTERM");
     nvim = getenv_or_blank (envp, "NVIM");
     nvim_tui_enable_true_color = getenv_or_blank (envp, "NVIM_TUI_ENABLE_TRUE_COLOR");
+    eat_shell_integration_dir = getenv_or_blank (envp, "EAT_SHELL_INTEGRATION_DIR");
 
     /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
      * including AIX and DirectColor sequences. We detect this early and allow
@@ -543,6 +545,11 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     /* Regular rxvt supports 16 colors at most */
     if (!strcmp (term, "rxvt-unicode"))
         color_seq_list = color_16_list;
+
+    /* Eat uses the "eat-" prefix for TERM.
+     * Eat also sets EAT_SHELL_INTEGRATION_DIR in the environment. */
+    if (!strncmp (term, "eat-", 4) || strcmp (eat_shell_integration_dir, ""))
+        gfx_seqs = sixel_seqs;
 
     /* 'screen' does not like truecolor at all, but 256 colors works fine.
      * Sometimes we'll see the outer terminal appended to the TERM string,
