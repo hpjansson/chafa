@@ -217,6 +217,8 @@ gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pai
 #ifdef HAVE_AVX2_INTRINSICS
 gint calc_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
                       const guint32 *sym_mask_u32) G_GNUC_PURE;
+void calc_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
+                       const guint32 *sym_mask_u32);
 #endif
 
 #if defined(HAVE_POPCNT64_INTRINSICS) || defined(HAVE_POPCNT32_INTRINSICS)
