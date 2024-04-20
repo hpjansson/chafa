@@ -83,7 +83,11 @@ chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, const Ch
     const guint8 *covp = (guint8 *) &sym->coverage [0];
     ChafaColorAccum accums [2] = { 0 };
 
-#ifdef HAVE_MMX_INTRINSICS
+#ifdef HAVE_AVX2_INTRINSICS
+    if (chafa_have_avx2 ())
+        calc_colors_avx2 (wcell->pixels, accums, sym->mask_u32);
+    else
+#elif HAVE_MMX_INTRINSICS
     if (chafa_have_mmx ())
         calc_colors_mmx (wcell->pixels, accums, covp);
     else
