@@ -22,6 +22,7 @@
 #include <stdlib.h>  /* abs */
 #include <math.h>  /* pow, cbrt, log, sqrt, atan2, cos, sin */
 #include "chafa.h"
+#include "internal/chafa-private.h"
 #include "internal/chafa-color.h"
 
 guint32
@@ -46,10 +47,19 @@ chafa_unpack_color (guint32 packed, ChafaColor *color_out)
 void
 chafa_color_accum_div_scalar (ChafaColorAccum *accum, gint scalar)
 {
-    accum->ch [0] /= scalar;
-    accum->ch [1] /= scalar;
-    accum->ch [2] /= scalar;
-    accum->ch [3] /= scalar;
+#ifdef HAVE_AVX2_INTRINSICS
+    if (chafa_have_avx2 ())
+    {
+        chafa_color_accum_div_scalar_avx2 (accum, scalar);
+    }
+    else
+#endif
+    {
+        accum->ch [0] /= scalar;
+        accum->ch [1] /= scalar;
+        accum->ch [2] /= scalar;
+        accum->ch [3] /= scalar;
+    }
 }
 
 typedef struct
