@@ -12,6 +12,7 @@ EXTRA_DIST = \
 	pixel.avif \
 	pixel.gif \
 	pixel.jpeg \
+	pixel.jxl \
 	pixel.png \
 	pixel.qoi \
 	pixel.svg \
