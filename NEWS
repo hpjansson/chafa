@@ -1,6 +1,28 @@
 Chafa releases
 ==============
 
+1.14.1 (2024-06-17)
+-------------------
+
+This release brings bug fixes, compatibility improvements and some performance
+enhancements.
+
+* A JPEG XL (.jxl) loader was added using libjxl (github#188, @oupson).
+
+* Added detection of the Eat "Emulate a Terminal" Emacs terminal (Simon Law).
+
+* Symbols mode was sped up significantly on AVX2-capable platforms.
+
+* Tests: A new test driver was added. It will log the specifics of any failures,
+  which aids debugging of CI builds (issue found by Mo Zhou).
+
+* Bug fixes:
+  github#189  Fix installation of zsh completions (Felix Yan).
+  github#190  Fix a small memory leak in ChafaCanvas (found by @jstkdng).
+  github#192  Wrong sixel padding in some circumstances (found by @dnkl).
+  github#195  tmux passthrough enabled when already set (found by Ron Lau).
+  github#196  iTerm mode not enabled automatically (found by @sudo-burger).
+
 1.14.0 (2024-01-08)
 -------------------
 
