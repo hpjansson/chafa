@@ -138,7 +138,9 @@ chafa_color_accum_div_scalar_avx2 (ChafaColorAccum *accum, guint16 divisor)
 {
     __m128i accum_128, divisor_128;
 
-    accum_128 = _mm_loadu_si64 ((guint64 *) accum);
+    /* Not using _mm_loadu_si64() here because it's not available on
+     * older versions of GCC. The opcode is the same. */
+    accum_128 = _mm_loadl_epi64 ((const __m128i *) accum);
     divisor_128 = _mm_set1_epi16 (invdiv16 [divisor]);
     accum_128 = _mm_mulhrs_epi16 (accum_128, divisor_128);
     *((guint64 *) accum) = _mm_extract_epi64 (accum_128, 0);
