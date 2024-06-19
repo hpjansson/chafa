@@ -21,8 +21,20 @@
 
 #include <emmintrin.h>
 #include <immintrin.h>
+#include <smmintrin.h>
 #include "chafa.h"
 #include "internal/chafa-private.h"
+
+/* _mm_extract_epi64() (pextrq) is not available in 32-bit mode. Work around
+ * it. This needs to be a macro, as the compiler expects an integer constant
+ * for n. */
+#if defined __x86_64__ && !defined __ILP32__
+# define extract_128_epi64(i, n) _mm_extract_epi64 ((i), (n))
+#else
+# define extract_128_epi64(i, n) \
+    ((((guint64) _mm_extract_epi32 ((i), (n) * 2 + 1)) << 32) \
+     | _mm_extract_epi32 ((i), (n) * 2))
+#endif
 
 gint
 calc_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
@@ -96,14 +108,14 @@ calc_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
     accum_bg_128 = _mm_add_epi16 (_mm256_extracti128_si256 (accum_bg, 0),
                                   _mm256_extracti128_si256 (accum_bg, 1));
     ((guint64 *) accums_out) [0] =
-        (guint64) _mm_extract_epi64 (accum_bg_128, 0)
-        + (guint64) _mm_extract_epi64 (accum_bg_128, 1);
+        extract_128_epi64 (accum_bg_128, 0)
+        + extract_128_epi64 (accum_bg_128, 1);
 
     accum_fg_128 = _mm_add_epi16 (_mm256_extracti128_si256 (accum_fg, 0),
                                   _mm256_extracti128_si256 (accum_fg, 1));
     ((guint64 *) accums_out) [1] =
-        (guint64) _mm_extract_epi64 (accum_fg_128, 0)
-        + (guint64) _mm_extract_epi64 (accum_fg_128, 1);
+        extract_128_epi64 (accum_fg_128, 0)
+        + extract_128_epi64 (accum_fg_128, 1);
 }
 
 /* 32768 divided by index. Divide by zero is defined as zero. */
@@ -143,5 +155,5 @@ chafa_color_accum_div_scalar_avx2 (ChafaColorAccum *accum, guint16 divisor)
     accum_128 = _mm_loadl_epi64 ((const __m128i *) accum);
     divisor_128 = _mm_set1_epi16 (invdiv16 [divisor]);
     accum_128 = _mm_mulhrs_epi16 (accum_128, divisor_128);
-    *((guint64 *) accum) = _mm_extract_epi64 (accum_128, 0);
+    *((guint64 *) accum) = extract_128_epi64 (accum_128, 0);
 }
