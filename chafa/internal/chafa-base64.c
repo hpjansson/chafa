@@ -107,7 +107,9 @@ chafa_base64_encode_end (ChafaBase64 *base64, GString *gs_out)
     {
         g_string_append_c (gs_out, base64_dict [base64->buf [0] >> 2]);
         g_string_append_c (gs_out, base64_dict [((base64->buf [0] << 4) | (base64->buf [1] >> 4)) & 0x3f]);
-        g_string_append_c (gs_out, base64_dict [base64->buf [1] & 0x0f]);
+        g_string_append_c (gs_out, base64_dict [(base64->buf [1] << 2) & 0x3c]);
         g_string_append_c (gs_out, '=');
     }
+
+    base64->buf_len = 0;
 }
