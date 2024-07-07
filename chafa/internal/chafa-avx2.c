@@ -90,6 +90,7 @@ calc_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
     __m256i accum_bg = { 0 };
     __m128i accum_fg_128;
     __m128i accum_bg_128;
+    guint64 accums_u64 [2];
     gint i;
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS / 4; i++)
@@ -107,15 +108,17 @@ calc_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
 
     accum_bg_128 = _mm_add_epi16 (_mm256_extracti128_si256 (accum_bg, 0),
                                   _mm256_extracti128_si256 (accum_bg, 1));
-    ((guint64 *) accums_out) [0] =
+    accums_u64 [0] =
         extract_128_epi64 (accum_bg_128, 0)
         + extract_128_epi64 (accum_bg_128, 1);
 
     accum_fg_128 = _mm_add_epi16 (_mm256_extracti128_si256 (accum_fg, 0),
                                   _mm256_extracti128_si256 (accum_fg, 1));
-    ((guint64 *) accums_out) [1] =
+    accums_u64 [1] =
         extract_128_epi64 (accum_fg_128, 0)
         + extract_128_epi64 (accum_fg_128, 1);
+
+    memcpy (accums_out, accums_u64, 2 * sizeof (guint64));
 }
 
 /* 32768 divided by index. Divide by zero is defined as zero. */
@@ -149,11 +152,14 @@ void
 chafa_color_accum_div_scalar_avx2 (ChafaColorAccum *accum, guint16 divisor)
 {
     __m128i accum_128, divisor_128;
+    guint64 accum_u64;
 
     /* Not using _mm_loadu_si64() here because it's not available on
      * older versions of GCC. The opcode is the same. */
     accum_128 = _mm_loadl_epi64 ((const __m128i *) accum);
     divisor_128 = _mm_set1_epi16 (invdiv16 [divisor]);
     accum_128 = _mm_mulhrs_epi16 (accum_128, divisor_128);
-    *((guint64 *) accum) = extract_128_epi64 (accum_128, 0);
+
+    accum_u64 = extract_128_epi64 (accum_128, 0);
+    memcpy (accum, &accum_u64, sizeof (guint64));
 }
