@@ -67,7 +67,7 @@ calc_colors_plain (const ChafaPixel *block, ChafaColorAccum *accums, const guint
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
-        gint16 *out_s16 = (gint16 *) (accums + *cov++);
+        gint16 *out_s16 = accums [*cov++].ch;
 
         *out_s16++ += *in_u8++;
         *out_s16++ += *in_u8++;
