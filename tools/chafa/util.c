@@ -76,7 +76,7 @@ invert_rotation (RotationType rot)
 }
 
 void
-rotate_image (guchar **src, guint *width, guint *height, guint *rowstride,
+rotate_image (gpointer *src, guint *width, guint *height, guint *rowstride,
               guint n_channels, RotationType rot)
 {
     gint src_width, src_height;
