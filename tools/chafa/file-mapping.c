@@ -229,7 +229,6 @@ static guint64
 get_random_u64 (void)
 {
     guint64 u64 = 0;
-    guint32 *u32p = (guint32 *) &u64;
     gint len = 0;
     GTimeVal tv;
 
@@ -248,10 +247,10 @@ get_random_u64 (void)
 
         g_get_current_time (&tv);
         g_random_set_seed (tv.tv_sec ^ tv.tv_usec);
-        u32p [0] ^= g_random_int ();
+        u64 ^= (guint64) g_random_int ();
         g_get_current_time (&tv);
         g_random_set_seed (tv.tv_sec ^ tv.tv_usec);
-        u32p [1] ^= g_random_int ();
+        u64 ^= ((guint64) g_random_int ()) << 32;
 
         p = g_thread_self ();
         u64 ^= (guint64) p;
