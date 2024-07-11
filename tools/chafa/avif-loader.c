@@ -39,7 +39,7 @@
 struct AvifLoader
 {
     FileMapping *mapping;
-    const guint8 *file_data;
+    gconstpointer file_data;
     size_t file_data_len;
     gpointer frame_data;
     guint width, height;
@@ -115,7 +115,7 @@ maybe_decode_frame (AvifLoader *loader)
     axis = image->imir.mode;
 #endif
 
-    rotate_image ((guchar **) &loader->frame_data,
+    rotate_image (&loader->frame_data,
                   &loader->width, &loader->height,
                   &loader->rowstride, N_CHANNELS,
                   calc_rotation (image->transformFlags,

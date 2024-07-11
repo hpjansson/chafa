@@ -280,7 +280,7 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     struct jpeg_decompress_struct cinfo;
     struct my_jpeg_error_mgr my_jerr;
     JpegLoader * volatile loader = NULL;
-    unsigned char * volatile frame_data = NULL;
+    gpointer frame_data = NULL;
     volatile gboolean have_decompress = FALSE;
     volatile gboolean success = FALSE;
 
@@ -341,7 +341,7 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 
     while (cinfo.output_scanline < height)
     {
-        guchar *row_data = frame_data + cinfo.output_scanline * rowstride;
+        guchar *row_data = ((guchar *) frame_data) + cinfo.output_scanline * rowstride;
         if (jpeg_read_scanlines (&cinfo, &row_data, 1) < 1)
             goto out;
     }
@@ -350,7 +350,7 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 
     (void) jpeg_finish_decompress (&cinfo);
 
-    rotate_image ((guchar **) &frame_data, &width, &height, &rowstride, 3,
+    rotate_image (&frame_data, &width, &height, &rowstride, 3,
                   invert_rotation (read_orientation (loader)));
 
     loader->frame_data = frame_data;
