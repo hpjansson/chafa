@@ -27,22 +27,26 @@ gint
 calc_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov)
 {
     const guint32 *u32p0 = (const guint32 *) pixels;
-    const guint32 *u32p1 = (const guint32 *) color_pair->colors;
-    __m128i err4 = { 0 };
-    const gint32 *e = (gint32 *) &err4;
+    guint32 cpair_u32 [2];
+    __m128i err = { 0 };
     gint i;
+
+    memcpy (&cpair_u32 [0], color_pair->colors [0].ch, sizeof (guint32));
+    memcpy (&cpair_u32 [1], color_pair->colors [1].ch, sizeof (guint32));
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         __m128i t0, t1, t;
 
         t0 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (u32p0 [i]));
-        t1 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (u32p1 [cov [i]]));
+        t1 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (cpair_u32 [cov [i]]));
 
         t = t0 - t1;
         t = _mm_mullo_epi32 (t, t);
-        err4 += t;
+        err += t;
     }
 
-    return e [0] + e [1] + e [2];
+    /* FIXME: Perhaps not ideal */
+    return _mm_extract_epi32 (err, 0) + _mm_extract_epi32 (err, 1)
+        + _mm_extract_epi32 (err, 2) + _mm_extract_epi32 (err, 3);
 }
