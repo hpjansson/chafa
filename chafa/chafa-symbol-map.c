@@ -1802,6 +1802,9 @@ chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
     {
         Glyph2 *glyph2;
 
+        if (g_hash_table_size (symbol_map->glyphs2) >= G_MAXINT - 1)
+            return;
+
         glyph2 = g_new (Glyph2, 1);
         glyph2->c = code_point;
         glyph_to_bitmap_wide (width, height, rowstride, pixel_format, pixels,
@@ -1811,6 +1814,9 @@ chafa_symbol_map_add_glyph (ChafaSymbolMap *symbol_map,
     else
     {
         Glyph *glyph;
+
+        if (g_hash_table_size (symbol_map->glyphs) >= G_MAXINT - 1)
+            return;
 
         glyph = g_new (Glyph, 1);
         glyph->c = code_point;
