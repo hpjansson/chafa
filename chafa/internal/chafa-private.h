@@ -84,7 +84,7 @@ struct ChafaSymbolMap
 
 typedef struct
 {
-    gint16 symbol_index;
+    gint symbol_index;
     guint8 hamming_distance;
     guint8 is_inverted;
 }
