@@ -1,6 +1,19 @@
 Chafa releases
 ==============
 
+1.14.2 (2024-07-26)
+-------------------
+
+This is a bugfix release. github#205 is particularly serious, since it affects
+many users on distributions that build with LTO enabled.
+
+* Bug fixes:
+  github#203  Chafa 1.14.1 fails to build on i686 (reported by @tranzystorekk).
+  github#205  Symbols mode not working since 1.14.1 (reported by Folke
+              Lemaitre).
+  github#206  Crash when importing more than 32767 glyphs (reported by @stgiga).
+  [unfiled]   Fix erroneous base64 encoding of final byte in some circumstances.
+
 1.14.1 (2024-06-17)
 -------------------
 
