@@ -14,7 +14,11 @@ LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
 ## --- Backend tests ---
 
 noinst_PROGRAMS = \
+	canvas-test \
 	term-info-test
+
+canvas_test_SOURCES = \
+	canvas-test.c
 
 term_info_test_SOURCES = \
 	term-info-test.c
@@ -34,6 +38,7 @@ TOOL_CHECKS =
 endif
 
 TESTS = \
+	canvas-test \
 	term-info-test \
 	$(TOOL_CHECKS)
 
