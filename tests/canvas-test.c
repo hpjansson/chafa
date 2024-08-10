@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 static void
-symbols_test (void)
+symbols_fgbg_test_canvas (ChafaCanvas *canvas)
 {
     const guint8 black_pixel [4] =
     {
@@ -14,21 +14,7 @@ symbols_test (void)
     {
         0xff, 0xff, 0xff, 0xff
     };
-    ChafaSymbolMap *symbol_map;
-    ChafaCanvasConfig *config;
-    ChafaCanvas *canvas;
     gint i, j;
-
-    symbol_map = chafa_symbol_map_new ();
-    chafa_symbol_map_apply_selectors (symbol_map, "[ a]", NULL);
-
-    config = chafa_canvas_config_new ();
-    chafa_canvas_config_set_canvas_mode (config, CHAFA_CANVAS_MODE_FGBG_BGFG);
-    chafa_canvas_config_set_symbol_map (config, symbol_map);
-    chafa_canvas_config_set_geometry (config, 100, 100);
-    chafa_canvas_config_set_fg_only_enabled (config, TRUE);
-
-    canvas = chafa_canvas_new (config);
 
     chafa_canvas_draw_all_pixels (canvas,
                                   CHAFA_PIXEL_RGBA8_UNASSOCIATED,
@@ -55,8 +41,32 @@ symbols_test (void)
             g_assert (c == 'a');
         }
     }
+}
 
+static void
+symbols_fgbg_test (void)
+{
+    ChafaSymbolMap *symbol_map;
+    ChafaCanvasConfig *config;
+    ChafaCanvas *canvas, *canvas2;
+
+    symbol_map = chafa_symbol_map_new ();
+    chafa_symbol_map_apply_selectors (symbol_map, "[ a]", NULL);
+
+    config = chafa_canvas_config_new ();
+    chafa_canvas_config_set_canvas_mode (config, CHAFA_CANVAS_MODE_FGBG_BGFG);
+    chafa_canvas_config_set_symbol_map (config, symbol_map);
+    chafa_canvas_config_set_geometry (config, 100, 100);
+    chafa_canvas_config_set_fg_only_enabled (config, TRUE);
+
+    canvas = chafa_canvas_new (config);
+    symbols_fgbg_test_canvas (canvas);
+
+    canvas2 = chafa_canvas_new_similar (canvas);
     chafa_canvas_unref (canvas);
+    symbols_fgbg_test_canvas (canvas2);
+    chafa_canvas_unref (canvas2);
+
     chafa_canvas_config_unref (config);
     chafa_symbol_map_unref (symbol_map);
 }
@@ -66,7 +76,7 @@ main (int argc, char *argv [])
 {
     g_test_init (&argc, &argv, NULL);
 
-    g_test_add_func ("/canvas/symbols", symbols_test);
+    g_test_add_func ("/canvas/symbols/fgbg", symbols_fgbg_test);
 
     return g_test_run ();
 }
