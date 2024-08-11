@@ -6,7 +6,7 @@ cc -g \
     -fsanitize=address,undefined \
     -fsanitize-undefined-trap-on-error \
     $(pkg-config --libs --cflags chafa) \
-    example.c \
+    ../examples/example.c \
     -o example
 
 ./example
