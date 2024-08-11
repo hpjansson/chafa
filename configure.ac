@@ -481,6 +481,7 @@ AC_CONFIG_FILES([Makefile
                  chafa.pc
                  docs/Makefile
                  docs/version.xml
+                 examples/Makefile
                  tests/Makefile
                  tests/data/Makefile
                  tests/data/bad/Makefile
