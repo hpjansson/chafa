@@ -23,6 +23,7 @@ Makefile.in
 /config.sub
 /configure
 /depcomp
+/gtk-doc.m4
 /gtk-doc.make
 /install-sh
 /libtool
