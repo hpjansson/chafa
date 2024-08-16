@@ -83,6 +83,7 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
     JxlFrameHeader frame_header;
 
     int read = 0;
+    gboolean success = FALSE;
 
     while (JXL_DEC_ERROR != decode_status)
     {
@@ -151,7 +152,8 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
         else if (JXL_DEC_SUCCESS == decode_status)
         {
             frame_list = g_list_reverse (frame_list);
-            return frame_list;
+            success = TRUE;
+            break;
         }
 
         decode_status = JxlDecoderProcessInput (dec);
@@ -163,13 +165,14 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
         g_free (image_buffer);
     }
 
-    if (frame_list != NULL)
+    if (!success && frame_list != NULL)
     {
         jxl_cleanup_frame_list (frame_list);
         g_list_free (frame_list);
+        frame_list = NULL;
     }
 
-    return NULL;
+    return frame_list;
 }
 
 JxlLoader *
@@ -204,6 +207,10 @@ jxl_loader_new_from_mapping (FileMapping *mapping)
         loader->frames = frames;
         loader->frame_count = g_list_length (frames);
         loader->index = 0;
+
+        /* _new_from_mapping() steals the mapping on success. We're done with
+         * it at this point, so destroy. */
+        file_mapping_destroy (mapping);
     }
     else
     {
