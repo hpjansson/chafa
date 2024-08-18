@@ -3046,8 +3046,8 @@ finalize_vertical_with_opacity_64bpp (const uint64_t * SMOL_RESTRICT accums,
 
 static int
 scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
-                        SmolLocalCtx *local_ctx,
-                        uint32_t dest_row_index)
+                          SmolLocalCtx *local_ctx,
+                          uint32_t dest_row_index)
 {
     uint32_t *precalc_y = scale_ctx->vdim.precalc;
     uint32_t ofs_y, ofs_y_max;
