@@ -63,7 +63,10 @@
 #define FILE_DURATION_DEFAULT 0.0
 #define SCALE_MAX 9999.0
 #define CELL_EXTENT_AUTO_MAX 65535
-#define PIXEL_EXTENT_MAX 32767
+
+/* Maximum width or height of the terminal, in pixels. If it claims to be
+ * bigger than this, assume it's broken. */
+#define PIXEL_EXTENT_MAX (8192 * 3)
 
 typedef enum
 {
