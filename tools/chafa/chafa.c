@@ -2041,6 +2041,8 @@ parse_options (int *argc, char **argv [])
     options.use_exact_size = TRISTATE_AUTO;
     options.output_utf_16_on_windows = FALSE;
     options.is_conhost_mode = FALSE;
+    options.cell_width = 10;
+    options.cell_height = 20;
 
     if (!g_option_context_parse (context, argc, argv, &error))
     {
@@ -2088,13 +2090,13 @@ parse_options (int *argc, char **argv [])
     {
         options.cell_width = detected_term_size.width_pixels / detected_term_size.width_cells;
         options.cell_height = detected_term_size.height_pixels / detected_term_size.height_cells;
+    }
 
-        if (options.font_ratio <= 0.0
-            && options.cell_width > 0
-            && options.cell_height > 0)
-        {
-            options.font_ratio = (gdouble) options.cell_width / (gdouble) options.cell_height;
-        }
+    if (options.font_ratio <= 0.0
+        && options.cell_width > 0
+        && options.cell_height > 0)
+    {
+        options.font_ratio = (gdouble) options.cell_width / (gdouble) options.cell_height;
     }
 
     /* Assign detected or default dimensions if none specified */
@@ -2202,8 +2204,6 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_width = 4;
         if (options.dither_grain_height < 0)
             options.dither_grain_height = 4;
-        if (options.font_ratio <= 0.0)
-            options.font_ratio = 1.0 / 2.0;
         if (options.scale <= 0.0)
             options.scale = 4.0;
     }
@@ -2217,8 +2217,6 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_width = 1;
         if (options.dither_grain_height < 0)
             options.dither_grain_height = 1;
-        if (options.font_ratio <= 0.0)
-            options.font_ratio = 1.0 / 2.0;
         if (options.scale <= 0.0)
             options.scale = 1.0;
     }
@@ -2392,11 +2390,11 @@ pixel_to_cell_dimensions (gdouble scale,
     /* Scale can't be zero or negative */
     scale = MAX (scale, 0.00001);
 
-    /* Zero or negative cell dimensions -> presumably unknown, use 8x8 */
+    /* Zero or negative cell dimensions -> presumably unknown, use 10x20 */
     if (cell_width < 1)
-        cell_width = 8;
+        cell_width = 10;
     if (cell_height < 1)
-        cell_height = 8;
+        cell_height = 20;
 
     extra_height = options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS ? 5 : 0;
 
