@@ -499,7 +499,7 @@ chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, ChafaTermInfo *te
 
     chafa_passthrough_encoder_begin (&ptenc, passthrough, term_info, str);
 
-    *chafa_term_info_emit_begin_sixels (term_info, buf, 0, 0, 0) = '\0';
+    *chafa_term_info_emit_begin_sixels (term_info, buf, 0, 1, 0) = '\0';
     chafa_passthrough_encoder_append (&ptenc, buf);
 
     g_snprintf (buf,
