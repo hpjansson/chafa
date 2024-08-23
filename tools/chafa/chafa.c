@@ -2714,10 +2714,11 @@ build_config (gint dest_width, gint dest_height, gboolean is_animation)
     chafa_canvas_config_set_fg_only_enabled (config, options.fg_only);
     chafa_canvas_config_set_passthrough (config, options.passthrough);
 
-    /* With Kitty, animation frames should have an opaque background. Otherwise,
-     * previous frames will show through transparent areas. */
+    /* With Kitty and sixels, animation frames should have an opaque background.
+     * Otherwise, previous frames will show through transparent areas. */
     if (is_animation
-        && options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        && (options.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+            || options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
         && !options.transparency_threshold_set)
         chafa_canvas_config_set_transparency_threshold (config, 1.0f);
     else if (options.transparency_threshold >= 0.0)
