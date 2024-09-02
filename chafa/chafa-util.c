@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <math.h>
 #include "chafa.h"
 #include "internal/chafa-private.h"
 
@@ -124,19 +125,19 @@ chafa_calc_canvas_geometry (gint src_width,
 
         if (dest_width < 1)
         {
-            dest_width = dest_height * (src_aspect / font_ratio) + 0.5;
+            dest_width = ceil (dest_height * (src_aspect / font_ratio));
         }
         else if (dest_height < 1)
         {
-            dest_height = (dest_width / src_aspect) * font_ratio + 0.5;
+            dest_height = ceil ((dest_width / src_aspect) * font_ratio);
         }
         else if (src_aspect > dest_aspect)
         {
-            dest_height = dest_width * (font_ratio / src_aspect) + 0.5;
+            dest_height = ceil (dest_width * (font_ratio / src_aspect));
         }
         else
         {
-            dest_width = dest_height * (src_aspect / font_ratio) + 0.5;
+            dest_width = ceil (dest_height * (src_aspect / font_ratio));
         }
     }
 

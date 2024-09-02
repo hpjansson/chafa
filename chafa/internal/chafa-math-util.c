@@ -18,6 +18,8 @@
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "config.h"
+
+#include <math.h>
 #include "internal/chafa-private.h"
 #include "internal/chafa-math-util.h"
 
@@ -71,6 +73,7 @@ chafa_tuck_and_align (gint src_width, gint src_height,
         case CHAFA_TUCK_SHRINK_TO_FIT:
             if (src_width <= dest_width && src_height <= dest_height)
             {
+                /* Image fits entirely in dest. Do alignment only, no scaling. */
                 *width_out = src_width;
                 *height_out = src_height;
                 break;
@@ -82,8 +85,8 @@ chafa_tuck_and_align (gint src_width, gint src_height,
             ratio [0] = (gfloat) dest_width / (gfloat) src_width;
             ratio [1] = (gfloat) dest_height / (gfloat) src_height;
 
-            *width_out = src_width * MIN (ratio [0], ratio [1]);
-            *height_out = src_height * MIN (ratio [0], ratio [1]);
+            *width_out = ceilf (src_width * MIN (ratio [0], ratio [1]));
+            *height_out = ceilf (src_height * MIN (ratio [0], ratio [1]));
             break;
 
         default:
