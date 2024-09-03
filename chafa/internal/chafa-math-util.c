@@ -99,5 +99,13 @@ chafa_tuck_and_align (gint src_width, gint src_height,
 
     *ofs_x_out = align_dim (halign, *width_out, dest_width);
     *ofs_y_out = align_dim (valign, *height_out, dest_height);
+
+#if 0
+    g_printerr ("src=(%dx%d) dest=(%dx%d) out=(%dx%d) @ (%d,%d)\n",
+                src_width, src_height,
+                dest_width, dest_height,
+                *width_out, *height_out,
+                *ofs_x_out, *ofs_y_out);
+#endif
 }
 
