@@ -968,6 +968,46 @@ out:
 }
 
 static gboolean
+parse_threshold_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gdouble threshold = -1.0;
+    gboolean success = FALSE;
+
+    if (!parse_fraction_or_real (value, &threshold) || threshold < 0.0 || threshold > 1.0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Opacity threshold must be a real number or fraction in the range [0.0-1.0].");
+        goto out;
+    }
+
+    options.transparency_threshold = threshold;
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
+parse_dither_intensity_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gdouble dither_intensity = -1.0;
+    gboolean success = FALSE;
+
+    if (!parse_fraction_or_real (value, &dither_intensity) || dither_intensity < 0.0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Dither intensity must be a positive real number or fraction.");
+        goto out;
+    }
+
+    options.dither_intensity = dither_intensity;
+    success = TRUE;
+
+out:
+    return success;
+}
+
+static gboolean
 parse_duration_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gdouble duration = -1.0;
@@ -1939,7 +1979,7 @@ parse_options (int *argc, char **argv [])
         { "color-space", '\0', 0, G_OPTION_ARG_CALLBACK, parse_color_space_arg, "Color space (rgb or din99d)", NULL },
         { "dither",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_arg,      "Dither", NULL },
         { "dither-grain",'\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_grain_arg, "Dither grain", NULL },
-        { "dither-intensity", '\0',  0, G_OPTION_ARG_DOUBLE,   &options.dither_intensity, "Dither intensity", NULL },
+        { "dither-intensity", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_intensity_arg, "Dither intensity", NULL },
         { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_CALLBACK, parse_duration_arg,    "Duration", NULL },
         { "exact-size",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_exact_size_arg,  "Whether to prefer the original image size", NULL },
@@ -1966,7 +2006,7 @@ parse_options (int *argc, char **argv [])
         { "stretch",     '\0', 0, G_OPTION_ARG_NONE,     &options.stretch,      "Stretch image to fix output dimensions", NULL },
         { "symbols",     '\0', 0, G_OPTION_ARG_CALLBACK, parse_symbols_arg,     "Output symbols", NULL },
         { "threads",     '\0', 0, G_OPTION_ARG_INT,      &options.n_threads,    "Number of threads", NULL },
-        { "threshold",   't',  0, G_OPTION_ARG_DOUBLE,   &options.transparency_threshold, "Transparency threshold", NULL },
+        { "threshold",   't',  0, G_OPTION_ARG_CALLBACK, parse_threshold_arg,   "Transparency threshold", NULL },
         { "view-size",   '\0', 0, G_OPTION_ARG_CALLBACK, parse_view_size_arg,   "View size", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
         /* Deprecated: Equivalent to --scale max */
