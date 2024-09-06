@@ -4338,7 +4338,7 @@
     },
     {
         /* [Ξ] */
-        CHAFA_SYMBOL_TAG_LATIN,
+        CHAFA_SYMBOL_TAG_LATIN | CHAFA_SYMBOL_TAG_EXTRA,
         0x39e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "

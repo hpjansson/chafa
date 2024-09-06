@@ -1456,20 +1456,6 @@
             "X       ")
     },
     {
-        /* Variant */
-        CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
-        0x2571,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "      XX"
-            "     XXX"
-            "    XXX "
-            "   XXX  "
-            "  XXX   "
-            " XXX    "
-            "XXX     "
-            "XX      ")
-    },
-    {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
         0x2572,
         CHAFA_SYMBOL_OUTLINE_8X8 (
@@ -1481,19 +1467,6 @@
             "     X  "
             "      X "
             "       X")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
-        0x2572,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX      "
-            "XXX     "
-            " XXX    "
-            "  XXX   "
-            "   XXX  "
-            "    XXX "
-            "     XXX"
-            "      XX")
     },
     {
         CHAFA_SYMBOL_TAG_BORDER | CHAFA_SYMBOL_TAG_DIAGONAL,
