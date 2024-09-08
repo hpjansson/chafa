@@ -1780,7 +1780,8 @@ tty_options_deinit (void)
 
 static void
 detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
-                 ChafaPixelMode *pixel_mode_out, ChafaPassthrough *passthrough_out)
+                 ChafaPixelMode *pixel_mode_out, ChafaPassthrough *passthrough_out,
+                 gboolean *polite_out)
 {
     ChafaCanvasMode mode;
     ChafaPixelMode pixel_mode;
@@ -1858,6 +1859,10 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
     *mode_out = mode;
     *pixel_mode_out = pixel_mode;
     *passthrough_out = passthrough;
+
+    /* The 'lf' file browser will choke if there are extra sequences in front
+     * of a sixel image. Let's be polite to it. */
+    *polite_out = g_environ_getenv (envp, "LF_LEVEL") ? TRUE : FALSE;
 
     g_strfreev (envp);
 }
@@ -2043,7 +2048,8 @@ parse_options (int *argc, char **argv [])
     options.fill_symbol_map = chafa_symbol_map_new ();
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
-    detect_terminal (&options.term_info, &canvas_mode, &pixel_mode, &passthrough);
+    detect_terminal (&options.term_info, &canvas_mode, &pixel_mode, &passthrough,
+                     &options.polite);
 
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
@@ -2054,7 +2060,6 @@ parse_options (int *argc, char **argv [])
     options.animate = TRUE;
     options.horiz_align = CHAFA_ALIGN_START;
     options.vert_align = CHAFA_ALIGN_START;
-    options.polite = FALSE;
     options.preprocess = TRUE;
     options.relative_set = FALSE;
     options.fg_only = FALSE;
