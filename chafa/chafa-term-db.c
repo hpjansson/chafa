@@ -481,9 +481,11 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         || !strcmp (term, "st-256color"))
         color_seq_list = color_direct_list;
 
-    /* Kitty has a unique graphics protocol */
+    /* Kitty has a unique graphics protocol. It is also supported by Ghostty. */
     if (!strcmp (term, "xterm-kitty")
-        || strlen (kitty_pid) > 0)
+        || strlen (kitty_pid) > 0
+        || !strcmp (term, "xterm-ghostty")
+        || !strcmp (term_program, "ghostty"))
         gfx_seqs = kitty_seqs;
 
     /* iTerm2 supports truecolor and has a unique graphics protocol */
