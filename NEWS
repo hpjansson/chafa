@@ -1,6 +1,28 @@
 Chafa releases
 ==============
 
+1.14.3 (2024-09-09)
+-------------------
+
+This release brings important fixes for sixel rendering and Windows Terminal,
+plus a few other odds and ends.
+
+* Sixel transparency has been reenabled for still frames. Animations will be
+  pre-composited on an opaque background to prevent flicker/glitchiness
+  (discussed in github#211, big thanks to James Holderness).
+
+* Now supports the Ghostty terminal, defaulting to the Kitty graphics protocol
+  there.
+
+* Bug fixes:
+  github#185  Chafa version 1.14 breaks image preview on lf (found by
+              @Steven79203).
+  github#210  Crash with -f sixels (found by Chris Antos).
+  github#211  Sixels are too small in Windows Terminal (found by @veltza).
+  github#212  Aspect-preserving calculations are off in some cases.
+  [unfiled]   Inconsistent fraction parsing in CLI arguments.
+  [unfiled]   A few small memory leaks in the JPEG XL loader.
+
 1.14.2 (2024-07-26)
 -------------------
 
