@@ -35,8 +35,6 @@ libchafa_internal_la_SOURCES = \
 	chafa-math-util.h \
 	chafa-palette.c \
 	chafa-palette.h \
-	chafa-parser.c \
-	chafa-parser.h \
 	chafa-passthrough-encoder.c \
 	chafa-passthrough-encoder.h \
 	chafa-pca.c \
