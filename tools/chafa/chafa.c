@@ -813,33 +813,69 @@ parse_dither_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     return result;
 }
 
-/* FIXME: Make it parse negative values too, and use sscanf() return values properly */
+static const gchar *
+utf8_skip_spaces (const gchar *str)
+{
+    gunichar c;
+
+    for (c = g_utf8_get_char (str);
+         c != 0 && g_unichar_isspace (c);
+         c = g_utf8_get_char (str))
+    {
+        str = g_utf8_next_char (str);
+    }
+
+    return str;
+}
+
 static gboolean
 parse_fraction_or_real (const gchar *str, gdouble *real_out)
 {
     gboolean success = FALSE;
-    gdouble ratio = -1.0;
-    gint width = -1, height = -1;
-    gint o = 0;
+    gdouble ratio = G_MAXDOUBLE;
+    gint64 width = -1, height = -1;
+    const gchar *sep;
+    const gchar *p0 = NULL;
+    const gchar *end = NULL;
 
-    sscanf (str, "%d/%d%n", &width, &height, &o);
-    if (width < 0 || height < 0)
-        sscanf (str, "%d:%d%n", &width, &height, &o);
-    if (width < 0 || height < 0)
-        sscanf (str, "%lf%n", &ratio, &o);
+    p0 = utf8_skip_spaces (str);
 
-    if (o != 0 && str [o] != '\0')
+    sep = g_utf8_strchr (p0, -1, '/');
+    if (!sep)
+        sep = g_utf8_strchr (p0, -1, ':');
+
+    if (sep)
     {
-        width = -1;
-        height = -1;
-        ratio = -1.0;
-        goto out;
+        width = g_ascii_strtoll (p0, (gchar **) &end, 10);
+        if (!end || end == p0)
+            goto out;
+        end = utf8_skip_spaces (end);
+        if (g_utf8_get_char (end) != '/' && g_utf8_get_char (end) != ':')
+            goto out;
+
+        sep = g_utf8_next_char (sep);
+        p0 = utf8_skip_spaces (sep);
+        height = g_ascii_strtoll (p0, (gchar **) &end, 10);
+        if (end == p0)
+            goto out;
+        end = utf8_skip_spaces (end);
+        if (!end || *end)
+            goto out;
+
+        if ((gdouble) height != 0.0)
+            ratio = width / (gdouble) height;
+    }
+    else
+    {
+        ratio = g_strtod (p0, (gchar **) &end);
+        if (!end || end == p0)
+            goto out;
+        end = utf8_skip_spaces (end);
+        if (!end || *end)
+            goto out;
     }
 
-    if (width > 0 && height > 0)
-        ratio = width / (gdouble) height;
-
-    if (ratio < 0.0)
+    if (ratio == G_MAXDOUBLE)
         goto out;
 
     *real_out = ratio;
