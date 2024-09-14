@@ -73,7 +73,7 @@ chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIF
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(JXL_LIBS) $(AVIF_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la $(WIN32_LDADD)
+chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(JXL_LIBS) $(AVIF_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la -lm $(WIN32_LDADD)
 
 # On Microsoft Windows, we compile a resource file with windres and link it in.
 # This enables UTF-8 support in filenames, environment variables, etc.
