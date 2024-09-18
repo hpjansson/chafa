@@ -404,6 +404,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     const gchar *nvim;
     const gchar *nvim_tui_enable_true_color;
     const gchar *eat_shell_integration_dir;
+    const gchar *wezterm_executable;
     gchar *comspec = NULL;
     const SeqStr **color_seq_list = color_256_list;
     const SeqStr *gfx_seqs = NULL;
@@ -424,6 +425,7 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     nvim = getenv_or_blank (envp, "NVIM");
     nvim_tui_enable_true_color = getenv_or_blank (envp, "NVIM_TUI_ENABLE_TRUE_COLOR");
     eat_shell_integration_dir = getenv_or_blank (envp, "EAT_SHELL_INTEGRATION_DIR");
+    wezterm_executable = getenv_or_blank (envp, "WEZTERM_EXECUTABLE");
 
     /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
      * including AIX and DirectColor sequences. We detect this early and allow
@@ -496,7 +498,8 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
         gfx_seqs = iterm2_seqs;
     }
 
-    if (!g_ascii_strcasecmp (term_program, "WezTerm"))
+    if (!g_ascii_strcasecmp (term_program, "WezTerm")
+        || strlen (wezterm_executable) > 0)
     {
         gfx_seqs = sixel_seqs;
     }
