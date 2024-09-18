@@ -1814,8 +1814,25 @@ tty_options_deinit (void)
     }
 }
 
+static gint
+get_tmux_version (gchar **envp)
+{
+    const gchar *tmux_ver_str;
+    const gchar *sep;
+
+    tmux_ver_str = g_environ_getenv (envp, "TERM_PROGRAM_VERSION");
+    if (!tmux_ver_str)
+        return 0;
+
+    sep = strchr (tmux_ver_str, '.');
+
+    return g_ascii_strtoull (tmux_ver_str, NULL, 10) * 1000
+        + (sep ? g_ascii_strtoull (sep + 1, NULL, 10) : 0);
+}
+
 static void
-detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
+detect_terminal (gchar **envp,
+                 ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
                  ChafaPixelMode *pixel_mode_out, ChafaPassthrough *passthrough_out,
                  gboolean *polite_out)
 {
@@ -1824,9 +1841,7 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
     ChafaPassthrough passthrough;
     ChafaTermInfo *term_info;
     ChafaTermInfo *fallback_info;
-    gchar **envp;
 
-    envp = g_get_environ ();
     term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
 
     if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT)
@@ -1874,8 +1889,10 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
     else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_TMUX_PASSTHROUGH))
     {
         /* We can do passthrough for sixels and iterm too, but we won't do so
-         * automatically, since they'll break with inner TE updates. */
-        if (pixel_mode != CHAFA_PIXEL_MODE_KITTY)
+         * automatically, since they'll break with inner TE updates. However,
+         * tmux 3.4+ supports sixels without the need for passthrough, so don't
+         * downgrade the pixel mode in that case. */
+        if (pixel_mode != CHAFA_PIXEL_MODE_KITTY && get_tmux_version (envp) < 3004)
             pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
 
         passthrough = CHAFA_PASSTHROUGH_TMUX;
@@ -1899,8 +1916,6 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
     /* The 'lf' file browser will choke if there are extra sequences in front
      * of a sixel image. Let's be polite to it. */
     *polite_out = g_environ_getenv (envp, "LF_LEVEL") ? TRUE : FALSE;
-
-    g_strfreev (envp);
 }
 
 static gchar *tmux_allow_passthrough_original;
@@ -2057,7 +2072,9 @@ parse_options (int *argc, char **argv [])
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
     ChafaPassthrough passthrough;
+    gchar **envp;
 
+    envp = g_get_environ ();
     memset (&options, 0, sizeof (options));
 
     context = g_option_context_new ("[COMMAND] [OPTION...]");
@@ -2084,8 +2101,8 @@ parse_options (int *argc, char **argv [])
     options.fill_symbol_map = chafa_symbol_map_new ();
 
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
-    detect_terminal (&options.term_info, &canvas_mode, &pixel_mode, &passthrough,
-                     &options.polite);
+    detect_terminal (envp, &options.term_info, &canvas_mode, &pixel_mode,
+                     &passthrough, &options.polite);
 
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
@@ -2304,7 +2321,21 @@ parse_options (int *argc, char **argv [])
 
     /* Apply detected passthrough if auto */
     if (!options.passthrough_set)
-        options.passthrough = passthrough;
+    {
+        /* tmux 3.4+ supports sixels without the need for passthrough. We check
+         * this here instead of in detect_terminal() because we need to react to
+         * a user-requested sixel mode too */
+        if (options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS
+            && passthrough == CHAFA_PASSTHROUGH_TMUX
+            && get_tmux_version (envp) >= 3004)
+        {
+            options.passthrough = CHAFA_PASSTHROUGH_NONE;
+        }
+        else
+        {
+            options.passthrough = passthrough;
+        }
+    }
 
     /* Apply tmux workarounds only if both detected and desired, and a
      * graphics protocol is desired */
@@ -2456,6 +2487,7 @@ parse_options (int *argc, char **argv [])
 
 out:
     g_option_context_free (context);
+    g_strfreev (envp);
 
     return result;
 }
