@@ -574,33 +574,30 @@ detect_capabilities (ChafaTermInfo *ti, gchar **envp)
     if (!strcmp (term, "eat-mono"))
         color_seq_list = color_mono_list;
 
-    /* 'screen' does not like truecolor at all, but 256 colors works fine.
-     * Sometimes we'll see the outer terminal appended to the TERM string,
-     * like so: screen.xterm-256color */
-    if (!strncmp (term, "screen", 6))
+    /* 'tmux' sets TERM=screen or =screen-256color, but it supports truecolor
+     * codes. You may have to add the following to .tmux.conf to prevent
+     * remapping to 256 colors:
+     *
+     * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
+    if (strlen (tmux) > 0 || !g_ascii_strcasecmp (term_program, "tmux"))
     {
-        /* 'tmux' also sets TERM=screen, but it supports truecolor codes.
-         * You may have to add the following to .tmux.conf to prevent
-         * remapping to 256 colors:
-         *
-         * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
-        if (strlen (tmux) > 0)
-        {
-            color_seq_list = color_direct_list;
-            inner_seqs = tmux_seqs;
-        }
-        else
-        {
-            color_seq_list = color_256_list;
-            inner_seqs = screen_seqs;
-        }
+        color_seq_list = color_direct_list;
+        inner_seqs = tmux_seqs;
 
-        /* screen and older tmux do not support REP. Newer tmux does,
-         * but there's no reliable way to tell which version we're dealing with. */
+        /* Older tmux does not support REP. Newer tmux does, but there's no
+         * reliable way to tell which version we're dealing with */
         rep_seqs_local = NULL;
+    }
+    else if (!strncmp (term, "screen", 6))
+    {
+        /* 'screen' does not like truecolor at all, but 256 colors works fine.
+         * Sometimes we'll see the outer terminal appended to the TERM string,
+         * like so: screen.xterm-256color */
+        color_seq_list = color_256_list;
+        inner_seqs = screen_seqs;
 
-        /* Graphics is allowed in screen and tmux, with passthrough. */
-        /* gfx_seqs = NULL; */
+        /* 'screen' does not support REP. */
+        rep_seqs_local = NULL;
     }
 
     /* If TERM is "linux", we're probably on the Linux console, which supports
