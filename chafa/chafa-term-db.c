@@ -480,6 +480,15 @@ static const TermDef term_def [] =
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
 
+    /* The 'lf' file browser will choke if there are extra sequences in front
+     * of a sixel image, so we need to be polite to it.
+     *
+     * FIXME: Remove any unhandled sequences from the list. */
+    { TERM_TYPE_APP,  "lf", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "LF_LEVEL", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
     { TERM_TYPE_TERM, "linux-console", NULL, NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "linux", 10 } },
       { vt220_seqs, color_16_seqs, color_8_seqs } },
