@@ -41,12 +41,61 @@ struct ChafaTermDb
     gint refs;
 };
 
+typedef enum
+{
+    TERM_TYPE_TERM,
+    TERM_TYPE_MUX,
+    TERM_TYPE_APP
+}
+TermType;
+
+typedef enum
+{
+    ENV_OP_INCL,  /* Include if true */
+    ENV_OP_EXCL   /* Exclude if not true */
+}
+EnvOp;
+
+typedef enum
+{
+    ENV_CMP_ISSET,
+    ENV_CMP_EXACT,
+    ENV_CMP_PREFIX,
+    ENV_CMP_SUFFIX,
+    ENV_CMP_VER_GE
+}
+EnvCmp;
+
+typedef struct
+{
+    EnvOp op;
+    EnvCmp cmp;
+    const gchar *var;
+    const gchar *value;
+    gint priority;
+}
+EnvRule;
+
 typedef struct
 {
     ChafaTermSeq seq;
     const gchar *str;
 }
 SeqStr;
+
+#define SEQ_LIST_MAX 16
+#define ENV_RULE_MAX 16
+
+typedef struct
+{
+    TermType type;
+    const gchar *name;
+    const gchar *variant;
+    const gchar *version;
+    const EnvRule env_rules [ENV_RULE_MAX];
+    const SeqStr *seqs [SEQ_LIST_MAX];
+}
+TermDef;
 
 static const SeqStr vt220_seqs [] =
 {
@@ -345,6 +394,187 @@ static const SeqStr *fallback_list [] =
     screen_seqs,
     tmux_seqs,
     NULL
+};
+
+static const TermDef term_def [] =
+{
+    { TERM_TYPE_TERM, "apple-terminal", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "Apple_Terminal", 0 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "contour", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERMINAL_NAME", "contour", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "ctx", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "CTX_BACKEND", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        rep_seqs } },
+
+    { TERM_TYPE_TERM, "eat", "truecolor", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-truecolor", 10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "eat", "256color", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-256color", 10 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "eat", "16color", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-16color", 10 } },
+      { vt220_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "eat", "color", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-color", 10 } },
+      { vt220_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "eat", "mono", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-mono", 10 } },
+      { vt220_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "eat", "truecolor", NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "EAT_SHELL_INTEGRATION_DIR", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "fbterm", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "fbterm", 10 } },
+      { vt220_seqs, color_fbterm_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "foot", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "foot", 10 },
+        { ENV_OP_INCL, ENV_CMP_PREFIX, "TERM", "foot-", 10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "ghostty", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "xterm-ghostty", 10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "ghostty", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        kitty_seqs } },
+
+    { TERM_TYPE_TERM, "iterm", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "LC_TERMINAL", "iTerm2", 0 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "iTerm.app", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        iterm2_seqs } },
+
+    { TERM_TYPE_TERM, "kitty", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "xterm-kitty", 10 },
+        { ENV_OP_INCL, ENV_CMP_ISSET,  "KITTY_PID", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        kitty_seqs } },
+
+    { TERM_TYPE_TERM, "konsole", NULL, "220370",
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 },
+        { ENV_OP_EXCL, ENV_CMP_VER_GE, "KONSOLE_VERSION", "220370", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "konsole", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "linux-console", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "linux", 10 } },
+      { vt220_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "mlterm", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "mlterm", 10 },
+        { ENV_OP_INCL, ENV_CMP_ISSET,  "MLTERM", NULL, 0 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_APP,  "neovim", "truecolor", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "COLORTERM", "truecolor", 0 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "NVIM_TUI_ENABLE_TRUE_COLOR", "1", 0 },
+        { ENV_OP_EXCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_APP,  "neovim", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "rxvt", "unicode-256color", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode-256color", 10 } },
+      { vt220_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "rxvt", "unicode", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
+      { vt220_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_MUX,  "screen", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_PREFIX, "TERM", "screen", 10 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        screen_seqs } },
+
+    { TERM_TYPE_TERM, "st", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "st-256color", 10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_MUX,  "tmux", NULL, "3.4",
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 },
+        { ENV_OP_EXCL, ENV_CMP_VER_GE, "TERM_PROGRAM_VERSION", "3.4", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs, tmux_seqs } },
+
+    { TERM_TYPE_MUX,  "tmux", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        tmux_seqs } },
+
+    { TERM_TYPE_TERM, "vte", NULL, "5202",
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 },
+        { ENV_OP_EXCL, ENV_CMP_VER_GE, "VTE_VERSION", "5202", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        rep_seqs } },
+
+    { TERM_TYPE_TERM, "vte", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "wezterm", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "WezTerm", 0 },
+        { ENV_OP_INCL, ENV_CMP_ISSET,  "WEZTERM_EXECUTABLE", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { TERM_TYPE_TERM, "windows-console", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_SUFFIX, "ComSpec", "\\cmd.exe", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "xterm", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_ISSET, "XTERM_VERSION", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    /* Terminals that advertise xterm-256color usually support truecolor too,
+     * (VTE, xterm) although some (xterm) may quantize to an indexed palette
+     * regardless. */
+    { TERM_TYPE_TERM, "xterm", "256color", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-256color", -10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "xterm", "direct", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct", -10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct2", -10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct16", -10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct256", -10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+
+    { TERM_TYPE_TERM, "yaft", NULL, NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "yaft-256color", 10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "yaft", 10 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs } },
+
+    { 0, NULL, NULL, NULL, { { 0, 0, NULL, NULL, 0 } }, { NULL } }
 };
 
 static void
