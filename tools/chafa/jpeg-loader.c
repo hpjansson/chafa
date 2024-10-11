@@ -272,6 +272,38 @@ jpeg_loader_new (void)
     return g_new0 (JpegLoader, 1);
 }
 
+static gint
+convert_cmyk_ch_to_rgb (gint k, gint cmy)
+{
+    gint v = k * cmy + 128;
+    v = ((v >> 8) + v) >> 8;
+    return CLAMP (k - v, 0, 255);
+}
+
+static void
+convert_cmyk_pixel_to_rgb (const guchar *cmyk, guchar *rgb)
+{
+    gint c, m, y, k;
+
+    c = cmyk [0];
+    m = cmyk [1];
+    y = cmyk [2];
+    k = cmyk [3];
+
+    rgb [0] = convert_cmyk_ch_to_rgb (k, 255 - c);
+    rgb [1] = convert_cmyk_ch_to_rgb (k, 255 - m);
+    rgb [2] = convert_cmyk_ch_to_rgb (k, 255 - y);
+}
+
+static void
+convert_cmyk_row_to_rgb (const guchar *cmyk, guchar *rgb, gint width)
+{
+    gint i;
+
+    for (i = 0; i < width; i++)
+        convert_cmyk_pixel_to_rgb (cmyk + 4 * i, rgb + 3 * i);
+}
+
 JpegLoader *
 jpeg_loader_new_from_mapping (FileMapping *mapping)
 {
@@ -281,6 +313,8 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     struct my_jpeg_error_mgr my_jerr;
     JpegLoader * volatile loader = NULL;
     gpointer frame_data = NULL;
+    volatile gboolean convert_cmyk_to_rgb = FALSE;
+    guchar *cmyk_buf = NULL;
     volatile gboolean have_decompress = FALSE;
     volatile gboolean success = FALSE;
 
@@ -321,7 +355,17 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     my_jpeg_mem_src (&cinfo, loader->file_data, loader->file_data_len);
     (void) jpeg_read_header (&cinfo, TRUE);
 
-    cinfo.out_color_space = JCS_RGB;
+    if (cinfo.jpeg_color_space == JCS_CMYK
+        || cinfo.jpeg_color_space == JCS_YCCK)
+    {
+        convert_cmyk_to_rgb = TRUE;
+        cinfo.out_color_space = JCS_CMYK;
+    }
+    else
+    {
+        cinfo.out_color_space = JCS_RGB;
+    }
+
     cinfo.output_components = 3;
 
     jpeg_start_decompress (&cinfo);
@@ -339,11 +383,25 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 
     /* Decoding loop */
 
+    if (convert_cmyk_to_rgb)
+        cmyk_buf = g_malloc (width * 4);
+
     while (cinfo.output_scanline < height)
     {
         guchar *row_data = ((guchar *) frame_data) + cinfo.output_scanline * rowstride;
-        if (jpeg_read_scanlines (&cinfo, &row_data, 1) < 1)
-            goto out;
+
+        if (convert_cmyk_to_rgb)
+        {
+            if (jpeg_read_scanlines (&cinfo, &cmyk_buf, 1) < 1)
+                goto out;
+
+            convert_cmyk_row_to_rgb (cmyk_buf, row_data, width);
+        }
+        else
+        {
+            if (jpeg_read_scanlines (&cinfo, &row_data, 1) < 1)
+                goto out;
+        }
     }
 
     /* Orientation and cleanup */
@@ -361,6 +419,8 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     success = TRUE;
 
 out:
+    g_free (cmyk_buf);
+
     if (have_decompress)
         jpeg_destroy_decompress (&cinfo);
 
