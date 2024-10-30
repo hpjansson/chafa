@@ -39,67 +39,6 @@
  * the canvas is created.
  **/
 
-/**
- * ChafaCanvasMode:
- * @CHAFA_CANVAS_MODE_TRUECOLOR: Truecolor.
- * @CHAFA_CANVAS_MODE_INDEXED_256: 256 colors.
- * @CHAFA_CANVAS_MODE_INDEXED_240: 256 colors, but avoid using the lower 16 whose values vary between terminal environments.
- * @CHAFA_CANVAS_MODE_INDEXED_16: 16 colors using the aixterm ANSI extension.
- * @CHAFA_CANVAS_MODE_INDEXED_16_8: 16 FG colors (8 of which enabled with bold/bright) and 8 BG colors.
- * @CHAFA_CANVAS_MODE_INDEXED_8: 8 colors, compatible with original ANSI X3.64.
- * @CHAFA_CANVAS_MODE_FGBG_BGFG: Default foreground and background colors, plus inversion.
- * @CHAFA_CANVAS_MODE_FGBG: Default foreground and background colors. No ANSI codes will be used.
- * @CHAFA_CANVAS_MODE_MAX: Last supported canvas mode plus one.
- **/
-
-/**
- * ChafaColorExtractor:
- * @CHAFA_COLOR_EXTRACTOR_AVERAGE: Use the average colors of each symbol's coverage area.
- * @CHAFA_COLOR_EXTRACTOR_MEDIAN: Use the median colors of each symbol's coverage area.
- * @CHAFA_COLOR_EXTRACTOR_MAX: Last supported color extractor plus one.
- **/
-
-/**
- * ChafaColorSpace:
- * @CHAFA_COLOR_SPACE_RGB: RGB color space. Fast but imprecise.
- * @CHAFA_COLOR_SPACE_DIN99D: DIN99d color space. Slower, but good perceptual color precision.
- * @CHAFA_COLOR_SPACE_MAX: Last supported color space plus one.
- **/
-
-/**
- * ChafaDitherMode:
- * @CHAFA_DITHER_MODE_NONE: No dithering.
- * @CHAFA_DITHER_MODE_ORDERED: Ordered dithering (Bayer or similar).
- * @CHAFA_DITHER_MODE_DIFFUSION: Error diffusion dithering (Floyd-Steinberg or similar).
- * @CHAFA_DITHER_MODE_MAX: Last supported dither mode plus one.
- **/
-
-/**
- * ChafaPixelMode:
- * @CHAFA_PIXEL_MODE_SYMBOLS: Pixel data is approximated using character symbols ("ANSI art").
- * @CHAFA_PIXEL_MODE_SIXELS: Pixel data is encoded as sixels.
- * @CHAFA_PIXEL_MODE_KITTY: Pixel data is encoded using the Kitty terminal protocol.
- * @CHAFA_PIXEL_MODE_ITERM2: Pixel data is encoded using the iTerm2 terminal protocol.
- * @CHAFA_PIXEL_MODE_MAX: Last supported pixel mode plus one.
- **/
-
-/**
- * ChafaOptimizations:
- * @CHAFA_OPTIMIZATION_REUSE_ATTRIBUTES: Suppress redundant SGR control sequences.
- * @CHAFA_OPTIMIZATION_SKIP_CELLS: Reserved for future use.
- * @CHAFA_OPTIMIZATION_REPEAT_CELLS: Use REP sequence to compress repeated runs of similar cells.
- * @CHAFA_OPTIMIZATION_NONE: All optimizations disabled.
- * @CHAFA_OPTIMIZATION_ALL: All optimizations enabled.
- **/
-
-/**
- * ChafaPassthrough:
- * @CHAFA_PASSTHROUGH_NONE: No passthrough guards will be used.
- * @CHAFA_PASSTHROUGH_SCREEN: Passthrough guards for GNU Screen will be used.
- * @CHAFA_PASSTHROUGH_TMUX: Passthrough guards for tmux will be used.
- * @CHAFA_PASSTHROUGH_MAX: Last supported passthrough mode plus one.
- **/
-
 /* Private */
 
 void
