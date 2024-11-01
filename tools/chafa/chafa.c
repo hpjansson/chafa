@@ -2190,11 +2190,16 @@ parse_options (int *argc, char **argv [])
         options.cell_height = detected_term_size.height_pixels / detected_term_size.height_cells;
     }
 
-    if (options.font_ratio <= 0.0
-        && options.cell_width > 0
-        && options.cell_height > 0)
+    if (options.cell_width > 0 && options.cell_height > 0)
     {
-        options.font_ratio = (gdouble) options.cell_width / (gdouble) options.cell_height;
+        if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS && options.font_ratio > 0.0)
+        {
+            options.cell_height = options.cell_width / options.font_ratio;
+        }
+        else
+        {
+            options.font_ratio = (gdouble) options.cell_width / (gdouble) options.cell_height;
+        }
     }
 
     /* Assign detected or default dimensions if none specified */
