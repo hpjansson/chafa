@@ -177,7 +177,7 @@ Fit images to the view's width, potentially exceeding its height.
 <term><option>--font-ratio <replaceable>width</replaceable>/<replaceable>height</replaceable></option></term>
 <listitem><para>
 Target font's width/height ratio. Can be specified as a real number or a
-fraction. Defaults to 1/2.
+fraction. Defaults to 1/2. This will only be applied in symbol mode.
 </para></listitem>
 </varlistentry>
 
