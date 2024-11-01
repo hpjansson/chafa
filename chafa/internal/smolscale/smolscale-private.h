@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright © 2019-2023 Hans Petter Jansson. See COPYING for details. */
+/* Copyright © 2019-2024 Hans Petter Jansson. See COPYING for details. */
 
 /* If you're just going to use Smolscale in your project, you don't have to
  * worry about anything in here. The public API and documentation, such as
