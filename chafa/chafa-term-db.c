@@ -931,6 +931,9 @@ detect_capabilities (gchar **envp)
         chafa_term_info_unref (ti);
     }
 
+    if (!ret_ti)
+        ret_ti = chafa_term_info_new ();
+
     return ret_ti;
 }
 
