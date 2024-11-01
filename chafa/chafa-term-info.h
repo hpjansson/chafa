@@ -104,6 +104,39 @@ void chafa_term_info_ref (ChafaTermInfo *term_info);
 CHAFA_AVAILABLE_IN_1_6
 void chafa_term_info_unref (ChafaTermInfo *term_info);
 
+CHAFA_AVAILABLE_IN_1_16
+const gchar *chafa_term_info_get_name (ChafaTermInfo *term_info);
+CHAFA_AVAILABLE_IN_1_16
+void chafa_term_info_set_name (ChafaTermInfo *term_info, const gchar *name);
+
+CHAFA_AVAILABLE_IN_1_16
+gboolean chafa_term_info_is_canvas_mode_supported (ChafaTermInfo *term_info,
+                                                   ChafaCanvasMode canvas_mode);
+CHAFA_AVAILABLE_IN_1_16
+ChafaCanvasMode chafa_term_info_get_best_canvas_mode (ChafaTermInfo *term_info);
+
+CHAFA_AVAILABLE_IN_1_16
+gboolean chafa_term_info_is_pixel_mode_supported (ChafaTermInfo *term_info,
+                                                  ChafaPixelMode pixel_mode);
+CHAFA_AVAILABLE_IN_1_16
+ChafaPixelMode chafa_term_info_get_best_pixel_mode (ChafaTermInfo *term_info);
+
+CHAFA_AVAILABLE_IN_1_16
+ChafaPassthrough chafa_term_info_get_passthrough_type (ChafaTermInfo *term_info);
+
+CHAFA_AVAILABLE_IN_1_16
+gboolean chafa_term_info_get_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
+                                                          ChafaPixelMode pixel_mode);
+CHAFA_AVAILABLE_IN_1_16
+void chafa_term_info_set_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
+                                                      ChafaPixelMode pixel_mode,
+                                                      gboolean pixel_passthrough_needed);
+
+CHAFA_AVAILABLE_IN_1_16
+ChafaSymbolTags chafa_term_info_get_safe_symbol_tags (ChafaTermInfo *term_info);
+CHAFA_AVAILABLE_IN_1_16
+void chafa_term_info_set_safe_symbol_tags (ChafaTermInfo *term_info, ChafaSymbolTags tags);
+
 CHAFA_AVAILABLE_IN_1_6
 const gchar *chafa_term_info_get_seq (ChafaTermInfo *term_info, ChafaTermSeq seq);
 CHAFA_AVAILABLE_IN_1_6
@@ -118,8 +151,16 @@ ChafaParseResult chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermS
                                             gchar **input, gint *input_len,
                                             guint *args_out);
 
+CHAFA_AVAILABLE_IN_1_16
+gboolean chafa_term_info_get_inherit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq);
+CHAFA_AVAILABLE_IN_1_16
+void chafa_term_info_set_inherit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
+                                      gboolean inherit);
+
 CHAFA_AVAILABLE_IN_1_6
 void chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source);
+CHAFA_AVAILABLE_IN_1_16
+ChafaTermInfo *chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner);
 
 /* This declares the prototypes for chafa_term_info_emit_*(). See
  * chafa-term-seq-def.h for more information, or look up the canonical

@@ -205,9 +205,13 @@ SeqArgInfo;
 struct ChafaTermInfo
 {
     gint refs;
+    gchar *name;
     gchar seq_str [CHAFA_TERM_SEQ_MAX] [CHAFA_TERM_SEQ_LENGTH_MAX];
     SeqArgInfo seq_args [CHAFA_TERM_SEQ_MAX] [CHAFA_TERM_SEQ_ARGS_MAX];
     gchar *unparsed_str [CHAFA_TERM_SEQ_MAX];
+    guint8 pixel_passthrough_needed [CHAFA_PIXEL_MODE_MAX];
+    guint8 inherit_seq [CHAFA_TERM_SEQ_MAX];
+    ChafaSymbolTags safe_symbol_tags;
 };
 
 typedef struct
@@ -240,6 +244,34 @@ copy_bytes (gchar *out, const gchar *in, gint n)
         i++;
     }
     while (i < n);
+}
+
+#if 0
+static void
+clear_seq (ChafaTermInfo *ti, gint seq)
+{
+    g_free (ti->unparsed_str [seq]);
+    ti->unparsed_str [seq] = NULL;
+
+    memset (&ti->seq_str [seq] [0], 0, CHAFA_TERM_SEQ_LENGTH_MAX);
+    memset (&ti->seq_args [seq] [0], 0, CHAFA_TERM_SEQ_ARGS_MAX * sizeof (SeqArgInfo));
+}
+#endif
+
+static void
+copy_seq (const ChafaTermInfo *src, ChafaTermInfo *dest, gint seq)
+{
+    g_free (dest->unparsed_str [seq]);
+    dest->unparsed_str [seq] = NULL;
+
+    if (src->unparsed_str [seq])
+        dest->unparsed_str [seq] = g_strdup (src->unparsed_str [seq]);
+    memcpy (&dest->seq_str [seq] [0], &src->seq_str [seq] [0],
+            CHAFA_TERM_SEQ_LENGTH_MAX);
+    memcpy (&dest->seq_args [seq] [0], &src->seq_args [seq] [0],
+            CHAFA_TERM_SEQ_ARGS_MAX * sizeof (SeqArgInfo));
+
+    dest->inherit_seq [seq] = src->inherit_seq [seq];
 }
 
 static gboolean
@@ -698,6 +730,316 @@ chafa_term_info_unref (ChafaTermInfo *term_info)
 }
 
 /**
+ * chafa_term_info_get_name:
+ * @term_info: A #ChafaTermInfo
+ *
+ * Gets the name associated with the @term_info. This may be NULL.
+ * The returned string belongs to @term_info, and is only valid until the
+ * next operation on this data structure. Make a copy using g_strdup() if
+ * you need to keep it around.
+ *
+ * Returns: The name for this #TermInfo, or %NULL
+ *
+ * Since: 1.16
+ **/
+const gchar *
+chafa_term_info_get_name (ChafaTermInfo *term_info)
+{
+    g_return_val_if_fail (term_info != NULL, NULL);
+
+    return term_info->name;
+}
+
+/**
+ * chafa_term_info_set_name:
+ * @term_info: A #ChafaTermInfo
+ * @name: The new name for this #ChafaTermInfo, or %NULL
+ *
+ * Assigns a new name to @term_info. The name should be a short lowercase
+ * ASCII string that uniquely identifies the terminal or program described
+ * by @term_info.
+ *
+ * Since: 1.16
+ **/
+void
+chafa_term_info_set_name (ChafaTermInfo *term_info,
+                          const gchar *name)
+{
+    gchar *name_copy;
+
+    g_return_if_fail (term_info != NULL);
+
+    name_copy = name ? g_strdup (name) : NULL;
+    g_free (term_info->name);
+    term_info->name = name_copy;
+}
+
+/**
+ * chafa_term_info_is_canvas_mode_supported:
+ * @term_info: A #ChafaTermInfo
+ * @canvas_mode: A #ChafaCanvasMode
+ *
+ * Checks if @term_info has terminal sequences that support @canvas_mode.
+ *
+ * Returns: %TRUE if @canvas_mode is supported, %FALSE otherwise.
+ *
+ * Since: 1.16
+ **/
+gboolean
+chafa_term_info_is_canvas_mode_supported (ChafaTermInfo *term_info,
+                                          ChafaCanvasMode canvas_mode)
+{
+    gboolean result = FALSE;
+
+    g_return_val_if_fail (term_info != NULL, FALSE);
+
+    switch (canvas_mode)
+    {
+        case CHAFA_CANVAS_MODE_TRUECOLOR:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_256:
+        case CHAFA_CANVAS_MODE_INDEXED_240:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_256)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_256)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_256);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_16:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_16)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_16)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_16);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_16_8:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_8)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_8)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_8)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_ENABLE_BOLD)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_RESET_ATTRIBUTES);
+            break;
+        case CHAFA_CANVAS_MODE_INDEXED_8:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_8)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_8)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_8);
+            break;
+        case CHAFA_CANVAS_MODE_FGBG_BGFG:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_INVERT_COLORS)
+                && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_RESET_ATTRIBUTES);
+            break;
+        case CHAFA_CANVAS_MODE_FGBG:
+            result = TRUE;
+            break;
+        case CHAFA_CANVAS_MODE_MAX:
+            g_assert_not_reached ();
+    }
+
+    return result ? TRUE : FALSE;
+}
+
+/**
+ * chafa_term_info_get_best_canvas_mode:
+ * @term_info: A #ChafaTermInfo
+ *
+ * Gets the optimal #ChafaCanvasMode supported by @term_info.
+ *
+ * Returns: A #ChafaCanvasMode
+ *
+ * Since: 1.16
+ **/
+ChafaCanvasMode
+chafa_term_info_get_best_canvas_mode (ChafaTermInfo *term_info)
+{
+    g_return_val_if_fail (term_info != NULL, CHAFA_CANVAS_MODE_FGBG);
+
+    if (chafa_term_info_is_canvas_mode_supported (term_info, CHAFA_CANVAS_MODE_TRUECOLOR))
+        return CHAFA_CANVAS_MODE_TRUECOLOR;
+    if (chafa_term_info_is_canvas_mode_supported (term_info, CHAFA_CANVAS_MODE_INDEXED_240))
+        return CHAFA_CANVAS_MODE_INDEXED_240;
+    if (chafa_term_info_is_canvas_mode_supported (term_info, CHAFA_CANVAS_MODE_INDEXED_16))
+        return CHAFA_CANVAS_MODE_INDEXED_16;
+    if (chafa_term_info_is_canvas_mode_supported (term_info, CHAFA_CANVAS_MODE_INDEXED_16_8))
+        return CHAFA_CANVAS_MODE_INDEXED_16_8;
+    if (chafa_term_info_is_canvas_mode_supported (term_info, CHAFA_CANVAS_MODE_INDEXED_8))
+        return CHAFA_CANVAS_MODE_INDEXED_8;
+    if (chafa_term_info_is_canvas_mode_supported (term_info, CHAFA_CANVAS_MODE_FGBG_BGFG))
+        return CHAFA_CANVAS_MODE_FGBG_BGFG;
+
+    return CHAFA_CANVAS_MODE_FGBG;
+}
+
+/**
+ * chafa_term_info_is_pixel_mode_supported:
+ * @term_info: A #ChafaTermInfo
+ * @pixel_mode: A #ChafaPixelMode
+ *
+ * Checks if @term_info has terminal sequences that support @pixel_mode.
+ *
+ * Returns: %TRUE if @pixel_mode is supported, %FALSE otherwise.
+ *
+ * Since: 1.16
+ **/
+gboolean
+chafa_term_info_is_pixel_mode_supported (ChafaTermInfo *term_info,
+                                         ChafaPixelMode pixel_mode)
+{
+    gboolean result = FALSE;
+
+    g_return_val_if_fail (term_info != NULL, FALSE);
+
+    switch (pixel_mode)
+    {
+        case CHAFA_PIXEL_MODE_KITTY:
+            result =
+                chafa_term_info_get_passthrough_type (term_info) == CHAFA_PASSTHROUGH_NONE
+                ? chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1)
+                : chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1);
+            break;
+        case CHAFA_PIXEL_MODE_SIXELS:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS);
+            break;
+        case CHAFA_PIXEL_MODE_ITERM2:
+            result = chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_ITERM2_IMAGE);
+            break;
+        case CHAFA_PIXEL_MODE_SYMBOLS:
+            result = TRUE;
+            break;
+        case CHAFA_PIXEL_MODE_MAX:
+            g_assert_not_reached ();
+    }
+
+    return result ? TRUE : FALSE;
+}
+
+/**
+ * chafa_term_info_get_best_pixel_mode:
+ * @term_info: A #ChafaTermInfo
+ *
+ * Gets the optimal #ChafaPixelMode supported by @term_info.
+ *
+ * Returns: A #ChafaPixelMode
+ *
+ * Since: 1.16
+ **/
+ChafaPixelMode
+chafa_term_info_get_best_pixel_mode (ChafaTermInfo *term_info)
+{
+    g_return_val_if_fail (term_info != NULL, CHAFA_PIXEL_MODE_SYMBOLS);
+
+    if (chafa_term_info_is_pixel_mode_supported (term_info, CHAFA_PIXEL_MODE_KITTY))
+        return CHAFA_PIXEL_MODE_KITTY;
+    if (chafa_term_info_is_pixel_mode_supported (term_info, CHAFA_PIXEL_MODE_SIXELS))
+        return CHAFA_PIXEL_MODE_SIXELS;
+    if (chafa_term_info_is_pixel_mode_supported (term_info, CHAFA_PIXEL_MODE_ITERM2))
+        return CHAFA_PIXEL_MODE_ITERM2;
+
+    return CHAFA_PIXEL_MODE_SYMBOLS;
+}
+
+/**
+ * chafa_term_info_get_passthrough_type:
+ * @term_info: A #ChafaTermInfo
+ *
+ * Gets the passthrough mode supported by @term_info.
+ *
+ * Returns: A #ChafaPassthrough
+ *
+ * Since: 1.16
+ **/
+ChafaPassthrough
+chafa_term_info_get_passthrough_type (ChafaTermInfo *term_info)
+{
+    g_return_val_if_fail (term_info != NULL, CHAFA_PASSTHROUGH_NONE);
+
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_TMUX_PASSTHROUGH))
+        return CHAFA_PASSTHROUGH_TMUX;
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH))
+        return CHAFA_PASSTHROUGH_SCREEN;
+
+    return CHAFA_PASSTHROUGH_NONE;
+}
+
+/**
+ * chafa_term_info_get_pixel_passthrough_needed:
+ * @term_info: A #ChafaTermInfo
+ * @pixel_mode: A #ChafaPixelMode
+ *
+ * Gets if passthrough should be used to convey images in @pixel_mode.
+ * If needed, the passthrough type can be gotten from chafa_term_info_get_passthrough_type().
+ *
+ * Returns: %TRUE if passthrough is needed, %FALSE otherwise.
+ *
+ * Since: 1.16
+ **/
+gboolean
+chafa_term_info_get_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
+                                                 ChafaPixelMode pixel_mode)
+{
+    g_return_val_if_fail (term_info != NULL, FALSE);
+    g_return_val_if_fail (pixel_mode < CHAFA_PIXEL_MODE_MAX, FALSE);
+
+    return term_info->pixel_passthrough_needed [pixel_mode] ? TRUE : FALSE;
+}
+
+/**
+ * chafa_term_info_set_pixel_passthrough_needed:
+ * @term_info: A #ChafaTermInfo
+ * @pixel_mode: A #ChafaPixelMode
+ * @pixel_passthrough_needed: A boolean indicating whether passthrough is needed
+ *
+ * Specifies if passthrough should be used to convey images in @pixel_mode.
+ *
+ * Since: 1.16
+ **/
+void
+chafa_term_info_set_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
+                                                 ChafaPixelMode pixel_mode,
+                                                 gboolean pixel_passthrough_needed)
+{
+    g_return_if_fail (term_info != NULL);
+    g_return_if_fail (pixel_mode < CHAFA_PIXEL_MODE_MAX);
+
+    term_info->pixel_passthrough_needed [pixel_mode] = pixel_passthrough_needed ? 1 : 0;
+}
+
+/**
+ * chafa_term_info_get_safe_symbol_tags:
+ * @term_info: A #ChafaTermInfo
+ *
+ * Gets the #ChafaSymbolTags that are likely safe to use with @term_info. The
+ * #ChafaSymbolTags are a bitwise OR of flags from the enum.
+ *
+ * Returns: The #ChafaSymbolTags
+ *
+ * Since: 1.16
+ **/
+ChafaSymbolTags
+chafa_term_info_get_safe_symbol_tags (ChafaTermInfo *term_info)
+{
+    g_return_val_if_fail (term_info != NULL, CHAFA_SYMBOL_TAG_NONE);
+
+    return term_info->safe_symbol_tags;
+}
+
+/**
+ * chafa_term_info_set_safe_symbol_tags:
+ * @term_info: A #ChafaTermInfo
+ * @tags: A set of #ChafaSymbolTags
+ *
+ * Sets the #ChafaSymbolTags that are likely safe to use with @term_info. The
+ * @tags are a bitwise OR of flags from the enum.
+ *
+ * Since: 1.16
+ **/
+void
+chafa_term_info_set_safe_symbol_tags (ChafaTermInfo *term_info, ChafaSymbolTags tags)
+{
+    g_return_if_fail (term_info != NULL);
+
+    term_info->safe_symbol_tags = tags;
+}
+
+/**
  * chafa_term_info_have_seq:
  * @term_info: A #ChafaTermInfo.
  * @seq: A #ChafaTermSeq to query for.
@@ -939,6 +1281,48 @@ chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
 }
 
 /**
+ * chafa_term_info_get_inherit_seq:
+ * @term_info: A #ChafaTermInfo
+ * @seq: A #ChafaTermSeq
+ *
+ * Gets whether @seq can be inherited from the outer #ChafaTermInfo
+ * when chaining with chafa_term_info_chain().
+ *
+ * Returns: Whether @seq gets inherited when chaining
+ *
+ * Since: 1.16
+ **/
+gboolean
+chafa_term_info_get_inherit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq)
+{
+    g_return_val_if_fail (term_info != NULL, FALSE);
+    g_return_val_if_fail (seq < CHAFA_TERM_SEQ_MAX, FALSE);
+
+    return term_info->inherit_seq [seq];
+}
+
+/**
+ * chafa_term_info_set_inherit_seq:
+ * @term_info: A #ChafaTermInfo
+ * @seq: A #ChafaTermSeq
+ * @inherit: A boolean indicating whether @seq should be inherited
+ *
+ * Sets whether @seq can be inherited from the outer #ChafaTermInfo
+ * when chaining with chafa_term_info_chain().
+ *
+ * Since: 1.16
+ **/
+void
+chafa_term_info_set_inherit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
+                                 gboolean inherit)
+{
+    g_return_if_fail (term_info != NULL);
+    g_return_if_fail (seq < CHAFA_TERM_SEQ_MAX);
+
+    term_info->inherit_seq [seq] = inherit;
+}
+
+/**
  * chafa_term_info_supplement:
  * @term_info: A #ChafaTermInfo to supplement
  * @source: A #ChafaTermInfo to copy from
@@ -967,6 +1351,67 @@ chafa_term_info_supplement (ChafaTermInfo *term_info, ChafaTermInfo *source)
                     CHAFA_TERM_SEQ_ARGS_MAX * sizeof (SeqArgInfo));
         }
     }
+}
+
+/**
+ * chafa_term_info_chain:
+ * @outer: The #ChafaTermInfo for the outer terminal
+ * @inner: The #ChafaTermInfo for the inner terminal
+ *
+ * Terminal emulators and applications are often nested, with the inner
+ * application's capabilities limiting, extending or modifying the outer's.
+ *
+ * Examples are terminal multiplexers like Screen and tmux, or terminal
+ * emulators running inside editors like Emacs and vi.
+ *
+ * This merges the @outer and @inner sequences into a single #ChafaTermInfo
+ * according to the following rules.
+ *
+ * For sequences marked as inherited in @inner:
+ *
+ * - If either @inner or @outer sequence is %NULL, pick the @outer sequence.
+ * - Otherwise, pick @inner sequence.
+ *
+ * For sequences not marked as inherited, always use the @inner sequence.
+ *
+ * This allows for using the inner term's sequences while clearing them if the
+ * outer term does not support the sequence at all. This is useful for muxers
+ * (e.g. fbterm supports 256 colors, but with private seqs; we want to use the
+ * inner mux' corresponding seqs).
+ *
+ * The merged #ChafaTermInfo is a new instance, with the initial reference
+ * owned by the caller.
+ *
+ * This function can be used repeatedly to create chains that're arbitrarily
+ * long, but is unlikely to be useful beyond three levels (terminal emulator,
+ * multiplexer, application).
+ *
+ * Returns: The merged #ChafaTermInfo
+ *
+ * Since: 1.16
+ **/
+ChafaTermInfo *
+chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner)
+{
+    ChafaTermInfo *chained;
+    gint i;
+
+    chained = chafa_term_info_copy (outer);
+
+    for (i = 0; i < CHAFA_TERM_SEQ_MAX; i++)
+    {
+        if (chafa_term_info_get_inherit_seq (inner, i))
+        {
+            if (chained->unparsed_str [i] && inner->unparsed_str [i])
+                copy_seq (inner, chained, i);
+        }
+        else
+        {
+            copy_seq (inner, chained, i);
+        }
+    }
+
+    return chained;
 }
 
 #define DEFINE_EMIT_SEQ_0_none_char(func_name, seq_name) \
