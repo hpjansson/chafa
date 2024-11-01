@@ -45,7 +45,9 @@ typedef enum
 {
     TERM_TYPE_TERM,
     TERM_TYPE_MUX,
-    TERM_TYPE_APP
+    TERM_TYPE_APP,
+
+    TERM_TYPE_MAX
 }
 TermType;
 
@@ -70,7 +72,7 @@ typedef struct
 {
     EnvOp op;
     EnvCmp cmp;
-    const gchar *var;
+    const gchar *key;
     const gchar *value;
     gint priority;
 }
@@ -83,8 +85,15 @@ typedef struct
 }
 SeqStr;
 
-#define SEQ_LIST_MAX 16
-#define ENV_RULE_MAX 16
+typedef struct
+{
+    ChafaPixelMode pixel_mode;
+    gboolean need_passthrough;
+}
+PixelModePassthrough;
+
+#define ENV_RULE_MAX 8
+#define SEQ_LIST_MAX 12
 
 typedef struct
 {
@@ -94,6 +103,10 @@ typedef struct
     const gchar *version;
     const EnvRule env_rules [ENV_RULE_MAX];
     const SeqStr *seqs [SEQ_LIST_MAX];
+    const ChafaTermSeq *inherit_seqs;
+    ChafaPassthrough passthrough;
+    const PixelModePassthrough *pixel_pt;
+    ChafaSymbolTags safe_symbol_tags;
 }
 TermDef;
 
@@ -292,41 +305,6 @@ static const SeqStr color_8_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
-static const SeqStr *color_direct_list [] =
-{
-    color_direct_seqs,
-    color_256_seqs,
-    color_16_seqs,
-    color_8_seqs,
-    NULL
-};
-
-static const SeqStr *color_256_list [] =
-{
-    color_256_seqs,
-    color_16_seqs,
-    color_8_seqs,
-    NULL
-};
-
-static const SeqStr *color_16_list [] =
-{
-    color_16_seqs,
-    color_8_seqs,
-    NULL
-};
-
-static const SeqStr *color_8_list [] =
-{
-    color_8_seqs,
-    NULL
-};
-
-static const SeqStr *color_mono_list [] =
-{
-    NULL
-};
-
 static const SeqStr color_fbterm_seqs [] =
 {
     { CHAFA_TERM_SEQ_SET_COLOR_FG_16, "\033[1;%1}" },
@@ -339,20 +317,19 @@ static const SeqStr color_fbterm_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
-static const SeqStr *color_fbterm_list [] =
-{
-    color_fbterm_seqs,
-    color_8_seqs,
-    NULL
-};
-
 static const SeqStr kitty_seqs [] =
 {
     { CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1, "\033_Ga=T,f=%1,s=%2,v=%3,c=%4,r=%5,m=1\033\\" },
-    { CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, "\033_Ga=T,U=1,q=2,f=%1,s=%2,v=%3,c=%4,r=%5,i=%6,m=1\033\\" },
     { CHAFA_TERM_SEQ_END_KITTY_IMAGE, "\033_Gm=0\033\\" },
     { CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK, "\033_Gm=1;" },
     { CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK, "\033\\" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
+static const SeqStr kitty_virt_seqs [] =
+{
+    { CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, "\033_Ga=T,U=1,q=2,f=%1,s=%2,v=%3,c=%4,r=%5,i=%6,m=1\033\\" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
@@ -373,12 +350,134 @@ static const SeqStr tmux_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
+static const ChafaTermSeq tmux_inherit_seqs [] =
+{
+    CHAFA_TERM_SEQ_BEGIN_SIXELS,
+    CHAFA_TERM_SEQ_END_SIXELS,
+
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK,
+
+    CHAFA_TERM_SEQ_MAX
+};
+
+static const PixelModePassthrough tmux_pixel_pt [] =
+{
+    { CHAFA_PIXEL_MODE_SIXELS, TRUE },
+    { CHAFA_PIXEL_MODE_KITTY,  TRUE },
+    { CHAFA_PIXEL_MODE_ITERM2, TRUE },
+    { CHAFA_PIXEL_MODE_MAX,    FALSE }
+};
+
+static const PixelModePassthrough tmux_3_4_pixel_pt [] =
+{
+    { CHAFA_PIXEL_MODE_SIXELS, FALSE },
+    { CHAFA_PIXEL_MODE_KITTY,  TRUE },
+    { CHAFA_PIXEL_MODE_ITERM2, TRUE },
+    { CHAFA_PIXEL_MODE_MAX,    FALSE }
+};
+
 static const SeqStr screen_seqs [] =
 {
     { CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH, "\033P" },
     { CHAFA_TERM_SEQ_END_SCREEN_PASSTHROUGH, "\033\\" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
+static const ChafaTermSeq screen_inherit_seqs [] =
+{
+    CHAFA_TERM_SEQ_BEGIN_SIXELS,
+    CHAFA_TERM_SEQ_END_SIXELS,
+
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK,
+
+    CHAFA_TERM_SEQ_MAX
+};
+
+static const PixelModePassthrough screen_pixel_pt [] =
+{
+    { CHAFA_PIXEL_MODE_SIXELS, TRUE },
+    { CHAFA_PIXEL_MODE_KITTY,  TRUE },
+    { CHAFA_PIXEL_MODE_ITERM2, TRUE },
+    { CHAFA_PIXEL_MODE_MAX,    CHAFA_PASSTHROUGH_MAX }
+};
+
+static const SeqStr lf_seqs [] =
+{
+    { CHAFA_TERM_SEQ_ENABLE_BOLD, "\033[1m" },
+    { CHAFA_TERM_SEQ_INVERT_COLORS, "\033[7m" },
+
+    { CHAFA_TERM_SEQ_MAX, NULL }
+};
+
+/* Sequence inheritance
+ * --------------------
+ *
+ * For inherited seqs:
+ *
+ * - If either inner or outer sequence is NULL, use outer sequence.
+ * - Otherwise, use inner sequence.
+
+ * The last rule is a special case that allows for using the inner term's
+ * sequences while clearing them if the outer term does not support the
+ * sequence at all. This is useful for muxers (e.g. fbterm supports 256 colors,
+ * but with private seqs; we want to use the inner mux' corresponding seqs).
+ *
+ * For sequences not listed as inheritable:
+ *
+ * - Always pick the inner sequence.
+ */
+
+static const ChafaTermSeq lf_inherit_seqs [] =
+{
+    CHAFA_TERM_SEQ_RESET_ATTRIBUTES,
+    CHAFA_TERM_SEQ_ENABLE_BOLD,
+    CHAFA_TERM_SEQ_INVERT_COLORS,
+
+    CHAFA_TERM_SEQ_RESET_DEFAULT_FG,
+    CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+
+    CHAFA_TERM_SEQ_RESET_DEFAULT_BG,
+    CHAFA_TERM_SEQ_SET_DEFAULT_BG,
+
+    CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT,
+    CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT,
+    CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT,
+
+    CHAFA_TERM_SEQ_SET_COLOR_FG_256,
+    CHAFA_TERM_SEQ_SET_COLOR_BG_256,
+    CHAFA_TERM_SEQ_SET_COLOR_FGBG_256,
+
+    CHAFA_TERM_SEQ_SET_COLOR_FG_16,
+    CHAFA_TERM_SEQ_SET_COLOR_BG_16,
+    CHAFA_TERM_SEQ_SET_COLOR_FGBG_16,
+
+    CHAFA_TERM_SEQ_SET_COLOR_FG_8,
+    CHAFA_TERM_SEQ_SET_COLOR_BG_8,
+    CHAFA_TERM_SEQ_SET_COLOR_FGBG_8,
+
+    CHAFA_TERM_SEQ_RESET_COLOR_FG,
+    CHAFA_TERM_SEQ_RESET_COLOR_BG,
+    CHAFA_TERM_SEQ_RESET_COLOR_FGBG,
+
+    CHAFA_TERM_SEQ_BEGIN_SIXELS,
+    CHAFA_TERM_SEQ_END_SIXELS,
+
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK,
+
+    CHAFA_TERM_SEQ_MAX
 };
 
 static const SeqStr *fallback_list [] =
@@ -390,201 +489,275 @@ static const SeqStr *fallback_list [] =
     color_8_seqs,
     sixel_seqs,
     kitty_seqs,
+    kitty_virt_seqs,
     iterm2_seqs,
     screen_seqs,
     tmux_seqs,
     NULL
 };
 
+/* These make the term_def list more readable */
+#define VARIANT_NONE NULL
+#define VERSION_NONE NULL
+#define INHERIT_NONE NULL
+#define PIXEL_PT_NONE NULL
+
+#define LINUX_CONSOLE_SYMS (CHAFA_SYMBOL_TAG_ASCII)
+#define LINUX_DESKTOP_SYMS (CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_BORDER)
+#define WIN_TERMINAL_SYMS (CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_BORDER)
+
 static const TermDef term_def [] =
 {
-    { TERM_TYPE_TERM, "apple-terminal", NULL, NULL,
+    { TERM_TYPE_TERM, "apple-terminal", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "Apple_Terminal", 0 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "contour", NULL, NULL,
+    { TERM_TYPE_TERM, "contour", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERMINAL_NAME", "contour", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "ctx", NULL, NULL,
+    { TERM_TYPE_TERM, "ctx", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "CTX_BACKEND", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        rep_seqs } },
+        rep_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "eat", "truecolor", NULL,
+    { TERM_TYPE_TERM, "eat", "truecolor", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-truecolor", 10 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "eat", "256color", NULL,
+    { TERM_TYPE_TERM, "eat", "256color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-256color", 10 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "eat", "16color", NULL,
+    { TERM_TYPE_TERM, "eat", "16color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-16color", 10 } },
       { vt220_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "eat", "color", NULL,
+    { TERM_TYPE_TERM, "eat", "color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-color", 10 } },
       { vt220_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "eat", "mono", NULL,
+    { TERM_TYPE_TERM, "eat", "mono", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-mono", 10 } },
       { vt220_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "eat", "truecolor", NULL,
+    { TERM_TYPE_TERM, "eat", "truecolor", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "EAT_SHELL_INTEGRATION_DIR", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "fbterm", NULL, NULL,
+    /* FbTerm can use 256 colors through a private extension; see fbterm(1) */
+    { TERM_TYPE_TERM, "fbterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "fbterm", 10 } },
-      { vt220_seqs, color_fbterm_seqs, color_8_seqs } },
+      { vt220_seqs, color_fbterm_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "foot", NULL, NULL,
+    { TERM_TYPE_TERM, "foot", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "foot", 10 },
         { ENV_OP_INCL, ENV_CMP_PREFIX, "TERM", "foot-", 10 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "ghostty", NULL, NULL,
+    { TERM_TYPE_TERM, "ghostty", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "xterm-ghostty", 10 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "ghostty", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        kitty_seqs } },
+        kitty_seqs, kitty_virt_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE,
+        PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "iterm", NULL, NULL,
+    { TERM_TYPE_TERM, "iterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "LC_TERMINAL", "iTerm2", 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "iTerm.app", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        iterm2_seqs } },
+        iterm2_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "kitty", NULL, NULL,
+    { TERM_TYPE_TERM, "kitty", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "xterm-kitty", 10 },
         { ENV_OP_INCL, ENV_CMP_ISSET,  "KITTY_PID", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        kitty_seqs } },
+        kitty_seqs, kitty_virt_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE,
+        PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "konsole", NULL, "220370",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 },
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "KONSOLE_VERSION", "220370", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "konsole", NULL, NULL,
+    { TERM_TYPE_TERM, "konsole", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* The 'lf' file browser will choke if there are extra sequences in front
-     * of a sixel image, so we need to be polite to it.
-     *
-     * FIXME: Remove any unhandled sequences from the list. */
-    { TERM_TYPE_APP,  "lf", NULL, NULL,
+     * of a sixel image, so we need to be polite to it. */
+    { TERM_TYPE_APP,  "lf", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "LF_LEVEL", NULL, 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+      { lf_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      lf_inherit_seqs, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "linux-console", NULL, NULL,
+    /* If TERM is "linux", we're probably on the Linux console, which supports
+     * 16 colors only. It also sets COLORTERM=1.
+     *
+     * https://github.com/torvalds/linux/commit/cec5b2a97a11ade56a701e83044d0a2a984c67b4
+     *
+     * In theory we could emit directcolor codes and let the console remap,
+     * but we get better results if we do the conversion ourselves, since we
+     * can apply preprocessing and exotic color spaces. */
+    { TERM_TYPE_TERM, "linux-console", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "linux", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_CONSOLE_SYMS },
 
-    { TERM_TYPE_TERM, "mlterm", NULL, NULL,
+    /* mlterm's truecolor support seems to be broken; it looks like a color
+     * allocation issue. This affects character cells, but not sixels. */
+    { TERM_TYPE_TERM, "mlterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "mlterm", 10 },
         { ENV_OP_INCL, ENV_CMP_ISSET,  "MLTERM", NULL, 0 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_APP,  "neovim", "truecolor", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "COLORTERM", "truecolor", 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "NVIM_TUI_ENABLE_TRUE_COLOR", "1", 0 },
         { ENV_OP_EXCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_APP,  "neovim", NULL, NULL,
+    { TERM_TYPE_APP,  "neovim", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "rxvt", "unicode-256color", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode-256color", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "rxvt", "unicode", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_MUX,  "screen", NULL, NULL,
-      { { ENV_OP_INCL, ENV_CMP_PREFIX, "TERM", "screen", 10 } },
+    /* 'screen' does not like directcolor at all, but 256 colors works fine.
+     * Sometimes we'll see the outer terminal appended to the TERM string,
+     * like so: screen.xterm-256color */
+    { TERM_TYPE_MUX,  "screen", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_PREFIX, "TERM", "screen", -5 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        screen_seqs } },
+        screen_seqs }, screen_inherit_seqs, CHAFA_PASSTHROUGH_SCREEN, screen_pixel_pt, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "st", NULL, NULL,
+    { TERM_TYPE_TERM, "st", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "st-256color", 10 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
+    /* 'tmux' sets TERM=screen or =screen-256color, but it supports directcolor
+     * codes. You may have to add the following to .tmux.conf to prevent
+     * remapping to 256 colors:
+     *
+     * tmux set-option -ga terminal-overrides ",screen-256color:Tc"
+     *
+     * tmux 3.4+ supports sixels natively. */
     { TERM_TYPE_MUX,  "tmux", NULL, "3.4",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 },
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "TERM_PROGRAM_VERSION", "3.4", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs, tmux_seqs } },
+        tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_3_4_pixel_pt, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_MUX,  "tmux", NULL, NULL,
+    { TERM_TYPE_MUX,  "tmux", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        tmux_seqs } },
+        tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_pixel_pt, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "vte", NULL, "5202",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 },
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "VTE_VERSION", "5202", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        rep_seqs } },
+        rep_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "vte", NULL, NULL,
+    { TERM_TYPE_TERM, "vte", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "wezterm", NULL, NULL,
+    /* Note: WezTerm does not support Kitty virtual image placements yet.
+     * See https://github.com/wez/wezterm/issues/986 */
+    { TERM_TYPE_TERM, "wezterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "WezTerm", 0 },
         { ENV_OP_INCL, ENV_CMP_ISSET,  "WEZTERM_EXECUTABLE", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs, kitty_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "windows-console", NULL, NULL,
-      { { ENV_OP_INCL, ENV_CMP_SUFFIX, "ComSpec", "\\cmd.exe", 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+    /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
+     * including AIX and DirectColor sequences. */
+    { TERM_TYPE_TERM, "windows-console", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_SUFFIX, "ComSpec", "\\cmd.exe", -5 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, WIN_TERMINAL_SYMS },
 
-    { TERM_TYPE_TERM, "xterm", NULL, NULL,
+    { TERM_TYPE_TERM, "xterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET, "XTERM_VERSION", NULL, 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* Terminals that advertise xterm-256color usually support truecolor too,
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
      * regardless. */
     { TERM_TYPE_TERM, "xterm", "256color", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-256color", -10 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "xterm", "direct", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct", -10 },
         { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct2", -10 },
         { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct16", -10 },
         { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct256", -10 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "yaft", NULL, NULL,
+    /* yaft supports sixels and directcolor escape codes, but it remaps cell
+     * colors to a 256-color palette. */
+    { TERM_TYPE_TERM, "yaft", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "yaft-256color", 10 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "yaft", 10 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs } },
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { 0, NULL, NULL, NULL, { { 0, 0, NULL, NULL, 0 } }, { NULL } }
+    { 0, NULL, VARIANT_NONE, VERSION_NONE, { { 0, 0, NULL, NULL, 0 } },
+      { NULL }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, 0 }
 };
+
+/* Parse various version formats into a single integer for comparisons.
+ * E.g. "1.2.3", "20240912", "XTerm(388)". */
+static gint64
+parse_version (const gchar *version_str)
+{
+    gint64 ver = 0;
+    gint i;
+
+    for (i = 0; version_str [i]; i++)
+    {
+        gint n = version_str [i] - (gint) '0';
+
+        if (n < 0 || n > 9)
+            continue;
+
+        ver = ver * 10 + n;
+    }
+
+    return ver;
+}
 
 static void
 add_seqs (ChafaTermInfo *ti, const SeqStr *seqstr)
@@ -614,254 +787,151 @@ add_seq_list (ChafaTermInfo *ti, const SeqStr **seqlist)
     }
 }
 
-static const gchar *
-getenv_or_blank (gchar **envp, const gchar *key)
+static gint
+match_term_def (const TermDef *term_def, gchar **envp)
 {
-    const gchar *value;
+    gint best_pri = G_MININT;
+    gint i;
 
-    value = g_environ_getenv (envp, key);
-    if (!value)
-        value = "";
-
-    return value;
-}
-
-static void
-detect_capabilities (ChafaTermInfo *ti, gchar **envp)
-{
-    const gchar *term;
-    const gchar *colorterm;
-    const gchar *konsole_version;
-    const gchar *vte_version;
-    const gchar *term_program;
-    const gchar *term_name;
-    const gchar *tmux;
-    const gchar *ctx_backend;
-    const gchar *lc_terminal;
-    const gchar *kitty_pid;
-    const gchar *mlterm;
-    const gchar *nvim;
-    const gchar *nvim_tui_enable_true_color;
-    const gchar *eat_shell_integration_dir;
-    const gchar *wezterm_executable;
-    gchar *comspec = NULL;
-    const SeqStr **color_seq_list = color_256_list;
-    const SeqStr *gfx_seqs = NULL;
-    const SeqStr *rep_seqs_local = NULL;
-    const SeqStr *inner_seqs = NULL;
-
-    term = getenv_or_blank (envp, "TERM");
-    colorterm = getenv_or_blank (envp, "COLORTERM");
-    konsole_version = getenv_or_blank (envp, "KONSOLE_VERSION");
-    vte_version = getenv_or_blank (envp, "VTE_VERSION");
-    term_program = getenv_or_blank (envp, "TERM_PROGRAM");
-    term_name = getenv_or_blank (envp, "TERMINAL_NAME");
-    tmux = getenv_or_blank (envp, "TMUX");
-    ctx_backend = getenv_or_blank (envp, "CTX_BACKEND");
-    lc_terminal = getenv_or_blank (envp, "LC_TERMINAL");
-    kitty_pid = getenv_or_blank (envp, "KITTY_PID");
-    mlterm = getenv_or_blank (envp, "MLTERM");
-    nvim = getenv_or_blank (envp, "NVIM");
-    nvim_tui_enable_true_color = getenv_or_blank (envp, "NVIM_TUI_ENABLE_TRUE_COLOR");
-    eat_shell_integration_dir = getenv_or_blank (envp, "EAT_SHELL_INTEGRATION_DIR");
-    wezterm_executable = getenv_or_blank (envp, "WEZTERM_EXECUTABLE");
-
-    /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
-     * including AIX and DirectColor sequences. We detect this early and allow
-     * TERM to override, if present. */
-    comspec = (gchar *) g_environ_getenv (envp, "ComSpec");
-    if (comspec)
+    for (i = 0; i < ENV_RULE_MAX && term_def->env_rules [i].key; i++)
     {
-        comspec = g_ascii_strdown (comspec, -1);
-        if (g_str_has_suffix (comspec, "\\cmd.exe"))
-            color_seq_list = color_direct_list;
-        g_free (comspec);
-        comspec = NULL;
-    }
+        const EnvRule *r = &term_def->env_rules [i];
+        const gchar *value;
+        gboolean m = FALSE;
 
-    /* Some terminals set COLORTERM=truecolor. However, this env var can
-     * make its way into environments where truecolor is not desired
-     * (e.g. screen sessions), so check it early on and override it later. */
-    if (!g_ascii_strcasecmp (colorterm, "truecolor")
-        || !g_ascii_strcasecmp (colorterm, "gnome-terminal")
-        || !g_ascii_strcasecmp (colorterm, "xfce-terminal"))
-        color_seq_list = color_direct_list;
+        value = g_environ_getenv (envp, r->key);
 
-    /* In a modern VTE we can rely on VTE_VERSION. It's a great terminal emulator
-     * which supports truecolor. */
-    if (strlen (vte_version) > 0)
-    {
-        color_seq_list = color_direct_list;
-
-        /* Newer VTE versions understand REP */
-        if (g_ascii_strtoull (vte_version, NULL, 10) >= 5202
-            && !strcmp (term, "xterm-256color"))
-            rep_seqs_local = rep_seqs;
-    }
-
-    /* Konsole exports KONSOLE_VERSION */
-    if (strtoul (konsole_version, NULL, 10) >= 220370)
-    {
-        /* Konsole version 22.03.70+ supports sixel graphics */
-        gfx_seqs = sixel_seqs;
-    }
-
-    /* The ctx terminal (https://ctx.graphics/) understands REP */
-    if (strlen (ctx_backend) > 0)
-        rep_seqs_local = rep_seqs;
-
-    /* Terminals that advertise 256 colors usually support truecolor too,
-     * (VTE, xterm) although some (xterm) may quantize to an indexed palette
-     * regardless. */
-    if (!strcmp (term, "xterm-256color")
-        || !strcmp (term, "xterm-direct")
-        || !strcmp (term, "xterm-direct2")
-        || !strcmp (term, "xterm-direct16")
-        || !strcmp (term, "xterm-direct256")
-        || !strcmp (term, "xterm-kitty")
-        || !strcmp (term, "st-256color"))
-        color_seq_list = color_direct_list;
-
-    /* Kitty has a unique graphics protocol. It is also supported by Ghostty. */
-    if (!strcmp (term, "xterm-kitty")
-        || strlen (kitty_pid) > 0
-        || !strcmp (term, "xterm-ghostty")
-        || !strcmp (term_program, "ghostty"))
-        gfx_seqs = kitty_seqs;
-
-    /* iTerm2 supports truecolor and has a unique graphics protocol */
-    if (!g_ascii_strcasecmp (lc_terminal, "iTerm2")
-        || !g_ascii_strcasecmp (term_program, "iTerm.app"))
-    {
-        color_seq_list = color_direct_list;
-        gfx_seqs = iterm2_seqs;
-    }
-
-    if (!g_ascii_strcasecmp (term_program, "WezTerm")
-        || strlen (wezterm_executable) > 0)
-    {
-        gfx_seqs = sixel_seqs;
-    }
-
-    if (!g_ascii_strcasecmp (term_name, "contour"))
-    {
-        gfx_seqs = sixel_seqs;
-    }
-
-    /* Check for Neovim early. It pretends to be xterm-256color, and may or
-     * may not support directcolor. */
-    if (strlen (nvim) > 0)
-    {
-        /* The Neovim terminal defaults to 256 colors unless termguicolors has
-         * been set to true. */
-        color_seq_list = color_256_list;
-
-        /* If COLORTERM was explicitly set to truecolor, honor it. Neovim may do
-         * this when termguicolors has been set to true *and* COLORTERM was
-         * previously set. See Neovim commit d8963c434f01e6a7316 (Nov 26, 2020).
-         *
-         * The user may also set NVIM_TUI_ENABLE_TRUE_COLOR=1 in older Neovim
-         * versions. We'll honor that one blindly, since it's specific and there
-         * seems to be no better option. */
-        if (!g_ascii_strcasecmp (colorterm, "truecolor")
-            || !g_ascii_strcasecmp (nvim_tui_enable_true_color, "1"))
+        switch (r->cmp)
         {
-            color_seq_list = color_direct_list;
+            case ENV_CMP_ISSET:
+                m = value != NULL;
+                break;
+            case ENV_CMP_EXACT:
+                m = value != NULL && (!g_ascii_strcasecmp (value, r->value));
+                break;
+            case ENV_CMP_PREFIX:
+                m = value != NULL && (!g_ascii_strncasecmp (value, r->value, strlen (r->value)));
+                break;
+            case ENV_CMP_SUFFIX:
+                m = value != NULL && strlen (r->value) <= strlen (value)
+                    && !g_ascii_strncasecmp (value + strlen (value) - strlen (r->value),
+                                             r->value, strlen (r->value));
+                break;
+            case ENV_CMP_VER_GE:
+                m = value != NULL && parse_version (value) >= parse_version (r->value);
+                break;
+        }
+
+        if (r->op == ENV_OP_EXCL)
+        {
+            if (!m)
+            {
+                best_pri = G_MININT;
+                break;
+            }
+        }
+        else if (m && r->priority >= best_pri)
+        {
+            best_pri = r->priority;
+        }
+        else
+        {
+            m = FALSE;
         }
     }
 
-    /* Apple Terminal sets TERM=xterm-256color, and does not support truecolor */
-    if (!g_ascii_strcasecmp (term_program, "Apple_Terminal"))
-        color_seq_list = color_256_list;
+    return best_pri;
+}
 
-    /* mlterm's truecolor support seems to be broken; it looks like a color
-     * allocation issue. This affects character cells, but not sixels.
-     *
-     * yaft supports sixels and truecolor escape codes, but it remaps cell
-     * colors to a 256-color palette. */
-    if (!strcmp (term, "mlterm")
-        || strlen (mlterm) > 0
-        || !strcmp (term, "yaft")
-        || !strcmp (term, "yaft-256color"))
+static ChafaTermInfo *
+new_term_info_from_def (const TermDef *def)
+{
+    const SeqStr * const *seqs = def->seqs;
+    ChafaTermInfo *ti;
+    gint i;
+
+    ti = chafa_term_info_new ();
+    chafa_term_info_set_name (ti, def->name);
+    chafa_term_info_set_safe_symbol_tags (ti, def->safe_symbol_tags);
+
+    for (i = 0; i < SEQ_LIST_MAX && seqs [i]; i++)
     {
-        /* The default canvas mode is truecolor for sixels. 240 colors is
-         * the default for symbols. */
-        color_seq_list = color_256_list;
-        gfx_seqs = sixel_seqs;
+        add_seqs (ti, seqs [i]);
     }
 
-    if (!strcmp (term, "foot") || !strncmp (term, "foot-", 5))
-        gfx_seqs = sixel_seqs;
-
-    /* rxvt 256-color really is 256 colors only */
-    if (!strcmp (term, "rxvt-unicode-256color"))
-        color_seq_list = color_256_list;
-
-    /* Regular rxvt supports 16 colors at most */
-    if (!strcmp (term, "rxvt-unicode"))
-        color_seq_list = color_16_list;
-
-    /* Eat uses the "eat-" prefix for TERM.
-     * Eat also sets EAT_SHELL_INTEGRATION_DIR in the environment. */
-    if (!strncmp (term, "eat-", 4) || strcmp (eat_shell_integration_dir, ""))
-        gfx_seqs = sixel_seqs;
-    if (!strcmp (term, "eat-truecolor"))
-        color_seq_list = color_direct_list;
-    if (!strcmp (term, "eat-256color"))
-        color_seq_list = color_256_list;
-    if (!strcmp (term, "eat-16color"))
-        color_seq_list = color_16_list;
-    if (!strcmp (term, "eat-color"))
-        color_seq_list = color_8_list;
-    if (!strcmp (term, "eat-mono"))
-        color_seq_list = color_mono_list;
-
-    /* 'tmux' sets TERM=screen or =screen-256color, but it supports truecolor
-     * codes. You may have to add the following to .tmux.conf to prevent
-     * remapping to 256 colors:
-     *
-     * tmux set-option -ga terminal-overrides ",screen-256color:Tc" */
-    if (strlen (tmux) > 0 || !g_ascii_strcasecmp (term_program, "tmux"))
+    for (i = 0; def->pixel_pt && def->pixel_pt [i].pixel_mode < CHAFA_PIXEL_MODE_MAX; i++)
     {
-        color_seq_list = color_direct_list;
-        inner_seqs = tmux_seqs;
-
-        /* Older tmux does not support REP. Newer tmux does, but there's no
-         * reliable way to tell which version we're dealing with */
-        rep_seqs_local = NULL;
-    }
-    else if (!strncmp (term, "screen", 6))
-    {
-        /* 'screen' does not like truecolor at all, but 256 colors works fine.
-         * Sometimes we'll see the outer terminal appended to the TERM string,
-         * like so: screen.xterm-256color */
-        color_seq_list = color_256_list;
-        inner_seqs = screen_seqs;
-
-        /* 'screen' does not support REP. */
-        rep_seqs_local = NULL;
+        chafa_term_info_set_is_pixel_passthrough_needed (ti, def->pixel_pt [i].pixel_mode,
+                                                         def->pixel_pt [i].need_passthrough);
     }
 
-    /* If TERM is "linux", we're probably on the Linux console, which supports
-     * 16 colors only. It also sets COLORTERM=1.
-     *
-     * https://github.com/torvalds/linux/commit/cec5b2a97a11ade56a701e83044d0a2a984c67b4
-     *
-     * In theory we could emit truecolor codes and let the console remap,
-     * but we get better results if we do the conversion ourselves, since we
-     * can apply preprocessing and exotic color spaces. */
-    if (!strcmp (term, "linux"))
-        color_seq_list = color_16_list;
+    for (i = 0; def->inherit_seqs && def->inherit_seqs [i] < CHAFA_TERM_SEQ_MAX; i++)
+    {
+        chafa_term_info_set_inherit_seq (ti, def->inherit_seqs [i], TRUE);
+    }
 
-    /* FbTerm can use 256 colors through a private extension; see fbterm(1) */
-    if (!strcmp (term, "fbterm"))
-        color_seq_list = color_fbterm_list;
+    return ti;
+}
 
-    add_seqs (ti, vt220_seqs);
-    add_seq_list (ti, color_seq_list);
-    add_seqs (ti, gfx_seqs);
-    add_seqs (ti, rep_seqs_local);
-    add_seqs (ti, inner_seqs);
+static ChafaTermInfo *
+detect_term_of_type (TermType term_type, gchar **envp)
+{
+    ChafaTermInfo *ti = NULL;
+    gint best_def_i = -1;
+    gint best_pri = G_MININT + 1;
+    gint i;
+
+    for (i = 0; term_def [i].name; i++)
+    {
+        gint pri;
+
+        if (term_def [i].type != term_type)
+            continue;
+
+        pri = match_term_def (&term_def [i], envp);
+        if (pri >= best_pri)
+        {
+            best_pri = pri;
+            best_def_i = i;
+        }
+    }
+
+    if (best_def_i != -1)
+    {
+        ti = new_term_info_from_def (&term_def [best_def_i]);
+    }
+
+    return ti;
+}
+
+static ChafaTermInfo *
+detect_capabilities (gchar **envp)
+{
+    ChafaTermInfo *ret_ti = NULL;
+    gint i;
+
+    for (i = 0; i < TERM_TYPE_MAX; i++)
+    {
+        ChafaTermInfo *ti = detect_term_of_type (i, envp);
+        if (!ti)
+            continue;
+
+        if (ret_ti)
+        {
+            ChafaTermInfo *chained = chafa_term_info_chain (ret_ti, ti);
+            chafa_term_info_unref (ret_ti);
+            ret_ti = chained;
+        }
+        else
+        {
+            chafa_term_info_ref (ti);
+            ret_ti = ti;
+        }
+
+        chafa_term_info_unref (ti);
+    }
+
+    return ret_ti;
 }
 
 static ChafaTermDb *
@@ -994,13 +1064,9 @@ chafa_term_db_get_default (void)
 ChafaTermInfo *
 chafa_term_db_detect (ChafaTermDb *term_db, gchar **envp)
 {
-    ChafaTermInfo *ti;
-
     g_return_val_if_fail (term_db != NULL, NULL);
 
-    ti = chafa_term_info_new ();
-    detect_capabilities (ti, envp);
-    return ti;
+    return detect_capabilities (envp);
 }
 
 /**
