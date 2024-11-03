@@ -467,7 +467,7 @@ AC_ARG_ENABLE(rpath,
               [AS_HELP_STRING([--enable-rpath],
                               [use rpath [default=no]])])
 
-AM_CONDITIONAL(ENABLE_RPATH, test "$enable_rpath" == yes)
+AM_CONDITIONAL(ENABLE_RPATH, test "$enable_rpath" = yes)
 
 dnl --- Output ---
 
