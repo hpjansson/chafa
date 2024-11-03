@@ -1,6 +1,18 @@
 Chafa releases
 ==============
 
+1.14.5 (2024-11-03)
+-------------------
+
+This release addresses a handful of medium-severity bugs.
+
+* Bug fixes:
+  github#217  Improve sixel and general terminal support inside tmux (found
+              by Steven Walton).
+  github#221  Support JPEGs with CMYK color space (found by Lionel Dricot).
+  github#225  Fix --font-ratio doing nothing (found by @johnd0e).
+  [unfiled]   Ensure CLI tool gets linked with libm.
+
 1.14.4 (2024-09-10)
 -------------------
 
