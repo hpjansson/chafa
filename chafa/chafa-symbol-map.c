@@ -869,6 +869,7 @@ parse_symbol_tag (const gchar *name, gint len, SelectorType *sel_type_out,
         { "latin", CHAFA_SYMBOL_TAG_LATIN },
         { "import", CHAFA_SYMBOL_TAG_IMPORTED },
         { "imported", CHAFA_SYMBOL_TAG_IMPORTED },
+        { "octant", CHAFA_SYMBOL_TAG_OCTANT },
 
         { NULL, 0 }
     };

@@ -328,7 +328,7 @@ static int
 generate_sextant_syms (ChafaSymbol *syms, gint first_ofs)
 {
     gunichar c;
-    gint i = first_ofs;
+    gint i;
 
     /* Teletext sextant/2x3 mosaic range */
 
@@ -351,6 +351,164 @@ generate_sextant_syms (ChafaSymbol *syms, gint first_ofs)
         calc_weights (&syms [i]);
         syms [i].bitmap = coverage_to_bitmap (syms [i].coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
         syms [i].popcount = chafa_population_count_u64 (syms [i].bitmap);
+    }
+
+    return i;
+}
+
+/* Based on code by Kang-Che Sung. The original is MIT licensed.
+ * See https://gitlab.com/-/snippets/3710003 */
+
+struct OctantEntry
+{
+    guint8 octant_bits;
+    guint8 data;
+};
+
+static const struct OctantEntry octant_map [26] =
+{
+    { 0x00, 0x00 /* u+00a0 */ },
+    { 0x01, 0xa8 /* u+1cea8 */ },
+    { 0x02, 0xab /* u+1ceab */ },
+    { 0x03, 0xc2 /* u+1fb82 */ },
+    { 0x05, 0x98 /* u+2598 */ },
+    { 0x0a, 0x9d /* u+259d */ },
+    { 0x0f, 0x80 /* u+2580 */ },
+    { 0x14, 0xe6 /* u+1fbe6 */ },
+    { 0x28, 0xe7 /* u+1fbe7 */ },
+    { 0x3f, 0xc5 /* u+1fb85 */ },
+    { 0x40, 0xa3 /* u+1cea3 */ },
+    { 0x50, 0x96 /* u+2596 */ },
+    { 0x55, 0x8c /* u+258c */ },
+    { 0x5a, 0x9e /* u+259e */ },
+    { 0x5f, 0x9b /* u+259b */ },
+    { 0x80, 0xa0 /* u+1cea0 */ },
+    { 0xa0, 0x97 /* u+2597 */ },
+    { 0xa5, 0x9a /* u+259a */ },
+    { 0xaa, 0x90 /* u+2590 */ },
+    { 0xaf, 0x9c /* u+259c */ },
+    { 0xc0, 0x82 /* u+2582 */ },
+    { 0xf0, 0x84 /* u+2584 */ },
+    { 0xf5, 0x99 /* u+2599 */ },
+    { 0xfa, 0x9f /* u+259f */ },
+    { 0xfc, 0x86 /* u+2586 */ },
+    { 0xff, 0x88 /* u+2588 */ }
+};
+
+static int
+find_unicode_octant_map_data (guint8 octant_bits)
+{
+    unsigned int first = 0;
+    unsigned int last = sizeof (octant_map) / sizeof (octant_map [0]);
+
+    while (first < last)
+    {
+        unsigned int i = (first + last) / 2;
+
+        if (octant_bits == octant_map [i].octant_bits)
+            return octant_map [i].data;
+
+        if (octant_bits > octant_map [i].octant_bits)
+            first = i + 1;
+        else
+            last = i;
+    }
+
+    return -(int) first;
+}
+
+static gunichar
+octant_bits_to_unichar (guint8 octant_bits)
+{
+    int data = find_unicode_octant_map_data (octant_bits);
+
+    if (data < 0)
+        return (octant_bits + (guint32) data) | 0x1cd00;
+
+    if (data == 0x00)
+        return 0x00a0;
+
+    switch ((data >> 5) & 0x3)
+    {
+        case 0:
+            /* "Block Elements" block */
+            return ((guint32) data & 0x1f) | 0x2580;
+        case 1:
+            /* Part of "Symbols for Legacy Computing Supplement" block */
+            return ((guint32) data & 0x1f) | 0x1cea0;
+        case 2:
+            /* Part of "Symbols for Legacy Computing" block */
+            return ((guint32) data & 0x1f) | 0x1fb80;
+        case 3:
+        default:
+            /* Part of "Symbols for Legacy Computing" block */
+            return ((guint32) data & 0x1f) | 0x1fbe6;
+    }
+}
+
+static void
+octant_bits_to_coverage (guint8 octant_bits, gchar *coverage_dest)
+{
+    gint y;
+
+    for (y = 0; y < CHAFA_SYMBOL_HEIGHT_PIXELS; y++)
+    {
+        gint x;
+
+        for (x = 0; x < CHAFA_SYMBOL_WIDTH_PIXELS; x++)
+        {
+            guint bit = (y & ~1) + ((x >> 2) & 1);
+            guint8 cov;
+
+            cov = ((octant_bits >> bit) & 1);
+            coverage_dest [y * CHAFA_SYMBOL_WIDTH_PIXELS + x] = cov;
+#if 0
+            g_printerr ("%d, ", cov);
+#endif
+        }
+
+#if 0
+        g_printerr ("\n");
+#endif
+    }
+
+#if 0
+    g_printerr ("\n");
+#endif
+}
+
+static int
+generate_octant_syms (ChafaSymbol *syms, gint first_ofs)
+{
+    guint oct;
+    gint i;
+
+    for (i = first_ofs, oct = 0; oct < 256; oct++)
+    {
+        ChafaSymbol *sym = &syms [i];
+        gunichar c;
+
+        c = octant_bits_to_unichar (oct);
+
+#if 0
+        /* Skip block symbols; we already have those */
+        /* FIXME: Need to merge duplicates */
+        if (c < 0x1cd00)
+            continue;
+
+        g_printerr ("%08x\n", c);
+#endif
+
+        sym->sc = CHAFA_SYMBOL_TAG_OCTANT;
+        sym->c = c;
+        sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
+
+        octant_bits_to_coverage (oct, sym->coverage);
+        calc_weights (sym);
+        sym->bitmap = coverage_to_bitmap (sym->coverage, CHAFA_SYMBOL_WIDTH_PIXELS);
+        sym->popcount = chafa_population_count_u64 (sym->bitmap);
+
+        i++;
     }
 
     return i;
@@ -449,7 +607,8 @@ init_symbol_array (const ChafaSymbolDef *defs)
     }
 
     j = generate_braille_syms (syms, j);
-    generate_sextant_syms (syms, j);
+    j = generate_sextant_syms (syms, j);
+    j = generate_octant_syms (syms, j);
     return syms;
 }
 
