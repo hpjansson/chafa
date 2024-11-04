@@ -1834,6 +1834,7 @@ static void
 detect_terminal (gchar **envp,
                  ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out,
                  ChafaPixelMode *pixel_mode_out, ChafaPassthrough *passthrough_out,
+                 ChafaSymbolMap **symbol_map_out, ChafaSymbolMap **fill_symbol_map_out,
                  gboolean *polite_out)
 {
     ChafaCanvasMode mode;
@@ -1844,63 +1845,18 @@ detect_terminal (gchar **envp,
 
     term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
 
-    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT))
-        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_256)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_256)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_256))
-        mode = CHAFA_CANVAS_MODE_INDEXED_240;
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_16)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_16)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_16))
-        mode = CHAFA_CANVAS_MODE_INDEXED_16;
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_8)
-        && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_8)
-             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_8))
-        mode = CHAFA_CANVAS_MODE_INDEXED_8;
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_INVERT_COLORS)
-             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_RESET_ATTRIBUTES))
-        mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
-    else
-        mode = CHAFA_CANVAS_MODE_FGBG;
+    /* Let's see what this baby can do! */
+    mode = chafa_term_info_get_best_canvas_mode (term_info);
+    pixel_mode = chafa_term_info_get_best_pixel_mode (term_info);
+    passthrough = chafa_term_info_get_is_pixel_passthrough_needed (term_info, pixel_mode)
+        ? chafa_term_info_get_passthrough_type (term_info)
+        : CHAFA_PASSTHROUGH_NONE;
 
-    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
-        pixel_mode = CHAFA_PIXEL_MODE_KITTY;
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS)
-             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS))
-        pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_ITERM2_IMAGE)
-             && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_END_ITERM2_IMAGE))
-        pixel_mode = CHAFA_PIXEL_MODE_ITERM2;
-    else
-        pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
+    *symbol_map_out = chafa_symbol_map_new ();
+    chafa_symbol_map_add_by_tags (*symbol_map_out,
+                                  chafa_term_info_get_safe_symbol_tags (term_info));
 
-    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SCREEN_PASSTHROUGH))
-    {
-        /* We can do passthrough for sixels and iterm too, but we won't do so
-         * automatically, since they'll break with inner TE updates. */
-        if (pixel_mode != CHAFA_PIXEL_MODE_KITTY)
-            pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-
-        passthrough = CHAFA_PASSTHROUGH_SCREEN;
-    }
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_TMUX_PASSTHROUGH))
-    {
-        /* We can do passthrough for sixels and iterm too, but we won't do so
-         * automatically, since they'll break with inner TE updates. However,
-         * tmux 3.4+ supports sixels without the need for passthrough, so don't
-         * downgrade the pixel mode in that case. */
-        if (pixel_mode != CHAFA_PIXEL_MODE_KITTY && get_tmux_version (envp) < 3004)
-            pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-
-        passthrough = CHAFA_PASSTHROUGH_TMUX;
-    }
-    else
-    {
-        passthrough = CHAFA_PASSTHROUGH_NONE;
-    }
+    *fill_symbol_map_out = chafa_symbol_map_new ();
 
     /* Make sure we have fallback sequences in case the user forces
      * a mode that's technically unsupported by the terminal. */
@@ -2085,24 +2041,10 @@ parse_options (int *argc, char **argv [])
 
     /* Defaults */
 
-    options.symbol_map = chafa_symbol_map_new ();
-#ifdef G_OS_WIN32
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_HALF);
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BORDER);
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SOLID);
-#else
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_BORDER);
-    chafa_symbol_map_add_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_SPACE);
-#endif
-    chafa_symbol_map_remove_by_tags (options.symbol_map, CHAFA_SYMBOL_TAG_WIDE);
-
-    options.fill_symbol_map = chafa_symbol_map_new ();
-
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     detect_terminal (envp, &options.term_info, &canvas_mode, &pixel_mode,
-                     &passthrough, &options.polite);
+                     &passthrough, &options.symbol_map, &options.fill_symbol_map,
+                     &options.polite);
 
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
