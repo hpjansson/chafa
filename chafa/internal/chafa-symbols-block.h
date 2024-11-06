@@ -2630,6 +2630,162 @@
     },
     {
         CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb80,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb81,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "        "
+            "XXXXXXXX"
+            "        "
+            "XXXXXXXX"
+            "        "
+            "        "
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb82,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb83,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb84,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb85,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb86,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb87,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "      XX"
+            "      XX"
+            "      XX"
+            "      XX"
+            "      XX"
+            "      XX"
+            "      XX"
+            "      XX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb88,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "     XXX"
+            "     XXX"
+            "     XXX"
+            "     XXX"
+            "     XXX"
+            "     XXX"
+            "     XXX"
+            "     XXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb89,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "   XXXXX"
+            "   XXXXX"
+            "   XXXXX"
+            "   XXXXX"
+            "   XXXXX"
+            "   XXXXX"
+            "   XXXXX"
+            "   XXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb8a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "  XXXXXX"
+            "  XXXXXX"
+            "  XXXXXX"
+            "  XXXXXX"
+            "  XXXXXX"
+            "  XXXXXX"
+            "  XXXXXX"
+            "  XXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb8b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            " XXXXXXX"
+            " XXXXXXX"
+            " XXXXXXX"
+            " XXXXXXX"
+            " XXXXXXX"
+            " XXXXXXX"
+            " XXXXXXX"
+            " XXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
         0x1fb95,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XX  XX  "
