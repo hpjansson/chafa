@@ -24,6 +24,62 @@
  * chafa-symbols.c. It's kept in a separate file due to its size. */
 
     {
+        /* Leftwards arrow */
+        CHAFA_SYMBOL_TAG_TECHNICAL,
+        0x2190,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   X    "
+            "  XX    "
+            " XXXXXX "
+            "  XX    "
+            "   X    "
+            "        "
+            "        ")
+    },
+    {
+        /* Upwards arrow */
+        CHAFA_SYMBOL_TAG_TECHNICAL,
+        0x2191,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   X    "
+            "  XXX   "
+            " XXXXX  "
+            "   X    "
+            "   X    "
+            "   X    "
+            "        ")
+    },
+    {
+        /* Rightwards arrow */
+        CHAFA_SYMBOL_TAG_TECHNICAL,
+        0x2192,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "    X   "
+            "    XX  "
+            " XXXXXX "
+            "    XX  "
+            "    X   "
+            "        "
+            "        ")
+    },
+    {
+        /* Downwards arrow */
+        CHAFA_SYMBOL_TAG_TECHNICAL,
+        0x2193,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "   X    "
+            "   X    "
+            "   X    "
+            " XXXXX  "
+            "  XXX   "
+            "   X    "
+            "        ")
+    },
+    {
         /* Horizontal Scan Line 1 */
         CHAFA_SYMBOL_TAG_TECHNICAL,
         0x23ba,
