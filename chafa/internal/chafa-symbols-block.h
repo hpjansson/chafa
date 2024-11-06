@@ -23,384 +23,6 @@
  * This is meant to be #included in the symbol definition table of
  * chafa-symbols.c. It's kept in a separate file due to its size. */
 
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_INVERTED,
-        0x2580,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2581,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2582,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2583,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF,
-        0x2584,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2585,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2586,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2587,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        /* Full block */
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_SOLID | CHAFA_SYMBOL_TAG_SEXTANT,
-        0x2588,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x2589,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXX "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XXXXXXX "
-            "XXXXXXX ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x258a,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXX  "
-            "XXXXXX  "
-            "XXXXXX  "
-            "XXXXXX  "
-            "XXXXXX  "
-            "XXXXXX  "
-            "XXXXXX  "
-            "XXXXXX  ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x258b,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXX   "
-            "XXXXX   "
-            "XXXXX   "
-            "XXXXX   "
-            "XXXXX   "
-            "XXXXX   "
-            "XXXXX   "
-            "XXXXX   ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_SEXTANT,
-        0x258c,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x258d,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXX     "
-            "XXX     "
-            "XXX     "
-            "XXX     "
-            "XXX     "
-            "XXX     "
-            "XXX     "
-            "XXX     ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x258e,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XX      "
-            "XX      "
-            "XX      "
-            "XX      "
-            "XX      "
-            "XX      "
-            "XX      "
-            "XX      ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK,
-        0x258f,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "X       "
-            "X       "
-            "X       "
-            "X       "
-            "X       "
-            "X       "
-            "X       "
-            "X       ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_INVERTED | CHAFA_SYMBOL_TAG_SEXTANT,
-        0x2590,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_INVERTED,
-        0x2594,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXXX"
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_INVERTED,
-        0x2595,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "       X"
-            "       X"
-            "       X"
-            "       X"
-            "       X"
-            "       X"
-            "       X"
-            "       X")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
-        0x2596,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
-        0x2597,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "        "
-            "        "
-            "        "
-            "        "
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
-        0x2598,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
-        0x2599,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
-        0x259a,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
-        0x259b,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
-        0x259c,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
-        0x259d,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "        "
-            "        "
-            "        "
-            "        ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
-        0x259e,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "XXXX    "
-            "XXXX    "
-            "XXXX    "
-            "XXXX    ")
-    },
-    {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
-        0x259f,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "    XXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX"
-            "XXXXXXXX")
-    },
     /* Begin box drawing characters */
     {
         CHAFA_SYMBOL_TAG_BORDER,
@@ -1638,6 +1260,228 @@
             "    X   ")
     },
     {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_INVERTED,
+        0x2580,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2581,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2582,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2583,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF,
+        0x2584,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2585,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2586,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2587,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        /* Full block */
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_SOLID | CHAFA_SYMBOL_TAG_SEXTANT,
+        0x2588,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x2589,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX "
+            "XXXXXXX ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x258a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  "
+            "XXXXXX  ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x258b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   "
+            "XXXXX   ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_SEXTANT,
+        0x258c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x258d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     "
+            "XXX     ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x258e,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      "
+            "XX      ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK,
+        0x258f,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       "
+            "X       ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_INVERTED | CHAFA_SYMBOL_TAG_SEXTANT,
+        0x2590,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
+    },
+    {
         CHAFA_SYMBOL_TAG_STIPPLE,
         0x2591,
         CHAFA_SYMBOL_OUTLINE_8X8 (
@@ -1675,6 +1519,162 @@
             "XX XXX X"
             " XXX XXX"
             "XX XXX X")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_INVERTED,
+        0x2594,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_INVERTED,
+        0x2595,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X"
+            "       X")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        0x2596,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        0x2597,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "        "
+            "        "
+            "        "
+            "        "
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        0x2598,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        0x2599,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        0x259a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        0x259b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        0x259c,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        0x259d,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "        "
+            "        "
+            "        "
+            "        ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        0x259e,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "XXXX    "
+            "XXXX    "
+            "XXXX    "
+            "XXXX    ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        0x259f,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "    XXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX"
+            "XXXXXXXX")
     },
     {
         CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_WEDGE,
@@ -2355,59 +2355,6 @@
             "XXXXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_WEDGE,
-        0x1fb9a,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXX "
-            " XXXXX  "
-            "  XXX   "
-            "   X    "
-            "    X   "
-            "   XXX  "
-            "  XXXXX "
-            " XXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_WEDGE,
-        0x1fb9b,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "       X"
-            "X     XX"
-            "XX   XXX"
-            "XXX XXXX"
-            "XXXX XXX"
-            "XXX   XX"
-            "XX     X"
-            "X       ")
-    },
-
-    {
-        CHAFA_SYMBOL_TAG_LEGACY,
-        0x1fb98,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "X  X  X "
-            " X  X  X"
-            "  X  X  "
-            "X  X  X "
-            " X  X  X"
-            "  X  X  "
-            "X  X  X "
-            " X  X  X")
-    },
-    {
-        CHAFA_SYMBOL_TAG_LEGACY,
-        0x1fb99,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            " X  X  X"
-            "X  X  X "
-            "  X  X  "
-            " X  X  X"
-            "X  X  X "
-            "  X  X  "
-            " X  X  X"
-            "X  X  X ")
-    },
-    {
         CHAFA_SYMBOL_TAG_LEGACY,
         0x1fb7c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
@@ -2457,19 +2404,6 @@
             "       X"
             "       X"
             "       X"
-            "XXXXXXXX")
-    },
-    {
-        CHAFA_SYMBOL_TAG_LEGACY,
-        0x1fb80,
-        CHAFA_SYMBOL_OUTLINE_8X8 (
-            "XXXXXXXX"
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
-            "        "
             "XXXXXXXX")
     },
     {
@@ -2822,6 +2756,58 @@
             "        "
             "XXXXXXXX"
             "XXXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb98,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "X  X  X "
+            " X  X  X"
+            "  X  X  "
+            "X  X  X "
+            " X  X  X"
+            "  X  X  "
+            "X  X  X "
+            " X  X  X")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY,
+        0x1fb99,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            " X  X  X"
+            "X  X  X "
+            "  X  X  "
+            " X  X  X"
+            "X  X  X "
+            "  X  X  "
+            " X  X  X"
+            "X  X  X ")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_WEDGE,
+        0x1fb9a,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "XXXXXXX "
+            " XXXXX  "
+            "  XXX   "
+            "   X    "
+            "    X   "
+            "   XXX  "
+            "  XXXXX "
+            " XXXXXXX")
+    },
+    {
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_WEDGE,
+        0x1fb9b,
+        CHAFA_SYMBOL_OUTLINE_8X8 (
+            "       X"
+            "X     XX"
+            "XX   XXX"
+            "XXX XXXX"
+            "XXXX XXX"
+            "XXX   XX"
+            "XX     X"
+            "X       ")
     },
     {
         CHAFA_SYMBOL_TAG_LEGACY,
