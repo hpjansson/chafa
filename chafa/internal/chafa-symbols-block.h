@@ -1260,7 +1260,8 @@
             "    X   ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_INVERTED,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_QUAD
+            | CHAFA_SYMBOL_TAG_OCTANT | CHAFA_SYMBOL_TAG_INVERTED,
         0x2580,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -1286,7 +1287,7 @@
             "XXXXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_OCTANT,
         0x2582,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1312,7 +1313,8 @@
             "XXXXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_VHALF | CHAFA_SYMBOL_TAG_QUAD
+            | CHAFA_SYMBOL_TAG_OCTANT,
         0x2584,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1338,7 +1340,7 @@
             "XXXXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_OCTANT,
         0x2586,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1365,7 +1367,8 @@
     },
     {
         /* Full block */
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_SOLID | CHAFA_SYMBOL_TAG_SEXTANT,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_SOLID | CHAFA_SYMBOL_TAG_QUAD
+            | CHAFA_SYMBOL_TAG_SEXTANT | CHAFA_SYMBOL_TAG_OCTANT,
         0x2588,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -1417,7 +1420,8 @@
             "XXXXX   ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_SEXTANT,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_QUAD
+            | CHAFA_SYMBOL_TAG_SEXTANT | CHAFA_SYMBOL_TAG_OCTANT,
         0x258c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXX    "
@@ -1469,7 +1473,8 @@
             "X       ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_INVERTED | CHAFA_SYMBOL_TAG_SEXTANT,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_HHALF | CHAFA_SYMBOL_TAG_QUAD
+            | CHAFA_SYMBOL_TAG_SEXTANT | CHAFA_SYMBOL_TAG_OCTANT | CHAFA_SYMBOL_TAG_INVERTED,
         0x2590,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "    XXXX"
@@ -1547,7 +1552,7 @@
             "       X")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT,
         0x2596,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1560,7 +1565,7 @@
             "XXXX    ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT,
         0x2597,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "        "
@@ -1573,7 +1578,7 @@
             "    XXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT,
         0x2598,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXX    "
@@ -1586,7 +1591,8 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT
+            | CHAFA_SYMBOL_TAG_INVERTED,
         0x2599,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXX    "
@@ -1599,7 +1605,7 @@
             "XXXXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT,
         0x259a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXX    "
@@ -1612,7 +1618,8 @@
             "    XXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT
+            | CHAFA_SYMBOL_TAG_INVERTED,
         0x259b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -1625,7 +1632,8 @@
             "XXXX    ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT
+            | CHAFA_SYMBOL_TAG_INVERTED,
         0x259c,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -1638,7 +1646,7 @@
             "    XXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT,
         0x259d,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "    XXXX"
@@ -1651,7 +1659,8 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT
+            | CHAFA_SYMBOL_TAG_INVERTED,
         0x259e,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "    XXXX"
@@ -1664,7 +1673,8 @@
             "XXXX    ")
     },
     {
-        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_INVERTED,
+        CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_QUAD | CHAFA_SYMBOL_TAG_OCTANT
+            | CHAFA_SYMBOL_TAG_INVERTED,
         0x259f,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "    XXXX"
@@ -2589,7 +2599,7 @@
             "XXXXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_OCTANT | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb82,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -2602,7 +2612,7 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb83,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -2615,7 +2625,7 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb84,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -2628,7 +2638,7 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_OCTANT | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb85,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -2641,7 +2651,7 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb86,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "XXXXXXXX"
@@ -2654,7 +2664,7 @@
             "        ")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb87,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "      XX"
@@ -2667,7 +2677,7 @@
             "      XX")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb88,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "     XXX"
@@ -2680,7 +2690,7 @@
             "     XXX")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb89,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "   XXXXX"
@@ -2693,7 +2703,7 @@
             "   XXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb8a,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             "  XXXXXX"
@@ -2706,7 +2716,7 @@
             "  XXXXXX")
     },
     {
-        CHAFA_SYMBOL_TAG_LEGACY,
+        CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_INVERTED,
         0x1fb8b,
         CHAFA_SYMBOL_OUTLINE_8X8 (
             " XXXXXXX"

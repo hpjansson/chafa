@@ -490,16 +490,11 @@ generate_octant_syms (ChafaSymbol *syms, gint first_ofs)
 
         c = octant_bits_to_unichar (oct);
 
-#if 0
         /* Skip block symbols; we already have those */
-        /* FIXME: Need to merge duplicates */
-        if (c < 0x1cd00)
+        if (c < 0x1cd00 || c > 0x1d000)
             continue;
 
-        g_printerr ("%08x\n", c);
-#endif
-
-        sym->sc = CHAFA_SYMBOL_TAG_OCTANT;
+        sym->sc = CHAFA_SYMBOL_TAG_LEGACY | CHAFA_SYMBOL_TAG_OCTANT;
         sym->c = c;
         sym->coverage = g_malloc (CHAFA_SYMBOL_N_PIXELS);
 
