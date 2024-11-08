@@ -787,6 +787,35 @@ add_seq_list (ChafaTermInfo *ti, const SeqStr **seqlist)
     }
 }
 
+static gboolean
+match_env_rule (const EnvRule *r, const gchar *value)
+{
+    gboolean m = FALSE;
+    
+    switch (r->cmp)
+    {
+        case ENV_CMP_ISSET:
+            m = value != NULL;
+            break;
+        case ENV_CMP_EXACT:
+            m = value != NULL && (!g_ascii_strcasecmp (value, r->value));
+            break;
+        case ENV_CMP_PREFIX:
+            m = value != NULL && (!g_ascii_strncasecmp (value, r->value, strlen (r->value)));
+            break;
+        case ENV_CMP_SUFFIX:
+            m = value != NULL && strlen (r->value) <= strlen (value)
+                && !g_ascii_strncasecmp (value + strlen (value) - strlen (r->value),
+                                         r->value, strlen (r->value));
+            break;
+        case ENV_CMP_VER_GE:
+            m = value != NULL && parse_version (value) >= parse_version (r->value);
+            break;
+    }
+
+    return m;
+}
+
 static gint
 match_term_def (const TermDef *term_def, gchar **envp)
 {
@@ -801,26 +830,20 @@ match_term_def (const TermDef *term_def, gchar **envp)
 
         value = g_environ_getenv (envp, r->key);
 
-        switch (r->cmp)
+        /* TERM can be a series of names separated by '.'. GNU Screen does this,
+         * e.g. TERM=screen.xterm-256color */
+        if (value != NULL && !g_ascii_strcasecmp (r->key, "TERM"))
         {
-            case ENV_CMP_ISSET:
-                m = value != NULL;
-                break;
-            case ENV_CMP_EXACT:
-                m = value != NULL && (!g_ascii_strcasecmp (value, r->value));
-                break;
-            case ENV_CMP_PREFIX:
-                m = value != NULL && (!g_ascii_strncasecmp (value, r->value, strlen (r->value)));
-                break;
-            case ENV_CMP_SUFFIX:
-                m = value != NULL && strlen (r->value) <= strlen (value)
-                    && !g_ascii_strncasecmp (value + strlen (value) - strlen (r->value),
-                                             r->value, strlen (r->value));
-                break;
-            case ENV_CMP_VER_GE:
-                m = value != NULL && parse_version (value) >= parse_version (r->value);
-                break;
+            gchar **subterms = g_strsplit (value, ".", -1);
+            gint j;
+
+            for (j = 0; subterms && subterms [j]; j++)
+                m |= match_env_rule (r, subterms [j]);
+
+            g_strfreev (subterms);
         }
+
+        m |= match_env_rule (r, value);
 
         if (r->op == ENV_OP_EXCL)
         {
