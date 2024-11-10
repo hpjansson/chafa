@@ -866,15 +866,41 @@ match_term_def (const TermDef *term_def, gchar **envp)
     return best_pri;
 }
 
+/* Terminal identifiers have three parts: name, variant and version.
+ * Either or both of variant and version can be omitted. If version is
+ * present but variant isn't, variant is replaced with a "*" placeholder.
+ *
+ * Examples of syntactically valid identifiers:
+ *
+ * vte
+ * vte-256color
+ * mlterm-*-3.9.3
+ * xterm-256color-XTerm(389)
+ */
+static gchar *
+term_def_to_name (const TermDef *def)
+{
+    const gchar *parts [3];
+
+    parts [0] = def->name ? def->name : "unknown";
+    parts [1] = def->variant ? def->variant : (def->version ? "*" : NULL);
+    parts [2] = def->version;
+
+    return g_strjoin ("-", parts [0], parts [1], parts [2], NULL);
+}
+
 static ChafaTermInfo *
 new_term_info_from_def (const TermDef *def)
 {
     const SeqStr * const *seqs = def->seqs;
     ChafaTermInfo *ti;
+    gchar *name;
     gint i;
 
+    name = term_def_to_name (def);
+
     ti = chafa_term_info_new ();
-    chafa_term_info_set_name (ti, def->name);
+    chafa_term_info_set_name (ti, name);
     chafa_term_info_set_safe_symbol_tags (ti, def->safe_symbol_tags);
 
     for (i = 0; i < SEQ_LIST_MAX && seqs [i]; i++)
@@ -893,6 +919,7 @@ new_term_info_from_def (const TermDef *def)
         chafa_term_info_set_inherit_seq (ti, def->inherit_seqs [i], TRUE);
     }
 
+    g_free (name);
     return ti;
 }
 

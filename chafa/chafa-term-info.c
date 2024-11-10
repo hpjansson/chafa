@@ -1394,6 +1394,8 @@ ChafaTermInfo *
 chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner)
 {
     ChafaTermInfo *chained;
+    const gchar *outer_name, *inner_name;
+    gchar *new_name;
     gint i;
 
     chained = chafa_term_info_copy (outer);
@@ -1410,6 +1412,16 @@ chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner)
             copy_seq (inner, chained, i);
         }
     }
+
+    outer_name = chafa_term_info_get_name (outer);
+    inner_name = chafa_term_info_get_name (inner);
+
+    new_name = g_strjoin (":",
+                          inner_name ? inner_name : "unknown",
+                          outer_name ? outer_name : "unknown",
+                          NULL);
+    chafa_term_info_set_name (chained, new_name);
+    g_free (new_name);
 
     return chained;
 }
