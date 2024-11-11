@@ -1413,6 +1413,12 @@ chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner)
         }
     }
 
+    for (i = 0; i < CHAFA_PIXEL_MODE_MAX; i++)
+        chained->pixel_passthrough_needed [i]
+            = inner->pixel_passthrough_needed [i] | outer->pixel_passthrough_needed [i];
+
+    chained->safe_symbol_tags |= inner->safe_symbol_tags & outer->safe_symbol_tags;
+
     outer_name = chafa_term_info_get_name (outer);
     inner_name = chafa_term_info_get_name (inner);
 
