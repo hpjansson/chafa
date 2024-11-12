@@ -666,7 +666,7 @@ static const TermDef term_def [] =
      * tmux set-option -ga terminal-overrides ",screen-256color:Tc"
      *
      * tmux 3.4+ supports sixels natively. */
-    { TERM_TYPE_MUX,  "tmux", NULL, "3.4",
+    { TERM_TYPE_MUX,  "tmux", VARIANT_NONE, "3.4",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 },
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "TERM_PROGRAM_VERSION", "3.4", 0 } },
@@ -679,7 +679,7 @@ static const TermDef term_def [] =
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_pixel_pt, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "vte", NULL, "5202",
+    { TERM_TYPE_TERM, "vte", VARIANT_NONE, "5202",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 },
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "VTE_VERSION", "5202", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
