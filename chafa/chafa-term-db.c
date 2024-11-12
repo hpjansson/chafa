@@ -746,6 +746,9 @@ parse_version (const gchar *version_str)
     gint64 ver = 0;
     gint i;
 
+    if (!version_str)
+        return -1;
+
     for (i = 0; version_str [i]; i++)
     {
         gint n = version_str [i] - (gint) '0';
@@ -923,6 +926,19 @@ new_term_info_from_def (const TermDef *def)
     return ti;
 }
 
+static gint
+strcmp_wrap (const gchar *a, const gchar *b)
+{
+    if (a == NULL && b == NULL)
+        return 0;
+    if (a == NULL)
+        return 1;
+    if (b == NULL)
+        return -1;
+
+    return strcmp (a, b);
+}
+
 static ChafaTermInfo *
 detect_term_of_type (TermType term_type, gchar **envp)
 {
@@ -938,8 +954,15 @@ detect_term_of_type (TermType term_type, gchar **envp)
         if (term_def [i].type != term_type)
             continue;
 
+        /* Pick higher-priority solutions. If the priority is equal, allow
+         * more specific and higher-version entries of the same TE to take precedence. */
         pri = match_term_def (&term_def [i], envp);
-        if (pri >= best_pri)
+        if (pri > best_pri
+            || (pri == best_pri
+                && !strcmp_wrap (term_def [i].name, term_def [best_def_i].name)
+                && ((term_def [i].variant && !term_def [best_def_i].variant)
+                    || (!strcmp_wrap (term_def [i].variant, term_def [best_def_i].variant)
+                        && parse_version (term_def [i].version) > parse_version (term_def [best_def_i].version)))))
         {
             best_pri = pri;
             best_def_i = i;
