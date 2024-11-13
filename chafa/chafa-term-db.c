@@ -585,16 +585,16 @@ static const TermDef term_def [] =
         kitty_seqs, kitty_virt_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE,
         PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "konsole", NULL, "220370",
-      { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 },
-        { ENV_OP_EXCL, ENV_CMP_VER_GE, "KONSOLE_VERSION", "220370", 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
-
     { TERM_TYPE_TERM, "konsole", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+
+    { TERM_TYPE_TERM, "konsole", VARIANT_NONE, "220370",
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "KONSOLE_VERSION", NULL, 0 },
+        { ENV_OP_EXCL, ENV_CMP_VER_GE, "KONSOLE_VERSION", "220370", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* The 'lf' file browser will choke if there are extra sequences in front
      * of a sixel image, so we need to be polite to it. */
@@ -624,6 +624,11 @@ static const TermDef term_def [] =
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
+    { TERM_TYPE_APP,  "neovim", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+
     { TERM_TYPE_APP,  "neovim", "truecolor", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "COLORTERM", "truecolor", 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "NVIM_TUI_ENABLE_TRUE_COLOR", "1", 0 },
@@ -631,19 +636,14 @@ static const TermDef term_def [] =
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_APP,  "neovim", VARIANT_NONE, VERSION_NONE,
-      { { ENV_OP_INCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+    { TERM_TYPE_TERM, "rxvt", "unicode", NULL,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
+      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
       CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "rxvt", "unicode-256color", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode-256color", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
-      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
-
-    { TERM_TYPE_TERM, "rxvt", "unicode", NULL,
-      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
       CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* 'screen' does not like directcolor at all, but 256 colors works fine.
@@ -666,6 +666,12 @@ static const TermDef term_def [] =
      * tmux set-option -ga terminal-overrides ",screen-256color:Tc"
      *
      * tmux 3.4+ supports sixels natively. */
+    { TERM_TYPE_MUX,  "tmux", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_pixel_pt, LINUX_DESKTOP_SYMS },
+
     { TERM_TYPE_MUX,  "tmux", VARIANT_NONE, "3.4",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 },
@@ -673,22 +679,16 @@ static const TermDef term_def [] =
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_3_4_pixel_pt, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_MUX,  "tmux", VARIANT_NONE, VERSION_NONE,
-      { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
-        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_pixel_pt, LINUX_DESKTOP_SYMS },
+    { TERM_TYPE_TERM, "vte", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "vte", VARIANT_NONE, "5202",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 },
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "VTE_VERSION", "5202", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         rep_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
-
-    { TERM_TYPE_TERM, "vte", VARIANT_NONE, VERSION_NONE,
-      { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
-      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* Note: WezTerm does not support Kitty virtual image placements yet.
      * See https://github.com/wez/wezterm/issues/986 */
