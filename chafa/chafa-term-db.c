@@ -31,15 +31,60 @@
  * a suitable #ChafaTermInfo for a terminal environment.
  **/
 
-/* This is a very naïve implementation, but perhaps good enough for most
- * contemporary terminal emulators. I've kept the API minimal so actual
- * termcap/terminfo subset parsing can be added later if needed without
- * breaking existing applications. */
-
 struct ChafaTermDb
 {
     gint refs;
 };
+
+/* ------- *
+ * Helpers *
+ * ------- */
+
+static gint
+strcmp_wrap (const gchar *a, const gchar *b)
+{
+    if (a == NULL && b == NULL)
+        return 0;
+    if (a == NULL)
+        return 1;
+    if (b == NULL)
+        return -1;
+
+    return strcmp (a, b);
+}
+
+/* ------------------------------ *
+ * Definitions for terminal table *
+ * ------------------------------ */
+
+/* Sequence inheritance
+ * --------------------
+ *
+ * For inherited seqs:
+ *
+ * - If either inner or outer sequence is NULL, use outer sequence.
+ * - Otherwise, use inner sequence.
+
+ * The last rule is a special case that allows for using the inner term's
+ * sequences while clearing them if the outer term does not support the
+ * sequence at all. This is useful for muxers (e.g. fbterm supports 256 colors,
+ * but with private seqs; we want to use the inner mux' corresponding seqs).
+ *
+ * For sequences not listed as inheritable:
+ *
+ * - Always pick the inner sequence.
+ */
+
+/* These make the table more readable */
+#define VARIANT_NONE NULL
+#define VERSION_NONE NULL
+#define INHERIT_NONE NULL
+#define PIXEL_PT_NONE NULL
+
+/* Common symbol capabilities */
+#define LINUX_CONSOLE_SYMS (CHAFA_SYMBOL_TAG_ASCII)
+#define LINUX_DESKTOP_SYMS (CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_BORDER)
+#define WIN_TERMINAL_SYMS (CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_BORDER)
 
 typedef enum
 {
@@ -418,24 +463,6 @@ static const SeqStr lf_seqs [] =
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
-/* Sequence inheritance
- * --------------------
- *
- * For inherited seqs:
- *
- * - If either inner or outer sequence is NULL, use outer sequence.
- * - Otherwise, use inner sequence.
-
- * The last rule is a special case that allows for using the inner term's
- * sequences while clearing them if the outer term does not support the
- * sequence at all. This is useful for muxers (e.g. fbterm supports 256 colors,
- * but with private seqs; we want to use the inner mux' corresponding seqs).
- *
- * For sequences not listed as inheritable:
- *
- * - Always pick the inner sequence.
- */
-
 static const ChafaTermSeq lf_inherit_seqs [] =
 {
     CHAFA_TERM_SEQ_RESET_ATTRIBUTES,
@@ -496,19 +523,9 @@ static const SeqStr *fallback_list [] =
     NULL
 };
 
-/* These make the term_def list more readable */
-#define VARIANT_NONE NULL
-#define VERSION_NONE NULL
-#define INHERIT_NONE NULL
-#define PIXEL_PT_NONE NULL
-
-#define LINUX_CONSOLE_SYMS (CHAFA_SYMBOL_TAG_ASCII)
-#define LINUX_DESKTOP_SYMS (CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_BORDER)
-#define WIN_TERMINAL_SYMS (CHAFA_SYMBOL_TAG_BLOCK | CHAFA_SYMBOL_TAG_BORDER)
-
 static const TermDef term_def [] =
 {
-    { TERM_TYPE_TERM, "apple-terminal", VARIANT_NONE, VERSION_NONE,
+    { TERM_TYPE_TERM, "apple", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "Apple_Terminal", 0 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
       CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
@@ -530,23 +547,23 @@ static const TermDef term_def [] =
 
     { TERM_TYPE_TERM, "eat", "256color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-256color", 10 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs, sixel_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "eat", "16color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-16color", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, color_16_seqs, color_8_seqs, sixel_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "eat", "color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-color", 10 } },
-      { vt220_seqs, color_8_seqs,
-        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, color_8_seqs, sixel_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "eat", "mono", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "eat-mono", 10 } },
-      { vt220_seqs,
-        sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, sixel_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "eat", "truecolor", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "EAT_SHELL_INTEGRATION_DIR", NULL, 0 } },
@@ -556,8 +573,8 @@ static const TermDef term_def [] =
     /* FbTerm can use 256 colors through a private extension; see fbterm(1) */
     { TERM_TYPE_TERM, "fbterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "fbterm", 10 } },
-      { vt220_seqs, color_fbterm_seqs, color_8_seqs }, INHERIT_NONE,
-      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, color_fbterm_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "foot", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "foot", 10 },
@@ -611,10 +628,10 @@ static const TermDef term_def [] =
      * In theory we could emit directcolor codes and let the console remap,
      * but we get better results if we do the conversion ourselves, since we
      * can apply preprocessing and exotic color spaces. */
-    { TERM_TYPE_TERM, "linux-console", VARIANT_NONE, VERSION_NONE,
+    { TERM_TYPE_TERM, "linux", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "linux", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
-      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_CONSOLE_SYMS },
+      { vt220_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_CONSOLE_SYMS },
 
     /* mlterm's truecolor support seems to be broken; it looks like a color
      * allocation issue. This affects character cells, but not sixels. */
@@ -638,13 +655,13 @@ static const TermDef term_def [] =
 
     { TERM_TYPE_TERM, "rxvt", "unicode", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
-      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_TERM, "rxvt", "unicode-256color", NULL,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode-256color", 10 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
-      CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* 'screen' does not like directcolor at all, but 256 colors works fine.
      * Sometimes we'll see the outer terminal appended to the TERM string,
@@ -924,19 +941,6 @@ new_term_info_from_def (const TermDef *def)
 
     g_free (name);
     return ti;
-}
-
-static gint
-strcmp_wrap (const gchar *a, const gchar *b)
-{
-    if (a == NULL && b == NULL)
-        return 0;
-    if (a == NULL)
-        return 1;
-    if (b == NULL)
-        return -1;
-
-    return strcmp (a, b);
 }
 
 static ChafaTermInfo *
