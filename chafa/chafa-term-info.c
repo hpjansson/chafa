@@ -678,6 +678,8 @@ chafa_term_info_copy (const ChafaTermInfo *term_info)
             new_term_info->unparsed_str [i] = g_strdup (new_term_info->unparsed_str [i]);
     }
 
+    new_term_info->name = g_strdup (new_term_info->name);
+
     return new_term_info;
 }
 
