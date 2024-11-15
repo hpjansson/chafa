@@ -696,6 +696,12 @@ static const TermDef term_def [] =
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_3_4_pixel_pt, LINUX_DESKTOP_SYMS },
 
+    /* Fallback when TERM is set but unrecognized */
+    { TERM_TYPE_TERM, "vt220", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_ISSET,  "TERM", NULL, -1000 } },
+      { vt220_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, CHAFA_SYMBOL_TAG_ASCII },
+
     { TERM_TYPE_TERM, "vte", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "VTE_VERSION", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
@@ -1009,7 +1015,13 @@ detect_capabilities (gchar **envp)
     }
 
     if (!ret_ti)
+    {
+        /* Fallback for when we're completely clueless. Plain ASCII output
+         * with no seqs at all. */
         ret_ti = chafa_term_info_new ();
+        chafa_term_info_set_name (ret_ti, "dumb");
+        chafa_term_info_set_safe_symbol_tags (ret_ti, CHAFA_SYMBOL_TAG_ASCII);
+    }
 
     return ret_ti;
 }
