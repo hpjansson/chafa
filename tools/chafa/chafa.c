@@ -153,6 +153,8 @@ typedef struct
     
     gboolean output_utf_16_on_windows;
     gboolean is_conhost_mode;
+
+    gboolean do_dump_detect;
 }
 GlobalOptions;
 
@@ -1968,6 +1970,49 @@ retire_passthrough_workarounds_tmux (void)
     return result;
 }
 
+static void
+dump_settings (ChafaTermInfo *term_info, ChafaCanvasMode canvas_mode,
+               ChafaPixelMode pixel_mode, ChafaPassthrough passthrough,
+               gboolean polite)
+{
+    const gchar *canvas_mode_desc [] =
+    {
+        "truecolor",
+        "indexed-256",
+        "indexed-240",
+        "indexed-16",
+        "fgbg-bgfg",
+        "fgbg",
+        "indexed-8",
+        "indexed-16-8",
+        NULL
+    };
+    const gchar *pixel_mode_desc [] =
+    {
+        "symbols",
+        "sixels",
+        "kitty",
+        "iterm2"
+    };
+    const gchar *passthrough_desc [] =
+    {
+        "none",
+        "screen",
+        "tmux"
+    };
+
+    g_printerr ("CHAFA_TERM='%s'\n"
+                "CHAFA_CANVAS_MODE='%s'\n"
+                "CHAFA_PIXEL_MODE='%s'\n"
+                "CHAFA_PASSTHROUGH='%s'\n"
+                "CHAFA_POLITE='%s'\n",
+                chafa_term_info_get_name (term_info),
+                canvas_mode_desc [canvas_mode],
+                pixel_mode_desc [pixel_mode],
+                passthrough_desc [passthrough],
+                polite ? "true" : "false");
+}
+
 static gboolean
 parse_options (int *argc, char **argv [])
 {
@@ -1992,6 +2037,7 @@ parse_options (int *argc, char **argv [])
         { "dither",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_arg,      "Dither", NULL },
         { "dither-grain",'\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_grain_arg, "Dither grain", NULL },
         { "dither-intensity", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dither_intensity_arg, "Dither intensity", NULL },
+        { "dump-detect", '\0', 0, G_OPTION_ARG_NONE,     &options.do_dump_detect, "Dump detection results", NULL },
         { "dump-glyph-file", '\0', 0, G_OPTION_ARG_CALLBACK, parse_dump_glyph_file_arg, "Dump glyph file", NULL },
         { "duration",    'd',  0, G_OPTION_ARG_CALLBACK, parse_duration_arg,    "Duration", NULL },
         { "exact-size",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_exact_size_arg,  "Whether to prefer the original image size", NULL },
@@ -2028,6 +2074,7 @@ parse_options (int *argc, char **argv [])
     ChafaCanvasMode canvas_mode;
     ChafaPixelMode pixel_mode;
     ChafaPassthrough passthrough;
+    gboolean polite;
     gchar **envp;
 
     envp = g_get_environ ();
@@ -2044,10 +2091,11 @@ parse_options (int *argc, char **argv [])
     options.is_interactive = isatty (STDIN_FILENO) && isatty (STDOUT_FILENO);
     detect_terminal (envp, &options.term_info, &canvas_mode, &pixel_mode,
                      &passthrough, &options.symbol_map, &options.fill_symbol_map,
-                     &options.polite);
+                     &polite);
 
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
+    options.polite = polite;
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
     options.dither_grain_width = -1;  /* Unset */
     options.dither_grain_height = -1;  /* Unset */
@@ -2090,7 +2138,7 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
-    /* If help or version info was requested, print it and bail out */
+    /* If help, version info or config dump was requested, print it and bail out */
 
     if (options.show_help)
     {
@@ -2101,6 +2149,13 @@ parse_options (int *argc, char **argv [])
     if (options.show_version)
     {
         print_version ();
+        options.skip_processing = TRUE;
+    }
+
+    if (options.do_dump_detect)
+    {
+        dump_settings (options.term_info, canvas_mode, pixel_mode, passthrough,
+                       polite);
         options.skip_processing = TRUE;
     }
 
