@@ -725,6 +725,7 @@ chafa_term_info_unref (ChafaTermInfo *term_info)
         for (i = 0; i < CHAFA_TERM_SEQ_MAX; i++)
             g_free (term_info->unparsed_str [i]);
 
+        g_free (term_info->name);
         g_free (term_info);
     }
 }
