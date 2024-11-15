@@ -633,12 +633,17 @@ static const TermDef term_def [] =
       { vt220_seqs, color_16_seqs, color_8_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_CONSOLE_SYMS },
 
+    { TERM_TYPE_TERM, "mintty", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "mintty", 10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, WIN_TERMINAL_SYMS },
+
     /* mlterm's truecolor support seems to be broken; it looks like a color
      * allocation issue. This affects character cells, but not sixels. */
     { TERM_TYPE_TERM, "mlterm", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "mlterm", 10 },
         { ENV_OP_INCL, ENV_CMP_ISSET,  "MLTERM", NULL, 0 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs, iterm2_seqs,
         sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_APP,  "neovim", VARIANT_NONE, VERSION_NONE,
@@ -646,21 +651,30 @@ static const TermDef term_def [] =
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
       CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_APP,  "neovim", "truecolor", NULL,
+    { TERM_TYPE_APP,  "neovim", "truecolor", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "COLORTERM", "truecolor", 0 },
         { ENV_OP_INCL, ENV_CMP_EXACT,  "NVIM_TUI_ENABLE_TRUE_COLOR", "1", 0 },
         { ENV_OP_EXCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "rxvt", "unicode", NULL,
-      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
-      { vt220_seqs, color_16_seqs, color_8_seqs },
+    { TERM_TYPE_TERM, "rio", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rio", 10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "rio", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        iterm2_seqs, sixel_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "rxvt", "unicode-256color", NULL,
+    /* rxvtu seems to support directcolor, but the default 256-color palette
+     * appears to be broken/unusual. */
+    { TERM_TYPE_TERM, "rxvt", "unicode", VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode", 10 } },
+      { vt220_seqs, color_direct_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+
+    { TERM_TYPE_TERM, "rxvt", "unicode-256color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "rxvt-unicode-256color", 10 } },
-      { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      { vt220_seqs, color_direct_seqs, color_16_seqs, color_8_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* 'screen' does not like directcolor at all, but 256 colors works fine.
@@ -719,7 +733,7 @@ static const TermDef term_def [] =
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "WezTerm", 0 },
         { ENV_OP_INCL, ENV_CMP_ISSET,  "WEZTERM_EXECUTABLE", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
-        sixel_seqs, kitty_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+        sixel_seqs, iterm2_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
     /* The MS Windows 10 TH2 (v1511+) console supports ANSI escape codes,
      * including AIX and DirectColor sequences. */
@@ -736,12 +750,20 @@ static const TermDef term_def [] =
     /* Terminals that advertise xterm-256color usually support truecolor too,
      * (VTE, xterm) although some (xterm) may quantize to an indexed palette
      * regardless. */
-    { TERM_TYPE_TERM, "xterm", "256color", NULL,
+    { TERM_TYPE_TERM, "xterm", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm", -10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+
+    /* Terminals that advertise xterm-256color usually support truecolor too,
+     * (VTE, xterm) although some (xterm) may quantize to an indexed palette
+     * regardless. */
+    { TERM_TYPE_TERM, "xterm", "256color", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-256color", -10 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
 
-    { TERM_TYPE_TERM, "xterm", "direct", NULL,
+    { TERM_TYPE_TERM, "xterm", "direct", VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct", -10 },
         { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct2", -10 },
         { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "xterm-direct16", -10 },
