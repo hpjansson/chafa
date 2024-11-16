@@ -2001,16 +2001,16 @@ dump_settings (ChafaTermInfo *term_info, ChafaCanvasMode canvas_mode,
         "tmux"
     };
 
-    g_printerr ("CHAFA_TERM='%s'\n"
-                "CHAFA_CANVAS_MODE='%s'\n"
-                "CHAFA_PIXEL_MODE='%s'\n"
-                "CHAFA_PASSTHROUGH='%s'\n"
-                "CHAFA_POLITE='%s'\n",
-                chafa_term_info_get_name (term_info),
-                canvas_mode_desc [canvas_mode],
-                pixel_mode_desc [pixel_mode],
-                passthrough_desc [passthrough],
-                polite ? "true" : "false");
+    g_print ("CHAFA_TERM='%s'\n"
+             "CHAFA_CANVAS_MODE='%s'\n"
+             "CHAFA_PIXEL_MODE='%s'\n"
+             "CHAFA_PASSTHROUGH='%s'\n"
+             "CHAFA_POLITE='%s'\n",
+             chafa_term_info_get_name (term_info),
+             canvas_mode_desc [canvas_mode],
+             pixel_mode_desc [pixel_mode],
+             passthrough_desc [passthrough],
+             polite ? "true" : "false");
 }
 
 static gboolean
