@@ -24,6 +24,8 @@
 
 G_BEGIN_DECLS
 
+#define CHAFA_SQUARE(n) ((n) * (n))
+
 void chafa_tuck_and_align (gint src_width, gint src_height,
                            gint dest_width, gint dest_height,
                            ChafaAlign halign, ChafaAlign valign,

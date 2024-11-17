@@ -46,7 +46,8 @@ void chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                       gint src_width, gint src_height, gint src_rowstride,
                                       gint dest_width, gint dest_height,
                                       ChafaAlign halign, ChafaAlign valign,
-                                      ChafaTuck tuck);
+                                      ChafaTuck tuck,
+                                      gfloat quality);
 
 G_END_DECLS
 

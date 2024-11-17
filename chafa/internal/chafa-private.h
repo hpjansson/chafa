@@ -27,6 +27,7 @@
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-iterm2-canvas.h"
 #include "internal/chafa-kitty-canvas.h"
+#include "internal/chafa-math-util.h"
 #include "internal/chafa-palette.h"
 #include "internal/chafa-sixel-canvas.h"
 

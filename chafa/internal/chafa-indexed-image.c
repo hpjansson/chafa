@@ -33,6 +33,7 @@ typedef struct
     gconstpointer src_pixels;
     gint src_width, src_height, src_rowstride;
     gint dest_width, dest_height;
+    gfloat quality;
 
     SmolScaleCtx *scale_ctx;
     guint32 *scaled_data;
@@ -380,7 +381,7 @@ draw_pixels (DrawPixelsCtx *ctx)
 
     chafa_palette_generate (&ctx->indexed_image->palette,
                             ctx->scaled_data, ctx->dest_width * ctx->dest_height,
-                            ctx->color_space);
+                            ctx->color_space, ctx->quality);
 
     /* Single thread only for diffusion; it's a fully serial operation */
     chafa_process_batches (ctx,
@@ -439,7 +440,8 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                  gint src_width, gint src_height, gint src_rowstride,
                                  gint dest_width, gint dest_height,
                                  ChafaAlign halign, ChafaAlign valign,
-                                 ChafaTuck tuck)
+                                 ChafaTuck tuck,
+                                 gfloat quality)
 {
     DrawPixelsCtx ctx;
     ChafaColor bg;
@@ -461,6 +463,7 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
     ctx.src_rowstride = src_rowstride;
     ctx.dest_width = dest_width;
     ctx.dest_height = dest_height;
+    ctx.quality = quality;
 
 #if 0
     /* FIXME: Need a new smolscale compositing mode that preserves src

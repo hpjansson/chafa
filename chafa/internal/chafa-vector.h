@@ -142,6 +142,12 @@ chafa_vec3f32_add_to_array (ChafaVec3f32 *v, const ChafaVec3f32 *in, gint n)
     }
 }
 
+static inline gfloat
+chafa_vec3f32_sum_to_scalar (const ChafaVec3f32 *v)
+{
+    return v->v [0] + v->v [1] + v->v [2];
+}
+
 static inline void
 chafa_vec3f32_mul_scalar (ChafaVec3f32 *out, const ChafaVec3f32 *in, gfloat s)
 {
@@ -154,6 +160,14 @@ static inline gfloat
 chafa_vec3f32_dot (const ChafaVec3f32 *v, const ChafaVec3f32 *u)
 {
     return v->v [0] * u->v [0] + v->v [1] * u->v [1] + v->v [2] * u->v [2];
+}
+
+static inline void
+chafa_vec3f32_hadamard (ChafaVec3f32 *out, const ChafaVec3f32 *v, const ChafaVec3f32 *u)
+{
+    out->v [0] = v->v [0] * u->v [0];
+    out->v [1] = v->v [1] * u->v [1];
+    out->v [2] = v->v [2] * u->v [2];
 }
 
 static inline gfloat
@@ -171,6 +185,14 @@ chafa_vec3f32_normalize (ChafaVec3f32 *out, const ChafaVec3f32 *in)
     out->v [0] = in->v [0] * m;
     out->v [1] = in->v [1] * m;
     out->v [2] = in->v [2] * m;
+}
+
+static inline void
+chafa_vec3f32_round (ChafaVec3f32 *out, const ChafaVec3f32 *in)
+{
+    out->v [0] = rintf (in->v [0]);
+    out->v [1] = rintf (in->v [1]);
+    out->v [2] = rintf (in->v [2]);
 }
 
 static inline void

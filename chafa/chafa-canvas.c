@@ -1352,7 +1352,8 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                             src_width, src_height,
                                             src_rowstride,
                                             halign, valign,
-                                            tuck);
+                                            tuck,
+                                            canvas->config.work_factor);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {

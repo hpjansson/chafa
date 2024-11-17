@@ -27,6 +27,68 @@
 
 #define DEBUG(x)
 
+/* ------------------------ *
+ * Quality level parameters *
+ * ------------------------ */
+
+typedef struct
+{
+    gfloat min_quality;
+    gint algorithm;  /* Currently unused */
+
+    /* Number of samples to extract from the input. Samples are evenly
+     * distributed across the image. This value is advisory -- we may extract
+     * slightly more or fewer. If the samples are close together (small step
+     * size), or too many samples are below the alpha threshold, we revert
+     * to 1:1 population sampling. */
+    gint n_samples;
+
+    /* Number of high-order bits to grab from each color channel when
+     * populating the initial bins. This determines the number of bins:
+     *
+     * n_bins = 2^(bits_per_ch * 3)
+     *
+     * In order to limit cache pollution, we use u16 to store bin indexes,
+     * limiting us to 65536 bins. The upper limit for bits_per_ch is thus 5,
+     * resulting in 32768 bins. We could use an extra bit for green (i.e.
+     * RGB565), but it's probably not worth the effort, and it increases the
+     * risk of oversaturating the L2 cache, at which point we become slower
+     * than your average dog. We'd also have to respect the G_MAXUINT16
+     * sentinel (effectively limiting us to 65535 bins). */
+    gint bits_per_ch;
+}
+QualityParams;
+
+static const QualityParams quality_params [] =
+{
+    {  .0f, 0, (1 << 14),  3 },  /* -w 1 */
+    {  .1f, 0, (1 << 15),  3 },  /* -w 2 */
+    {  .2f, 0, (1 << 16),  4 },  /* -w 3 */
+    {  .3f, 0, (1 << 17),  4 },  /* -w 4 */
+    { .45f, 0, (1 << 18),  4 },  /* -w 5 */
+    {  .6f, 0, (1 << 19),  5 },  /* -w 6 */
+    {  .7f, 0, (1 << 20),  5 },  /* -w 7 */
+    {  .8f, 0, (1 << 21),  5 },  /* -w 8 */
+    { .95f, 0, (1 << 26),  5 },  /* -w 9 */
+
+    { -.1f, -1, -1, -1 }
+};
+
+static const QualityParams *
+get_quality_params (gfloat quality)
+{
+    const QualityParams *params = &quality_params [0];
+    gint i;
+
+    for (i = 0; quality_params [i].algorithm >= 0
+                && quality >= quality_params [i].min_quality; i++)
+    {
+        params = &quality_params [i];
+    }
+
+    return params;
+}
+
 /* ---------------- *
  * Color candidates *
  * ---------------- */
@@ -323,305 +385,347 @@ pick_color_fixed_fgbg (const ChafaColor *color,
     update_candidates (candidates, CHAFA_PALETTE_INDEX_BG, error);
 }
 
-/* --------------------------------- *
- * Quantization for dynamic palettes *
- * --------------------------------- */
+/* ----------------------------------- *
+ * Pairwise nearest neighbor quantizer *
+ * ----------------------------------- */
 
+/* Implementation inspired by nQuant by Mark Tyler, Dmitry Groshev and
+ * Miller Cy Chan.
+ *
+ * There's a nice description of the PNN algorithm and several fast
+ * variants in DOI:10.1117/1.1412423 and DOI:10.1117/1.1604396. */
+
+#define RED_WEIGHT_32f .299f
+#define GREEN_WEIGHT_32f .587f
+#define BLUE_WEIGHT_32f .114f
+#define RATIO .5f
+
+static const ChafaVec3f32 pnn_coeffs [3] =
+{
+    CHAFA_VEC3F32_INIT (RED_WEIGHT_32f, GREEN_WEIGHT_32f, BLUE_WEIGHT_32f),
+    CHAFA_VEC3F32_INIT (-0.14713f, -0.28886f,  0.436f),
+    CHAFA_VEC3F32_INIT (0.615f, -0.51499f, -0.10001f)
+};
+
+typedef guint16 PnnBinIndex;
+
+typedef struct
+{
+    ChafaVec3f32 accum;
+    gfloat err;
+    gfloat count;
+    PnnBinIndex nearest, next, prev, tm, mtm;
+}
+PnnBin;
+
+/* 3 <= bits_per_ch <= 8. However, we're limited to <= 5 bits elsewhere. */
 static gint
-find_dominant_channel (gconstpointer pixels, gint n_pixels)
+color_to_index (const ChafaColor *color, gint bits_per_ch)
 {
-    const guint8 *p = pixels;
-    guint8 min [4] = { G_MAXUINT8, G_MAXUINT8, G_MAXUINT8, G_MAXUINT8 };
-    guint8 max [4] = { 0, 0, 0, 0 };
-    guint16 diff [4];
-    gint best;
-    gint i;
+    guint8 mask = 0xff << (8 - bits_per_ch);
 
-    for (i = 0; i < n_pixels; i++)
+    return ((color->ch [0] & mask) << (bits_per_ch * 2 - (8 - bits_per_ch)))
+        | ((color->ch [1] & mask) << (bits_per_ch - (8 - bits_per_ch)))
+        | ((color->ch [2] & mask) >> (8 - bits_per_ch));
+}
+
+static gfloat
+quanfn (gfloat count, gint quan_rt)
+{
+    if (quan_rt > 0)
     {
-        /* This should yield branch-free code where possible */
-        min [0] = MIN (min [0], *p);
-        max [0] = MAX (max [0], *p);
-        p++;
-        min [1] = MIN (min [1], *p);
-        max [1] = MAX (max [1], *p);
-        p++;
-        min [2] = MIN (min [2], *p);
-        max [2] = MAX (max [2], *p);
-
-        /* Skip alpha */
-        p += 2;
+        if (quan_rt > 1)
+            return (gfloat) (gint) sqrtf (count);
+        return sqrtf (count);
     }
+    if (quan_rt < 0)
+        return (gfloat) (gint) cbrtf (count);
 
-#if 1
-    /* Multipliers for luminance */
-    diff [0] = (max [0] - min [0]) * 30;
-    diff [1] = (max [1] - min [1]) * 59;
-    diff [2] = (max [2] - min [2]) * 11;
-#else
-    diff [0] = (max [0] - min [0]);
-    diff [1] = (max [1] - min [1]);
-    diff [2] = (max [2] - min [2]);
-#endif
-
-    /* If there are ties, prioritize thusly: G, R, B */
-
-    best = 1;
-    if (diff [0] > diff [best])
-        best = 0;
-    if (diff [2] > diff [best])
-        best = 2;
-
-    return best;
-}
-
-static int
-compare_rgba_0 (gconstpointer a, gconstpointer b)
-{
-    const guint8 *ab = a;
-    const guint8 *bb = b;
-    gint ai = ab [0];
-    gint bi = bb [0];
-
-    return ai - bi;
-}
-
-static int
-compare_rgba_1 (gconstpointer a, gconstpointer b)
-{
-    const guint8 *ab = a;
-    const guint8 *bb = b;
-    gint ai = ab [1];
-    gint bi = bb [1];
-
-    return ai - bi;
-}
-
-static int
-compare_rgba_2 (gconstpointer a, gconstpointer b)
-{
-    const guint8 *ab = a;
-    const guint8 *bb = b;
-    gint ai = ab [2];
-    gint bi = bb [2];
-
-    return ai - bi;
-}
-
-static int
-compare_rgba_3 (gconstpointer a, gconstpointer b)
-{
-    const guint8 *ab = a;
-    const guint8 *bb = b;
-    gint ai = ab [3];
-    gint bi = bb [3];
-
-    return ai - bi;
+    return count;
 }
 
 static void
-sort_by_channel (gpointer pixels, gint n_pixels, gint ch)
+find_nearest (PnnBin *bins, PnnBinIndex index, const ChafaVec3f32 *rgb_weights)
 {
-    switch (ch)
+    PnnBin *bin1 = &bins [index];
+    gfloat err = G_MAXFLOAT;
+    PnnBinIndex nearest = 0;
+    PnnBinIndex i, j;
+
+    for (i = bin1->next; i; i = bins [i].next)
     {
-        case 0:
-            qsort (pixels, n_pixels, sizeof (guint32), compare_rgba_0);
-            break;
-        case 1:
-            qsort (pixels, n_pixels, sizeof (guint32), compare_rgba_1);
-            break;
-        case 2:
-            qsort (pixels, n_pixels, sizeof (guint32), compare_rgba_2);
-            break;
-        case 3:
-            qsort (pixels, n_pixels, sizeof (guint32), compare_rgba_3);
-            break;
-        default:
-            g_assert_not_reached ();
-    }
-}
+        gfloat bin2_count = bins [i].count;
+        gfloat nerr2 = (bin1->count * bin2_count) / (bin1->count + bin2_count);
+        gfloat nerr = .0f;
+        ChafaVec3f32 tv;
 
-#if 0
+        if (nerr2 >= err)
+            continue;
 
-static void
-average_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_out)
-{
-    guint8 *p = pixels + first_ofs * sizeof (guint32);
-    guint8 *pixels_end;
-    gint ch [3] = { 0 };
+        chafa_vec3f32_sub (&tv, &bins [i].accum, &bin1->accum);
+        chafa_vec3f32_hadamard (&tv, &tv, &tv);
+        chafa_vec3f32_hadamard (&tv, &tv, rgb_weights);
+        chafa_vec3f32_mul_scalar (&tv, &tv, nerr2 * (1 - RATIO));
+        nerr += chafa_vec3f32_sum_to_scalar (&tv);
+        if (nerr >= err)
+            continue;
 
-    pixels_end = p + n_pixels * sizeof (guint32);
-
-    for ( ; p < pixels_end; p += 4)
-    {
-        ch [0] += p [0];
-        ch [1] += p [1];
-        ch [2] += p [2];
-    }
-
-    col_out->ch [0] = (ch [0] + n_pixels / 2) / n_pixels;
-    col_out->ch [1] = (ch [1] + n_pixels / 2) / n_pixels;
-    col_out->ch [2] = (ch [2] + n_pixels / 2) / n_pixels;
-}
-
-#endif
-
-static void
-median_pixels (guint8 *pixels, gint first_ofs, gint n_pixels, ChafaColor *col_out)
-{
-    guint8 *p = pixels + (first_ofs + n_pixels / 2) * sizeof (guint32);
-    col_out->ch [0] = p [0];
-    col_out->ch [1] = p [1];
-    col_out->ch [2] = p [2];
-}
-
-static void
-average_pixels_weighted_by_deviation (guint8 *pixels, gint first_ofs, gint n_pixels,
-                                      ChafaColor *col_out)
-{
-    guint8 *p = pixels + first_ofs * sizeof (guint32);
-    guint8 *pixels_end;
-    gint ch [3] = { 0 };
-    ChafaColor median;
-    guint sum = 0;
-
-    median_pixels (pixels, first_ofs, n_pixels, &median);
-
-    pixels_end = p + n_pixels * sizeof (guint32);
-
-    for ( ; p < pixels_end; p += 4)
-    {
-        ChafaColor t;
-        guint diff;
-
-        t.ch [0] = p [0];
-        t.ch [1] = p [1];
-        t.ch [2] = p [2];
-
-        diff = chafa_color_diff_fast (&median, &t);
-        diff /= 256;
-        diff += 1;
-
-        ch [0] += p [0] * diff;
-        ch [1] += p [1] * diff;
-        ch [2] += p [2] * diff;
-
-        sum += diff;
-    }
-
-    col_out->ch [0] = (ch [0] + sum / 2) / sum;
-    col_out->ch [1] = (ch [1] + sum / 2) / sum;
-    col_out->ch [2] = (ch [2] + sum / 2) / sum;
-}
-
-static void
-pick_box_color (gpointer pixels, gint first_ofs, gint n_pixels, ChafaColor *color_out)
-{
-    average_pixels_weighted_by_deviation (pixels, first_ofs, n_pixels, color_out);
-}
-
-static void
-median_cut_once (gpointer pixels,
-                 gint first_ofs, gint n_pixels,
-                 ChafaColor *color_out)
-{
-    guint8 *p = pixels;
-    gint dominant_ch;
-
-    g_assert (n_pixels > 0);
-
-    dominant_ch = find_dominant_channel (p + first_ofs * sizeof (guint32), n_pixels);
-    sort_by_channel (p + first_ofs * sizeof (guint32), n_pixels, dominant_ch);
-
-    pick_box_color (pixels, first_ofs, n_pixels, color_out);
-}
-
-static void
-median_cut (ChafaPalette *pal, gpointer pixels,
-            gint first_ofs, gint n_pixels,
-            gint first_col, gint n_cols)
-{
-    guint8 *p = pixels;
-    gint dominant_ch;
-
-    g_assert (n_pixels > 0);
-    g_assert (n_cols > 0);
-
-    dominant_ch = find_dominant_channel (p + first_ofs * sizeof (guint32), n_pixels);
-    sort_by_channel (p + first_ofs * sizeof (guint32), n_pixels, dominant_ch);
-
-    if (n_cols == 1 || n_pixels < 2)
-    {
-        pick_box_color (pixels, first_ofs, n_pixels, &pal->colors [first_col].col [CHAFA_COLOR_SPACE_RGB]);
-        return;
-    }
-
-    median_cut (pal, pixels,
-                first_ofs,
-                n_pixels / 2,
-                first_col,
-                n_cols / 2);
-
-    median_cut (pal, pixels,
-                first_ofs + (n_pixels / 2),
-                n_pixels - (n_pixels / 2),
-                first_col + (n_cols / 2),
-                n_cols - (n_cols / 2));
-}
-
-static gint
-dominant_diff (guint8 *p1, guint8 *p2)
-{
-    gint diff [3];
-
-    diff [0] = abs (p2 [0] - (gint) p1 [0]);
-    diff [1] = abs (p2 [1] - (gint) p1 [1]);
-    diff [2] = abs (p2 [2] - (gint) p1 [2]);
-
-    return MAX (diff [0], MAX (diff [1], diff [2]));
-}
-
-static void
-diversity_pass (ChafaPalette *pal, gpointer pixels,
-                gint n_pixels,
-                gint first_col, gint n_cols)
-{
-    guint8 *p = pixels;
-    gint step = n_pixels / 128;
-    gint i, n, c;
-    guint8 done [128] = { 0 };
-
-    step = MAX (step, 1);
-
-    for (c = 0; c < n_cols; c++)
-    {
-        gint best_box = 0;
-        gint best_diff = 0;
-
-        for (i = 0, n = 0; i < 128 && i < n_pixels; i++)
+        for (j = 0; j < 3; j++)
         {
-            gint diff = dominant_diff (p + 4 * n, p + 4 * (n + step - 1));
-
-            if (diff > best_diff && !done [i])
-            {
-                best_diff = diff;
-                best_box = i;
-            }
-
-            n += step;
+            chafa_vec3f32_sub (&tv, &bins [i].accum, &bin1->accum);
+            chafa_vec3f32_hadamard (&tv, &tv, &pnn_coeffs [j]);
+            chafa_vec3f32_hadamard (&tv, &tv, &tv);
+            chafa_vec3f32_mul_scalar (&tv, &tv, nerr2 * RATIO);
+            nerr += chafa_vec3f32_sum_to_scalar (&tv);
+            if (nerr >= err)
+                break;
         }
 
-        median_cut_once (pixels, best_box * step, MAX (step / 2, 1),
-                         &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
-        c++;
-        if (c >= n_cols)
-            break;
-
-        median_cut_once (pixels, best_box * step + step / 2, MAX (step / 2, 1),
-                         &pal->colors [first_col + c].col [CHAFA_COLOR_SPACE_RGB]);
-
-        done [best_box] = 1;
+        if (nerr < err)
+        {
+            err = nerr;
+            nearest = i;
+        }
     }
+
+    bin1->err = err;
+    bin1->nearest = nearest;
+}
+
+static void
+vec3f32_add_color (ChafaVec3f32 *out, const ChafaColor *col)
+{
+    out->v [0] += col->ch [0];
+    out->v [1] += col->ch [1];
+    out->v [2] += col->ch [2];
+    /* Ignore alpha */
+}
+
+static void
+color_from_vec3f32_trunc (ChafaColor *col, const ChafaVec3f32 *v)
+{
+    col->ch [0] = v->v [0];
+    col->ch [1] = v->v [1];
+    col->ch [2] = v->v [2];
+    /* Ignore alpha */
+}
+
+static gint
+sample_to_bins (PnnBin *bins, gconstpointer pixels, size_t n_pixels, gint step,
+                gint bits_per_ch, gint alpha_threshold)
+{
+    const ChafaColor *p = (const ChafaColor *) pixels;
+    gint n_samples = 0;
+    size_t i;
+
+    for (i = 0; i < n_pixels; i += step)
+    {
+        const ChafaColor col = p [i];
+        PnnBin *tb;
+
+        if (col.ch [3] < alpha_threshold)
+            continue;
+
+        tb = &bins [color_to_index (&col, bits_per_ch)];
+        vec3f32_add_color (&tb->accum, &col);
+        tb->count += 1.0f;
+        n_samples++;
+    }
+
+    return n_samples;
+}
+
+static gint
+pnn_palette (ChafaPalette *pal, gconstpointer pixels,
+             gint n_pixels, gint n_cols,
+             gint bits_per_ch, gint sample_step,
+             gint alpha_threshold)
+{
+    ChafaVec3f32 rgb_weights =
+        CHAFA_VEC3F32_INIT (RED_WEIGHT_32f, GREEN_WEIGHT_32f, BLUE_WEIGHT_32f);
+    PnnBin *bins;
+    PnnBinIndex *heap;
+    gfloat weight = 1.0f;
+    gfloat err;
+    gint quan_rt = 1;
+    gint max_bins, n_bins;
+    gint extbins;
+    gint i, j, k;
+
+    g_assert (bits_per_ch >= 3);
+    g_assert (bits_per_ch <= 5);
+
+    max_bins = 1 << (bits_per_ch * 3);
+    bins = g_new0 (PnnBin, max_bins);
+
+    /* --- Extract samples and assign to bins --- */
+
+    if (sample_to_bins (bins, pixels, n_pixels, sample_step, bits_per_ch,
+                        alpha_threshold) < 256)
+    {
+        if (sample_step == 1)
+            return 0;
+
+        /* Too many transparent pixels. Try again at maximum density */
+        memset (bins, 0, max_bins * sizeof (PnnBin));
+        if (sample_to_bins (bins, pixels, n_pixels, 1, bits_per_ch,
+                            alpha_threshold) <= 0)
+            return 0;
+    }
+
+    /* --- Count active bins and average their colors --- */
+
+    for (i = 0, n_bins = 0; i < max_bins; i++)
+    {
+        PnnBin *tb = &bins [i];
+
+        if (bins [i].count <= .0f)
+            continue;
+
+        chafa_vec3f32_mul_scalar (&tb->accum, &tb->accum, 1.0f / tb->count);
+        bins [n_bins++] = *tb;
+    }
+
+    /* --- Set up weights and bin counts --- */
+
+    if (n_cols < 16)
+        quan_rt = -1;
+
+    weight = MIN (0.9f, n_cols * 1.0f / n_bins);
+    if (weight < .03f && rgb_weights.v [1] < 1.0f
+        && rgb_weights.v [1] >= pnn_coeffs [0].v [1])
+    {
+        chafa_vec3f32_set (&rgb_weights, 1.0f, 1.0f, 1.0f);
+        if (n_cols >= 64)
+            quan_rt = 0;
+    }
+
+    if (quan_rt > 0 && n_cols < 64)
+        quan_rt = 2;
+
+    for (j = 0; j < n_bins - 1; j++)
+    {
+        bins [j].next = j + 1;
+        bins [j + 1].prev = j;
+        bins [j].count = quanfn (bins [j].count, quan_rt);
+    }
+    bins [j].count = quanfn (bins [j].count, quan_rt);
+
+    /* --- Set up heap --- */
+
+    heap = g_new0 (PnnBinIndex, max_bins + 1);
+
+    for (i = 0; i < n_bins; i++)
+    {
+        PnnBinIndex h, l, l2;
+        gfloat err;
+
+        find_nearest (bins, i, &rgb_weights);
+        err = bins [i].err;
+
+        heap [0]++;
+        for (l = heap [0]; l > 1; l = l2)
+        {
+            l2 = l >> 1;
+            h = heap [l2];
+            if (bins [h].err <= err)
+                break;
+            heap [l] = h;
+        }
+
+        heap [l] = i;
+    }
+
+    /* --- Merge bins iteratively --- */
+
+    extbins = n_bins - n_cols;
+
+    for (i = 0; i < extbins; )
+    {
+        ChafaVec3f32 tv1;
+        PnnBin *tb;
+        PnnBin *nb;
+        gfloat n1;
+        gfloat n2;
+        gfloat d;
+        PnnBinIndex b1;
+
+        for (;;)
+        {
+            PnnBinIndex h, l, l2;
+
+            b1 = heap [1];
+            tb = &bins [b1];
+
+            if ((tb->tm >= tb->mtm) && (bins [tb->nearest].mtm <= tb->tm))
+                break;
+
+            if (tb->mtm == G_MAXUINT16)
+            {
+                b1 = heap [1] = heap [heap [0]];
+                heap [0]--;
+            }
+            else
+            {
+                find_nearest (bins, b1, &rgb_weights);
+                tb->tm = i;
+            }
+
+            err = bins [b1].err;
+
+            for (l = 1, l2 = 2; l2 <= heap [0]; l = l2, l2 = l * 2)
+            {
+                if ((l2 < heap [0]) && (bins [heap [l2]].err > bins [heap [l2 + 1]].err))
+                    l2++;
+                h = heap [l2];
+                if (err <= bins [h].err)
+                    break;
+                heap [l] = h;
+            }
+            heap [l] = b1;
+        }
+
+        tb = &bins [b1];
+        nb = &bins [tb->nearest];
+        n1 = tb->count;
+        n2 = nb->count;
+        d = 1.0f / (n1 + n2);
+
+        chafa_vec3f32_mul_scalar (&tb->accum, &tb->accum, n1);
+        chafa_vec3f32_mul_scalar (&tv1, &nb->accum, n2);
+        chafa_vec3f32_add (&tb->accum, &tb->accum, &tv1);
+        chafa_vec3f32_round (&tb->accum, &tb->accum);
+        chafa_vec3f32_mul_scalar (&tb->accum, &tb->accum, d);
+
+        tb->count += n2;
+        tb->mtm = ++i;
+
+        bins [nb->prev].next = nb->next;
+        bins [nb->next].prev = nb->prev;
+        nb->mtm = G_MAXUINT16;
+    }
+
+    /* --- Export final colors --- */
+
+    for (i = 0, k = 0; ; k++)
+    {
+        ChafaColor col = { 0 };
+
+        color_from_vec3f32_trunc (&col, &bins [i].accum);
+        col.ch [3] = 0xff;
+
+        pal->colors [k].col [CHAFA_COLOR_SPACE_RGB] = col;
+
+        i = bins [i].next;
+        if (!i)
+            break;
+    }
+
+    g_free (heap);
+    g_free (bins);
+
+    /* We may produce fewer colors than requested */
+    return k + 1;
 }
 
 static void
@@ -655,56 +759,6 @@ gen_table (ChafaPalette *palette, ChafaColorSpace color_space)
     }
 
     chafa_color_table_sort (&palette->table [color_space]);
-}
-
-#define N_SAMPLES 32768
-
-static gint
-extract_samples (gconstpointer pixels, gpointer pixels_out, gint n_pixels, gint step,
-                 gint alpha_threshold)
-{
-    const guint32 *p = pixels;
-    guint32 *p_out = pixels_out;
-    gint i;
-
-    step = MAX (step, 1);
-
-    for (i = 0; i < n_pixels; i += step)
-    {
-        gint alpha = p [i] >> 24;
-        if (alpha < alpha_threshold)
-            continue;
-        *(p_out++) = p [i];
-    }
-
-    return ((ptrdiff_t) p_out - (ptrdiff_t) pixels_out) / 4;
-}
-
-static gint
-extract_samples_dense (gconstpointer pixels, gpointer pixels_out, gint n_pixels,
-                       gint n_samples_max, gint alpha_threshold)
-{
-    const guint32 *p = pixels;
-    guint32 *p_out = pixels_out;
-    gint n_samples = 0;
-    gint i;
-
-    g_assert (n_samples_max > 0);
-
-    for (i = 0; i < n_pixels; i++)
-    {
-        gint alpha = p [i] >> 24;
-        if (alpha < alpha_threshold)
-            continue;
-
-        *(p_out++) = p [i];
-
-        n_samples++;
-        if (n_samples == n_samples_max)
-            break;
-    }
-
-    return n_samples;
 }
 
 static void
@@ -859,43 +913,38 @@ chafa_palette_copy (const ChafaPalette *src, ChafaPalette *dest)
 /* FIXME: Rowstride etc? */
 void
 chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
-                        ChafaColorSpace color_space)
+                        ChafaColorSpace color_space, gfloat quality)
 {
-    guint32 *pixels_copy;
+    const QualityParams *params;
     gint step;
-    gint copy_n_pixels;
 
     if (palette_out->type != CHAFA_PALETTE_TYPE_DYNAMIC_256)
         return;
 
-    pixels_copy = g_malloc (N_SAMPLES * sizeof (guint32));
+    /* --- Determine quality parameters --- */
 
-    step = (n_pixels / N_SAMPLES) + 1;
-    copy_n_pixels = extract_samples (pixels, pixels_copy, n_pixels, step,
-                                     palette_out->alpha_threshold);
+    if (quality < 0.0f)
+        quality = 0.5f;
+    quality = CLAMP (quality, 0.0f, 1.0f);
 
-    /* If we recovered very few (potentially zero) samples, it could be due to
-     * the image being mostly transparent. Resample at full density if so. */
-    if (copy_n_pixels < 256 && step != 1)
-        copy_n_pixels = extract_samples_dense (pixels, pixels_copy, n_pixels, N_SAMPLES,
-                                               palette_out->alpha_threshold);
+    params = get_quality_params (quality);
+    step = n_pixels / params->n_samples;
 
-    DEBUG (g_printerr ("Extracted %d samples.\n", copy_n_pixels));
+    /* If step is small, revert to dense sampling. We're going to fetch
+     * every cache line anyway, might as well make the most of it. */
+    if (step <= 4)
+        step = 1;
 
-    if (copy_n_pixels < 1)
-    {
-        palette_out->n_colors = 0;
-        goto out;
-    }
+    /* --- Generate --- */
 
-    median_cut (palette_out, pixels_copy, 0, copy_n_pixels, 0, 128);
-    palette_out->n_colors = 128;
+    palette_out->n_colors = pnn_palette (palette_out,
+                                         pixels,
+                                         n_pixels,
+                                         255,
+                                         params->bits_per_ch,
+                                         step,
+                                         palette_out->alpha_threshold);
     clean_up (palette_out);
-
-    diversity_pass (palette_out, pixels_copy, copy_n_pixels, palette_out->n_colors, 256 - palette_out->n_colors);
-    palette_out->n_colors = 256;
-    clean_up (palette_out);
-
     gen_table (palette_out, CHAFA_COLOR_SPACE_RGB);
 
     if (color_space == CHAFA_COLOR_SPACE_DIN99D)
@@ -903,9 +952,6 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_
         gen_din99d_color_space (palette_out);
         gen_table (palette_out, CHAFA_COLOR_SPACE_DIN99D);
     }
-
-out:
-    g_free (pixels_copy);
 }
 
 gint
