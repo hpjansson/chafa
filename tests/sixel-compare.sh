@@ -48,17 +48,17 @@ DIMENSIONS=$(magick identify -ping -format '%wx%h' "$PREPARED_FILE")
 # --- Run the converters --- #
 
 MAGICK_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $MAGICK_CMD convert "$PREPARED_FILE" sixel:- \
+    $MAGICK_CMD convert +dither "$PREPARED_FILE" sixel:- \
     2>&1 >"$MAGICK_SIX_FILE")
 magick convert "$MAGICK_SIX_FILE" "$MAGICK_SIXPNG_FILE"
 
 IMG2SIXEL_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $IMG2SIXEL_CMD -d none "$PREPARED_FILE" \
+    $IMG2SIXEL_CMD -q full -d none "$PREPARED_FILE" \
     2>&1 >"$IMG2SIXEL_SIX_FILE")
 magick convert "$IMG2SIXEL_SIX_FILE" "$IMG2SIXEL_SIXPNG_FILE"
 
 IMG2SIXEL_HIGH_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $IMG2SIXEL_CMD -d none -I "$PREPARED_FILE" \
+    $IMG2SIXEL_CMD -q full -d none -I "$PREPARED_FILE" \
     2>&1 >"$IMG2SIXEL_HIGH_SIX_FILE")
 magick convert "$IMG2SIXEL_HIGH_SIX_FILE" "$IMG2SIXEL_HIGH_SIXPNG_FILE"
 
