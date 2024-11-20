@@ -550,7 +550,7 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
     gint quan_rt = 1;
     gint max_bins, n_bins;
     gint extbins;
-    gint i, j, k;
+    gint i, j, k = -1;
 
     g_assert (bits_per_ch >= 3);
     g_assert (bits_per_ch <= 5);
@@ -563,14 +563,11 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
     if (sample_to_bins (bins, pixels, n_pixels, sample_step, bits_per_ch,
                         alpha_threshold) < 256)
     {
-        if (sample_step == 1)
-            return 0;
-
         /* Too many transparent pixels. Try again at maximum density */
         memset (bins, 0, max_bins * sizeof (PnnBin));
         if (sample_to_bins (bins, pixels, n_pixels, 1, bits_per_ch,
                             alpha_threshold) <= 0)
-            return 0;
+            goto out;
     }
 
     /* --- Count active bins and average their colors --- */
@@ -721,6 +718,7 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
             break;
     }
 
+out:
     g_free (heap);
     g_free (bins);
 
