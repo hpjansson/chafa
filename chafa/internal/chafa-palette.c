@@ -543,8 +543,8 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
 {
     ChafaVec3f32 rgb_weights =
         CHAFA_VEC3F32_INIT (RED_WEIGHT_32f, GREEN_WEIGHT_32f, BLUE_WEIGHT_32f);
-    PnnBin *bins;
-    PnnBinIndex *heap;
+    PnnBin *bins = NULL;
+    PnnBinIndex *heap = NULL;
     gfloat weight = 1.0f;
     gfloat err;
     gint quan_rt = 1;
