@@ -11,6 +11,8 @@ chafa_SOURCES = \
 	font-loader.h \
 	gif-loader.c \
 	gif-loader.h \
+	grid-layout.c \
+	grid-layout.h \
 	media-loader.c \
 	media-loader.h \
 	placement-counter.c \

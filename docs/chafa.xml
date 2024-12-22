@@ -182,6 +182,17 @@ fraction. Defaults to 1/2. This will only be applied in symbol mode.
 </varlistentry>
 
 <varlistentry>
+<term><option>--grid <replaceable>cols</replaceable>x<replaceable>rows</replaceable></option></term>
+<listitem><para>
+Lay out images in a grid of <replaceable>cols</replaceable> columns and
+<replaceable>rows</replaceable> rows per screenful. Either
+<replaceable>cols</replaceable> or <replaceable>rows</replaceable> may be
+omitted, e.g. --grid 4 or --grid x4, in which case cell allocations
+will be approximately square.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--margin-bottom <replaceable>num</replaceable></option></term>
 <listitem><para>
 When terminal size is detected, reserve at least this many rows at the bottom

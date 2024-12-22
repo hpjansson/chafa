@@ -42,6 +42,7 @@
 
 #include <chafa.h>
 #include "font-loader.h"
+#include "grid-layout.h"
 #include "media-loader.h"
 #include "named-colors.h"
 #include "placement-counter.h"
@@ -115,6 +116,7 @@ typedef struct
     gint view_width, view_height;
     gint width, height;
     gint cell_width, cell_height;
+    gint grid_width, grid_height;
     gint margin_bottom, margin_right;
     gdouble scale;
     gdouble font_ratio;
@@ -439,6 +441,8 @@ print_summary (void)
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
+    "      --grid=CxR     Lay out images in a grid of C columns and R rows per\n"
+    "                     screenful. Either C or R may be omitted, e.g. --grid 4.\n"
     "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
     "                     rows at the bottom as a safety margin. Can be used to\n"
     "                     prevent images from scrolling out. Defaults to 1.\n"
@@ -1208,6 +1212,41 @@ parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
 
     options.width = width;
     options.height = height;
+
+    return result;
+}
+
+static gboolean
+parse_grid_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+    gint width, height;
+
+    parse_2d_size (value, &width, &height);
+
+    if (width < 0 && height < 0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Grid size must be specified as [width]x[height], [width]x or x[height], e.g 4x4, 4x or x4.");
+        result = FALSE;
+    }
+    else if (width == 0 || height == 0)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Grid size must be at least 1x1.");
+        result = FALSE;
+    }
+    else if (width < 0)
+    {
+        width = height;
+    }
+    else if (height < 0)
+    {
+        height = width;
+    }
+
+    options.grid_width = width;
+    options.grid_height = height;
 
     return result;
 }
@@ -2049,6 +2088,7 @@ parse_options (int *argc, char **argv [])
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
         { "fuzz-options", '\0', 0, G_OPTION_ARG_NONE,    &options.fuzz_options, "Fuzz the options", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
+        { "grid",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_grid_arg,        "Grid", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "margin-bottom", '\0', 0, G_OPTION_ARG_INT,    &options.margin_bottom,  "Bottom margin", NULL },
         { "margin-right", '\0', 0, G_OPTION_ARG_INT,     &options.margin_right,  "Right margin", NULL },
@@ -2112,6 +2152,8 @@ parse_options (int *argc, char **argv [])
     options.view_height = -1;  /* Unset */
     options.width = -1;  /* Unset */
     options.height = -1;  /* Unset */
+    options.grid_width = -1;  /* Unset */
+    options.grid_height = -1;  /* Unset */
     options.fit_to_width = FALSE;
     options.font_ratio = -1.0;  /* Unset */
     options.margin_bottom = -1;  /* Unset */
@@ -3218,6 +3260,50 @@ run_all (GList *filenames)
     return (n_processed - n_failed < 1) ? 2 : (n_failed > 0) ? 1 : 0;
 }
 
+static gint
+run_grid (GList *filenames)
+{
+    ChafaCanvasConfig *canvas_config;
+    GridLayout *grid_layout;
+    gint n_processed = 0;
+    gint n_failed = 0;
+    GList *l;
+    gchar *out_chunk;
+
+    /* This can only happen with --help and --version, so no error */
+    if (!filenames)
+        return 0;
+
+    tty_options_init ();
+
+    canvas_config = build_config (options.width, options.height, FALSE);
+
+    grid_layout = grid_layout_new ();
+    grid_layout_set_view_size (grid_layout, options.width, options.height);
+    grid_layout_set_grid_size (grid_layout, options.grid_width, options.grid_height);
+    grid_layout_set_canvas_config (grid_layout, canvas_config);
+    grid_layout_set_term_info (grid_layout, options.term_info);
+
+    for (l = filenames; l; l = g_list_next (l))
+    {
+        grid_layout_push_path (grid_layout, l->data);
+        n_processed++;
+    }
+
+    while (!interrupted_by_user
+           && (out_chunk = grid_layout_format_next_chunk (grid_layout)))
+    {
+        write_to_stdout (out_chunk, strlen (out_chunk));
+        g_free (out_chunk);
+    }
+
+    chafa_canvas_config_unref (canvas_config);
+    grid_layout_destroy (grid_layout);
+
+    tty_options_deinit ();
+    return n_processed;
+}
+
 static void
 proc_init (void)
 {
@@ -3255,9 +3341,12 @@ main (int argc, char *argv [])
     if (!parse_options (&argc, &argv))
         exit (2);
 
-    ret = options.watch
-        ? run_watch (options.args->data)
-        : run_all (options.args);
+    if (options.grid_width > 1 || options.grid_height > 1)
+        ret = run_grid (options.args);
+    else if (options.watch)
+        ret = run_watch (options.args->data);
+    else
+        ret = run_all (options.args);
 
     retire_passthrough_workarounds_tmux ();
 
