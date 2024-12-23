@@ -41,17 +41,48 @@ update_geometry (GridLayout *grid)
     gint view_width, view_height;
     gint n_cols, n_rows;
     gint item_width, item_height;
+    gint cell_width_px, cell_height_px;
+    gint font_ratio;
+
+    if (!grid->canvas_config)
+        return;
+
+    chafa_canvas_config_get_cell_geometry (grid->canvas_config, &cell_width_px, &cell_height_px);
+    if (cell_width_px < 1 || cell_height_px < 1)
+    {
+        cell_width_px = 10;
+        cell_height_px = 20;
+    }
 
     view_width = MAX (grid->view_width, 1);
     view_height = MAX (grid->view_height, 1);
-    n_cols = MAX (grid->n_cols, 1);
-    n_rows = MAX (grid->n_rows, 1);
+    n_cols = grid->n_cols;
+    n_rows = grid->n_rows;
 
-    item_width = MAX (view_width / n_cols - 1, 1);
-    item_height = MAX (view_height / n_rows - 1, 1);
+    if (n_cols < 1 && n_rows < 1)
+        n_cols = n_rows = 1;
 
-    if (grid->canvas_config)
-        chafa_canvas_config_set_geometry (grid->canvas_config, item_width, item_height);
+    /* If one dimension is not provided, make square tiles */
+
+    if (n_cols < 1)
+    {
+        item_height = view_height / n_rows - 1;
+        item_width = (item_height * cell_height_px) / cell_width_px;
+    }
+    else if (n_rows < 1)
+    {
+        item_width = view_width / n_cols - 1;
+        item_height = (item_width * cell_width_px) / cell_height_px;
+    }
+    else
+    {
+        item_width = view_width / n_cols - 1;
+        item_height = view_height / n_rows - 1;
+    }
+
+    item_width = MAX (item_width, 1);
+    item_height = MAX (item_height, 1);
+    chafa_canvas_config_set_geometry (grid->canvas_config, item_width, item_height);
 }
 
 static ChafaCanvas *

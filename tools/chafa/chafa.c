@@ -1238,11 +1238,11 @@ parse_grid_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
     }
     else if (width < 0)
     {
-        width = height;
+        width = -1;
     }
     else if (height < 0)
     {
-        height = width;
+        height = -1;
     }
 
     options.grid_width = width;
@@ -3276,7 +3276,8 @@ run_grid (GList *filenames)
 
     tty_options_init ();
 
-    canvas_config = build_config (options.width, options.height, FALSE);
+    /* The prototype canvas' size isn't used for anything; set it to a legal value */
+    canvas_config = build_config (1, 1, FALSE);
 
     grid_layout = grid_layout_new ();
     grid_layout_set_view_size (grid_layout, options.width, options.height);
