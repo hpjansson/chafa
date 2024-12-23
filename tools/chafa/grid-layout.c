@@ -30,6 +30,7 @@ struct GridLayout
     gint n_cols, n_rows;
     ChafaCanvasConfig *canvas_config;
     ChafaTermInfo *term_info;
+    ChafaTuck tuck;
     GList *paths, *next_path;
     gint n_items;
     guint finished_push : 1;
@@ -147,7 +148,7 @@ format_item (GridLayout *grid, const gchar *path, GString ***gsa)
     canvas = build_canvas (pixel_type, pixels,
                            src_width, src_height, src_rowstride, grid->canvas_config,
                            -1,
-                           CHAFA_TUCK_FIT);
+                           grid->tuck);
     chafa_canvas_print_rows (canvas, grid->term_info, gsa, NULL);
     success = TRUE;
 
@@ -341,6 +342,7 @@ grid_layout_new (void)
     GridLayout *grid;
 
     grid = g_new0 (GridLayout, 1);
+    grid->tuck = CHAFA_TUCK_FIT;
     return grid;
 }
 
@@ -401,6 +403,14 @@ grid_layout_set_grid_size (GridLayout *grid, gint n_cols, gint n_rows)
     grid->n_rows = n_rows;
 
     update_geometry (grid);
+}
+
+void
+grid_layout_set_tuck (GridLayout *grid, ChafaTuck tuck)
+{
+    g_return_if_fail (grid != NULL);
+
+    grid->tuck = tuck;
 }
 
 void

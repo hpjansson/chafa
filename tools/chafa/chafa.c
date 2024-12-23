@@ -3284,6 +3284,7 @@ run_grid (GList *filenames)
     grid_layout_set_grid_size (grid_layout, options.grid_width, options.grid_height);
     grid_layout_set_canvas_config (grid_layout, canvas_config);
     grid_layout_set_term_info (grid_layout, options.term_info);
+    grid_layout_set_tuck (grid_layout, options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT);
 
     for (l = filenames; l; l = g_list_next (l))
     {
