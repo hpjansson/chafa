@@ -34,9 +34,6 @@
 # include <signal.h>  /* sigaction */
 #endif
 #include <stdlib.h>  /* exit */
-#ifdef HAVE_TERMIOS_H
-# include <termios.h>  /* tcgetattr, tcsetattr */
-#endif
 
 #include <glib/gstdio.h>
 
@@ -173,10 +170,6 @@ static gboolean using_detected_size = FALSE;
 static volatile sig_atomic_t interrupted_by_user = FALSE;
 
 static PlacementCounter *placement_counter;
-
-#ifdef HAVE_TERMIOS_H
-static struct termios saved_termios;
-#endif
 
 #ifdef G_OS_WIN32
 static UINT saved_console_output_cp;
@@ -1798,17 +1791,11 @@ tty_options_init (void)
         gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
         gchar *p0;
 
-#ifdef HAVE_TERMIOS_H
         if (options.is_interactive)
         {
-            struct termios t;
-
-            tcgetattr (STDIN_FILENO, &saved_termios);
-            t = saved_termios;
-            t.c_lflag &= ~ECHO;
-            tcsetattr (STDIN_FILENO, TCSANOW, &t);
+            p0 = chafa_term_info_emit_disable_echo (options.term_info, buf);
+            write_to_stdout (buf, p0 - buf);
         }
-#endif
 
         if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
         {
@@ -1846,12 +1833,14 @@ tty_options_deinit (void)
             write_to_stdout (buf, p0 - buf);
         }
 
-#ifdef HAVE_TERMIOS_H
         if (options.is_interactive)
         {
-            tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
+            gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
+            gchar *p0;
+
+            p0 = chafa_term_info_emit_enable_echo (options.term_info, buf);
+            write_to_stdout (buf, p0 - buf);
         }
-#endif
     }
 }
 
