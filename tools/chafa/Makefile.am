@@ -5,6 +5,12 @@ bin_PROGRAMS = \
 
 chafa_SOURCES = \
 	chafa.c \
+	chafa-byte-fifo.c \
+	chafa-byte-fifo.h \
+	chafa-parser.c \
+	chafa-parser.h \
+	chafa-term.c \
+	chafa-term.h \
 	file-mapping.c \
 	file-mapping.h \
 	font-loader.c \
