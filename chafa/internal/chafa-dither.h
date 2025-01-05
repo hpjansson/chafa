@@ -31,9 +31,9 @@ typedef struct
     gint grain_width_shift;
     gint grain_height_shift;
 
-    gint bayer_size_shift;
-    guint bayer_size_mask;
-    gint *bayer_matrix;
+    gint texture_size_shift;
+    guint texture_size_mask;
+    gint *texture_data;
 }
 ChafaDither;
 
@@ -43,7 +43,7 @@ void chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
 void chafa_dither_deinit (ChafaDither *dither);
 void chafa_dither_copy (const ChafaDither *src, ChafaDither *dest);
 
-ChafaColor chafa_dither_color_ordered (const ChafaDither *dither, ChafaColor color, gint x, gint y);
+ChafaColor chafa_dither_color (const ChafaDither *dither, ChafaColor color, gint x, gint y);
 
 G_END_DECLS
 

@@ -293,7 +293,7 @@ convert_rgb_to_din99d (ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
 }
 
 static void
-bayer_dither (const ChafaDither *dither, ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
+simple_dither (const ChafaDither *dither, ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = pixels + dest_y * width;
     ChafaPixel *pixel_max = pixel + n_rows * width;
@@ -303,7 +303,7 @@ bayer_dither (const ChafaDither *dither, ChafaPixel *pixels, gint width, gint de
     {
         for (x = 0; x < width; x++)
         {
-            pixel->col = chafa_dither_color_ordered (dither, pixel->col, x, y);
+            pixel->col = chafa_dither_color (dither, pixel->col, x, y);
             pixel++;
         }
     }
@@ -413,8 +413,8 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
 }
 
 static void
-bayer_and_convert_rgb_to_din99d (const ChafaDither *dither,
-                                 ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
+dither_and_convert_rgb_to_din99d (const ChafaDither *dither,
+                                  ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = pixels + dest_y * width;
     ChafaPixel *pixel_max = pixel + n_rows * width;
@@ -424,7 +424,7 @@ bayer_and_convert_rgb_to_din99d (const ChafaDither *dither,
     {
         for (x = 0; x < width; x++)
         {
-            pixel->col = chafa_dither_color_ordered (dither, pixel->col, x, y);
+            pixel->col = chafa_dither_color (dither, pixel->col, x, y);
             chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
             pixel++;
         }
@@ -643,13 +643,14 @@ prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
 
     if (prep_ctx->color_space == CHAFA_COLOR_SPACE_DIN99D)
     {
-        if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_ORDERED)
+        if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_ORDERED
+            || prep_ctx->dither->mode == CHAFA_DITHER_MODE_NOISE)
         {
-            bayer_and_convert_rgb_to_din99d (prep_ctx->dither,
-                                             prep_ctx->dest_pixels,
-                                             prep_ctx->dest_width,
-                                             batch->first_row,
-                                             batch->n_rows);
+            dither_and_convert_rgb_to_din99d (prep_ctx->dither,
+                                              prep_ctx->dest_pixels,
+                                              prep_ctx->dest_width,
+                                              batch->first_row,
+                                              batch->n_rows);
         }
         else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_DIFFUSION)
         {
@@ -668,13 +669,14 @@ prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
                                    batch->n_rows);
         }
     }
-    else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_ORDERED)
+    else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_ORDERED
+             || prep_ctx->dither->mode == CHAFA_DITHER_MODE_NOISE)
     {
-        bayer_dither (prep_ctx->dither,
-                      prep_ctx->dest_pixels,
-                      prep_ctx->dest_width,
-                      batch->first_row,
-                      batch->n_rows);
+        simple_dither (prep_ctx->dither,
+                       prep_ctx->dest_pixels,
+                       prep_ctx->dest_width,
+                       batch->first_row,
+                       batch->n_rows);
     }
     else if (prep_ctx->dither->mode == CHAFA_DITHER_MODE_DIFFUSION)
     {

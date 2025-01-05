@@ -26,9 +26,10 @@
 #include "internal/chafa-dither.h"
 #include "internal/chafa-private.h"
 
-#define BAYER_MATRIX_DIM_SHIFT 4
-#define BAYER_MATRIX_DIM (1 << (BAYER_MATRIX_DIM_SHIFT))
-#define BAYER_MATRIX_SIZE ((BAYER_MATRIX_DIM) * (BAYER_MATRIX_DIM))
+#define TEXTURE_DIM_SHIFT 4
+#define TEXTURE_DIM (1 << (TEXTURE_DIM_SHIFT))
+#define TEXTURE_SIZE ((TEXTURE_DIM) * (TEXTURE_DIM))
+#define TEXTURE_NOISE_N_CHANNELS 3
 
 static gint
 calc_grain_shift (gint size)
@@ -61,12 +62,18 @@ chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
     dither->intensity = intensity;
     dither->grain_width_shift = calc_grain_shift (grain_width);
     dither->grain_height_shift = calc_grain_shift (grain_height);
-    dither->bayer_size_shift = BAYER_MATRIX_DIM_SHIFT;
-    dither->bayer_size_mask = BAYER_MATRIX_DIM - 1;
 
     if (mode == CHAFA_DITHER_MODE_ORDERED)
     {
-        dither->bayer_matrix = chafa_gen_bayer_matrix (BAYER_MATRIX_DIM, intensity);
+        dither->texture_size_shift = TEXTURE_DIM_SHIFT;
+        dither->texture_size_mask = TEXTURE_DIM - 1;
+        dither->texture_data = chafa_gen_bayer_matrix (TEXTURE_DIM, intensity);
+    }
+    else if (mode == CHAFA_DITHER_MODE_NOISE)
+    {
+        dither->texture_size_shift = 6;
+        dither->texture_size_mask = (1 << 6) - 1;
+        dither->texture_data = chafa_gen_noise_matrix (dither->intensity * 0.1);
     }
     else if (mode == CHAFA_DITHER_MODE_DIFFUSION)
     {
@@ -77,34 +84,60 @@ chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
 void
 chafa_dither_deinit (ChafaDither *dither)
 {
-    g_free (dither->bayer_matrix);
-    dither->bayer_matrix = NULL;
+    g_free (dither->texture_data);
+    dither->texture_data = NULL;
 }
 
 void
 chafa_dither_copy (const ChafaDither *src, ChafaDither *dest)
 {
     memcpy (dest, src, sizeof (*dest));
-    if (dest->bayer_matrix)
-        dest->bayer_matrix = g_memdup (src->bayer_matrix, BAYER_MATRIX_SIZE * sizeof (gint));
+    if (dest->texture_data)
+    {
+        if (dest->mode == CHAFA_DITHER_MODE_NOISE)
+            dest->texture_data = g_memdup (src->texture_data,
+                64 * 64 * TEXTURE_NOISE_N_CHANNELS * sizeof (gint));
+        else
+            dest->texture_data = g_memdup (src->texture_data, TEXTURE_SIZE * sizeof (gint));
+    }
 }
 
 ChafaColor
-chafa_dither_color_ordered (const ChafaDither *dither, ChafaColor color, gint x, gint y)
+chafa_dither_color (const ChafaDither *dither, ChafaColor color, gint x, gint y)
 {
-    gint bayer_index = (((y >> dither->grain_height_shift) & dither->bayer_size_mask)
-                        << dither->bayer_size_shift)
-                       + ((x >> dither->grain_width_shift) & dither->bayer_size_mask);
-    gint16 bayer_mod = dither->bayer_matrix [bayer_index];
+    gint texture_index = (((y >> dither->grain_height_shift) & dither->texture_size_mask)
+                          << dither->texture_size_shift)
+        + ((x >> dither->grain_width_shift) & dither->texture_size_mask);
     gint i;
 
-    for (i = 0; i < 3; i++)
+    if (dither->mode == CHAFA_DITHER_MODE_ORDERED)
     {
-        gint16 c;
+        gint16 texture_mod = dither->texture_data [texture_index];
 
-        c = (gint16) color.ch [i] + bayer_mod;
-        c = CLAMP (c, 0, 255);
-        color.ch [i] = c;
+        for (i = 0; i < 3; i++)
+        {
+            gint16 c;
+
+            c = (gint16) color.ch [i] + texture_mod;
+            c = CLAMP (c, 0, 255);
+            color.ch [i] = c;
+        }
+    }
+    else if (dither->mode == CHAFA_DITHER_MODE_NOISE)
+    {
+        for (i = 0; i < 3; i++)
+        {
+            gint16 texture_mod = dither->texture_data [texture_index * TEXTURE_NOISE_N_CHANNELS + i];
+            gint16 c;
+
+            c = (gint16) color.ch [i] + texture_mod;
+            c = CLAMP (c, 0, 255);
+            color.ch [i] = c;
+        }
+    }
+    else
+    {
+        g_assert_not_reached ();
     }
 
     return color;

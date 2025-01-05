@@ -156,6 +156,7 @@ ChafaColorSpace;
  * @CHAFA_DITHER_MODE_NONE: No dithering.
  * @CHAFA_DITHER_MODE_ORDERED: Ordered dithering (Bayer or similar).
  * @CHAFA_DITHER_MODE_DIFFUSION: Error diffusion dithering (Floyd-Steinberg or similar).
+ * @CHAFA_DITHER_MODE_NOISE: Noise pattern dithering (blue noise or similar).
  * @CHAFA_DITHER_MODE_MAX: Last supported dither mode plus one.
  **/
 
@@ -164,6 +165,7 @@ typedef enum
     CHAFA_DITHER_MODE_NONE,
     CHAFA_DITHER_MODE_ORDERED,
     CHAFA_DITHER_MODE_DIFFUSION,
+    CHAFA_DITHER_MODE_NOISE,
 
     CHAFA_DITHER_MODE_MAX
 }

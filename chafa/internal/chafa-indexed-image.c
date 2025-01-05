@@ -174,8 +174,8 @@ draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 }
 
 static void
-draw_pixels_pass_2_bayer (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
-                          ChafaColorHash *chash)
+draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
+                           ChafaColorHash *chash)
 {
     const guint32 *src_p;
     guint8 *dest_p, *dest_end_p;
@@ -194,7 +194,7 @@ draw_pixels_pass_2_bayer (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
         gint index;
 
         col = chafa_color8_fetch_from_rgba8 (src_p);
-        col = chafa_dither_color_ordered (&ctx->indexed_image->dither, col, x, y);
+        col = chafa_dither_color (&ctx->indexed_image->dither, col, x, y);
         index = quantize_pixel (&ctx->indexed_image->palette, ctx->color_space, chash, col);
         *dest_p = index;
 
@@ -354,7 +354,8 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
             break;
 
         case CHAFA_DITHER_MODE_ORDERED:
-            draw_pixels_pass_2_bayer (batch, ctx, &chash);
+        case CHAFA_DITHER_MODE_NOISE:
+            draw_pixels_pass_2_dither (batch, ctx, &chash);
             break;
 
         case CHAFA_DITHER_MODE_DIFFUSION:

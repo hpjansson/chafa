@@ -84,6 +84,7 @@ typedef struct
 
     GList *args;
     ChafaCanvasMode mode;
+    gboolean dither_mode_set;
     ChafaColorExtractor color_extractor;
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
@@ -477,7 +478,8 @@ print_summary (void)
     "      --color-space=CS  Color space used for quantization; one of [rgb, din99d].\n"
     "                     Defaults to rgb, which is faster but less accurate.\n"
     "      --dither=DITHER  Set output dither mode; one of [none, ordered,\n"
-    "                     diffusion]. No effect with 24-bit color. Defaults to none.\n"
+    "                     diffusion, noise]. No effect with 24-bit color. Defaults to\n"
+    "                     noise for sixels, none otherwise.\n"
     "      --dither-grain=WxH  Set dimensions of dither grains in 1/8ths of a\n"
     "                     character cell [1, 2, 4, 8]. Defaults to 4x4.\n"
     "      --dither-intensity=NUM  Multiplier for dither intensity [0.0 - inf].\n"
@@ -604,6 +606,7 @@ fuzz_options_with_seed (GlobalOptions *opt, gconstpointer seed, gint seed_len)
     opt->color_extractor = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_COLOR_EXTRACTOR_MAX);
     opt->color_space = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_COLOR_SPACE_MAX);
     opt->dither_mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_DITHER_MODE_MAX);
+    opt->dither_mode_set = TRUE;
     opt->pixel_mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_PIXEL_MODE_MAX);
     opt->dither_grain_width = 1 << (fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 4));
     opt->dither_grain_height = 1 << (fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 4));
@@ -802,13 +805,16 @@ parse_dither_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     else if (!g_ascii_strcasecmp (value, "diffusion")
              || !g_ascii_strcasecmp (value, "fs"))
         options.dither_mode = CHAFA_DITHER_MODE_DIFFUSION;
+    else if (!g_ascii_strcasecmp (value, "noise"))
+        options.dither_mode = CHAFA_DITHER_MODE_NOISE;
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Dither must be one of [none, ordered, diffusion].");
+                     "Dither must be one of [none, ordered, diffusion, noise].");
         result = FALSE;
     }
 
+    options.dither_mode_set = TRUE;
     return result;
 }
 
@@ -2350,6 +2356,12 @@ parse_options (int *argc, char **argv [])
             options.dither_grain_height = 1;
         if (options.scale <= 0.0)
             options.scale = 1.0;
+    }
+
+    if (options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+    {
+        if (!options.dither_mode_set)
+            options.dither_mode = CHAFA_DITHER_MODE_NOISE;
     }
 
     /* Apply detected passthrough if auto */

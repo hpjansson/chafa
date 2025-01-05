@@ -345,8 +345,9 @@ which is faster but less accurate.
 <term><option>--dither <replaceable>type</replaceable></option></term>
 <listitem><para>
 Type of dithering to apply during quantization. One of [none, ordered,
-diffusion]. "Bayer" is a synonym for "ordered", and "fs" (Floyd-Steinberg) is
-a synonym for "diffusion".
+diffusion, noise]. "Bayer" is a synonym for "ordered", and "fs" (Floyd-Steinberg)
+is a synonym for "diffusion". Defaults to "noise" in sixel mode, otherwise
+"none".
 </para></listitem>
 </varlistentry>
 
