@@ -83,47 +83,47 @@ IMG2SIXEL_HIGH_RES=$($TIME_CMD -f "%U %e %M" -- \
 magick convert "$IMG2SIXEL_HIGH_SIX_FILE" "$IMG2SIXEL_HIGH_SIXPNG_FILE"
 
 CHAFA_W1_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 1 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 1 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W1_SIX_FILE")
 magick convert "$CHAFA_W1_SIX_FILE" "$CHAFA_W1_SIXPNG_FILE"
 
 CHAFA_W2_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 2 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 2 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W2_SIX_FILE")
 magick convert "$CHAFA_W2_SIX_FILE" "$CHAFA_W2_SIXPNG_FILE"
 
 CHAFA_W3_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 3 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 3 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W3_SIX_FILE")
 magick convert "$CHAFA_W3_SIX_FILE" "$CHAFA_W3_SIXPNG_FILE"
 
 CHAFA_W4_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 4 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 4 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W4_SIX_FILE")
 magick convert "$CHAFA_W4_SIX_FILE" "$CHAFA_W4_SIXPNG_FILE"
 
 CHAFA_W5_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 5 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 5 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W5_SIX_FILE")
 magick convert "$CHAFA_W5_SIX_FILE" "$CHAFA_W5_SIXPNG_FILE"
 
 CHAFA_W6_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 6 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 6 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W6_SIX_FILE")
 magick convert "$CHAFA_W6_SIX_FILE" "$CHAFA_W6_SIXPNG_FILE"
 
 CHAFA_W7_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 7 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 7 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W7_SIX_FILE")
 magick convert "$CHAFA_W7_SIX_FILE" "$CHAFA_W7_SIXPNG_FILE"
 
 CHAFA_W8_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 8 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 8 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W8_SIX_FILE")
 magick convert "$CHAFA_W8_SIX_FILE" "$CHAFA_W8_SIXPNG_FILE"
 
 CHAFA_W9_RES=$($TIME_CMD -f "%U %e %M" -- \
-    $CHAFA_CMD -w 9 -f sixel --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
+    $CHAFA_CMD -w 9 -f sixel --dither none --view-size 9999x9999 --exact-size on "$PREPARED_FILE" \
     2>&1 >"$CHAFA_W9_SIX_FILE")
 magick convert "$CHAFA_W9_SIX_FILE" "$CHAFA_W9_SIXPNG_FILE"
 
