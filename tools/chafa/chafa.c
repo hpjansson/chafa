@@ -1811,7 +1811,7 @@ tty_options_init (void)
 
             tcgetattr (STDIN_FILENO, &saved_termios);
             t = saved_termios;
-            t.c_lflag &= ~ECHO;
+            t.c_lflag &= ~(ECHO | ICANON);
             tcsetattr (STDIN_FILENO, TCSANOW, &t);
         }
 #endif
