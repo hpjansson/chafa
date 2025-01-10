@@ -43,6 +43,12 @@ void chafa_sort_pixel_index_by_channel (guint8 *index,
                                         const ChafaPixel *pixels, gint n_pixels,
                                         gint ch);
 
+/* Assumes a8b8c8d8 data; 32 bits per pixel */
+void chafa_gaussian_blur (const void *src, gint src_rowstride,
+                          void *dest, gint dest_rowstride,
+                          gint width, gint height,
+                          gfloat radius);
+
 G_END_DECLS
 
 #endif /* __CHAFA_PIXOPS_H__ */

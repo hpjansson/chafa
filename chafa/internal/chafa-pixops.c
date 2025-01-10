@@ -818,3 +818,238 @@ chafa_sort_pixel_index_by_channel (guint8 *index, const ChafaPixel *pixels, gint
             index [k++] = buckets [i] [j];
     }
 }
+
+/* ------------- *
+ * Gaussian blur *
+ * ------------- */
+
+/* The algorithm used here is a box blur approximation based on an article
+ * by Ivan Kutskir, which can be found at https://blog.ivank.net/fastest-gaussian-blur.html .
+ *
+ * The reference code is MIT-licensed. I've rewritten it in C with integer
+ * arithmetics and SWAR. */
+
+static guint64
+unpack_u32_to_u64 (guint32 u32)
+{
+    guint32 u32a = u32 & 0xff00ff00;
+    guint32 u32b = u32 & 0x00ff00ff;
+
+    return (((guint64) u32a) << 24) | u32b;
+}
+
+static guint32
+pack_u64_to_u32 (guint64 u64)
+{
+    return (((guint32) (u64 >> 24)) & 0xff00ff00)
+        | (((guint32) u64) & 0x00ff00ff);
+}
+
+static void
+copy_rows (const void *src, gint src_rowstride,
+           void *dest, gint dest_rowstride,
+           gint rowlen,
+           gint n_rows)
+{
+    const guint8 *src_u8 = src;
+    guint8 *dest_u8 = dest;
+    gint i;
+
+    for (i = 0; i < n_rows; i++)
+    {
+        memcpy (dest_u8, src_u8, rowlen);
+        src_u8 += src_rowstride;
+        dest_u8 += dest_rowstride;
+    }
+}
+
+static void
+box_blur_h (const void *src, gint src_rowstride,
+            void *dest, gint dest_rowstride,
+            gint width, gint height,
+            gint radius)
+{
+    const guint32 *src_u32 = src;
+    guint32 *dest_u32 = dest;
+    gint src_rowstride_u32, dest_rowstride_u32;
+    guint16 iarr = (1 << 8) / (radius + radius + 1);
+    gint i, j;
+
+    g_assert (src_rowstride % 4 == 0);
+    g_assert (dest_rowstride % 4 == 0);
+
+    src_rowstride_u32 = src_rowstride / 4;
+    dest_rowstride_u32 = dest_rowstride / 4;
+
+    for (i = 0; i < height; i++)
+    {
+        gint si = i * src_rowstride_u32;
+        gint ti = i * dest_rowstride_u32, li = si, ri = si + radius;
+        guint64 fv = unpack_u32_to_u64 (src_u32 [si]);
+        guint64 lv = unpack_u32_to_u64 (src_u32 [si + width - 1]);
+        guint64 val = fv * (radius + 1);
+
+        for (j = 0; j < radius; j++)
+        {
+            val += unpack_u32_to_u64 (src_u32 [si + j]);
+        }
+
+        for (j = 0; j <= radius; j++)
+        {
+            val += unpack_u32_to_u64 (src_u32 [ri]);
+            val -= fv;
+            dest_u32 [ti] = pack_u64_to_u32 ((val * iarr + 0x007f007f007f007f) >> 8);
+            ri++;
+            ti++;
+        }
+
+        for (j = radius + 1; j < width - radius; j++)
+        {
+            val += unpack_u32_to_u64 (src_u32 [ri]);
+            val -= unpack_u32_to_u64 (src_u32 [li]);
+            dest_u32 [ti] = pack_u64_to_u32 ((val * iarr + 0x007f007f007f007f) >> 8);
+            li++;
+            ri++;
+            ti++;
+        }
+
+        for (j = width - radius; j < width; j++)
+        {
+            val += lv;
+            val -= unpack_u32_to_u64 (src_u32 [li]);
+            dest_u32 [ti] = pack_u64_to_u32 ((val * iarr + 0x007f007f007f007f) >> 8);
+            li++;
+            ti++;
+        }
+    }
+}
+
+static void
+box_blur_v (const void *src, gint src_rowstride,
+            void *dest, gint dest_rowstride,
+            gint width, gint height,
+            gint radius)
+{
+    const guint32 *src_u32 = src;
+    guint32 *dest_u32 = dest;
+    gint src_rowstride_u32, dest_rowstride_u32;
+    guint16 iarr = (1 << 8) / (radius + radius + 1);
+    gint i, j;
+
+    g_assert (src_rowstride % 4 == 0);
+    g_assert (dest_rowstride % 4 == 0);
+
+    src_rowstride_u32 = src_rowstride / 4;
+    dest_rowstride_u32 = dest_rowstride / 4;
+
+    for (i = 0; i < width; i++)
+    {
+        gint ti = i, li = ti, ri = ti + radius * src_rowstride_u32;
+        guint64 fv = unpack_u32_to_u64 (src_u32 [ti]);
+        guint64 lv = unpack_u32_to_u64 (src_u32 [ti + src_rowstride_u32 * (height - 1)]);
+        guint64 val = fv * (radius + 1);
+
+        for (j = 0; j < radius; j++)
+        {
+            val += unpack_u32_to_u64 (src_u32 [ti + j * src_rowstride_u32]);
+        }
+
+        for (j = 0; j <= radius; j++)
+        {
+            val += unpack_u32_to_u64 (src_u32 [ri]);
+            val -= fv;
+            dest_u32 [ti] = pack_u64_to_u32 ((val * iarr + 0x007f007f007f007f) >> 8);
+            ri += src_rowstride_u32;
+            ti += dest_rowstride_u32;
+        }
+
+        for (j = radius + 1; j < height - radius; j++)
+        {
+            val += unpack_u32_to_u64 (src_u32 [ri]);
+            val -= unpack_u32_to_u64 (src_u32 [li]);
+            dest_u32 [ti] = pack_u64_to_u32 ((val * iarr + 0x007f007f007f007f) >> 8);
+            li += src_rowstride_u32;
+            ri += src_rowstride_u32;
+            ti += dest_rowstride_u32;
+        }
+
+        for (j = height - radius; j < height; j++)
+        {
+            val += lv;
+            val -= unpack_u32_to_u64 (src_u32 [li]);
+            dest_u32 [ti] = pack_u64_to_u32 ((val * iarr + 0x007f007f007f007f) >> 8);
+            li += src_rowstride_u32;
+            ti += dest_rowstride_u32;
+        }
+    }
+}
+
+static void
+box_blur (const void *src, gint src_rowstride,
+          void *dest, gint dest_rowstride,
+          void *temp, gint temp_rowstride,
+          gint width, gint height,
+          gint radius)
+{
+    box_blur_h (src, src_rowstride,
+                temp, temp_rowstride,
+                width, height,
+                radius);
+    box_blur_v (temp, temp_rowstride,
+                dest, dest_rowstride,
+                width, height,
+                radius);
+}
+
+static void
+gauss_make_boxes (gfloat sigma, gint *sizes_out, gint n)
+{
+    gfloat w_ideal = sqrtf (((12.f * sigma * sigma) / (gfloat) n) + 1.0f);
+    gint wl, wu;
+    gfloat m_ideal;
+    gint m;
+    gint i;
+
+    wl = w_ideal;
+    if (wl % 2 == 0)
+        wl--;
+
+    wu = wl + 2;
+
+    m_ideal = (12 * sigma * sigma - n * wl * wl - 4 * n * wl - 3 * n) / (-4 * wl - 4);
+    m = lrintf (m_ideal);
+
+    for (i = 0; i < n; i++)
+        sizes_out [i] = i < m ? wl : wu;
+}
+
+#define N_BOXES 3
+
+/* Assumes a8b8c8d8 data; 32 bits per pixel */
+void
+chafa_gaussian_blur (const void *src, gint src_rowstride,
+                     void *dest, gint dest_rowstride,
+                     gint width, gint height,
+                     gfloat radius)
+{
+    gint box_size [N_BOXES];
+    void *temp;
+
+    temp = g_malloc (height * dest_rowstride);
+    gauss_make_boxes (radius, box_size, N_BOXES);
+
+    box_blur (src, src_rowstride,
+              dest, dest_rowstride,
+              temp, dest_rowstride,
+              width, height, (box_size [0] - 1) / 2);
+    box_blur (dest, dest_rowstride,
+              dest, dest_rowstride,
+              temp, dest_rowstride,
+              width, height, (box_size [1] - 1) / 2);
+    box_blur (dest, dest_rowstride,
+              dest, dest_rowstride,
+              temp, dest_rowstride,
+              width, height, (box_size [2] - 1) / 2);
+
+    g_free (temp);
+}
