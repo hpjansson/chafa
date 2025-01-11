@@ -1877,6 +1877,8 @@ chafa_canvas_print_rows (ChafaCanvas *canvas, ChafaTermInfo *term_info,
         if (array_len_out)
             *array_len_out = 1;
     }
+
+    chafa_term_info_unref (term_info);
 }
 
 /**
