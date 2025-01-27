@@ -255,12 +255,16 @@ have_any_apptype_magic (FileMapping *mapping)
 
     for (n = 0xe0; n <= 0xef; n++)
     {
-        magic [3] = n;
+        magic [3] = n; /* APPn */
         if (file_mapping_has_magic (mapping, 0, magic, 4))
             return TRUE;
     }
 
-    magic [3] = 0xdb;
+    magic [3] = 0xdb; /* DQT */
+    if (file_mapping_has_magic (mapping, 0, magic, 4))
+        return TRUE;
+
+    magic [3] = 0xfe; /* COM */
     return file_mapping_has_magic (mapping, 0, magic, 4);
 }
 
