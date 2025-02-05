@@ -41,6 +41,7 @@
 #include <glib/gstdio.h>
 
 #include <chafa.h>
+#include "chafa-term.h"
 #include "font-loader.h"
 #include "grid-layout.h"
 #include "media-loader.h"
@@ -184,6 +185,8 @@ static UINT saved_console_output_cp;
 static UINT saved_console_input_cp;
 #endif
 
+static ChafaTerm *term;
+
 #ifdef HAVE_SIGACTION
 static void
 sigint_handler (G_GNUC_UNUSED int sig)
@@ -206,61 +209,8 @@ interruptible_usleep (gdouble us)
 static gboolean
 write_to_stdout (gconstpointer buf, gsize len)
 {
-    gboolean result = TRUE;
-
-    if (len == 0)
-        return TRUE;
-
-#ifdef G_OS_WIN32
-    {
-        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
-        gsize total_written = 0;
-        const void * const newline = "\r\n";
-        const gchar *p0, *p1, *end;
-
-        /* On MS Windows, we convert line feeds to DOS-style CRLF as we go. */
-
-        for (p0 = buf, end = p0 + len;
-             chd != INVALID_HANDLE_VALUE && total_written < len;
-             p0 = p1)
-        {
-            p1 = memchr (p0, '\n', end - p0);
-            if (!p1)
-                p1 = end;
-
-            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
-                break;
-
-            total_written += p1 - p0;
-
-            if (p1 != end)
-            {
-                if (!safe_WriteConsoleA (chd, newline, 2))
-                    break;
-
-                p1 += 1;
-                total_written += 1;
-            }
-        }
-
-        result = total_written == len ? TRUE : FALSE;
-    }
-#else
-    {
-        gsize total_written;
-
-        for (total_written = 0; total_written < len; )
-        {
-            gsize n_written = fwrite (((const gchar *) buf) + total_written, 1,
-                                      len - total_written, stdout);
-            total_written += n_written;
-            if (total_written < len && n_written == 0 && errno != EINTR)
-                result = FALSE;
-        }
-    }
-#endif
-
-    return result;
+    chafa_term_write (term, buf, len);
+    return TRUE;
 }
 
 static guchar
@@ -3129,7 +3079,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                     || !write_image (gsa, dest_width)
                     || !write_image_epilogue (dest_width)
-                    || fflush (stdout) != 0)
+                    || chafa_term_flush (term) < 0)
                 {
                     chafa_free_gstring_array (gsa);
                     goto out;
@@ -3343,6 +3293,8 @@ proc_init (void)
     /* Chafa may create and destroy GThreadPools multiple times while rendering
      * an image. This reduces thread churn and saves a decent amount of CPU. */
     g_thread_pool_set_max_unused_threads (-1);
+
+    term = chafa_term_get_default ();
 }
 
 int
@@ -3361,6 +3313,8 @@ main (int argc, char *argv [])
         ret = run_watch (options.args->data);
     else
         ret = run_all (options.args);
+
+    chafa_term_flush (term);
 
     retire_passthrough_workarounds_tmux ();
 
