@@ -2658,7 +2658,7 @@ CHAFA_TERM_SEQ_DEF(end_tmux_passthrough, END_TMUX_PASSTHROUGH, 0, none, char)
  * @height_cells: Target height in cells
  * @id: Image ID
  *
- * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1.
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1.
  *
  * @dest must have enough space to hold
  * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
