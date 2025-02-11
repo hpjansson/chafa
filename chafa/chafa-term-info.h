@@ -29,7 +29,7 @@ G_BEGIN_DECLS
 #define CHAFA_TERM_SEQ_LENGTH_MAX 96
 
 /* Maximum number of arguments + 1 for sentinel */
-#define CHAFA_TERM_SEQ_ARGS_MAX 8
+#define CHAFA_TERM_SEQ_ARGS_MAX 24
 
 #ifndef __GTK_DOC_IGNORE__
 /* This declares the enum for CHAFA_TERM_SEQ_*. See chafa-term-seq-def.h
@@ -38,8 +38,10 @@ G_BEGIN_DECLS
 typedef enum
 {
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...) CHAFA_TERM_SEQ_##NAME,
+#define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type) CHAFA_TERM_SEQ_##NAME,
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF
+#undef CHAFA_TERM_SEQ_DEF_VARARGS
 
     CHAFA_TERM_SEQ_MAX
 }
@@ -146,10 +148,14 @@ CHAFA_AVAILABLE_IN_1_6
 gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
 CHAFA_AVAILABLE_IN_1_14
 gchar *chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...);
-CHAFA_AVAILABLE_IN_1_14
+CHAFA_DEPRECATED_IN_1_16
 ChafaParseResult chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
                                             gchar **input, gint *input_len,
                                             guint *args_out);
+CHAFA_AVAILABLE_IN_1_16
+ChafaParseResult chafa_term_info_parse_seq_varargs (ChafaTermInfo *term_info, ChafaTermSeq seq,
+                                                    gchar **input, gint *input_len,
+                                                    guint *args_out, gint *n_args_out);
 
 CHAFA_AVAILABLE_IN_1_16
 gboolean chafa_term_info_get_inherit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq);
@@ -168,8 +174,11 @@ ChafaTermInfo *chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner
  * function prototypes. */
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     CHAFA_TERM_SEQ_AVAILABILITY gchar * chafa_term_info_emit_##name(const ChafaTermInfo *term_info, gchar *dest __VA_ARGS__);
+#define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type)  \
+    CHAFA_TERM_SEQ_AVAILABILITY gchar * chafa_term_info_emit_##name(const ChafaTermInfo *term_info, gchar *dest, arg_type *args, gint n_args);
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF
+#undef CHAFA_TERM_SEQ_DEF_VARARGS
 
 G_END_DECLS
 

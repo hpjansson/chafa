@@ -197,7 +197,8 @@
 
 typedef struct
 {
-    guint8 pre_len;
+    guint8 is_varargs : 1;
+    guint8 pre_len : 7;
     guint8 arg_index;
 }
 SeqArgInfo;
@@ -214,19 +215,30 @@ struct ChafaTermInfo
     ChafaSymbolTags safe_symbol_tags;
 };
 
+typedef enum
+{
+    SEQ_TYPE_FIXARGS,
+    SEQ_TYPE_VARARGS
+}
+SeqType;
+
 typedef struct
 {
-    guint n_args;
-    guint type_size;
+    guint seq_type : 8;
+    guint n_args : 8;
+    guint type_size : 8;
 }
 SeqMeta;
 
 static const SeqMeta seq_meta [CHAFA_TERM_SEQ_MAX] =
 {
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
-    [CHAFA_TERM_SEQ_##NAME] = { n_args, sizeof (arg_type) },
+    [CHAFA_TERM_SEQ_##NAME] = { SEQ_TYPE_FIXARGS, n_args, sizeof (arg_type) },
+#define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type)  \
+    [CHAFA_TERM_SEQ_##NAME] = { SEQ_TYPE_VARARGS, CHAFA_TERM_SEQ_ARGS_MAX - 1, sizeof (arg_type) },
 #include <chafa-term-seq-def.h>
 #undef CHAFA_TERM_SEQ_DEF
+#undef CHAFA_TERM_SEQ_DEF_VARARGS
 };
 
 /* Avoid memcpy() because it inlines to a sizeable amount of code (it
@@ -286,6 +298,7 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
 
     for (k = 0; k < CHAFA_TERM_SEQ_ARGS_MAX; k++)
     {
+        arg_info [k].is_varargs = FALSE;
         arg_info [k].pre_len = 0;
         arg_info [k].arg_index = ARG_INDEX_SENTINEL;
     }
@@ -315,6 +328,25 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
                 arg_info [k].pre_len = pre_len;
 
                 if (arg_info [k].arg_index >= n_args)
+                {
+                    /* Bad argument index (out of range) */
+                    g_set_error (error, CHAFA_TERM_INFO_ERROR, CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS,
+                                 "Control sequence had too many arguments.");
+                    goto out;
+                }
+
+                pre_len = 0;
+                k++;
+            }
+            else if (c == 'v')
+            {
+                /* Variable number of arguments separated by ';' */
+
+                arg_info [k].is_varargs = TRUE;
+                arg_info [k].arg_index = 0;  /* FIXME: Should be highest seen + 1 */
+                arg_info [k].pre_len = pre_len;
+
+                if (arg_info [k].arg_index >= CHAFA_TERM_SEQ_ARGS_MAX)
                 {
                     /* Bad argument index (out of range) */
                     g_set_error (error, CHAFA_TERM_INFO_ERROR, CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS,
@@ -364,10 +396,10 @@ out:
     return result;
 }
 
-#define EMIT_SEQ_DEF(name, inttype, intformatter)                        \
+#define EMIT_SEQ_DEF(name, inttype, intformatter)                       \
     static gchar *                                                      \
     emit_seq_##name (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, \
-                     inttype *args, gint n_args)                     \
+                     inttype *args, gint n_args)                        \
     {                                                                   \
         const gchar *seq_str;                                           \
         const SeqArgInfo *seq_args;                                     \
@@ -394,9 +426,59 @@ out:
         return out;                                                     \
     }
 
+#define EMIT_VARARGS_SEQ_DEF(name, inttype, intformatter)               \
+    static gchar *                                                      \
+    emit_seq_##name (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, \
+                     inttype *args, gint n_args)                        \
+    {                                                                   \
+        const gchar *seq_str;                                           \
+        const SeqArgInfo *seq_args;                                     \
+        gboolean found_varargs = FALSE;                                 \
+        gint ofs = 0;                                                   \
+        gint i, j;                                                      \
+                                                                        \
+        seq_str = &term_info->seq_str [seq] [0];                        \
+        seq_args = &term_info->seq_args [seq] [0];                      \
+                                                                        \
+        if (seq_args [0].arg_index == ARG_INDEX_SENTINEL)               \
+            return out;                                                 \
+                                                                        \
+        for (i = 0, j = 0; i + j < n_args; )                            \
+        {                                                               \
+            if (found_varargs)                                          \
+            {                                                           \
+                *(out++) = ';';                                         \
+            }                                                           \
+            else                                                        \
+            {                                                           \
+                if (seq_args [i].is_varargs)                            \
+                    found_varargs = TRUE;                               \
+                copy_bytes (out, &seq_str [ofs], seq_args [i].pre_len); \
+                out += seq_args [i].pre_len;                            \
+                ofs += seq_args [i].pre_len;                            \
+            }                                                           \
+                                                                        \
+            out = intformatter (out, args [seq_args [i].arg_index + j]);\
+                                                                        \
+            if (found_varargs)                                          \
+                j++;                                                    \
+            else                                                        \
+                i++;                                                    \
+        }                                                               \
+                                                                        \
+        if (found_varargs)                                              \
+            i++;                                                        \
+                                                                        \
+        copy_bytes (out, &seq_str [ofs], seq_args [i].pre_len);         \
+        out += seq_args [i].pre_len;                                    \
+                                                                        \
+        return out;                                                     \
+    }
+
 EMIT_SEQ_DEF(guint, guint, chafa_format_dec_uint_0_to_9999)
 EMIT_SEQ_DEF(guint8, guint8, chafa_format_dec_u8)
 EMIT_SEQ_DEF(guint16_hex, guint16, chafa_format_dec_u16_hex)
+EMIT_VARARGS_SEQ_DEF(guint_varargs, guint, chafa_format_dec_uint_0_to_9999)
 
 static gchar *
 emit_seq_0_args_uint (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq)
@@ -511,6 +593,12 @@ emit_seq_3_args_uint16_hex (const ChafaTermInfo *term_info, gchar *out, ChafaTer
     return emit_seq_guint16_hex (term_info, out, seq, args, 3);
 }
 
+static gchar *
+emit_seq_varargs_uint (const ChafaTermInfo *term_info, gchar *out, ChafaTermSeq seq, guint *args, gint n_args)
+{
+    return emit_seq_guint_varargs (term_info, out, seq, args, n_args);
+}
+
 /* Stream parsing */
 
 static gint
@@ -566,12 +654,13 @@ parse_hex4 (const gchar *in, gint in_len, guint *args_out)
 
 static ChafaParseResult
 try_parse_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq,
-               gchar **input, gint *input_len, guint *args_out)
+               gchar **input, gint *input_len, guint *args_out, gint *n_args_out)
 {
     gchar *in = *input;
     gint in_len = *input_len;
     const gchar *seq_str;
     const SeqArgInfo *seq_args;
+    gboolean parsed_varargs = FALSE;
     gint pofs = 0;
     guint i = 0;
 
@@ -583,6 +672,7 @@ try_parse_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq,
     for ( ; ; i++)
     {
         gint len;
+        guint j;
 
         if (memcmp (in, &seq_str [pofs], MIN (in_len, seq_args [i].pre_len)))
             return CHAFA_PARSE_FAILURE;
@@ -592,24 +682,46 @@ try_parse_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq,
         in_len -= seq_args [i].pre_len;
         pofs += seq_args [i].pre_len;
 
-        if (i >= seq_meta [seq].n_args)
+        if (parsed_varargs || i >= seq_meta [seq].n_args)
             break;
 
-        if (in_len == 0)
-            return CHAFA_PARSE_AGAIN;
+        if (seq_args [i].is_varargs)
+            parsed_varargs = TRUE;
 
-        if (seq_meta [seq].type_size == 1)
-            len = parse_dec (in, in_len, args_out + seq_args [i].arg_index);
-        else if (seq_meta [seq].type_size == 2)
-            len = parse_hex4 (in, in_len, args_out + seq_args [i].arg_index);
-        else
-            len = parse_dec (in, in_len, args_out + seq_args [i].arg_index);
+        for (j = 0; ; j++)
+        {
+            guint arg_ofs = seq_args [i].arg_index + j;
 
-        if (len == 0)
-            return CHAFA_PARSE_FAILURE;
+            if (arg_ofs > CHAFA_TERM_SEQ_ARGS_MAX - 1)
+                return CHAFA_PARSE_FAILURE;
+            if (in_len == 0)
+                return CHAFA_PARSE_AGAIN;
 
-        in += len;
-        in_len -= len;
+            *n_args_out = arg_ofs + 1;
+
+            if (seq_meta [seq].type_size == 1)
+                len = parse_dec (in, in_len, args_out + arg_ofs);
+            else if (seq_meta [seq].type_size == 2)
+                len = parse_hex4 (in, in_len, args_out + arg_ofs);
+            else
+                len = parse_dec (in, in_len, args_out + arg_ofs);
+
+            if (len == 0)
+                return CHAFA_PARSE_FAILURE;
+
+            in += len;
+            in_len -= len;
+
+            if (!seq_args [i].is_varargs)
+                break;
+            if (in_len > 0)
+            {
+                if (*in != ';')
+                    break;
+                in++;
+                in_len--;
+            }
+        }
     }
 
     if (*input == in)
@@ -1221,12 +1333,14 @@ chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
         n_args++;
     }
     
-    if (n_args != seq_meta [seq].n_args)
+    if (seq_meta [seq].seq_type == SEQ_TYPE_FIXARGS && n_args != seq_meta [seq].n_args)
         goto out;
 
     /* 16-bit args are always hex for now. It has no other uses. */
 
-    if (seq_meta [seq].n_args == 0)
+    if (seq_meta [seq].seq_type == SEQ_TYPE_VARARGS)
+        p = emit_seq_varargs_uint (term_info, buf, seq, args_uint, n_args);
+    else if (seq_meta [seq].n_args == 0)
         p = emit_seq_0_args_uint (term_info, buf, seq);
     else if (seq_meta [seq].type_size == 1)
         p = emit_seq_guint8 (term_info, buf, seq, args_u8, n_args);
@@ -1257,9 +1371,17 @@ out:
  * #CHAFA_PARSE_SUCCESS will be returned, the @input pointer will be advanced and
  * the parsed length will be subtracted from @input_len.
  *
+ * Thus function can be used with seqs where the number of arguments is known
+ * in advance, but since it doesn't return the number of arguments parsed, it can't
+ * be used with variable-argument seqs.
+ *
+ * It is recommended to use chafa_term_info_parse_seq_varargs() in all cases
+ * instead.
+ *
  * Returns: A #ChafaParseResult indicating success, failure or insufficient input data
  *
  * Since: 1.14
+ * Deprecated: 1.16: Use chafa_term_info_parse_seq_varargs() instead.
  **/
 ChafaParseResult
 chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
@@ -1267,6 +1389,8 @@ chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
                            guint *args_out)
 {
     guint dummy_args_out [CHAFA_TERM_SEQ_ARGS_MAX];
+    gint n_args_out;
+    ChafaParseResult result;
 
     g_return_val_if_fail (term_info != NULL, CHAFA_PARSE_FAILURE);
     g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, CHAFA_PARSE_FAILURE);
@@ -1280,7 +1404,69 @@ chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
     if (!args_out)
         args_out = dummy_args_out;
 
-    return try_parse_seq (term_info, seq, input, input_len, args_out);
+    result = try_parse_seq (term_info, seq, input, input_len, dummy_args_out, &n_args_out);
+
+    if (result == CHAFA_PARSE_SUCCESS && args_out)
+    {
+        /* CHAFA_TERM_SEQ_ARGS_MAX was increased from 8 to 24 in version 1.16.0.
+         * For ABI backwards compatibility, respect the legacy value in this legacy
+         * function. */
+        n_args_out = MIN (n_args_out, 8);
+        memcpy (args_out, dummy_args_out, n_args_out * sizeof (guint));
+    }
+
+    return result;
+}
+
+/**
+ * chafa_term_info_parse_seq_varargs:
+ * @term_info: A #ChafaTermInfo
+ * @seq: A #ChafaTermSeq to attempt to parse
+ * @input: Pointer to pointer to input data
+ * @input_len: Pointer to maximum input data length
+ * @args_out: Pointer to parsed argument values
+ * @args_out_len: Pointer to storage for argument count
+ *
+ * Attempts to parse a terminal sequence from an input data array. If successful,
+ * #CHAFA_PARSE_SUCCESS will be returned, the @input pointer will be advanced and
+ * the parsed length will be subtracted from @input_len.
+ *
+ * Any numeric parsed arguments are returned as an array starting at @args_out,
+ * which must have room for up to #CHAFA_TERM_SEQ_ARGS_MAX elements.
+ *
+ * The number of parsed arguments is returned in @n_args_out. This is useful for
+ * seqs with a variable number of arguments, like #PRIMARY_DEVICE_ATTRIBUTES.
+ *
+ * Either or both of @args_out and @n_args_out can be %NULL, in which case
+ * nothing is returned for that parameter.
+ *
+ * Returns: A #ChafaParseResult indicating success, failure or insufficient input data
+ *
+ * Since: 1.16
+ **/
+ChafaParseResult
+chafa_term_info_parse_seq_varargs (ChafaTermInfo *term_info, ChafaTermSeq seq,
+                                   gchar **input, gint *input_len,
+                                   guint *args_out, gint *n_args_out)
+{
+    guint dummy_args_out [CHAFA_TERM_SEQ_ARGS_MAX];
+    gint dummy_n_args_out;
+
+    g_return_val_if_fail (term_info != NULL, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (input != NULL, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (*input != NULL, CHAFA_PARSE_FAILURE);
+    g_return_val_if_fail (input_len != NULL, CHAFA_PARSE_FAILURE);
+
+    if (!chafa_term_info_have_seq (term_info, seq))
+        return CHAFA_PARSE_FAILURE;
+
+    if (!args_out)
+        args_out = dummy_args_out;
+    if (!n_args_out)
+        n_args_out = &dummy_n_args_out;
+
+    return try_parse_seq (term_info, seq, input, input_len, args_out, n_args_out);
 }
 
 /**
@@ -1504,10 +1690,17 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 { return emit_seq_6_args_uint8 (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2, arg3, arg4, arg5); }
 
 #define DEFINE_EMIT_SEQ_3_u16hex_guint16(func_name, seq_name) \
-    gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint16 arg0, guint16 arg1, guint16 arg2) \
-    { return emit_seq_3_args_uint16_hex (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2); }
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint16 arg0, guint16 arg1, guint16 arg2) \
+{ return emit_seq_3_args_uint16_hex (term_info, dest, CHAFA_TERM_SEQ_##seq_name, arg0, arg1, arg2); }
+
+#define DEFINE_EMIT_SEQ_VARARGS_guint(func_name, seq_name) \
+gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint *args, gint n_args) \
+{ return emit_seq_varargs_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, args, n_args); }
 
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     DEFINE_EMIT_SEQ_##n_args##_##arg_proc##_##arg_type(name, NAME)
+#define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type) \
+    DEFINE_EMIT_SEQ_VARARGS_##arg_type(name, NAME)
 #include "chafa-term-seq-def.h"
 #undef CHAFA_TERM_SEQ_DEF
+#undef CHAFA_TERM_SEQ_DEF_VARARGS

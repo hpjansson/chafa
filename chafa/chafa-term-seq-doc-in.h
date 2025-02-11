@@ -19,14 +19,19 @@
 
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
     gchar *chafa_term_info_emit_##name (const ChafaTermInfo *term_info, gchar *dest __VA_ARGS__);
+#define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type)  \
+    gchar * chafa_term_info_emit_##name(const ChafaTermInfo *term_info, gchar *dest, arg_type *args, gint n_args);
 #include "chafa-term-seq-def.h"
 #undef CHAFA_TERM_SEQ_DEF
+#undef CHAFA_TERM_SEQ_DEF_VARARGS
 
 typedef enum
 {
 #define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...) CHAFA_TERM_SEQ_##NAME,
+#define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type) CHAFA_TERM_SEQ_##NAME,
 #include "chafa-term-seq-def.h"
 #undef CHAFA_TERM_SEQ_DEF
+#undef CHAFA_TERM_SEQ_DEF_VARARGS
 
     CHAFA_TERM_SEQ_MAX
 }
