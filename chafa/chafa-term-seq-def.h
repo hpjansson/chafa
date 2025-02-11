@@ -2680,6 +2680,47 @@ CHAFA_TERM_SEQ_DEF(end_tmux_passthrough, END_TMUX_PASSTHROUGH, 0, none, char)
  **/
 CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_virt_image_v1, BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, 6, none, guint, CHAFA_TERM_SEQ_ARGS guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells, guint id)
 
+/* --- Available in 1.16+ --- */
+
+#undef CHAFA_TERM_SEQ_AVAILABILITY
+#define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_16
+
+/**
+ * chafa_term_info_emit_query_primary_device_attributes:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(query_primary_device_attributes, QUERY_PRIMARY_DEVICE_ATTRIBUTES, 0, none, char)
+
+/**
+ * chafa_term_info_emit_primary_device_attributes:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @args: Pointer to array of attributes
+ * @n_args: Number of attributes in array
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF_VARARGS(primary_device_attributes, PRIMARY_DEVICE_ATTRIBUTES, guint)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS
