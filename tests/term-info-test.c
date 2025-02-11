@@ -136,14 +136,71 @@ parsing_test (void)
     gint dyn_len;
     gchar *p;
     guint args [CHAFA_TERM_SEQ_ARGS_MAX];
+    gint n_args;
     ChafaParseResult result;
+    gboolean r;
     guint i;
 
     ti = chafa_term_info_new ();
 
     /* Define and emit */
 
-    chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, "def-fg-%1-%2-%3,", NULL);
+    r = chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, "def-fg-%1-%2-%3,", NULL);
+    g_assert (r == TRUE);
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
+                                    0xffff, 0x0000, 0x1234, -1);
+
+    /* Parse success */
+
+    p = dyn;
+    dyn_len = strlen (dyn);
+    result = chafa_term_info_parse_seq_varargs (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, &p, &dyn_len, args, &n_args);
+    g_assert (result == CHAFA_PARSE_SUCCESS);
+    g_assert (n_args == 3);
+    g_assert (args [0] == 0xffff);
+    g_assert (args [1] == 0x0000);
+    g_assert (args [2] == 0x1234);
+
+    /* Not enough data */
+
+    for (i = 0; i < strlen (dyn); i++)
+    {
+        p = dyn;
+        dyn_len = i;
+        result = chafa_term_info_parse_seq_varargs (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, &p, &dyn_len, args, &n_args);
+        g_assert (result == CHAFA_PARSE_AGAIN);
+    }
+
+    /* Parse failure */
+
+    p = dyn + 1;
+    dyn_len = strlen (dyn) - 1;
+    result = chafa_term_info_parse_seq_varargs (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, &p, &dyn_len, args, &n_args);
+    g_assert (result == CHAFA_PARSE_FAILURE);
+
+    g_free (dyn);
+    chafa_term_info_unref (ti);
+}
+
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+static void
+parsing_legacy_test (void)
+{
+    ChafaTermInfo *ti;
+    gchar *dyn;
+    gint dyn_len;
+    gchar *p;
+    guint args [CHAFA_TERM_SEQ_ARGS_MAX];
+    ChafaParseResult result;
+    gboolean r;
+    guint i;
+
+    ti = chafa_term_info_new ();
+
+    /* Define and emit */
+
+    r = chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG, "def-fg-%1-%2-%3,", NULL);
+    g_assert (r == TRUE);
     dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_SET_DEFAULT_FG,
                                     0xffff, 0x0000, 0x1234, -1);
 
@@ -177,6 +234,62 @@ parsing_test (void)
     g_free (dyn);
     chafa_term_info_unref (ti);
 }
+G_GNUC_END_IGNORE_DEPRECATIONS
+
+static void
+parsing_varargs_test (void)
+{
+    ChafaTermInfo *ti;
+    gchar *dyn;
+    gint dyn_len;
+    gchar *p;
+    guint args [CHAFA_TERM_SEQ_ARGS_MAX];
+    gint n_args;
+    ChafaParseResult result;
+    gboolean r;
+    guint i;
+
+    ti = chafa_term_info_new ();
+
+    /* Define and emit */
+
+    r = chafa_term_info_set_seq (ti, CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES, "attr-%v,", NULL);
+    g_assert (r == TRUE);
+    dyn = chafa_term_info_emit_seq (ti, CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES,
+                                    0xff, 0x0000, 0x1234, -1);
+    g_assert (strcmp (dyn, "attr-255;0;4660,") == 0);
+
+    /* Parse success */
+
+    p = dyn;
+    dyn_len = strlen (dyn);
+    result = chafa_term_info_parse_seq_varargs (ti, CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES, &p, &dyn_len, args, &n_args);
+    g_assert (result == CHAFA_PARSE_SUCCESS);
+    g_assert (n_args == 3);
+    g_assert (args [0] == 0xff);
+    g_assert (args [1] == 0x0000);
+    g_assert (args [2] == 0x1234);
+
+    /* Not enough data */
+
+    for (i = 0; i < strlen (dyn); i++)
+    {
+        p = dyn;
+        dyn_len = i;
+        result = chafa_term_info_parse_seq_varargs (ti, CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES, &p, &dyn_len, args, &n_args);
+        g_assert (result == CHAFA_PARSE_AGAIN);
+    }
+
+    /* Parse failure */
+
+    p = dyn + 1;
+    dyn_len = strlen (dyn) - 1;
+    result = chafa_term_info_parse_seq_varargs (ti, CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES, &p, &dyn_len, args, &n_args);
+    g_assert (result == CHAFA_PARSE_FAILURE);
+
+    g_free (dyn);
+    chafa_term_info_unref (ti);
+}
 
 int
 main (int argc, char *argv [])
@@ -186,6 +299,8 @@ main (int argc, char *argv [])
     g_test_add_func ("/term-info/formatting", formatting_test);
     g_test_add_func ("/term-info/dynamic", dynamic_test);
     g_test_add_func ("/term-info/parsing", parsing_test);
+    g_test_add_func ("/term-info/parsing-legacy", parsing_legacy_test);
+    g_test_add_func ("/term-info/parsing-varargs", parsing_varargs_test);
 
     return g_test_run ();
 }
