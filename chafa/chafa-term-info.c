@@ -1292,7 +1292,35 @@ chafa_term_info_set_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, const gchar
 gchar *
 chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
 {
-    va_list ap;
+    va_list args;
+    gchar *result;
+
+    g_return_val_if_fail (term_info != NULL, NULL);
+    g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, NULL);
+
+    va_start (args, seq);
+    result = chafa_term_info_emit_seq_valist (term_info, seq, &args);
+    va_end (args);
+
+    return result;
+}
+
+/**
+ * chafa_term_info_emit_seq_valist:
+ * @term_info: A #ChafaTermInfo
+ * @seq: A #ChafaTermSeq to emit
+ * @args: A #va_list of int arguments to insert in @seq
+ *
+ * Behaves like chafa_term_info_emit_seq(), but takes the arguments as a
+ * #va_list.
+ *
+ * Returns: A newly allocated, zero-terminated formatted string, or %NULL on error
+ *
+ * Since: 1.16
+ **/
+gchar *
+chafa_term_info_emit_seq_valist (ChafaTermInfo *term_info, ChafaTermSeq seq, va_list *args)
+{
     guint args_uint [CHAFA_TERM_SEQ_ARGS_MAX];
     guint16 args_u16 [CHAFA_TERM_SEQ_ARGS_MAX];
     guint8 args_u8 [CHAFA_TERM_SEQ_ARGS_MAX];
@@ -1304,11 +1332,9 @@ chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
     g_return_val_if_fail (term_info != NULL, NULL);
     g_return_val_if_fail (seq >= 0 && seq < CHAFA_TERM_SEQ_MAX, NULL);
 
-    va_start (ap, seq);
-
     for (;;)
     {
-        gint arg = va_arg (ap, gint);
+        gint arg = va_arg (*args, gint);
         if (arg < 0)
             break;
 
@@ -1357,7 +1383,6 @@ chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...)
     result = g_strndup (buf, p - buf);
 
 out:
-    va_end (ap);
     return result;
 }
 

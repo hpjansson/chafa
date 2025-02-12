@@ -148,6 +148,8 @@ CHAFA_AVAILABLE_IN_1_6
 gboolean chafa_term_info_have_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq);
 CHAFA_AVAILABLE_IN_1_14
 gchar *chafa_term_info_emit_seq (ChafaTermInfo *term_info, ChafaTermSeq seq, ...);
+CHAFA_AVAILABLE_IN_1_16
+gchar *chafa_term_info_emit_seq_valist (ChafaTermInfo *term_info, ChafaTermSeq seq, va_list *args);
 CHAFA_DEPRECATED_IN_1_16
 ChafaParseResult chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
                                             gchar **input, gint *input_len,
