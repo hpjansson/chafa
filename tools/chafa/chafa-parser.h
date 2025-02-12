@@ -38,7 +38,8 @@ typedef struct ChafaParser ChafaParser;
 ChafaEventType chafa_event_get_type (ChafaEvent *event);
 gunichar chafa_event_get_unichar (ChafaEvent *event);
 ChafaTermSeq chafa_event_get_seq (ChafaEvent *event);
-guint chafa_event_get_seq_arg (ChafaEvent *event, gint n);
+gint chafa_event_get_seq_arg (ChafaEvent *event, gint n);
+gint chafa_event_get_n_seq_args (ChafaEvent *event);
 
 ChafaParser *chafa_parser_new (ChafaTermInfo *term_info);
 void chafa_parser_destroy (ChafaParser *parser);
@@ -46,7 +47,8 @@ void chafa_parser_init (ChafaParser *parser_out, ChafaTermInfo *term_info);
 void chafa_parser_deinit (ChafaParser *parser);
 
 void chafa_parser_push_data (ChafaParser *parser, gconstpointer data, gint data_len);
-gboolean chafa_parser_pop_event (ChafaParser *parser, ChafaEvent *event_out);
+void chafa_parser_push_eof (ChafaParser *parser);
+ChafaEvent *chafa_parser_pop_event (ChafaParser *parser);
 
 G_END_DECLS
 

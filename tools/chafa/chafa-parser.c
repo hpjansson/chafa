@@ -31,6 +31,7 @@ struct ChafaEvent
     gunichar c;
     ChafaTermSeq seq;
     guint seq_args [CHAFA_TERM_SEQ_ARGS_MAX];
+    gint n_seq_args;
 };
 
 struct ChafaParser
@@ -38,6 +39,8 @@ struct ChafaParser
     ChafaTermInfo *term_info;
     GString *buf;
     gint buf_ofs;
+    guint eof_pushed : 1;
+    guint eof_dispatched : 1;
 };
 
 ChafaEventType
@@ -55,6 +58,37 @@ chafa_event_get_unichar (ChafaEvent *event)
     g_return_val_if_fail (event->type == CHAFA_UNICHAR_EVENT, 0);
 
     return event->c;
+}
+
+ChafaTermSeq
+chafa_event_get_seq (ChafaEvent *event)
+{
+    g_return_val_if_fail (event != NULL, CHAFA_TERM_SEQ_MAX);
+
+    if (event->type != CHAFA_SEQ_EVENT)
+        return CHAFA_TERM_SEQ_MAX;
+
+    return event->seq;
+}
+
+gint
+chafa_event_get_seq_arg (ChafaEvent *event, gint n)
+{
+    g_return_val_if_fail (event != NULL, -1);
+
+    if (event->type != CHAFA_SEQ_EVENT
+        || n >= event->n_seq_args)
+        return -1;
+
+    return (gint) event->seq_args [n];
+}
+
+gint
+chafa_event_get_n_seq_args (ChafaEvent *event)
+{
+    g_return_val_if_fail (event != NULL, 0);
+
+    return event->n_seq_args;
 }
 
 void
@@ -101,22 +135,30 @@ chafa_parser_push_data (ChafaParser *parser, gconstpointer data, gint data_len)
     g_return_if_fail (parser != NULL);
     g_return_if_fail (data != NULL);
     g_return_if_fail (data_len >= 0);
+    g_return_if_fail (parser->eof_pushed == FALSE);
 
     g_string_append_len (parser->buf, data, data_len);
 }
 
-gboolean
-chafa_parser_pop_event (ChafaParser *parser, ChafaEvent *event_out)
+void
+chafa_parser_push_eof (ChafaParser *parser)
 {
-    ChafaEvent event;
+    g_return_if_fail (parser != NULL);
+    g_return_if_fail (parser->eof_pushed == FALSE);
+
+    parser->eof_pushed = TRUE;
+}
+
+ChafaEvent *
+chafa_parser_pop_event (ChafaParser *parser)
+{
+    ChafaEvent *event = NULL;
     gboolean have_again = FALSE;
-    gboolean success = FALSE;
     gchar *p0;
     gint len;
     gint i;
 
     g_return_val_if_fail (parser != NULL, FALSE);
-    g_return_val_if_fail (event_out != NULL, FALSE);
 
     p0 = parser->buf->str;
     len = parser->buf->len;
@@ -124,17 +166,18 @@ chafa_parser_pop_event (ChafaParser *parser, ChafaEvent *event_out)
     for (i = 0; i < CHAFA_TERM_SEQ_MAX; i++)
     {
         ChafaParseResult result;
+        ChafaEvent temp_event;
 
-        result = chafa_term_info_parse_seq (parser->term_info, i,
-                                            &p0, &len,
-                                            event.seq_args);
+        result = chafa_term_info_parse_seq_varargs (parser->term_info, i,
+                                                    &p0, &len,
+                                                    temp_event.seq_args,
+                                                    &temp_event.n_seq_args);
         if (result == CHAFA_PARSE_SUCCESS)
         {
-            event.type = CHAFA_SEQ_EVENT;
-            event.seq = i;
-            event.c = 0;
-            memcpy (event_out, &event, sizeof (*event_out));
-            success = TRUE;
+            event = g_memdup (&temp_event, sizeof (ChafaEvent));
+            event->type = CHAFA_SEQ_EVENT;
+            event->seq = i;
+            event->c = 0;
             goto out;
         }
         else if (result == CHAFA_PARSE_AGAIN)
@@ -173,22 +216,29 @@ chafa_parser_pop_event (ChafaParser *parser, ChafaEvent *event_out)
         else
         {
             /* Good char */
-            event.type = CHAFA_UNICHAR_EVENT;
-            event.seq = -1;
-            event.c = c;
-            memcpy (event_out, &event, sizeof (*event_out));
+            event = g_new0 (ChafaEvent, 1);
+            event->type = CHAFA_UNICHAR_EVENT;
+            event->seq = -1;
+            event->c = c;
             p0 = g_utf8_next_char (p0);
-            success = TRUE;
             goto out;
         }
     }
 
 out:
+    if (!event && parser->eof_pushed && !parser->eof_dispatched)
+    {
+        event = g_new0 (ChafaEvent, 1);
+        event->type = CHAFA_EOF_EVENT;
+        event->seq = -1;
+        parser->eof_dispatched = TRUE;
+    }
+
     if (p0 != parser->buf->str)
     {
         /* FIXME: This will be slow. Switch to a better data structure */
         g_string_erase (parser->buf, 0, (ptrdiff_t) p0 - (ptrdiff_t) parser->buf->str);
     }
 
-    return success;
+    return event;
 }
