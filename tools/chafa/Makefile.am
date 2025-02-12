@@ -11,6 +11,8 @@ chafa_SOURCES = \
 	chafa-parser.h \
 	chafa-term.c \
 	chafa-term.h \
+	chafa-wakeup.c \
+	chafa-wakeup.h \
 	file-mapping.c \
 	file-mapping.h \
 	font-loader.c \
