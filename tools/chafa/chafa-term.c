@@ -327,7 +327,7 @@ read_from_stdin (ChafaTerm *term, guchar *out, gint max)
         goto out;
 
 #ifdef G_OS_WIN32
-    poll_fds [0].fd = GetStdHandle (STD_INPUT_HANDLE);
+    poll_fds [0].fd = (gintptr) GetStdHandle (STD_INPUT_HANDLE);
 #else
     poll_fds [0].fd = term->in_fd;
 #endif
