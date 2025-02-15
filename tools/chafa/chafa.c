@@ -65,6 +65,7 @@
 #define FILE_DURATION_DEFAULT 0.0
 #define SCALE_MAX 9999.0
 #define CELL_EXTENT_AUTO_MAX 65535
+#define DEFAULT_PROBE_WAIT_MSEC 5000
 
 /* Maximum width or height of the terminal, in pixels. If it claims to be
  * bigger than this, assume it's broken. */
@@ -93,6 +94,7 @@ typedef struct
     ChafaColorSpace color_space;
     ChafaDitherMode dither_mode;
     ChafaPixelMode pixel_mode;
+    gboolean pixel_mode_set;
     gint dither_grain_width;
     gint dither_grain_height;
     gdouble dither_intensity;
@@ -565,6 +567,7 @@ fuzz_options_with_seed (GlobalOptions *opt, gconstpointer seed, gint seed_len)
     opt->dither_mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_DITHER_MODE_MAX);
     opt->dither_mode_set = TRUE;
     opt->pixel_mode = fuzz_seed_get_uint (seed, seed_len, &ofs, 0, CHAFA_PIXEL_MODE_MAX);
+    opt->pixel_mode_set = TRUE;
     opt->dither_grain_width = 1 << (fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 4));
     opt->dither_grain_height = 1 << (fuzz_seed_get_uint (seed, seed_len, &ofs, 0, 4));
     opt->dither_intensity = fuzz_seed_get_double (seed, seed_len, &ofs, 0.0, 10.0);
@@ -1092,7 +1095,10 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     }
 
     if (result)
+    {
         options.pixel_mode = pixel_mode;
+        options.pixel_mode_set = TRUE;
+    }
 
     return result;
 }
@@ -1608,147 +1614,8 @@ parse_bg_color_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, 
 }
 
 static void
-get_tty_size (TermSize *term_size_out)
-{
-    TermSize term_size;
-
-    term_size.width_cells
-        = term_size.height_cells
-        = term_size.width_pixels
-        = term_size.height_pixels
-        = -1;
-
-#ifdef G_OS_WIN32
-    {
-        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO csb_info;
-
-        if (chd != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo (chd, &csb_info))
-        {
-            term_size.width_cells = csb_info.srWindow.Right - csb_info.srWindow.Left + 1;
-            term_size.height_cells = csb_info.srWindow.Bottom - csb_info.srWindow.Top + 1;
-        }
-    }
-#elif defined(HAVE_SYS_IOCTL_H)
-    {
-        struct winsize w;
-        gboolean have_winsz = FALSE;
-
-        /* FIXME: Use tcgetwinsize() when it becomes more widely available.
-         * See: https://www.austingroupbugs.net/view.php?id=1151#c3856 */
-
-        if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &w) >= 0
-            || ioctl (STDERR_FILENO, TIOCGWINSZ, &w) >= 0
-            || ioctl (STDIN_FILENO, TIOCGWINSZ, &w) >= 0)
-            have_winsz = TRUE;
-
-# ifdef HAVE_CTERMID
-        if (!have_winsz)
-        {
-            const gchar *term_path;
-            gint fd = -1;
-
-            term_path = ctermid (NULL);
-            if (term_path)
-                fd = g_open (term_path, O_RDONLY);
-
-            if (fd >= 0)
-            {
-                if (ioctl (fd, TIOCGWINSZ, &w) >= 0)
-                    have_winsz = TRUE;
-
-                g_close (fd, NULL);
-            }
-        }
-# endif /* HAVE_CTERMID */
-
-        if (have_winsz)
-        {
-            term_size.width_cells = w.ws_col;
-            term_size.height_cells = w.ws_row;
-            term_size.width_pixels = w.ws_xpixel;
-            term_size.height_pixels = w.ws_ypixel;
-        }
-    }
-#endif /* HAVE_SYS_IOCTL_H */
-
-    if (term_size.width_cells <= 0)
-        term_size.width_cells = -1;
-    if (term_size.height_cells <= 2)
-        term_size.height_cells = -1;
-
-    /* If .ws_xpixel and .ws_ypixel are filled out, we can calculate
-     * aspect information for the font used. Sixel-capable terminals
-     * like mlterm set these fields, but most others do not. */
-
-    if (term_size.width_pixels > PIXEL_EXTENT_MAX
-        || term_size.height_pixels > PIXEL_EXTENT_MAX)
-    {
-        /* https://github.com/hpjansson/chafa/issues/62 */
-
-        g_printerr ("%s: Terminal reports strange pixel dimensions of %dx%d.\n"
-                    "%s: Disregarding so as to avoid unreasonably large allocation.\n"
-                    "%s: This is sometimes caused by older versions of the 'fish' shell.\n"
-                    "%s: See https://github.com/hpjansson/chafa/issues/62 for details.\n",
-                    options.executable_name,
-                    (gint) term_size.width_pixels,
-                    (gint) term_size.height_pixels,
-                    options.executable_name,
-                    options.executable_name,
-                    options.executable_name);
-
-        term_size.width_pixels = -1;
-        term_size.height_pixels = -1;
-    }
-    else if (term_size.width_pixels <= 0 || term_size.height_pixels <= 0)
-    {
-        term_size.width_pixels = -1;
-        term_size.height_pixels = -1;
-    }
-
-    *term_size_out = term_size;
-}
-
-static void
 tty_options_init (void)
 {
-#ifdef G_OS_WIN32
-    {
-        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
-
-        saved_console_output_cp = GetConsoleOutputCP ();
-        saved_console_input_cp = GetConsoleCP ();
-
-        /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
-        if (chd != INVALID_HANDLE_VALUE)
-        {   
-            DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-
-            if (!options.is_conhost_mode) 
-                bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
-
-            if (!SetConsoleMode (chd, bitmask))
-            {
-                if (GetLastError () == ERROR_INVALID_HANDLE)
-                {
-                    win32_stdout_is_file = TRUE;
-                }
-                else
-                {
-                    /* Compatibility with older MS Windows versions */
-                    SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-                }
-            }   
-        }
-
-        /* Set UTF-8 code page output */
-        SetConsoleOutputCP (65001);
-
-        /* Set UTF-8 code page input, for good measure */
-        SetConsoleCP (65001);
-    }
-#endif
-
     if (!options.polite)
     {
         gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
@@ -1781,16 +1648,18 @@ tty_options_init (void)
             write_to_stdout (buf, p0 - buf);
         }
     }
+
+    chafa_term_sync_probe (term, DEFAULT_PROBE_WAIT_MSEC);
+    if (!options.pixel_mode_set)
+    {
+        options.pixel_mode = chafa_term_info_get_best_pixel_mode (
+            chafa_term_get_term_info (term));
+    }
 }
 
 static void
 tty_options_deinit (void)
 {
-#ifdef G_OS_WIN32
-    SetConsoleOutputCP (saved_console_output_cp);
-    SetConsoleCP (saved_console_input_cp);
-#endif
-
     if (!options.polite)
     {
         if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
@@ -2091,6 +1960,7 @@ parse_options (int *argc, char **argv [])
 
     options.mode = CHAFA_CANVAS_MODE_MAX;  /* Unset */
     options.pixel_mode = pixel_mode;
+    options.pixel_mode_set = FALSE;
     options.polite = polite;
     options.dither_mode = CHAFA_DITHER_MODE_NONE;
     options.dither_grain_width = -1;  /* Unset */
@@ -2174,7 +2044,12 @@ parse_options (int *argc, char **argv [])
 
     /* Detect terminal geometry */
 
-    get_tty_size (&detected_term_size);
+    chafa_term_get_size_px (term,
+                            &detected_term_size.width_pixels,
+                            &detected_term_size.height_pixels);
+    chafa_term_get_size_cells (term,
+                            &detected_term_size.width_cells,
+                            &detected_term_size.height_cells);
 
     if (detected_term_size.width_cells > 0
         && detected_term_size.height_cells > 0
@@ -3079,7 +2954,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
                     || !write_image (gsa, dest_width)
                     || !write_image_epilogue (dest_width)
-                    || chafa_term_flush (term) < 0)
+                    || !chafa_term_flush (term))
                 {
                     chafa_free_gstring_array (gsa);
                     goto out;
@@ -3150,7 +3025,6 @@ run_watch (const gchar *filename)
     gboolean is_first_frame = TRUE;
     gdouble duration_s = options.file_duration_s >= 0.0 ? options.file_duration_s : G_MAXDOUBLE;
 
-    tty_options_init ();
     timer = g_timer_new ();
 
     for ( ; !interrupted_by_user; )
@@ -3179,7 +3053,6 @@ run_watch (const gchar *filename)
     }
 
     g_timer_destroy (timer);
-    tty_options_deinit ();
     return 0;
 }
 
@@ -3190,12 +3063,6 @@ run_all (GList *filenames)
     gdouble still_duration_s = options.file_duration_s > 0.0 ? options.file_duration_s : 0.0;
     gint n_processed = 0;
     gint n_failed = 0;
-
-    /* This can only happen with --help and --version, so no error */
-    if (!filenames)
-        return 0;
-
-    tty_options_init ();
 
     for (l = filenames; l && !interrupted_by_user; l = g_list_next (l))
     {
@@ -3218,7 +3085,6 @@ run_all (GList *filenames)
     if (!options.have_parking_row)
         write_to_stdout ("\n", 1);
 
-    tty_options_deinit ();
     return (n_processed - n_failed < 1) ? 2 : (n_failed > 0) ? 1 : 0;
 }
 
@@ -3228,15 +3094,8 @@ run_grid (GList *filenames)
     ChafaCanvasConfig *canvas_config;
     GridLayout *grid_layout;
     gint n_processed = 0;
-    gint n_failed = 0;
     GList *l;
     gchar *out_chunk;
-
-    /* This can only happen with --help and --version, so no error */
-    if (!filenames)
-        return 0;
-
-    tty_options_init ();
 
     /* The prototype canvas' size isn't used for anything; set it to a legal value */
     canvas_config = build_config (1, 1, FALSE);
@@ -3264,7 +3123,6 @@ run_grid (GList *filenames)
     chafa_canvas_config_unref (canvas_config);
     grid_layout_destroy (grid_layout);
 
-    tty_options_deinit ();
     return n_processed;
 }
 
@@ -3300,19 +3158,26 @@ proc_init (void)
 int
 main (int argc, char *argv [])
 {
-    int ret;
+    int ret = 0;
     
     proc_init ();
 
     if (!parse_options (&argc, &argv))
         exit (2);
 
-    if (options.grid_width > 1 || options.grid_height > 1)
-        ret = run_grid (options.args);
-    else if (options.watch)
-        ret = run_watch (options.args->data);
-    else
-        ret = run_all (options.args);
+    if (options.args)
+    {
+        tty_options_init ();
+
+        if (options.grid_width > 1 || options.grid_height > 1)
+            ret = run_grid (options.args);
+        else if (options.watch)
+            ret = run_watch (options.args->data);
+        else
+            ret = run_all (options.args);
+
+        tty_options_deinit ();
+    }
 
     chafa_term_flush (term);
 
