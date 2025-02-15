@@ -30,13 +30,17 @@ typedef struct ChafaTerm ChafaTerm;
 ChafaTerm *chafa_term_get_default (void);
 void chafa_term_destroy (ChafaTerm *term);
 
+gint chafa_term_get_buffer_max (ChafaTerm *term);
+void chafa_term_set_buffer_max (ChafaTerm *term, gint max);
+
 ChafaTermInfo *chafa_term_get_term_info (ChafaTerm *term);
 
 ChafaEvent *chafa_term_read_event (ChafaTerm *term, guint timeout_ms);
 
 void chafa_term_write (ChafaTerm *term, gconstpointer data, gsize len);
 gint chafa_term_print (ChafaTerm *term, const gchar *format, ...) G_GNUC_PRINTF (2, 3);
-gint chafa_term_flush (ChafaTerm *term);
+void chafa_term_print_seq (ChafaTerm *term, ChafaTermSeq seq, ...);
+gboolean chafa_term_flush (ChafaTerm *term);
 
 void chafa_term_write_err (ChafaTerm *term, gconstpointer data, gsize len);
 gint chafa_term_print_err (ChafaTerm *term, const gchar *format, ...) G_GNUC_PRINTF (2, 3);
@@ -44,7 +48,7 @@ gint chafa_term_print_err (ChafaTerm *term, const gchar *format, ...) G_GNUC_PRI
 void chafa_term_get_size_px (ChafaTerm *term, gint *width_px_out, gint *height_px_out);
 void chafa_term_get_size_cells (ChafaTerm *term, gint *width_cells_out, gint *height_cells_out);
 
-void chafa_term_sync_probe (ChafaTerm *term, guint timeout_ms);
+gboolean chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms);
 
 void chafa_term_notify_size_changed (ChafaTerm *term);
 
