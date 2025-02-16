@@ -23,8 +23,6 @@
 #include "chafa.h"
 #include "chafa-parser.h"
 
-#define DEBUG(x)
-
 struct ChafaEvent
 {
     ChafaEventType type;

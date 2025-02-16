@@ -67,10 +67,6 @@
 #define CELL_EXTENT_AUTO_MAX 65535
 #define DEFAULT_PROBE_WAIT_MSEC 5000
 
-/* Maximum width or height of the terminal, in pixels. If it claims to be
- * bigger than this, assume it's broken. */
-#define PIXEL_EXTENT_MAX (8192 * 3)
-
 typedef enum
 {
     TRISTATE_FALSE = 0,
