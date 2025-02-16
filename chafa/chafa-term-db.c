@@ -194,11 +194,20 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, "\033[u" },
 
     /* These are actually xterm seqs, but we'll allow it */
+
     { CHAFA_TERM_SEQ_ENABLE_ALT_SCREEN, "\033[1049h" },
     { CHAFA_TERM_SEQ_DISABLE_ALT_SCREEN, "\033[1049l" },
 
     { CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, "\033[0c" },
     { CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES, "\033[?%vc" },
+
+    { CHAFA_TERM_SEQ_RESET_DEFAULT_FG, "\033]110\033\\" },
+    { CHAFA_TERM_SEQ_SET_DEFAULT_FG, "\033]10;rgb:%1/%2/%3\e\\" },
+    { CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, "\033]10;?\033\\" },
+
+    { CHAFA_TERM_SEQ_RESET_DEFAULT_BG, "\033]111\033\\" },
+    { CHAFA_TERM_SEQ_SET_DEFAULT_BG, "\033]11;rgb:%1/%2/%3\e\\" },
+    { CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, "\033]11;?\033\\" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
@@ -218,19 +227,6 @@ static const SeqStr sixel_seqs [] =
     { CHAFA_TERM_SEQ_DISABLE_SIXEL_SCROLLING, "\033[?80h" },
     { CHAFA_TERM_SEQ_SET_SIXEL_ADVANCE_DOWN, "\033[?8452l" },
     { CHAFA_TERM_SEQ_SET_SIXEL_ADVANCE_RIGHT, "\033[?8452h" },
-
-    { CHAFA_TERM_SEQ_MAX, NULL }
-};
-
-static const SeqStr default_color_seqs [] =
-{
-    { CHAFA_TERM_SEQ_RESET_DEFAULT_FG, "\033]110\033\\" },
-    { CHAFA_TERM_SEQ_SET_DEFAULT_FG, "\033]10;rgb:%1/%2/%3\e\\" },
-    { CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, "\033]10;?\033\\" },
-
-    { CHAFA_TERM_SEQ_RESET_DEFAULT_BG, "\033]111\033\\" },
-    { CHAFA_TERM_SEQ_SET_DEFAULT_BG, "\033]11;rgb:%1/%2/%3\e\\" },
-    { CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, "\033]11;?\033\\" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
