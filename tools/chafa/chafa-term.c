@@ -1045,7 +1045,7 @@ chafa_term_read_event (ChafaTerm *term, guint timeout_ms)
     {
         if (timeout_ms > 0)
         {
-            remain_ms -= (g_get_monotonic_time () - start_time) * 1000;
+            remain_ms -= (g_get_monotonic_time () - start_time) / 1000;
             if (remain_ms <= 0)
                 break;
         }
@@ -1204,7 +1204,7 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
 
         if (timeout_ms > 0)
         {
-            remain_ms -= (g_get_monotonic_time () - start_time) * 1000;
+            remain_ms -= (g_get_monotonic_time () - start_time) / 1000;
             if (remain_ms <= 0)
                 break;
         }
