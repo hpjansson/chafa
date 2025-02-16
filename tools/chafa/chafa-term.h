@@ -52,6 +52,9 @@ gboolean chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms);
 
 void chafa_term_notify_size_changed (ChafaTerm *term);
 
+gint32 chafa_term_get_default_fg_color (ChafaTerm *term);
+gint32 chafa_term_get_default_bg_color (ChafaTerm *term);
+
 G_END_DECLS
 
 #endif /* __CHAFA_TERM_H__ */

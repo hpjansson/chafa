@@ -76,6 +76,10 @@ struct ChafaTerm
     gint width_cells, height_cells;
     gint width_px, height_px;
 
+    /* Default FG/BG colors. Byte order is XRGB native. -1 if unknown */
+    gint32 default_fg_rgb;
+    gint32 default_bg_rgb;
+
     /* TRUE if we probed the tty size at least once */
     guint have_tty_size : 1;
 
@@ -548,6 +552,46 @@ apply_probe_results (ChafaTerm *term)
     }
 }
 
+static gint
+probe_color_to_packed_rgb (const gint *c)
+{
+    return ((c [0] / 256) << 16)
+        | ((c [1] / 256) << 8)
+        | (c [2] / 256);
+}
+
+static gboolean
+handle_default_fg_event (ChafaTerm *term, ChafaEvent *event)
+{
+    gint c [3];
+    gint i;
+
+    if (chafa_event_get_seq (event) != CHAFA_TERM_SEQ_SET_DEFAULT_FG)
+        return FALSE;
+
+    for (i = 0; i < 3; i++)
+        c [i] = chafa_event_get_seq_arg (event, i);
+
+    term->default_fg_rgb = probe_color_to_packed_rgb (c);
+    return TRUE;
+}
+
+static gboolean
+handle_default_bg_event (ChafaTerm *term, ChafaEvent *event)
+{
+    gint c [3];
+    gint i;
+
+    if (chafa_event_get_seq (event) != CHAFA_TERM_SEQ_SET_DEFAULT_BG)
+        return FALSE;
+
+    for (i = 0; i < 3; i++)
+        c [i] = chafa_event_get_seq_arg (event, i);
+
+    term->default_bg_rgb = probe_color_to_packed_rgb (c);
+    return TRUE;
+}
+
 static gboolean
 handle_primary_da_event (ChafaTerm *term, ChafaEvent *event)
 {
@@ -584,11 +628,12 @@ handle_eof_event (ChafaTerm *term, ChafaEvent *event)
     return TRUE;
 }
 
-typedef gboolean (*EventHandler)(ChafaTerm *, ChafaEvent *);
+typedef gboolean (*EventHandler) (ChafaTerm *, ChafaEvent *);
 
-/* FIXME: Default FG and BG colors */
 static const EventHandler event_handlers [] =
 {
+    handle_default_fg_event,
+    handle_default_bg_event,
     handle_primary_da_event,
     handle_eof_event,
     NULL
@@ -908,6 +953,9 @@ new_default (void)
     term->term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
     term->parser = chafa_parser_new (term->term_info);
 
+    term->default_fg_rgb = -1;
+    term->default_bg_rgb = -1;
+
     term->in_buf_max = IN_FIFO_DEFAULT_MAX;
     term->out_buf_max = OUT_FIFO_DEFAULT_MAX;
 
@@ -1191,6 +1239,8 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     ensure_raw_mode_enabled (term, &saved_termios, &termios_changed);
 #endif
 
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, -1);
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, -1);
     chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, -1);
     term->probe_attempt = TRUE;
 
@@ -1221,4 +1271,16 @@ void
 chafa_term_notify_size_changed (ChafaTerm *term)
 {
     get_tty_size (term);
+}
+
+gint32
+chafa_term_get_default_fg_color (ChafaTerm *term)
+{
+    return term->default_fg_rgb;
+}
+
+gint32
+chafa_term_get_default_bg_color (ChafaTerm *term)
+{
+    return term->default_bg_rgb;
 }
