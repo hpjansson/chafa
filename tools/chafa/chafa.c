@@ -1646,10 +1646,27 @@ tty_options_init (void)
     }
 
     chafa_term_sync_probe (term, DEFAULT_PROBE_WAIT_MSEC);
+
     if (!options.pixel_mode_set)
     {
         options.pixel_mode = chafa_term_info_get_best_pixel_mode (
             chafa_term_get_term_info (term));
+    }
+
+    if (!options.fg_color_set && chafa_term_get_default_fg_color (term) >= 0)
+    {
+        if (options.invert)
+            options.bg_color = chafa_term_get_default_fg_color (term);
+        else
+            options.fg_color = chafa_term_get_default_fg_color (term);
+    }
+
+    if (!options.bg_color_set && chafa_term_get_default_bg_color (term) >= 0)
+    {
+        if (options.invert)
+            options.fg_color = chafa_term_get_default_bg_color (term);
+        else
+            options.bg_color = chafa_term_get_default_bg_color (term);
     }
 }
 
