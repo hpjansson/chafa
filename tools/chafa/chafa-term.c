@@ -702,7 +702,7 @@ win32_global_init (void)
 #if 0
         if (!options.is_conhost_mode)
 #endif
-        bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+        bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
         if (!SetConsoleMode (chd, bitmask))
         {
