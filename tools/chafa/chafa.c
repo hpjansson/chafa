@@ -1644,30 +1644,6 @@ tty_options_init (void)
             write_to_stdout (buf, p0 - buf);
         }
     }
-
-    chafa_term_sync_probe (term, DEFAULT_PROBE_WAIT_MSEC);
-
-    if (!options.pixel_mode_set)
-    {
-        options.pixel_mode = chafa_term_info_get_best_pixel_mode (
-            chafa_term_get_term_info (term));
-    }
-
-    if (!options.fg_color_set && chafa_term_get_default_fg_color (term) >= 0)
-    {
-        if (options.invert)
-            options.bg_color = chafa_term_get_default_fg_color (term);
-        else
-            options.fg_color = chafa_term_get_default_fg_color (term);
-    }
-
-    if (!options.bg_color_set && chafa_term_get_default_bg_color (term) >= 0)
-    {
-        if (options.invert)
-            options.fg_color = chafa_term_get_default_bg_color (term);
-        else
-            options.bg_color = chafa_term_get_default_bg_color (term);
-    }
 }
 
 static void
@@ -2053,6 +2029,36 @@ parse_options (int *argc, char **argv [])
     if (options.fuzz_options && *argc > 1)
     {
         fuzz_options_with_file (&options, (*argv) [1]);
+    }
+
+    /* Synchronous probe for sixels, default colors, etc. */
+
+    chafa_term_sync_probe (term, DEFAULT_PROBE_WAIT_MSEC);
+
+    if (!options.pixel_mode_set)
+    {
+        options.pixel_mode = chafa_term_info_get_best_pixel_mode (
+            chafa_term_get_term_info (term));
+    }
+
+    if (!options.fg_color_set)
+    {
+        gint32 color = options.invert
+            ? chafa_term_get_default_bg_color (term)
+            : chafa_term_get_default_fg_color (term);
+
+        if (color >= 0)
+            options.fg_color = color;
+    }
+
+    if (!options.bg_color_set)
+    {
+        gint32 color = options.invert
+            ? chafa_term_get_default_fg_color (term)
+            : chafa_term_get_default_bg_color (term);
+
+        if (color >= 0)
+            options.bg_color = color;
     }
 
     /* Detect terminal geometry */
