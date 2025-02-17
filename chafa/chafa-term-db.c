@@ -524,6 +524,11 @@ static const SeqStr *fallback_list [] =
 
 static const TermDef term_def [] =
 {
+    { TERM_TYPE_TERM, "alacritty", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "alacritty", 10 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE, LINUX_DESKTOP_SYMS },
+
     { TERM_TYPE_TERM, "apple", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "Apple_Terminal", 0 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs }, INHERIT_NONE,
