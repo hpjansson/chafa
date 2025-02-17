@@ -59,6 +59,15 @@ Show a brief help text.
 </varlistentry>
 
 <varlistentry>
+<term><option>--probe <replaceable>ARG</replaceable></option></term>
+<listitem><para>
+Probe terminal's capabilities and wait for response [auto, on, off].
+A positive real number denotes the maximum time to wait for a response,
+in seconds. Defaults to 5.0.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--version</option></term>
 <listitem><para>
 Show version, feature and copyright information.
