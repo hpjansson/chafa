@@ -65,7 +65,7 @@
 #define FILE_DURATION_DEFAULT 0.0
 #define SCALE_MAX 9999.0
 #define CELL_EXTENT_AUTO_MAX 65535
-#define DEFAULT_PROBE_WAIT_MSEC 5000
+#define PROBE_DURATION_DEFAULT 5.0
 
 typedef enum
 {
@@ -118,6 +118,8 @@ typedef struct
     gint cell_width, cell_height;
     gint grid_width, grid_height;
     gint margin_bottom, margin_right;
+    Tristate probe;
+    gdouble probe_duration;
     gdouble scale;
     gdouble font_ratio;
     gint work_factor;
@@ -356,6 +358,10 @@ print_summary (void)
     "\nGeneral options:\n"
 
     "  -h, --help         Show help.\n"
+    "      --probe=ARG    Probe terminal's capabilities and wait for response [auto,\n"
+    "                     on, off]. A positive real number denotes the maximum time\n"
+    "                     to wait for a response, in seconds. Defaults to "
+                          G_STRINGIFY (PROBE_DURATION_DEFAULT) ".\n"
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n"
 
@@ -671,6 +677,34 @@ parse_tristate_token (const gchar *token, Tristate *value_out)
 
 out:
     return success;
+}
+
+static gboolean
+parse_probe_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = FALSE;
+
+    result = parse_tristate_token (value, &options.probe);
+    if (!result)
+    {
+        gdouble d = -1.0;
+        gchar *endptr;
+
+        d = g_strtod (value, &endptr);
+        if (endptr == value || d <= 0.0)
+            goto out;
+
+        options.probe = TRISTATE_TRUE;
+        options.probe_duration = d;
+        result = TRUE;
+    }
+
+out:
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Probe duration must be a positive real number or one of [on, off, auto].");
+
+    return result;
 }
 
 static gboolean
@@ -1910,6 +1944,7 @@ parse_options (int *argc, char **argv [])
         { "passthrough", '\0', 0, G_OPTION_ARG_CALLBACK, parse_passthrough_arg, "Passthrough", NULL },
         { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
+        { "probe",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_probe_arg,       "Terminal probing", NULL },
         { "relative",    '\0', 0, G_OPTION_ARG_CALLBACK, parse_relative_arg,    "Relative", NULL },
         { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "scale",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_scale_arg,       "Scale", NULL },
@@ -1958,6 +1993,8 @@ parse_options (int *argc, char **argv [])
     options.animate = TRUE;
     options.horiz_align = CHAFA_ALIGN_START;
     options.vert_align = CHAFA_ALIGN_START;
+    options.probe = TRISTATE_AUTO;
+    options.probe_duration = PROBE_DURATION_DEFAULT;
     options.preprocess = TRUE;
     options.relative_set = FALSE;
     options.fg_only = FALSE;
@@ -2033,32 +2070,37 @@ parse_options (int *argc, char **argv [])
 
     /* Synchronous probe for sixels, default colors, etc. */
 
-    chafa_term_sync_probe (term, DEFAULT_PROBE_WAIT_MSEC);
-
-    if (!options.pixel_mode_set)
+    if ((options.probe == TRISTATE_TRUE
+         || options.probe == TRISTATE_AUTO)
+        && options.probe_duration >= 0.0)
     {
-        options.pixel_mode = chafa_term_info_get_best_pixel_mode (
-            chafa_term_get_term_info (term));
-    }
+        chafa_term_sync_probe (term, options.probe_duration * 1000);
 
-    if (!options.fg_color_set)
-    {
-        gint32 color = options.invert
-            ? chafa_term_get_default_bg_color (term)
-            : chafa_term_get_default_fg_color (term);
+        if (!options.pixel_mode_set)
+        {
+            options.pixel_mode = chafa_term_info_get_best_pixel_mode (
+                chafa_term_get_term_info (term));
+        }
 
-        if (color >= 0)
-            options.fg_color = color;
-    }
+        if (!options.fg_color_set)
+        {
+            gint32 color = options.invert
+                ? chafa_term_get_default_bg_color (term)
+                : chafa_term_get_default_fg_color (term);
 
-    if (!options.bg_color_set)
-    {
-        gint32 color = options.invert
-            ? chafa_term_get_default_fg_color (term)
-            : chafa_term_get_default_bg_color (term);
+            if (color >= 0)
+                options.fg_color = color;
+        }
 
-        if (color >= 0)
-            options.bg_color = color;
+        if (!options.bg_color_set)
+        {
+            gint32 color = options.invert
+                ? chafa_term_get_default_fg_color (term)
+                : chafa_term_get_default_bg_color (term);
+
+            if (color >= 0)
+                options.bg_color = color;
+        }
     }
 
     /* Detect terminal geometry */
