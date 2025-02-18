@@ -708,8 +708,9 @@ try_parse_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq,
             else
                 len = parse_dec (in, in_len, args_out + arg_ofs);
 
+            /* Blank args are interpreted to mean zero */
             if (len == 0)
-                return CHAFA_PARSE_FAILURE;
+                *(args_out + arg_ofs) = 0;
 
             in += len;
             in_len -= len;
