@@ -206,13 +206,6 @@ interruptible_usleep (gdouble us)
     }
 }
 
-static gboolean
-write_to_stdout (gconstpointer buf, gsize len)
-{
-    chafa_term_write (term, buf, len);
-    return TRUE;
-}
-
 static guchar
 get_hex_byte (const gchar *str)
 {
@@ -1648,9 +1641,6 @@ tty_options_init (void)
 {
     if (!options.polite)
     {
-        gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
-        gchar *p0;
-
 #ifdef HAVE_TERMIOS_H
         if (options.is_interactive)
         {
@@ -1665,17 +1655,15 @@ tty_options_init (void)
 
         if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
         {
-            p0 = chafa_term_info_emit_disable_cursor (options.term_info, buf);
-            write_to_stdout (buf, p0 - buf);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_DISABLE_CURSOR, -1);
         }
 
         if (options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
         {
             /* Most terminals should have sixel scrolling and advance-down enabled
              * by default, so we're not going to undo these later. */
-            p0 = chafa_term_info_emit_enable_sixel_scrolling (options.term_info, buf);
-            p0 = chafa_term_info_emit_set_sixel_advance_down (options.term_info, p0);
-            write_to_stdout (buf, p0 - buf);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_ENABLE_SIXEL_SCROLLING, -1);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_SET_SIXEL_ADVANCE_DOWN, -1);
         }
     }
 }
@@ -1687,11 +1675,7 @@ tty_options_deinit (void)
     {
         if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
         {
-            gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX];
-            gchar *p0;
-
-            p0 = chafa_term_info_emit_enable_cursor (options.term_info, buf);
-            write_to_stdout (buf, p0 - buf);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_ENABLE_CURSOR, -1);
         }
 
 #ifdef HAVE_TERMIOS_H
@@ -2466,42 +2450,22 @@ pixel_to_cell_dimensions (gdouble scale,
     }
 }
 
-static gchar *
-emit_vertical_space (gchar *dest)
-{
-    if (options.relative)
-    {
-        dest = chafa_term_info_emit_cursor_down_scroll (options.term_info, dest);
-    }
-    else
-    {
-        *dest++ = '\n';
-    }
-
-    return dest;
-}
-
-static gboolean
+static void
 write_gstring_to_stdout (GString *gs)
 {
-    return write_to_stdout (gs->str, gs->len);
+    chafa_term_write (term, gs->str, gs->len);
 }
 
-static gboolean
+static void
 write_gstrings_to_stdout (GString **gsa)
 {
     gint i;
 
     for (i = 0; gsa [i]; i++)
-    {
-        if (!write_gstring_to_stdout (gsa [i]))
-            return FALSE;
-    }
-
-    return TRUE;
+        write_gstring_to_stdout (gsa [i]);
 }
 
-static gboolean
+static void
 write_pad_spaces (gint n)
 {
     gchar buf [BUFFER_MAX];
@@ -2513,121 +2477,96 @@ write_pad_spaces (gint n)
     for (i = 0; i < n; i++)
         buf [i] = ' ';
 
-    return write_to_stdout (buf, n);
+    chafa_term_write (term, buf, n);
 }
 
-static gboolean
+static void
 write_cursor_down_scroll_n (gint n)
 {
     gchar buf [BUFFER_MAX];
     gchar *p0 = buf;
 
     if (n < 1)
-        return TRUE;
+        return;
 
     for ( ; n; n--)
     {
         p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
         if (p0 - buf + CHAFA_TERM_SEQ_LENGTH_MAX > BUFFER_MAX)
         {
-            if (!write_to_stdout (buf, p0 - buf))
-                return FALSE;
+            chafa_term_write (term, buf, p0 - buf);
             p0 = buf;
         }
     }
 
-    return write_to_stdout (buf, p0 - buf);
+    chafa_term_write (term, buf, p0 - buf);
 }
 
-static gboolean
+static void
 write_vertical_spaces (gint n)
 {
     gchar buf [BUFFER_MAX];
 
     if (n < 1)
-        return TRUE;
+        return;
 
     if (options.relative)
-        return write_cursor_down_scroll_n (n);
+    {
+        write_cursor_down_scroll_n (n);
+        return;
+    }
 
     memset (buf, '\n', MIN (n, BUFFER_MAX));
 
     for ( ; n > 0; n -= BUFFER_MAX)
-    {
-        if (!write_to_stdout (buf, MIN (n, BUFFER_MAX)))
-            return FALSE;
-    }
-
-    return TRUE;
+        chafa_term_write (term, buf, MIN (n, BUFFER_MAX));
 }
 
-static gboolean
+static void
 write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
                       gboolean is_animation, gint dest_height)
 {
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2];
-    gchar *p0 = buf;
-
     /* Insert a blank line between files in continuous (!clear) mode */
     if (is_first_frame && !options.clear && !is_first_file)
-    {
-        if (!options.have_parking_row)
-            p0 = emit_vertical_space (p0);
-        p0 = emit_vertical_space (p0);
-
-        if (!write_to_stdout (buf, p0 - buf))
-            return FALSE;
-        p0 = buf;
-    }
+        write_vertical_spaces (1 + (!options.have_parking_row ? 1 : 0));
 
     if (options.clear)
     {
         if (is_first_frame)
         {
             /* Clear */
-            p0 = chafa_term_info_emit_clear (options.term_info, p0);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_CLEAR, -1);
         }
 
         /* Home cursor between frames */
-        p0 = chafa_term_info_emit_cursor_to_top_left (options.term_info, p0);
-
-        if (!write_to_stdout (buf, p0 - buf))
-            return FALSE;
-        p0 = buf;
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_TO_TOP_LEFT, -1);
     }
 
     /* Insert space for vertical alignment */
-    if ((options.clear || is_first_frame) &&
-        !write_vertical_spaces (options.vert_align == CHAFA_ALIGN_START ? 0
-                                : options.vert_align == CHAFA_ALIGN_CENTER
-                                ? ((options.view_height - dest_height - options.margin_bottom) / 2)
-                                : (options.view_height - dest_height - options.margin_bottom)))
-        return FALSE;
+    if (options.clear || is_first_frame)
+        write_vertical_spaces (options.vert_align == CHAFA_ALIGN_START ? 0
+                               : options.vert_align == CHAFA_ALIGN_CENTER
+                               ? ((options.view_height - dest_height - options.margin_bottom) / 2)
+                               : (options.view_height - dest_height - options.margin_bottom));
 
     if (!options.clear && is_animation && is_first_frame)
     {
         /* Start animation: reserve space and save image origin */
-        if (!write_cursor_down_scroll_n (dest_height))
-            return FALSE;
-
-        p0 = chafa_term_info_emit_cursor_up (options.term_info, p0, dest_height);
-        p0 = chafa_term_info_emit_save_cursor_pos (options.term_info, p0);
+        write_cursor_down_scroll_n (dest_height);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_UP, dest_height, -1);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_SAVE_CURSOR_POS, -1);
     }
     else if (!options.clear && !is_first_frame)
     {
         /* Subsequent animation frames: cursor to image origin */
-        p0 = chafa_term_info_emit_restore_cursor_pos (options.term_info, p0);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
     }
-
-    return write_to_stdout (buf, p0 - buf);
 }
 
-static gboolean
+static void
 write_image_epilogue (gint dest_width)
 {
     gint left_space;
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 3];
-    gchar *p0 = buf;
 
     left_space = options.horiz_align == CHAFA_ALIGN_START ? 0
         : options.horiz_align == CHAFA_ALIGN_CENTER
@@ -2641,48 +2580,36 @@ write_image_epilogue (gint dest_width)
     {
         if (options.have_parking_row)
         {
-            p0 = emit_vertical_space (p0);
+            write_vertical_spaces (1);
         }
         else if (!options.relative)
         {
             /* We need this because absolute mode relies on emit_vertical_space()
              * producing an \n that implies a CR with Unix semantics */
-            *(p0++) = '\r';
+            chafa_term_write (term, "\r", 1);
         }
 
         if (options.relative)
-            p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
-                                                   left_space + dest_width);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
+                                  left_space + dest_width, -1);
     }
     else /* CHAFA_PIXEL_MODE_SIXELS */
     {
         /* Sixel mode leaves the cursor in the leftmost column of the final band */
 
-        if (options.relative)
-        {
-            p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
+        write_vertical_spaces (1);
 
-            if (left_space > 0)
-                p0 = chafa_term_info_emit_cursor_left (options.term_info, p0,
-                                                       left_space);
-        }
-        else
-        {
-            *(p0++) = '\n';
-        }
+        if (options.relative && left_space > 0)
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
+                                  left_space, -1);
     }
-
-    return write_to_stdout (buf, p0 - buf);
 }
 
 /* Write out the image data, possibly centering it */
-static gboolean
+static void
 write_image (GString **gsa, gint dest_width)
 {
-    gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX * 3 + 3];
-    gchar *p0 = buf;
     gint left_space;
-    gboolean result = FALSE;
 
     left_space = options.horiz_align == CHAFA_ALIGN_START ? 0
         : options.horiz_align == CHAFA_ALIGN_CENTER
@@ -2693,16 +2620,9 @@ write_image (GString **gsa, gint dest_width)
     /* Indent top left corner: Common for all modes */
 
     if (options.relative && left_space > 0)
-    {
-        p0 = chafa_term_info_emit_cursor_right (options.term_info, buf, left_space);
-        if (!write_to_stdout (buf, p0 - buf))
-            goto out;
-    }
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_RIGHT, left_space, -1);
     else
-    {
-        if (!write_pad_spaces (left_space))
-            goto out;
-    }
+        write_pad_spaces (left_space);
 
     if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
@@ -2712,41 +2632,31 @@ write_image (GString **gsa, gint dest_width)
 
         for (i = 0; gsa [i]; i++)
         {
-            if (!write_gstring_to_stdout (gsa [i]))
-                goto out;
+            write_gstring_to_stdout (gsa [i]);
 
             if (gsa [i + 1])
             {
                 if (options.relative)
                 {
-                    p0 = chafa_term_info_emit_cursor_left (options.term_info, buf, left_space + dest_width);
-                    p0 = chafa_term_info_emit_cursor_down_scroll (options.term_info, p0);
+                    chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
+                                          left_space + dest_width, -1);
+                    chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL, -1);
 
                     if (left_space > 0)
-                        p0 = chafa_term_info_emit_cursor_right (options.term_info, p0, left_space);
-                    if (!write_to_stdout (buf, p0 - buf))
-                        goto out;
+                        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_RIGHT, left_space, -1);
                 }
                 else
                 {
-                    if (!write_to_stdout ("\n", 1))
-                        goto out;
-                    if (!write_pad_spaces (left_space))
-                        goto out;
+                    chafa_term_write (term, "\n", 1);
+                    write_pad_spaces (left_space);
                 }
             }
         }
     }
     else
     {
-        if (!write_gstrings_to_stdout (gsa))
-            goto out;
+        write_gstrings_to_stdout (gsa);
     }
-
-    result = TRUE;
-
-out:
-    return result;
 }
 
 static ChafaCanvasConfig *
@@ -3012,10 +2922,11 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             {
                 chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
-                if (!write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height)
-                    || !write_image (gsa, dest_width)
-                    || !write_image_epilogue (dest_width)
-                    || !chafa_term_flush (term))
+                write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height);
+                write_image (gsa, dest_width);
+                write_image_epilogue (dest_width);
+
+                if (!chafa_term_flush (term))
                 {
                     chafa_free_gstring_array (gsa);
                     goto out;
@@ -3144,7 +3055,7 @@ run_all (GList *filenames)
 
     /* Emit linefeed after last image when cursor was not in parking row */
     if (!options.have_parking_row)
-        write_to_stdout ("\n", 1);
+        chafa_term_write (term, "\n", 1);
 
     return (n_processed - n_failed < 1) ? 2 : (n_failed > 0) ? 1 : 0;
 }
@@ -3177,7 +3088,7 @@ run_grid (GList *filenames)
     while (!interrupted_by_user
            && (out_chunk = grid_layout_format_next_chunk (grid_layout)))
     {
-        write_to_stdout (out_chunk, strlen (out_chunk));
+        chafa_term_write (term, out_chunk, strlen (out_chunk));
         g_free (out_chunk);
     }
 
