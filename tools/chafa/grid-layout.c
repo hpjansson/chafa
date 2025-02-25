@@ -32,8 +32,9 @@ struct GridLayout
     ChafaTermInfo *term_info;
     ChafaTuck tuck;
     GList *paths, *next_path;
-    gint n_items;
+    gint n_items, next_item;
     guint finished_push : 1;
+    guint finished_chunks : 1;
 };
 
 static void
@@ -165,18 +166,41 @@ out:
 }
 
 static gchar *
-format_grid_row_symbols (GridLayout *grid, GString ***item_gsa, gint n_cols_produced)
+format_grid_row_symbols (GridLayout *grid)
 {
+    GString **item_gsa [MAX_COLS];
+    gint item_height [MAX_COLS];
     gint col_width, row_height;
     gchar *row_data, *p0;
     gint row_data_len = 0;
-    gint item_height [MAX_COLS];
+    gint n_cols_produced;
     gint i, j;
+
+    if (grid->finished_chunks)
+        return NULL;
 
     chafa_canvas_config_get_geometry (grid->canvas_config, &col_width, &row_height);
 
     for (i = 0; i < MAX_COLS; i++)
         item_height [i] = G_MAXINT;
+
+    for (n_cols_produced = 0; n_cols_produced < grid->n_cols && grid->next_path; )
+    {
+        if (format_item (grid, grid->next_path->data, &item_gsa [n_cols_produced]))
+        {
+            n_cols_produced++;
+        }
+        else
+        {
+            /* FIXME: Use a placeholder image */
+        }
+
+        grid->next_path = g_list_next (grid->next_path);
+        grid->next_item++;
+    }
+
+    if (n_cols_produced < 1)
+        return NULL;
 
     for (i = 0; i < row_height; i++)
     {
@@ -229,18 +253,28 @@ format_grid_row_symbols (GridLayout *grid, GString ***item_gsa, gint n_cols_prod
 
     *(p0++) = '\n';
     *(p0++) = '\0';
+
+    for (i = 0; i < n_cols_produced; i++)
+        chafa_free_gstring_array (item_gsa [i]);
+
     return row_data;
 }
 
 static gchar *
-format_grid_row_images (GridLayout *grid, GString ***item_gsa, gint n_cols_produced)
+format_grid_image (GridLayout *grid)
 {
+    GString **item_gsa [1] = { NULL };
     gchar save_cursor_seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
     gchar restore_cursor_and_skip_seq [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 2];
     gint col_width, row_height;
     gchar *row_data, *p0;
     gint row_data_len = 0;
     gint i, j;
+
+    if (grid->finished_chunks)
+        return NULL;
+
+    /* Setup */
 
     chafa_canvas_config_get_geometry (grid->canvas_config, &col_width, &row_height);
 
@@ -250,92 +284,99 @@ format_grid_row_images (GridLayout *grid, GString ***item_gsa, gint n_cols_produ
                                                                                  restore_cursor_and_skip_seq),
                                         col_width + 1) = '\0';
 
+    /* Format first available item */
+
+    while (grid->next_path && !item_gsa [0])
+    {
+        if (!format_item (grid, grid->next_path->data, &item_gsa [0]))
+        {
+            /* FIXME: Use a placeholder image */
+        }
+
+        grid->next_path = g_list_next (grid->next_path);
+    }
+
     /* Allocate space for string */
 
-    for (i = 0; i < n_cols_produced; i++)
-    {
-        row_data_len += strlen (restore_cursor_and_skip_seq) + strlen (save_cursor_seq);
+    row_data_len += strlen (restore_cursor_and_skip_seq) + strlen (save_cursor_seq);
 
-        for (j = 0; item_gsa [i] [j]; j++)
-        {
-            row_data_len += item_gsa [i] [j]->len;
-        }
+    if (item_gsa [0])
+    {
+        for (j = 0; item_gsa [0] [j]; j++)
+            row_data_len += item_gsa [0] [j]->len;
     }
 
     row_data = p0 = g_malloc (row_data_len + 2 * (row_height + 1) * CHAFA_TERM_SEQ_LENGTH_MAX + 2);
 
-    /* Reserve space on terminal, scrolling if necessary */
+    /* Optional: End previous row */
 
-    for (i = 0; i < row_height + 1; i++)
+    if (grid->next_item != 0 &&
+        (grid->next_item % grid->n_cols == 0 || !item_gsa [0]))
     {
-        p0 = chafa_term_info_emit_cursor_down_scroll (grid->term_info, p0);
+        for (i = 0; i < row_height + 1; i++)
+        {
+            p0 = chafa_term_info_emit_cursor_down_scroll (grid->term_info, p0);
+        }
+
+        /* FIXME: Make relative */
+        *(p0++) = '\r';
+
+        if (!item_gsa [0])
+            grid->finished_chunks = TRUE;
     }
-    p0 = chafa_term_info_emit_cursor_up (grid->term_info, p0, row_height + 1);
 
-    /* Format image row */
+    /* Optional: Begin row */
 
-    for (i = 0; i < n_cols_produced; i++)
+    if (grid->next_item % grid->n_cols == 0 && item_gsa [0])
+    {
+        /* Reserve space on terminal, scrolling if necessary */
+
+        for (i = 0; i < row_height + 1; i++)
+        {
+            p0 = chafa_term_info_emit_cursor_down_scroll (grid->term_info, p0);
+        }
+        p0 = chafa_term_info_emit_cursor_up (grid->term_info, p0, row_height + 1);
+    }
+
+    /* Format image */
+
+    if (item_gsa [0])
     {
         strcpy (p0, save_cursor_seq);
         p0 += strlen (p0);
 
-        for (j = 0; item_gsa [i] [j]; j++)
+        for (j = 0; item_gsa [0] [j]; j++)
         {
-            gint col_row_data_len = item_gsa [i] [j]->len;
+            gint col_row_data_len = item_gsa [0] [j]->len;
 
-            memcpy (p0, item_gsa [i] [j]->str, col_row_data_len);
+            memcpy (p0, item_gsa [0] [j]->str, col_row_data_len);
             p0 += col_row_data_len;
         }
 
         strcpy (p0, restore_cursor_and_skip_seq);
         p0 += strlen (p0);
+
+        grid->next_item++;
     }
 
-    /* FIXME: Make relative */
-    *(p0++) = '\r';
-
-    for (i = 0; i < row_height + 1; i++)
-    {
-        p0 = chafa_term_info_emit_cursor_down_scroll (grid->term_info, p0);
-    }
+    /* Done */
 
     *(p0++) = '\0';
     return row_data;
 }
 
 static gchar *
-format_grid_row (GridLayout *grid)
+format_grid_chunk (GridLayout *grid)
 {
     ChafaPixelMode pixel_mode;
-    GString **item_gsa [MAX_COLS];
     gchar *chunk;
-    gint n_cols_produced;
-    gint i;
-
-    for (i = 0; i < grid->n_cols && grid->next_path; )
-    {
-        if (format_item (grid, grid->next_path->data, &item_gsa [i]))
-        {
-            /* FIXME: Use a placeholder image */
-            i++;
-        }
-
-        grid->next_path = g_list_next (grid->next_path);
-    }
-
-    n_cols_produced = i;
-    if (n_cols_produced < 1)
-        return NULL;
 
     pixel_mode = chafa_canvas_config_get_pixel_mode (grid->canvas_config);
 
     if (pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
-        chunk = format_grid_row_symbols (grid, item_gsa, n_cols_produced);
+        chunk = format_grid_row_symbols (grid);
     else
-        chunk = format_grid_row_images (grid, item_gsa, n_cols_produced);
-
-    for (i = 0; i < n_cols_produced; i++)
-        chafa_free_gstring_array (item_gsa [i]);
+        chunk = format_grid_image (grid);
 
     return chunk;
 }
@@ -447,5 +488,5 @@ grid_layout_format_next_chunk (GridLayout *grid)
         update_geometry (grid);
     }
 
-    return format_grid_row (grid);
+    return format_grid_chunk (grid);
 }
