@@ -2721,6 +2721,108 @@ CHAFA_TERM_SEQ_DEF(query_primary_device_attributes, QUERY_PRIMARY_DEVICE_ATTRIBU
  **/
 CHAFA_TERM_SEQ_DEF_VARARGS(primary_device_attributes, PRIMARY_DEVICE_ATTRIBUTES, guint)
 
+/**
+ * chafa_term_info_emit_query_text_area_size_cells:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(query_text_area_size_cells, QUERY_TEXT_AREA_SIZE_CELLS, 0, none, char)
+
+/**
+ * chafa_term_info_emit_text_area_size_cells:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_TEXT_AREA_SIZE_CELLS.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(text_area_size_cells, TEXT_AREA_SIZE_CELLS, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_cells, guint width_cells)
+
+/**
+ * chafa_term_info_emit_query_text_area_size_px:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(query_text_area_size_px, QUERY_TEXT_AREA_SIZE_PX, 0, none, char)
+
+/**
+ * chafa_term_info_emit_text_area_size_px:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_TEXT_AREA_SIZE_PX.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(text_area_size_px, TEXT_AREA_SIZE_PX, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_px, guint width_px)
+
+/**
+ * chafa_term_info_emit_query_cell_size_px:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(query_cell_size_px, QUERY_CELL_SIZE_PX, 0, none, char)
+
+/**
+ * chafa_term_info_emit_cell_size_px:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_CELL_SIZE_PX.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.16
+ **/
+CHAFA_TERM_SEQ_DEF(cell_size_px, CELL_SIZE_PX, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_px, guint width_px)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

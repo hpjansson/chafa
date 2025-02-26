@@ -58,6 +58,7 @@
 /* Maximum width or height of the terminal, in pixels. If it claims to be
  * bigger than this, assume it's broken. */
 #define PIXEL_EXTENT_MAX (8192 * 3)
+#define CELL_EXTENT_PX_MAX 8192
 
 /* Stack buffer size */
 #define READ_BUF_MAX 4096
@@ -75,6 +76,7 @@ struct ChafaTerm
 
     gint width_cells, height_cells;
     gint width_px, height_px;
+    gint cell_width_px, cell_height_px;
 
     /* Default FG/BG colors. Byte order is XRGB native. -1 if unknown */
     gint32 default_fg_rgb;
@@ -550,6 +552,13 @@ apply_probe_results (ChafaTerm *term)
         supplement_seqs (term->term_info, term->default_term_info,
                          sixel_seqs, G_N_ELEMENTS (sixel_seqs));
     }
+
+    if (term->width_cells > 0 && term->height_cells > 0
+        && term->width_px > 0 && term->height_px > 0)
+    {
+        term->cell_width_px = term->width_px / term->width_cells;
+        term->cell_height_px = term->height_px / term->height_cells;
+    }
 }
 
 static gint
@@ -589,6 +598,71 @@ handle_default_bg_event (ChafaTerm *term, ChafaEvent *event)
         c [i] = chafa_event_get_seq_arg (event, i);
 
     term->default_bg_rgb = probe_color_to_packed_rgb (c);
+    return TRUE;
+}
+
+static gboolean
+handle_text_area_size_cells_event (ChafaTerm *term, ChafaEvent *event)
+{
+    gint c [2];
+    gint i;
+
+    if (chafa_event_get_seq (event) != CHAFA_TERM_SEQ_TEXT_AREA_SIZE_CELLS)
+        return FALSE;
+
+    for (i = 0; i < 2; i++)
+        c [i] = chafa_event_get_seq_arg (event, i);
+
+    if (c [0] > 0 && c [1] > 0)
+    {
+        term->width_cells = c [1];
+        term->height_cells = c [0];
+    }
+
+    return TRUE;
+}
+
+static gboolean
+handle_text_area_size_px_event (ChafaTerm *term, ChafaEvent *event)
+{
+    gint c [2];
+    gint i;
+
+    if (chafa_event_get_seq (event) != CHAFA_TERM_SEQ_TEXT_AREA_SIZE_PX)
+        return FALSE;
+
+    for (i = 0; i < 2; i++)
+        c [i] = chafa_event_get_seq_arg (event, i);
+
+    if (c [0] > 0 && c [0] < PIXEL_EXTENT_MAX
+        && c [1] > 0 && c [1] < PIXEL_EXTENT_MAX)
+    {
+        term->width_px = c [1];
+        term->height_px = c [0];
+    }
+
+    return TRUE;
+}
+
+static gboolean
+handle_cell_size_px_event (ChafaTerm *term, ChafaEvent *event)
+{
+    gint c [2];
+    gint i;
+
+    if (chafa_event_get_seq (event) != CHAFA_TERM_SEQ_CELL_SIZE_PX)
+        return FALSE;
+
+    for (i = 0; i < 2; i++)
+        c [i] = chafa_event_get_seq_arg (event, i);
+
+    if (c [0] > 0 && c [0] < CELL_EXTENT_PX_MAX
+        && c [1] > 0 && c [1] < CELL_EXTENT_PX_MAX)
+    {
+        term->cell_width_px = c [1];
+        term->cell_height_px = c [0];
+    }
+
     return TRUE;
 }
 
@@ -634,6 +708,9 @@ static const EventHandler event_handlers [] =
 {
     handle_default_fg_event,
     handle_default_bg_event,
+    handle_text_area_size_cells_event,
+    handle_text_area_size_px_event,
+    handle_cell_size_px_event,
     handle_primary_da_event,
     handle_eof_event,
     NULL
@@ -953,6 +1030,13 @@ new_default (void)
     term->term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
     term->parser = chafa_parser_new (term->term_info);
 
+    term->width_cells = -1;
+    term->height_cells = -1;
+    term->width_px = -1;
+    term->height_px = -1;
+    term->cell_width_px = -1;
+    term->cell_height_px = -1;
+
     term->default_fg_rgb = -1;
     term->default_bg_rgb = -1;
 
@@ -1241,6 +1325,9 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
 
     chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, -1);
     chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, -1);
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS, -1);
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX, -1);
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX, -1);
     chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, -1);
     term->probe_attempt = TRUE;
 
