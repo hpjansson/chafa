@@ -305,7 +305,8 @@ until manually interrupted or, if --duration is set, until it expires.
 <listitem><para>
 Background color of display (color name or hex). Partially transparent input
 will be blended with this color. Color names are based on those provided with
-X.Org. Defaults to black.
+X.Org. Defaults to black, or the terminal's default background color when
+probing is enabled (see --probe).
 </para></listitem>
 </varlistentry>
 
@@ -386,7 +387,8 @@ useful results.
 Foreground color of display (color name or hex). Together with the background
 color specified by --bg, this specifies the terminal's palette in color modes 2
 and none. Color names are based on those provided with X.Org. Defaults to
-white.
+white, or the terminal's default foreground color when probing is enabled
+(see --probe).
 </para></listitem>
 </varlistentry>
 
