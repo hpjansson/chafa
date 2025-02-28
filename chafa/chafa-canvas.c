@@ -1271,6 +1271,7 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                  const guint8 *src_pixels,
                  gint src_width, gint src_height, gint src_rowstride)
 {
+    ChafaColor bg_color;
     ChafaAlign halign = CHAFA_ALIGN_START, valign = CHAFA_ALIGN_START;
     ChafaTuck tuck = CHAFA_TUCK_STRETCH;
 
@@ -1291,6 +1292,13 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     }
 
     destroy_pixel_canvas (canvas);
+
+    if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY
+        || canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
+    {
+        chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_color);
+        bg_color.ch [3] = canvas->config.alpha_threshold < 1 ? 0x00 : 0xff;
+    }
 
     if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
     {
@@ -1357,11 +1365,6 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
-        ChafaColor bg_color;
-
-        chafa_unpack_color (canvas->config.bg_color_packed_rgb, &bg_color);
-        bg_color.ch [3] = canvas->config.alpha_threshold < 1 ? 0x00 : 0xff;
-
         /* Kitty mode */
 
         canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
@@ -1392,6 +1395,7 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                                  src_pixels,
                                                  src_width, src_height,
                                                  src_rowstride,
+                                                 bg_color,
                                                  halign, valign,
                                                  tuck);
     }

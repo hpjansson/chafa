@@ -145,10 +145,13 @@ void
 chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixelType src_pixel_type,
                                      gconstpointer src_pixels,
                                      gint src_width, gint src_height, gint src_rowstride,
+                                     ChafaColor bg_color,
                                      ChafaAlign halign, ChafaAlign valign,
                                      ChafaTuck tuck)
 {
+    uint8_t bg_color_rgba [4];
     DrawCtx ctx;
+    gboolean flatten_alpha;
     gint placement_x, placement_y;
     gint placement_width, placement_height;
 
@@ -160,6 +163,10 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
 
     if (src_width == 0 || src_height == 0)
         return;
+
+    flatten_alpha = bg_color.ch [3] == 0;
+    bg_color.ch [3] = 0xff;
+    chafa_color8_store_to_rgba8 (bg_color, bg_color_rgba);
 
     chafa_tuck_and_align (src_width, src_height,
                           iterm2_canvas->width, iterm2_canvas->height,
@@ -176,7 +183,7 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                                          src_height,
                                          src_rowstride,
                                          /* Fill */
-                                         NULL,
+                                         flatten_alpha ? bg_color_rgba : NULL,
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          /* Destination */
                                          NULL,
