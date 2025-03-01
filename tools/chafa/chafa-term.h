@@ -37,12 +37,12 @@ ChafaTermInfo *chafa_term_get_term_info (ChafaTerm *term);
 
 ChafaEvent *chafa_term_read_event (ChafaTerm *term, guint timeout_ms);
 
-void chafa_term_write (ChafaTerm *term, gconstpointer data, gsize len);
+void chafa_term_write (ChafaTerm *term, gconstpointer data, gint len);
 gint chafa_term_print (ChafaTerm *term, const gchar *format, ...) G_GNUC_PRINTF (2, 3);
 void chafa_term_print_seq (ChafaTerm *term, ChafaTermSeq seq, ...);
 gboolean chafa_term_flush (ChafaTerm *term);
 
-void chafa_term_write_err (ChafaTerm *term, gconstpointer data, gsize len);
+void chafa_term_write_err (ChafaTerm *term, gconstpointer data, gint len);
 gint chafa_term_print_err (ChafaTerm *term, const gchar *format, ...) G_GNUC_PRINTF (2, 3);
 
 void chafa_term_get_size_px (ChafaTerm *term, gint *width_px_out, gint *height_px_out);

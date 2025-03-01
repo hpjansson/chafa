@@ -1190,15 +1190,48 @@ out:
 }
 
 void
-chafa_term_write (ChafaTerm *term, gconstpointer data, gsize len)
+chafa_term_write (ChafaTerm *term, gconstpointer data, gint len)
 {
-    /* FIXME: Apply emergency brakes if buffer limit reached */
+    while (len > 0)
+    {
+        gint n_written;
 
-    g_mutex_lock (&term->mutex);
-    term->out_drained = FALSE;
-    chafa_byte_fifo_push (term->out_fifo, data, len);
-    g_cond_broadcast (&term->cond);
-    g_mutex_unlock (&term->mutex);
+        g_mutex_lock (&term->mutex);
+
+        /* Wait for partial drain if necessary */
+
+        for (;;)
+        {
+            gint queued = chafa_byte_fifo_get_len (term->out_fifo);
+
+            if (queued == 0 || queued + len <= term->out_buf_max)
+                break;
+
+            if (term->out_shutdown_done)
+            {
+                g_mutex_unlock (&term->mutex);
+                goto out;
+            }
+
+            g_cond_wait (&term->cond, &term->mutex);
+        }
+
+        /* Push and signal */
+
+        term->out_drained = FALSE;
+        n_written = MIN (len, term->out_buf_max);
+
+        chafa_byte_fifo_push (term->out_fifo, data, n_written);
+
+        len -= n_written;
+        data = ((const gchar *) data) + n_written;
+
+        g_cond_broadcast (&term->cond);
+        g_mutex_unlock (&term->mutex);
+    }
+
+out:
+    return;
 }
 
 gint
@@ -1247,7 +1280,7 @@ chafa_term_flush (ChafaTerm *term)
 }
 
 void
-chafa_term_write_err (ChafaTerm *term, gconstpointer data, gsize len)
+chafa_term_write_err (ChafaTerm *term, gconstpointer data, gint len)
 {
     g_mutex_lock (&term->mutex);
     term->out_drained = FALSE;
