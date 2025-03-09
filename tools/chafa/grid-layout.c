@@ -87,7 +87,10 @@ update_geometry (GridLayout *grid)
     item_height = MAX (item_height, 1);
 
     if (grid->n_cols < 1)
+    {
         grid->n_cols = MIN (view_width / (item_width + 1), MAX_COLS);
+        grid->n_cols = MAX (grid->n_cols, 1);
+    }
 
     chafa_canvas_config_set_geometry (grid->canvas_config, item_width, item_height);
 }
