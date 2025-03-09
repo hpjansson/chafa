@@ -21,6 +21,7 @@
 #define __GRID_LAYOUT_H__
 
 #include <glib.h>
+#include "chafa-term.h"
 
 G_BEGIN_DECLS
 
@@ -37,7 +38,7 @@ void grid_layout_set_tuck (GridLayout *grid, ChafaTuck tuck);
 
 void grid_layout_push_path (GridLayout *grid, const gchar *path);
 
-gchar *grid_layout_format_next_chunk (GridLayout *grid);
+gboolean grid_layout_print_chunk (GridLayout *grid, ChafaTerm *term);
 
 G_END_DECLS
 

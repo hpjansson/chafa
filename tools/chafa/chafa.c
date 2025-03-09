@@ -3067,7 +3067,6 @@ run_grid (GList *filenames)
     GridLayout *grid_layout;
     gint n_processed = 0;
     GList *l;
-    gchar *out_chunk;
 
     /* The prototype canvas' size isn't used for anything; set it to a legal value */
     canvas_config = build_config (1, 1, FALSE);
@@ -3085,17 +3084,13 @@ run_grid (GList *filenames)
         n_processed++;
     }
 
-    while (!interrupted_by_user
-           && (out_chunk = grid_layout_format_next_chunk (grid_layout)))
-    {
-        chafa_term_write (term, out_chunk, strlen (out_chunk));
-        g_free (out_chunk);
-    }
+    while (!interrupted_by_user && grid_layout_print_chunk (grid_layout, term))
+        ;
 
     chafa_canvas_config_unref (canvas_config);
     grid_layout_destroy (grid_layout);
 
-    return n_processed;
+    return 0;
 }
 
 static void

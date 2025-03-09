@@ -22,6 +22,7 @@
 #include "grid-layout.h"
 #include "media-loader.h"
 
+#define CHAR_BUF_SIZE 1024
 #define MAX_COLS 1024
 
 struct GridLayout
@@ -165,19 +166,38 @@ out:
     return success;
 }
 
-static gchar *
-format_grid_row_symbols (GridLayout *grid)
+static void
+print_rep_char (ChafaTerm *term, gchar c, gint n)
+{
+    gchar buf_s [CHAR_BUF_SIZE];
+    gchar *buf_m = NULL;
+    gchar *buf = buf_s;
+    gint i;
+
+    if (n > CHAR_BUF_SIZE)
+    {
+        buf_m = g_malloc (n);
+        buf = buf_m;
+    }
+
+    for (i = 0; i < n; i++)
+        buf [i] = c;
+
+    chafa_term_write (term, buf, n);
+    g_free (buf_m);
+}
+
+static gboolean
+print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
 {
     GString **item_gsa [MAX_COLS];
     gint item_height [MAX_COLS];
     gint col_width, row_height;
-    gchar *row_data, *p0;
-    gint row_data_len = 0;
     gint n_cols_produced;
     gint i, j;
 
     if (grid->finished_chunks)
-        return NULL;
+        return FALSE;
 
     chafa_canvas_config_get_geometry (grid->canvas_config, &col_width, &row_height);
 
@@ -200,32 +220,20 @@ format_grid_row_symbols (GridLayout *grid)
     }
 
     if (n_cols_produced < 1)
-        return NULL;
+        return FALSE;
 
     for (i = 0; i < row_height; i++)
     {
         for (j = 0; j < n_cols_produced; j++)
         {
-            if (i >= item_height [j])
+            if (i < item_height [j] && !item_gsa [j] [i])
             {
                 /* Pad with spaces */
-                row_data_len += col_width + 1;
-            }
-            else if (!item_gsa [j] [i])
-            {
-                /* Pad with spaces */
-                row_data_len += col_width + 1;
                 item_height [j] = i;
-            }
-            else
-            {
-                row_data_len += item_gsa [j] [i]->len + 1;
             }
         }
     }
 
-    row_data = p0 = g_malloc (row_data_len + 2);
-
     for (i = 0; i < row_height; i++)
     {
         for (j = 0; j < n_cols_produced; j++)
@@ -233,56 +241,43 @@ format_grid_row_symbols (GridLayout *grid)
             if (i >= item_height [j])
             {
                 /* Pad with spaces */
-                memset (p0, ' ', col_width + 1);
-                p0 += col_width + 1;
+                print_rep_char (term, ' ', col_width + 1);
             }
             else
             {
                 gint col_row_data_len = item_gsa [j] [i]->len;
 
                 if (j > 0)
-                    *(p0++) = ' ';
+                    chafa_term_write (term, " ", 1);
 
-                memcpy (p0, item_gsa [j] [i]->str, col_row_data_len);
-                p0 += col_row_data_len;
+                chafa_term_write (term, item_gsa [j] [i]->str, col_row_data_len);
             }
         }
 
-        *(p0++) = '\n';
+        chafa_term_write (term, "\n", 1);
     }
 
-    *(p0++) = '\n';
-    *(p0++) = '\0';
+    chafa_term_write (term, "\n", 1);
 
     for (i = 0; i < n_cols_produced; i++)
         chafa_free_gstring_array (item_gsa [i]);
 
-    return row_data;
+    return TRUE;
 }
 
-static gchar *
-format_grid_image (GridLayout *grid)
+static gboolean
+print_grid_image (GridLayout *grid, ChafaTerm *term)
 {
     GString **item_gsa [1] = { NULL };
-    gchar save_cursor_seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
-    gchar restore_cursor_and_skip_seq [CHAFA_TERM_SEQ_LENGTH_MAX * 2 + 2];
     gint col_width, row_height;
-    gchar *row_data, *p0;
-    gint row_data_len = 0;
     gint i, j;
 
     if (grid->finished_chunks)
-        return NULL;
+        return FALSE;
 
     /* Setup */
 
     chafa_canvas_config_get_geometry (grid->canvas_config, &col_width, &row_height);
-
-    *chafa_term_info_emit_save_cursor_pos (grid->term_info, save_cursor_seq) = '\0';
-    *chafa_term_info_emit_cursor_right (grid->term_info,
-                                        chafa_term_info_emit_restore_cursor_pos (grid->term_info,
-                                                                                 restore_cursor_and_skip_seq),
-                                        col_width + 1) = '\0';
 
     /* Format first available item */
 
@@ -296,18 +291,6 @@ format_grid_image (GridLayout *grid)
         grid->next_path = g_list_next (grid->next_path);
     }
 
-    /* Allocate space for string */
-
-    row_data_len += strlen (restore_cursor_and_skip_seq) + strlen (save_cursor_seq);
-
-    if (item_gsa [0])
-    {
-        for (j = 0; item_gsa [0] [j]; j++)
-            row_data_len += item_gsa [0] [j]->len;
-    }
-
-    row_data = p0 = g_malloc (row_data_len + 2 * (row_height + 1) * CHAFA_TERM_SEQ_LENGTH_MAX + 2);
-
     /* Optional: End previous row */
 
     if (grid->next_item != 0 &&
@@ -315,11 +298,11 @@ format_grid_image (GridLayout *grid)
     {
         for (i = 0; i < row_height + 1; i++)
         {
-            p0 = chafa_term_info_emit_cursor_down_scroll (grid->term_info, p0);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL, -1);
         }
 
         /* FIXME: Make relative */
-        *(p0++) = '\r';
+        chafa_term_write (term, "\r", 1);
 
         if (!item_gsa [0])
             grid->finished_chunks = TRUE;
@@ -333,52 +316,43 @@ format_grid_image (GridLayout *grid)
 
         for (i = 0; i < row_height + 1; i++)
         {
-            p0 = chafa_term_info_emit_cursor_down_scroll (grid->term_info, p0);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL, -1);
         }
-        p0 = chafa_term_info_emit_cursor_up (grid->term_info, p0, row_height + 1);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_UP, row_height + 1, -1);
     }
 
     /* Format image */
 
     if (item_gsa [0])
     {
-        strcpy (p0, save_cursor_seq);
-        p0 += strlen (p0);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_SAVE_CURSOR_POS, -1);
 
         for (j = 0; item_gsa [0] [j]; j++)
         {
             gint col_row_data_len = item_gsa [0] [j]->len;
-
-            memcpy (p0, item_gsa [0] [j]->str, col_row_data_len);
-            p0 += col_row_data_len;
+            chafa_term_write (term, item_gsa [0] [j]->str, col_row_data_len);
         }
 
-        strcpy (p0, restore_cursor_and_skip_seq);
-        p0 += strlen (p0);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_RIGHT, col_width + 1, -1);
 
         grid->next_item++;
     }
 
-    /* Done */
-
-    *(p0++) = '\0';
-    return row_data;
+    return TRUE;
 }
 
-static gchar *
-format_grid_chunk (GridLayout *grid)
+static gboolean
+print_grid_chunk (GridLayout *grid, ChafaTerm *term)
 {
     ChafaPixelMode pixel_mode;
-    gchar *chunk;
 
     pixel_mode = chafa_canvas_config_get_pixel_mode (grid->canvas_config);
 
     if (pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
-        chunk = format_grid_row_symbols (grid);
+        return print_grid_row_symbols (grid, term);
     else
-        chunk = format_grid_image (grid);
-
-    return chunk;
+        return print_grid_image (grid, term);
 }
 
 GridLayout *
@@ -468,10 +442,10 @@ grid_layout_push_path (GridLayout *grid, const gchar *path)
     grid->paths = g_list_prepend (grid->paths, g_strdup (path));
 }
 
-gchar *
-grid_layout_format_next_chunk (GridLayout *grid)
+gboolean
+grid_layout_print_chunk (GridLayout *grid, ChafaTerm *term)
 {
-    g_return_val_if_fail (grid != NULL, NULL);
+    g_return_val_if_fail (grid != NULL, FALSE);
 
     if (!grid->finished_push)
     {
@@ -488,5 +462,5 @@ grid_layout_format_next_chunk (GridLayout *grid)
         update_geometry (grid);
     }
 
-    return format_grid_chunk (grid);
+    return print_grid_chunk (grid, term);
 }
