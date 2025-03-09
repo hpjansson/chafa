@@ -3136,7 +3136,7 @@ main (int argc, char *argv [])
     {
         tty_options_init ();
 
-        if (options.grid_width > 1 || options.grid_height > 1)
+        if (options.grid_width > 0 || options.grid_height > 0)
             ret = run_grid (options.args);
         else if (options.watch)
             ret = run_watch (options.args->data);
