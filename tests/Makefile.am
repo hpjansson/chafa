@@ -30,6 +30,7 @@ TOOL_CHECKS = \
 	chafa-tool-bad-test.sh \
 	chafa-tool-cmode-test.sh \
 	chafa-tool-format-test.sh \
+	chafa-tool-grid-test.sh \
 	chafa-tool-loader-test.sh \
 	chafa-tool-options-test.sh \
 	chafa-tool-pipe-test.sh
