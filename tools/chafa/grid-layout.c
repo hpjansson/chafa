@@ -342,6 +342,7 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
         grid->next_item++;
     }
 
+    chafa_free_gstring_array (item_gsa [0]);
     return TRUE;
 }
 
