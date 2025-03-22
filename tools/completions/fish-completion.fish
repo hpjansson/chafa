@@ -1,0 +1,48 @@
+complete -c chafa -e
+
+complete -c chafa -o 'h' -l 'help'    -d 'Show help'
+complete -c chafa        -l 'version' -d 'Show version'
+complete -c chafa -o 'v' -l 'verbose' -d 'Be verbose'
+
+complete -c chafa -o 'f' -l 'format'      -x -a 'iterm kitty sixels symbols' -d 'Set output format'
+complete -c chafa -o 'O' -l 'optimize'    -x -a "(seq 0 9)"                  -d 'Compress the output by using control sequences intelligently'
+complete -c chafa        -l 'relative'    -x -a 'on off'                     -d 'Use relative cursor positioning'
+complete -c chafa        -l 'passthrough' -x -a 'auto none screen tmux'      -d 'Graphics protocol passthrough'
+complete -c chafa        -l 'polite'      -x -a 'on off'                     -d 'Polite mode'
+
+complete -c chafa        -l 'align'         -x                  -d 'Horizontal and vertical alignment'
+complete -c chafa        -l 'clear'                             -d 'Clear screen before processing each file'
+complete -c chafa        -l 'exact-size'    -x -a 'auto on off' -d 'Try to match the input\'s size exactly'
+complete -c chafa        -l 'fit-width'                         -d 'Fit images to view\'s width, possibly exceeding their height'
+complete -c chafa        -l 'font-ratio'    -x                  -d 'Target font\'s width/height ratio'
+complete -c chafa        -l 'margin-bottom' -x                  -d 'Reserve at least NUM rows at the bottom as a safety margin'
+complete -c chafa        -l 'margin-right'  -x                  -d 'Reserve at least NUM columns safety margin on right-hand side'
+complete -c chafa        -l 'scale'         -x                  -d 'Scale image, respecting view\'s dimentions. Specify "max" to fit view'
+complete -c chafa -o 's' -l 'size'          -x                  -d 'Set maximum image dimensions in columns and rows'
+complete -c chafa        -l 'stretch'                           -d 'Stretch image to fit output dimentions, ignoring aspect. Implies --scale max'
+complete -c chafa        -l 'view-size'     -x                  -d 'Set the view size in columns and rows'
+
+complete -c chafa        -l 'animate'  -x -a 'on off' -d 'Whether to allow animation'
+complete -c chafa -s 'd' -l 'duration' -x             -d 'How long to show each file'
+complete -c chafa        -l 'speed'    -x             -d 'Animation speed'
+complete -c chafa        -l 'watch'                   -d 'Watch a single input file, redisplaying it whenever its contents change'
+
+complete -c chafa        -l 'bg'               -x                                    -d 'Background color of display (color name or hex)'
+complete -c chafa        -l 'colors'           -x -a 'none 2 8 16/8 16 240 256 full' -d 'Set output color mode'
+complete -c chafa        -l 'color-extractor'  -x -a 'average median'                -d 'Method for extracting color from an area'
+complete -c chafa        -l 'color-space'      -x -a 'rgb din99d'                    -d 'Color space used for quantization'
+complete -c chafa        -l 'dither'           -x -a 'none ordered diffusion'        -d 'Set output dither mode'
+complete -c chafa        -l 'dither-grain'     -x                                    -d 'Set dimentions of dither grains in 1/8ths of a character cell'
+complete -c chafa        -l 'dither-intensity' -x                                    -d 'Multiplier for dither intensity [0.0 - inf]'
+complete -c chafa        -l 'fg'               -x                                    -d 'Foreground color of display (color name or hex)'
+complete -c chafa        -l 'invert'                                                 -d 'Swap --fg and --bg'
+complete -c chafa -s 'p' -l 'preprocess'       -x -a 'on off'                        -d 'Turn on/off image preprocessing'
+complete -c chafa -s 't' -l 'threshold'        -x                                    -d 'Lower threshold for full transparency [0.0 - 1.0]'
+
+complete -c chafa        -l 'threads' -x                -d 'Maximum number of CPU threads to use'
+complete -c chafa -s 'w' -l 'work'    -x -a "(seq 1 9)" -d 'How hard to work in terms of CPU and memory'
+
+complete -c chafa -l 'fg-only'       -d 'Leave the background color untouched'
+complete -c chafa -l 'fill'       -x -d 'Specify character symbols to use for fill/gradients'
+complete -c chafa -l 'glyph-file' -r -d 'Load glyph information from FILE'
+complete -c chafa -l 'symbols'    -x -d 'Specify character symbols to employ in final output'
