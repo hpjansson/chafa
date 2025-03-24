@@ -1,4 +1,7 @@
 #compdef chafa
+
+local symbols=(all asci braille extra imported narrow solid ugly alnum bad diagonal geometric inverted none space vhalf alpha block digit half latin quad stipple wedge ambiguous border dot hhalf legacy sextant technical wide)
+
 local options=(
   '(- : *)'{-h,--help}"[Show help]"
   '(- : *)'--version"[Show version]"
@@ -16,7 +19,7 @@ local options=(
   {-d,--duration}"[The time to show each file]:SECONDS"
   --fg"[Foreground color of display (color name or hex).]:COLOR:(black blue cyan default gray green magenta orange red white)"
   --fg-only"[Leave the background color untouched]"
-  --fill"[Specify character symbols to use for fill/gradients. Defaults to none]:SYMS"
+  --fill"[Specify character symbols to use for fill/gradients. Defaults to none]:SYMS:($symbols)"
   --font-ratio"[Target font's width/height ratio. Can be specified as a real number or a fraction. Defaults to 1/2]:W/H"
   {-f,--format}"[Set output format]:FORMAT:(iterm kitty sixels symbols)"
   --glyph-file"[Load glyph information from FILE]:FILE:_files"
@@ -30,7 +33,7 @@ local options=(
   {-s,--size}"[Set maximum output dimensions in columns and rows. By default this will be the size of your terminal, or 80x25 if size detection fails]:WxH"
   --speed"[Set the speed animations will play at. This can be either a unitless multiplier, or a real number followed by fps to apply a specific framerate.]:SPEED"
   --stretch"[Stretch image to fit output dimensions; ignore aspect. Implies --scale max]"
-  --symbols"[Specify character symbols to employ in final output]:SYMS"
+  --symbols"[Specify character symbols to employ in final output]:SYMS:($symbols)"
   --threads"[Maximum number of CPU threads to use. If left unspecified or negative, this will equal available CPU cores]:NUM"
   {-t,--threshold}"[Threshold above which full transparency will be used 0.0 - 1.0]:NUM"
   --watch"[Watch a single input file, redisplaying it whenever its contents change. Will run until manually interrupted or, if --duration is set, until it expires.]"
