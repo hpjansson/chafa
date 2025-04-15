@@ -2595,9 +2595,13 @@ write_image_epilogue (gint dest_width)
     }
     else /* CHAFA_PIXEL_MODE_SIXELS */
     {
-        /* Sixel mode leaves the cursor in the leftmost column of the final band */
+        /* Sixel mode leaves the cursor in the leftmost column of the final band,
+         * but some terminals have a quirk where they'll leave it on the row
+         * below. */
 
-        write_vertical_spaces (1);
+        if (!(chafa_term_info_get_quirks (chafa_term_get_term_info (term))
+              & CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT))
+            write_vertical_spaces (1);
 
         if (options.relative && left_space > 0)
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
