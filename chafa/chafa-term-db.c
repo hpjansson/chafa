@@ -639,7 +639,7 @@ static const TermDef term_def [] =
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "KONSOLE_VERSION", "220370", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
-      QUIRKS_NONE, LINUX_DESKTOP_SYMS },
+      CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
 
     /* The 'lf' file browser will choke if there are extra sequences in front
      * of a sixel image, so we need to be polite to it. */
