@@ -214,6 +214,7 @@ struct ChafaTermInfo
     gchar *unparsed_str [CHAFA_TERM_SEQ_MAX];
     guint8 pixel_passthrough_needed [CHAFA_PIXEL_MODE_MAX];
     guint8 inherit_seq [CHAFA_TERM_SEQ_MAX];
+    ChafaTermQuirks quirks;
     ChafaSymbolTags safe_symbol_tags;
 };
 
@@ -1121,6 +1122,41 @@ chafa_term_info_set_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
 }
 
 /**
+ * chafa_term_info_get_quirks:
+ * @term_info: A #ChafaTermInfo
+ *
+ * Gets the quirks associated with @term_info.
+ *
+ * Returns: The #ChafaTermQuirks flags
+ *
+ * Since: 1.16
+ **/
+ChafaTermQuirks
+chafa_term_info_get_quirks (ChafaTermInfo *term_info)
+{
+    g_return_val_if_fail (term_info != NULL, 0);
+
+    return term_info->quirks;
+}
+
+/**
+ * chafa_term_info_set_quirks:
+ * @term_info: A #ChafaTermInfo
+ * @quirks: A set of #ChafaTermQuirks flags
+ *
+ * Assigns a set of quirks to @term_info.
+ *
+ * Since: 1.16
+ **/
+void
+chafa_term_info_set_quirks (ChafaTermInfo *term_info, ChafaTermQuirks quirks)
+{
+    g_return_if_fail (term_info != NULL);
+
+    term_info->quirks = quirks;
+}
+
+/**
  * chafa_term_info_get_safe_symbol_tags:
  * @term_info: A #ChafaTermInfo
  *
@@ -1635,6 +1671,7 @@ chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner)
             = inner->pixel_passthrough_needed [i] | outer->pixel_passthrough_needed [i];
 
     chained->safe_symbol_tags |= inner->safe_symbol_tags & outer->safe_symbol_tags;
+    chained->quirks = inner->quirks | outer->quirks;
 
     outer_name = chafa_term_info_get_name (outer);
     inner_name = chafa_term_info_get_name (inner);

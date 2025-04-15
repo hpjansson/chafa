@@ -48,6 +48,19 @@ typedef enum
 ChafaTermSeq;
 #endif /* __GTK_DOC_IGNORE__ */
 
+/**
+ * ChafaTermQuirk:
+ * @CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT: After printing a sixel image in advance-down
+ *  mode, terminal leaves the cursor below the final row instead of on top of it.
+ *
+ * Flags denoting various terminal quirks.
+ **/
+typedef enum
+{
+    CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT = (1 << 0)
+}
+ChafaTermQuirks;
+
 typedef struct ChafaTermInfo ChafaTermInfo;
 
 /**
@@ -133,6 +146,10 @@ CHAFA_AVAILABLE_IN_1_16
 void chafa_term_info_set_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
                                                       ChafaPixelMode pixel_mode,
                                                       gboolean pixel_passthrough_needed);
+CHAFA_AVAILABLE_IN_1_16
+ChafaTermQuirks chafa_term_info_get_quirks (ChafaTermInfo *term_info);
+CHAFA_AVAILABLE_IN_1_16
+void chafa_term_info_set_quirks (ChafaTermInfo *term_info, ChafaTermQuirks quirks);
 
 CHAFA_AVAILABLE_IN_1_16
 ChafaSymbolTags chafa_term_info_get_safe_symbol_tags (ChafaTermInfo *term_info);
