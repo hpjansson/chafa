@@ -2093,8 +2093,21 @@ parse_options (int *argc, char **argv [])
                             &detected_term_size.width_pixels,
                             &detected_term_size.height_pixels);
     chafa_term_get_size_cells (term,
-                            &detected_term_size.width_cells,
-                            &detected_term_size.height_cells);
+                               &detected_term_size.width_cells,
+                               &detected_term_size.height_cells);
+
+    /* Fall back on COLUMNS. It's the best we can do in some environments (e.g. CI). */
+
+    if (detected_term_size.width_cells < 1)
+    {
+        const gchar *columns_str = g_getenv ("COLUMNS");
+        if (columns_str)
+            detected_term_size.width_cells = atoi (columns_str);
+        if (detected_term_size.width_cells < 1)
+            detected_term_size.width_cells = -1;
+    }
+
+    /* Figure out cell size if we can */
 
     if (detected_term_size.width_cells > 0
         && detected_term_size.height_cells > 0
@@ -2104,6 +2117,8 @@ parse_options (int *argc, char **argv [])
         options.cell_width = detected_term_size.width_pixels / detected_term_size.width_cells;
         options.cell_height = detected_term_size.height_pixels / detected_term_size.height_cells;
     }
+
+    /* Apply the font ratio if specified, or derive it if not */
 
     if (options.cell_width > 0 && options.cell_height > 0)
     {
@@ -2129,7 +2144,7 @@ parse_options (int *argc, char **argv [])
         options.margin_bottom = 1;  /* Default */
     }
 
-    /* Sixel output always leaves the cursor below the image, so force a bottom
+    /* Sixel output can leave the cursor below the image, so force a bottom
      * margin of at least one even if the user wanted less. */
     if (options.margin_bottom < 1
         && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
