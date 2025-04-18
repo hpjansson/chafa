@@ -669,9 +669,10 @@ static const TermDef term_def [] =
 
     { TERM_TYPE_TERM, "mintty", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "mintty", 10 } },
-      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        iterm2_seqs, sixel_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
-      QUIRKS_NONE, WIN_TERMINAL_SYMS },
+      CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, WIN_TERMINAL_SYMS },
 
     /* mlterm's truecolor support seems to be broken; it looks like a color
      * allocation issue. This affects character cells, but not sixels. */
