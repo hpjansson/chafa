@@ -211,6 +211,8 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_SET_DEFAULT_BG, "\033]11;rgb:%1/%2/%3\e\\" },
     { CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, "\033]11;?\033\\" },
 
+    /* XTWINOPS */
+
     { CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS, "\033[18t" },
     { CHAFA_TERM_SEQ_TEXT_AREA_SIZE_CELLS, "\033[8;%1;%2t" },
 
@@ -681,7 +683,7 @@ static const TermDef term_def [] =
         { ENV_OP_INCL, ENV_CMP_ISSET,  "MLTERM", NULL, 0 } },
       { vt220_seqs, color_256_seqs, color_16_seqs, color_8_seqs, iterm2_seqs,
         sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
-        CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
+      CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_APP,  "neovim", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "NVIM", NULL, 0 } },
