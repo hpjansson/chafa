@@ -701,7 +701,7 @@ static const TermDef term_def [] =
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         iterm2_seqs, sixel_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
-      QUIRKS_NONE, LINUX_DESKTOP_SYMS },
+      CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
 
     /* rxvtu seems to support directcolor, but the default 256-color palette
      * appears to be broken/unusual. */
