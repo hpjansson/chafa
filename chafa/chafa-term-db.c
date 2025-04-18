@@ -747,7 +747,7 @@ static const TermDef term_def [] =
         { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "tmux", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_pixel_pt,
-      QUIRKS_NONE, LINUX_DESKTOP_SYMS },
+      CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
 
     { TERM_TYPE_MUX,  "tmux", VARIANT_NONE, "3.4",
       { { ENV_OP_INCL, ENV_CMP_ISSET,  "TMUX", NULL, 0 },
@@ -755,7 +755,7 @@ static const TermDef term_def [] =
         { ENV_OP_EXCL, ENV_CMP_VER_GE, "TERM_PROGRAM_VERSION", "3.4", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         tmux_seqs }, tmux_inherit_seqs, CHAFA_PASSTHROUGH_TMUX, tmux_3_4_pixel_pt,
-      QUIRKS_NONE, LINUX_DESKTOP_SYMS },
+      CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
 
     /* Fallback when TERM is set but unrecognized */
     { TERM_TYPE_TERM, "vt220", VARIANT_NONE, VERSION_NONE,
