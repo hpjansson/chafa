@@ -2144,10 +2144,12 @@ parse_options (int *argc, char **argv [])
         options.margin_bottom = 1;  /* Default */
     }
 
-    /* Sixel output can leave the cursor below the image, so force a bottom
-     * margin of at least one even if the user wanted less. */
+    /* On some terminals, sixel output leaves the cursor below the image, so
+     * force a bottom margin of at least one even if the user wanted less. */
     if (options.margin_bottom < 1
-        && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+        && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS
+        && (chafa_term_info_get_quirks (chafa_term_get_term_info (term))
+            & CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT))
         options.margin_bottom = 1;
 
     if (options.margin_right < 0)
@@ -2615,7 +2617,8 @@ write_image_epilogue (gint dest_width)
          * below. */
 
         if (!(chafa_term_info_get_quirks (chafa_term_get_term_info (term))
-              & CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT))
+              & CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT)
+            && options.have_parking_row)
             write_vertical_spaces (1);
 
         if (options.relative && left_space > 0)
