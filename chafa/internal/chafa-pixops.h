@@ -37,7 +37,11 @@ void chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                            gint src_rowstride,
                                            ChafaPixel *dest_pixels,
                                            gint dest_width,
-                                           gint dest_height);
+                                           gint dest_height,
+                                           gdouble font_ratio,
+                                           ChafaAlign halign,
+                                           ChafaAlign valign,
+                                           ChafaTuck tuck);
 
 void chafa_sort_pixel_index_by_channel (guint8 *index,
                                         const ChafaPixel *pixels, gint n_pixels,
