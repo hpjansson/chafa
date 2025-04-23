@@ -1975,8 +1975,8 @@ parse_options (int *argc, char **argv [])
     options.dither_grain_height = -1;  /* Unset */
     options.dither_intensity = 1.0;
     options.animate = TRUE;
-    options.horiz_align = CHAFA_ALIGN_START;
-    options.vert_align = CHAFA_ALIGN_START;
+    options.horiz_align = CHAFA_ALIGN_MAX;  /* Unset */
+    options.vert_align = CHAFA_ALIGN_MAX;  /* Unset */
     options.probe = TRISTATE_AUTO;
     options.probe_duration = PROBE_DURATION_DEFAULT;
     options.preprocess = TRUE;
@@ -2050,6 +2050,21 @@ parse_options (int *argc, char **argv [])
     if (options.fuzz_options && *argc > 1)
     {
         fuzz_options_with_file (&options, (*argv) [1]);
+    }
+
+    /* Set default alignment depending on run mode */
+
+    if (options.horiz_align == CHAFA_ALIGN_MAX)
+    {
+        options.horiz_align = ((options.grid_width > 0 || options.grid_height > 0)
+                               ? CHAFA_ALIGN_CENTER
+                               : CHAFA_ALIGN_START);
+    }
+    if (options.vert_align == CHAFA_ALIGN_MAX)
+    {
+        options.vert_align = ((options.grid_width > 0 || options.grid_height > 0)
+                              ? CHAFA_ALIGN_END
+                              : CHAFA_ALIGN_START);
     }
 
     /* Synchronous probe for sixels, default colors, etc. */
