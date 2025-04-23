@@ -3108,6 +3108,7 @@ run_grid (GList *filenames)
     grid_layout_set_grid_size (grid_layout, options.grid_width, options.grid_height);
     grid_layout_set_canvas_config (grid_layout, canvas_config);
     grid_layout_set_term_info (grid_layout, options.term_info);
+    grid_layout_set_align (grid_layout, options.horiz_align, options.vert_align);
     grid_layout_set_tuck (grid_layout,
                           options.use_exact_size == TRISTATE_TRUE
                           ? CHAFA_TUCK_SHRINK_TO_FIT

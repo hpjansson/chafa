@@ -102,6 +102,8 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
               gint src_width, gint src_height, gint src_rowstride,
               const ChafaCanvasConfig *config,
               gint placement_id,
+              ChafaAlign halign,
+              ChafaAlign valign,
               ChafaTuck tuck)
 {
     ChafaFrame *frame;
@@ -117,8 +119,8 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
 
     placement = chafa_placement_new (image, placement_id);
     chafa_placement_set_tuck (placement, tuck);
-    chafa_placement_set_halign (placement, CHAFA_ALIGN_CENTER);
-    chafa_placement_set_valign (placement, CHAFA_ALIGN_END);
+    chafa_placement_set_halign (placement, halign);
+    chafa_placement_set_valign (placement, valign);
     chafa_canvas_set_placement (canvas, placement);
 
     chafa_placement_unref (placement);
@@ -159,6 +161,7 @@ format_item (GridLayout *grid, const gchar *path, GString ***gsa)
     canvas = build_canvas (pixel_type, pixels,
                            src_width, src_height, src_rowstride, grid->canvas_config,
                            -1,
+                           grid->halign, grid->valign,
                            grid->tuck);
     chafa_canvas_print_rows (canvas, grid->term_info, gsa, NULL);
     success = TRUE;
