@@ -21,6 +21,7 @@
 
 #include "internal/chafa-batch.h"
 #include "internal/chafa-pixops.h"
+#include "internal/chafa-math-util.h"
 #include "internal/smolscale/smolscale.h"
 
 /* Fixed point multiplier */
@@ -754,9 +755,26 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                       gint src_rowstride,
                                       ChafaPixel *dest_pixels,
                                       gint dest_width,
-                                      gint dest_height)
+                                      gint dest_height,
+                                      gdouble font_ratio,
+                                      ChafaAlign halign,
+                                      ChafaAlign valign,
+                                      ChafaTuck tuck)
 {
     PrepareContext prep_ctx = { 0 };
+    gint placement_x, placement_y;
+    gint placement_width, placement_height;
+
+    /* The destination size may not have taken cell geometry into account.
+     * We could correct the placement origin and size after the calculation but
+     * instead, we manipulate the source size (just for the calculation) to
+     * achieve the same effect, since it's much simpler. */
+    chafa_tuck_and_align (src_width / font_ratio, src_height,
+                          dest_width, dest_height,
+                          halign, valign,
+                          tuck,
+                          &placement_x, &placement_y,
+                          &placement_width, &placement_height);
 
     prep_ctx.palette = palette;
     prep_ctx.dither = dither;
@@ -779,17 +797,31 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
     prep_ctx.dest_width = dest_width;
     prep_ctx.dest_height = dest_height;
 
-    prep_ctx.scale_ctx = smol_scale_new_simple (prep_ctx.src_pixels,
-                                                (SmolPixelType) prep_ctx.src_pixel_type,
-                                                prep_ctx.src_width,
-                                                prep_ctx.src_height,
-                                                prep_ctx.src_rowstride,
-                                                NULL,
-                                                SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
-                                                prep_ctx.dest_width,
-                                                prep_ctx.dest_height,
-                                                prep_ctx.dest_width * sizeof (guint32),
-                                                SMOL_NO_FLAGS);
+    prep_ctx.scale_ctx = smol_scale_new_full (/* Source */
+                                              prep_ctx.src_pixels,
+                                              (SmolPixelType) prep_ctx.src_pixel_type,
+                                              prep_ctx.src_width,
+                                              prep_ctx.src_height,
+                                              prep_ctx.src_rowstride,
+                                              /* Fill */
+                                              NULL,
+                                              SMOL_PIXEL_RGBA8_UNASSOCIATED,
+                                              /* Destination */
+                                              NULL,
+                                              SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
+                                              prep_ctx.dest_width,
+                                              prep_ctx.dest_height,
+                                              prep_ctx.dest_width * sizeof (guint32),
+                                              /* Placement */
+                                              placement_x * SMOL_SUBPIXEL_MUL,
+                                              placement_y * SMOL_SUBPIXEL_MUL,
+                                              placement_width * SMOL_SUBPIXEL_MUL,
+                                              placement_height * SMOL_SUBPIXEL_MUL,
+                                              /* Extra args */
+                                              SMOL_COMPOSITE_SRC_CLEAR_DEST,
+                                              SMOL_NO_FLAGS,
+                                              NULL,
+                                              &prep_ctx);
 
     prepare_pixels_pass_1 (&prep_ctx);
     prepare_pixels_pass_2 (&prep_ctx);

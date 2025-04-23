@@ -1325,7 +1325,11 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                                   src_width, src_height,
                                                   src_rowstride,
                                                   canvas->pixels,
-                                                  canvas->width_pixels, canvas->height_pixels);
+                                                  canvas->width_pixels, canvas->height_pixels,
+                                                  ((gdouble) canvas->config.cell_width
+                                                   / (gdouble) canvas->config.cell_height),
+                                                  halign, valign,
+                                                  tuck);
 
             if (canvas->config.alpha_threshold == 0)
                 canvas->have_alpha = FALSE;
