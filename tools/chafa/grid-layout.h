@@ -34,6 +34,7 @@ void grid_layout_set_canvas_config (GridLayout *grid, ChafaCanvasConfig *canvas_
 void grid_layout_set_term_info (GridLayout *grid, ChafaTermInfo *term_info);
 void grid_layout_set_view_size (GridLayout *grid, gint width, gint height);
 void grid_layout_set_grid_size (GridLayout *grid, gint n_cols, gint n_rows);
+void grid_layout_set_align (GridLayout *grid, ChafaAlign halign, ChafaAlign valign);
 void grid_layout_set_tuck (GridLayout *grid, ChafaTuck tuck);
 
 void grid_layout_push_path (GridLayout *grid, const gchar *path);
