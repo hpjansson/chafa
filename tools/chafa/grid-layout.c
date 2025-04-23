@@ -31,6 +31,8 @@ struct GridLayout
     gint n_cols, n_rows;
     ChafaCanvasConfig *canvas_config;
     ChafaTermInfo *term_info;
+    ChafaAlign halign;
+    ChafaAlign valign;
     ChafaTuck tuck;
     GList *paths, *next_path;
     gint n_items, next_item;
@@ -426,6 +428,15 @@ grid_layout_set_grid_size (GridLayout *grid, gint n_cols, gint n_rows)
     grid->n_rows = n_rows;
 
     update_geometry (grid);
+}
+
+void
+grid_layout_set_align (GridLayout *grid, ChafaAlign halign, ChafaAlign valign)
+{
+    g_return_if_fail (grid != NULL);
+
+    grid->halign = halign;
+    grid->valign = valign;
 }
 
 void
