@@ -2359,6 +2359,15 @@ parse_options (int *argc, char **argv [])
         options.scale = SCALE_MAX;
     }
 
+    /* `--exact-size on` overrides other sizing options */
+    if (options.use_exact_size == TRISTATE_TRUE)
+    {
+        options.fit_to_width = FALSE;
+        options.scale = 1.0;
+        options.stretch = FALSE;
+        using_detected_size = TRUE;
+    }
+
     if (options.invert)
     {
         guint32 temp_color;
