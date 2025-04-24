@@ -2908,7 +2908,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 && dest_width == uncorrected_src_width
                 && dest_height == uncorrected_src_height)
             {
-                tuck = CHAFA_TUCK_SHRINK_TO_FIT;
+                tuck = (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS
+                        ? CHAFA_TUCK_FIT : CHAFA_TUCK_SHRINK_TO_FIT);
             }
 
 #if 0
