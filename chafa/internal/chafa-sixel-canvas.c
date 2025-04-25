@@ -24,6 +24,7 @@
 #include "internal/chafa-batch.h"
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
+#include "internal/chafa-math-util.h"
 #include "internal/chafa-passthrough-encoder.h"
 #include "internal/chafa-sixel-canvas.h"
 #include "internal/chafa-string-util.h"
@@ -50,13 +51,6 @@ typedef struct
     ChafaBitfield filter_bits;
 }
 SixelRow;
-
-static gint
-round_up_to_multiple_of (gint value, gint m)
-{
-    value = value + m - 1;
-    return value - (value % m);
-}
 
 ChafaSixelCanvas *
 chafa_sixel_canvas_new (gint width, gint height,
