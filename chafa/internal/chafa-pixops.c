@@ -777,6 +777,22 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                           &placement_x, &placement_y,
                           &placement_width, &placement_height);
 
+    /* Rounding the placement edges to cell boundaries prevents artifacts
+     * in the first/last row/col containing the actual image,
+     * when tuck == FIT or SHRINK_TO_FIT. */
+
+    /* First image row/col rounds *down* to the nearest cell boundary. */
+    placement_x -= placement_x % cell_width;
+    placement_y -= placement_y % cell_height;
+
+    /* Last image row/col rounds *up* to the nearest cell boundary.
+     *
+     * Note: If the left/top edge is on a cell boundary (which it already is),
+     * and the width/height is a multiple of the cell width/height,
+     * then the right/bottom edge is also on a cell boundary. */
+    placement_width = round_up_to_multiple_of (placement_width, cell_width);
+    placement_height = round_up_to_multiple_of (placement_height, cell_height);
+
     /* Convert the placement dimensions from real geometry to symbol matrix geometry. */
     placement_x = (placement_x / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS,
     placement_y = (placement_y / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS,
