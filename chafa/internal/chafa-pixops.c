@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include "chafa.h"
 #include "internal/chafa-batch.h"
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-math-util.h"
@@ -756,7 +757,8 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                       ChafaPixel *dest_pixels,
                                       gint dest_width,
                                       gint dest_height,
-                                      gdouble font_ratio,
+                                      gint cell_width,
+                                      gint cell_height,
                                       ChafaAlign halign,
                                       ChafaAlign valign,
                                       ChafaTuck tuck)
@@ -765,16 +767,21 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
     gint placement_x, placement_y;
     gint placement_width, placement_height;
 
-    /* The destination size may not have taken cell geometry into account.
-     * We could correct the placement origin and size after the calculation but
-     * instead, we manipulate the source size (just for the calculation) to
-     * achieve the same effect, since it's much simpler. */
-    chafa_tuck_and_align (src_width / font_ratio, src_height,
-                          dest_width, dest_height,
+    /* Convert the destination dimensions from symbol matrix geometry to real
+     * geometry (just for the calculation) for correct image sizing. */
+    chafa_tuck_and_align (src_width, src_height,
+                          (dest_width / CHAFA_SYMBOL_WIDTH_PIXELS) * cell_width,
+                          (dest_height / CHAFA_SYMBOL_HEIGHT_PIXELS) * cell_height,
                           halign, valign,
                           tuck,
                           &placement_x, &placement_y,
                           &placement_width, &placement_height);
+
+    /* Convert the placement dimensions from real geometry to symbol matrix geometry. */
+    placement_x = (placement_x / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS,
+    placement_y = (placement_y / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS,
+    placement_width = (placement_width / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS,
+    placement_height = (placement_height / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS,
 
     prep_ctx.palette = palette;
     prep_ctx.dither = dither;
