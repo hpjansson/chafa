@@ -288,7 +288,7 @@ typedef struct
     SmolInitFunc *init_v_func;
     SmolHFilterFunc *hfilter_funcs [SMOL_STORAGE_MAX] [SMOL_FILTER_MAX];
     SmolVFilterFunc *vfilter_funcs [SMOL_STORAGE_MAX] [SMOL_FILTER_MAX];
-    SmolCompositeOverColorFunc *composite_over_color_funcs [SMOL_STORAGE_MAX];
+    SmolCompositeOverColorFunc *composite_over_color_funcs [SMOL_STORAGE_MAX] [SMOL_GAMMA_MAX] [SMOL_ALPHA_MAX];
     SmolCompositeOverDestFunc *composite_over_dest_funcs [SMOL_STORAGE_MAX];
     SmolClearFunc *clear_funcs [SMOL_STORAGE_MAX];
     const SmolRepackMeta *repack_meta;

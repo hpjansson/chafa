@@ -1043,7 +1043,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         SmolVFilterFunc *vfilter_func =
             implementations [i]->vfilter_funcs [scale_ctx->storage_type] [scale_ctx->vdim.filter_type];
         SmolCompositeOverColorFunc *composite_over_color_func =
-            implementations [i]->composite_over_color_funcs [scale_ctx->storage_type];
+            implementations [i]->composite_over_color_funcs
+                [scale_ctx->storage_type] [scale_ctx->gamma_type] [internal_alpha];
         SmolCompositeOverDestFunc *composite_over_dest_func =
             implementations [i]->composite_over_dest_funcs [scale_ctx->storage_type];
         SmolClearFunc *clear_dest_func =
