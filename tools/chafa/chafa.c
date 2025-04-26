@@ -2625,8 +2625,7 @@ write_image_epilogue (gint dest_width)
         }
         else if (!options.relative)
         {
-            /* We need this because absolute mode relies on emit_vertical_space()
-             * producing an \n that implies a CR with Unix semantics */
+            /* Windows needs an explicit CR in absolute mode */
             chafa_term_write (term, "\r", 1);
         }
 
