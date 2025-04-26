@@ -64,7 +64,7 @@ chafa_sixel_canvas_new (gint width, gint height,
     sixel_canvas->width = width;
     sixel_canvas->height = height;
     sixel_canvas->color_space = color_space;
-    sixel_canvas->image = chafa_indexed_image_new (width, round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
+    sixel_canvas->image = chafa_indexed_image_new (width, chafa_round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
                                                    palette, dither);
 
     if (!sixel_canvas->image)

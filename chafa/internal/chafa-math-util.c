@@ -110,7 +110,7 @@ chafa_tuck_and_align (gint src_width, gint src_height,
 }
 
 gint
-round_up_to_multiple_of (gint value, gint m)
+chafa_round_up_to_multiple_of (gint value, gint m)
 {
     value = value + m - 1;
     return value - (value % m);
