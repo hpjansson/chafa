@@ -33,7 +33,7 @@ void chafa_tuck_and_align (gint src_width, gint src_height,
                            gint *ofs_x_out, gint *ofs_y_out,
                            gint *width_out, gint *height_out);
 
-gint round_up_to_multiple_of (gint value, gint m);
+gint chafa_round_up_to_multiple_of (gint value, gint m);
 
 G_END_DECLS
 
