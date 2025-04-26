@@ -2799,6 +2799,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     gint placement_id = -1;
     gint frame_count = 0;
     RunResult result = FILE_FAILED;
+    gint dest_width = 0, dest_height = 0;
     GError *error = NULL;
 
     timer = g_timer_new ();
@@ -2847,7 +2848,6 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             gint src_width, src_height, src_rowstride;
             gint uncorrected_src_width, uncorrected_src_height;
             gint virt_src_width, virt_src_height;
-            gint dest_width, dest_height;
             const guint8 *pixels;
             ChafaCanvasConfig *config;
             ChafaCanvas *canvas;
@@ -2970,7 +2970,11 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
                 write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height);
                 write_image (gsa, dest_width);
-                write_image_epilogue (dest_width);
+
+                /* No inter-frame epilogue in animations; this prevents unwanted
+                 * scrolling when we get the sixel overshoot quirk wrong (#255). */
+                if (!is_animation)
+                    write_image_epilogue (dest_width);
 
                 if (!chafa_term_flush (term))
                 {
@@ -3012,6 +3016,9 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     }
     while (is_animation && !interrupted_by_user
            && !options.watch && anim_elapsed_s < anim_duration_s);
+
+    if (is_animation)
+        write_image_epilogue (dest_width);
 
 out:
     /* We need two IDs per animation in order to do flicker-free flips. If the
