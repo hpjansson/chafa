@@ -777,6 +777,12 @@ static const TermDef term_def [] =
         rep_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
       QUIRKS_NONE, LINUX_DESKTOP_SYMS },
 
+    { TERM_TYPE_TERM, "warp", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "WarpTerminal", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        kitty_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
+      QUIRKS_NONE, WIN_TERMINAL_SYMS },
+
     /* Note: WezTerm does not support Kitty virtual image placements yet.
      * See https://github.com/wez/wezterm/issues/986 */
     { TERM_TYPE_TERM, "wezterm", VARIANT_NONE, VERSION_NONE,
