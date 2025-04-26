@@ -670,7 +670,8 @@ static const TermDef term_def [] =
       QUIRKS_NONE, LINUX_CONSOLE_SYMS },
 
     { TERM_TYPE_TERM, "mintty", VARIANT_NONE, VERSION_NONE,
-      { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "mintty", 10 } },
+      { { ENV_OP_INCL, ENV_CMP_EXACT, "TERM", "mintty", 10 },
+        { ENV_OP_INCL, ENV_CMP_EXACT, "TERM_PROGRAM", "mintty", 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         iterm2_seqs, sixel_seqs },
       INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
