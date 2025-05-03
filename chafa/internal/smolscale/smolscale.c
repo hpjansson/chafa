@@ -905,6 +905,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     const SmolRepackMeta *src_rmeta, *dest_rmeta;
     SmolAlphaType internal_alpha = SMOL_ALPHA_PREMUL8;
     const SmolImplementation *implementations [IMPLEMENTATION_MAX];
+    uint64_t color_pixel_internal [2];
+    uint64_t color_pixel_as_src [2];
     int i = 0;
 
     if (color_pixel)
@@ -1003,21 +1005,28 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         {
             SmolPixelType color_ptype;
             const SmolPixelTypeMeta *color_pmeta;
-            const SmolRepackMeta *color_rmeta;
+            const SmolRepackMeta *color_in_rmeta, *color_out_rmeta;
 
             color_ptype = get_host_pixel_type (color_pixel_type);
             color_pmeta = &pixel_type_meta [color_ptype];
 
             find_repacks (implementations,
-                          color_pmeta->storage, scale_ctx->storage_type, dest_pmeta->storage,
-                          color_pmeta->alpha, internal_alpha, dest_pmeta->alpha,
+                          color_pmeta->storage, scale_ctx->storage_type, src_pmeta->storage,
+                          color_pmeta->alpha, internal_alpha, src_pmeta->alpha,
                           SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type, SMOL_GAMMA_SRGB_COMPRESSED,
-                          color_pmeta, dest_pmeta,
-                          &color_rmeta, NULL);
+                          color_pmeta, src_pmeta,
+                          &color_in_rmeta, &color_out_rmeta);
 
-            SMOL_ASSERT (color_rmeta != NULL);
+            SMOL_ASSERT (color_in_rmeta != NULL);
+            SMOL_ASSERT (color_out_rmeta != NULL);
 
-            color_rmeta->repack_row_func (color_pixel, scale_ctx->color_pixel, 1);
+            /* We need the fill color to have the same internal byte order as
+             * src. Currently, the simplest way to achieve this is to unpack the color,
+             * repack it to the same format as src, then unpacking it to internal again. */
+
+            color_in_rmeta->repack_row_func (color_pixel, color_pixel_internal, 1);
+            color_out_rmeta->repack_row_func (color_pixel_internal, color_pixel_as_src, 1);
+            src_rmeta->repack_row_func (color_pixel_as_src, scale_ctx->color_pixel, 1);
         }
         else
         {
