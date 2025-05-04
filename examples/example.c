@@ -38,15 +38,7 @@ main (int argc, char *argv [])
     /* Create canvas */
     canvas = chafa_canvas_new (config);
 
-    /* Draw pixels and build ANSI string */
-
-    /* Test a deprecated function */
-    chafa_canvas_set_contents_rgba8 (canvas,
-                                     pixels,
-                                     PIX_WIDTH,
-                                     PIX_HEIGHT,
-                                     PIX_WIDTH * N_CHANNELS);
-
+    /* Draw pixels to canvas */
     chafa_canvas_draw_all_pixels (canvas,
                                   CHAFA_PIXEL_RGBA8_UNASSOCIATED,
                                   pixels,
@@ -54,7 +46,8 @@ main (int argc, char *argv [])
                                   PIX_HEIGHT,
                                   PIX_WIDTH * N_CHANNELS);
 
-    gs = chafa_canvas_build_ansi (canvas);
+    /* Generate a string that will show the canvas contents on a terminal */
+    gs = chafa_canvas_print (canvas, NULL);
 
     /* Print the string */
     fwrite (gs->str, sizeof (char), gs->len, stdout);
