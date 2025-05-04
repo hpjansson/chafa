@@ -49,7 +49,7 @@ ChafaTermSeq;
 #endif /* __GTK_DOC_IGNORE__ */
 
 /**
- * ChafaTermQuirk:
+ * ChafaTermQuirks:
  * @CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT: After printing a sixel image in advance-down
  *  mode, terminal leaves the cursor below the final row instead of on top of it.
  *

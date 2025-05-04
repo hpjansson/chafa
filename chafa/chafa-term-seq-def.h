@@ -2742,6 +2742,8 @@ CHAFA_TERM_SEQ_DEF(query_text_area_size_cells, QUERY_TEXT_AREA_SIZE_CELLS, 0, no
  * chafa_term_info_emit_text_area_size_cells:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
+ * @height_cells: Text area height in cells
+ * @width_cells: Text area width in cells
  *
  * Prints the control sequence for #CHAFA_TERM_SEQ_TEXT_AREA_SIZE_CELLS.
  *
@@ -2776,6 +2778,8 @@ CHAFA_TERM_SEQ_DEF(query_text_area_size_px, QUERY_TEXT_AREA_SIZE_PX, 0, none, ch
  * chafa_term_info_emit_text_area_size_px:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
+ * @height_px: Text area height in pixels
+ * @width_px: Text area width in pixels
  *
  * Prints the control sequence for #CHAFA_TERM_SEQ_TEXT_AREA_SIZE_PX.
  *
@@ -2810,6 +2814,8 @@ CHAFA_TERM_SEQ_DEF(query_cell_size_px, QUERY_CELL_SIZE_PX, 0, none, char)
  * chafa_term_info_emit_cell_size_px:
  * @term_info: A #ChafaTermInfo
  * @dest: String destination
+ * @height_px: Cell height in pixels
+ * @width_px: Cell width in pixels
  *
  * Prints the control sequence for #CHAFA_TERM_SEQ_CELL_SIZE_PX.
  *

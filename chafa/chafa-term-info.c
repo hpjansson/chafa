@@ -103,6 +103,14 @@
  * @CHAFA_TERM_SEQ_RESET_DEFAULT_BG: Reset the default BG color to the terminal's default.
  * @CHAFA_TERM_SEQ_SET_DEFAULT_BG: Set the default BG to a specific RGB color.
  * @CHAFA_TERM_SEQ_QUERY_DEFAULT_BG: Query the default BG color.
+ * @CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES: Query the primary device attributes.
+ * @CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES: Indicate the primary device attributes.
+ * @CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX: Query the character cell size in pixels.
+ * @CHAFA_TERM_SEQ_CELL_SIZE_PX: Indicate the character cell size in pixels.
+ * @CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS: Query the text area size in character cells.
+ * @CHAFA_TERM_SEQ_TEXT_AREA_SIZE_CELLS: Indicate the text area size in character cells.
+ * @CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX: Query the text area size in pixels.
+ * @CHAFA_TERM_SEQ_TEXT_AREA_SIZE_PX: Indicate the text area size in pixels.
  * @CHAFA_TERM_SEQ_RETURN_KEY: Return key.
  * @CHAFA_TERM_SEQ_BACKSPACE_KEY: Backspace key.
  * @CHAFA_TERM_SEQ_TAB_KEY: Tab key.
@@ -857,7 +865,7 @@ chafa_term_info_unref (ChafaTermInfo *term_info)
  * next operation on this data structure. Make a copy using g_strdup() if
  * you need to keep it around.
  *
- * Returns: The name for this #TermInfo, or %NULL
+ * Returns: The name for this #ChafaTermInfo, or %NULL
  *
  * Since: 1.16
  **/
@@ -1489,7 +1497,7 @@ chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
  * @input: Pointer to pointer to input data
  * @input_len: Pointer to maximum input data length
  * @args_out: Pointer to parsed argument values
- * @args_out_len: Pointer to storage for argument count
+ * @n_args_out: Pointer to storage for argument count
  *
  * Attempts to parse a terminal sequence from an input data array. If successful,
  * #CHAFA_PARSE_SUCCESS will be returned, the @input pointer will be advanced and
@@ -1499,7 +1507,7 @@ chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
  * which must have room for up to #CHAFA_TERM_SEQ_ARGS_MAX elements.
  *
  * The number of parsed arguments is returned in @n_args_out. This is useful for
- * seqs with a variable number of arguments, like #PRIMARY_DEVICE_ATTRIBUTES.
+ * seqs with a variable number of arguments, like #CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES.
  *
  * Either or both of @args_out and @n_args_out can be %NULL, in which case
  * nothing is returned for that parameter.
