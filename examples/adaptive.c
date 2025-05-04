@@ -40,41 +40,10 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, Chafa
     envp = g_get_environ ();
     term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
 
-    /* See which control sequences were defined, and use that to pick the most
-     * high-quality rendering possible */
+    /* Pick the most high-quality rendering possible */
 
-    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
-    {
-        pixel_mode = CHAFA_PIXEL_MODE_KITTY;
-        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-    }
-    else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS))
-    {
-        pixel_mode = CHAFA_PIXEL_MODE_SIXELS;
-        mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-    }
-    else
-    {
-        pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-
-        if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_DIRECT)
-            && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_DIRECT)
-            && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_DIRECT))
-            mode = CHAFA_CANVAS_MODE_TRUECOLOR;
-        else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_256)
-                 && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_256)
-                 && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_256))
-            mode = CHAFA_CANVAS_MODE_INDEXED_240;
-        else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FGBG_16)
-                 && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_FG_16)
-                 && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_SET_COLOR_BG_16))
-            mode = CHAFA_CANVAS_MODE_INDEXED_16;
-        else if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_INVERT_COLORS)
-                 && chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_RESET_ATTRIBUTES))
-            mode = CHAFA_CANVAS_MODE_FGBG_BGFG;
-        else
-            mode = CHAFA_CANVAS_MODE_FGBG;
-    }
+    mode = chafa_term_info_get_best_canvas_mode (term_info);
+    pixel_mode = chafa_term_info_get_best_pixel_mode (term_info);
 
     /* Hand over the information to caller */
 
