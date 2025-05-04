@@ -27,12 +27,13 @@ typedef struct
 TermSize;
 
 static void
-detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out)
+detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, ChafaPixelMode *pixel_mode_out,
+                 ChafaPassthrough *passthrough_out, ChafaSymbolMap **symbol_map_out)
 {
     ChafaCanvasMode mode;
     ChafaPixelMode pixel_mode;
+    ChafaPassthrough passthrough;
     ChafaTermInfo *term_info;
-    ChafaTermInfo *fallback_info;
     gchar **envp;
 
     /* Examine the environment variables and guess what the terminal can do */
@@ -44,12 +45,20 @@ detect_terminal (ChafaTermInfo **term_info_out, ChafaCanvasMode *mode_out, Chafa
 
     mode = chafa_term_info_get_best_canvas_mode (term_info);
     pixel_mode = chafa_term_info_get_best_pixel_mode (term_info);
+    passthrough = chafa_term_info_get_is_pixel_passthrough_needed (term_info, pixel_mode)
+        ? chafa_term_info_get_passthrough_type (term_info)
+        : CHAFA_PASSTHROUGH_NONE;
+
+    *symbol_map_out = chafa_symbol_map_new ();
+    chafa_symbol_map_add_by_tags (*symbol_map_out,
+                                  chafa_term_info_get_safe_symbol_tags (term_info));
 
     /* Hand over the information to caller */
 
     *term_info_out = term_info;
     *mode_out = mode;
     *pixel_mode_out = pixel_mode;
+    *passthrough_out = passthrough;
 
     /* Cleanup */
 
@@ -155,24 +164,21 @@ convert_image (const void *pixels, gint pix_width, gint pix_height,
     ChafaTermInfo *term_info;
     ChafaCanvasMode mode;
     ChafaPixelMode pixel_mode;
+    ChafaPassthrough passthrough;
     ChafaSymbolMap *symbol_map;
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas;
     GString *printable;
 
-    detect_terminal (&term_info, &mode, &pixel_mode);
+    detect_terminal (&term_info, &mode, &pixel_mode, &passthrough, &symbol_map);
 
-    /* Specify the symbols we want */
-
-    symbol_map = chafa_symbol_map_new ();
-    chafa_symbol_map_add_by_tags (symbol_map, CHAFA_SYMBOL_TAG_BLOCK);
-
-    /* Set up a configuration with the symbols and the canvas size in characters */
+    /* Set up a configuration based on detected characteristics */
 
     config = chafa_canvas_config_new ();
     chafa_canvas_config_set_canvas_mode (config, mode);
     chafa_canvas_config_set_pixel_mode (config, pixel_mode);
     chafa_canvas_config_set_geometry (config, width_cells, height_cells);
+    chafa_canvas_config_set_passthrough (config, passthrough);
     chafa_canvas_config_set_symbol_map (config, symbol_map);
 
     if (cell_width > 0 && cell_height > 0)
