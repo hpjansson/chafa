@@ -1087,7 +1087,7 @@ chafa_term_info_get_passthrough_type (ChafaTermInfo *term_info)
 }
 
 /**
- * chafa_term_info_get_pixel_passthrough_needed:
+ * chafa_term_info_get_is_pixel_passthrough_needed:
  * @term_info: A #ChafaTermInfo
  * @pixel_mode: A #ChafaPixelMode
  *
@@ -1109,7 +1109,7 @@ chafa_term_info_get_is_pixel_passthrough_needed (ChafaTermInfo *term_info,
 }
 
 /**
- * chafa_term_info_set_pixel_passthrough_needed:
+ * chafa_term_info_set_is_pixel_passthrough_needed:
  * @term_info: A #ChafaTermInfo
  * @pixel_mode: A #ChafaPixelMode
  * @pixel_passthrough_needed: A boolean indicating whether passthrough is needed
