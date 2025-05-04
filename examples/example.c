@@ -1,3 +1,10 @@
+/* This file is in the public domain, and you are free to use it as you see fit.
+ *
+ * Compile with:
+ *
+ * cc example.c -o example $(pkg-config --libs --cflags chafa)
+ */
+
 #include <chafa.h>
 #include <stdio.h>
 
