@@ -228,7 +228,10 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
     }
 
     if (n_cols_produced < 1)
+    {
+        grid->finished_chunks = TRUE;
         return FALSE;
+    }
 
     for (i = 0; i < row_height; i++)
     {
@@ -311,14 +314,17 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
 
         /* FIXME: Make relative */
         chafa_term_write (term, "\r", 1);
+    }
 
-        if (!item_gsa [0])
-            grid->finished_chunks = TRUE;
+    if (!item_gsa [0])
+    {
+        grid->finished_chunks = TRUE;
+        return FALSE;
     }
 
     /* Optional: Begin row */
 
-    if (grid->next_item % grid->n_cols == 0 && item_gsa [0])
+    if (grid->next_item % grid->n_cols == 0)
     {
         /* Reserve space on terminal, scrolling if necessary */
 
@@ -331,21 +337,18 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
 
     /* Format image */
 
-    if (item_gsa [0])
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_SAVE_CURSOR_POS, -1);
+
+    for (j = 0; item_gsa [0] [j]; j++)
     {
-        chafa_term_print_seq (term, CHAFA_TERM_SEQ_SAVE_CURSOR_POS, -1);
-
-        for (j = 0; item_gsa [0] [j]; j++)
-        {
-            gint col_row_data_len = item_gsa [0] [j]->len;
-            chafa_term_write (term, item_gsa [0] [j]->str, col_row_data_len);
-        }
-
-        chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
-        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_RIGHT, col_width + 1, -1);
-
-        grid->next_item++;
+        gint col_row_data_len = item_gsa [0] [j]->len;
+        chafa_term_write (term, item_gsa [0] [j]->str, col_row_data_len);
     }
+
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
+    chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_RIGHT, col_width + 1, -1);
+
+    grid->next_item++;
 
     chafa_free_gstring_array (item_gsa [0]);
     return TRUE;
