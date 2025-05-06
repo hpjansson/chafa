@@ -27,8 +27,6 @@
 
 #include "jxl-loader.h"
 
-#define BUFFER_SIZE (1024)
-
 GList *jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping);
 
 void jxl_cleanup_frame_list (GList *frame_list);
@@ -75,36 +73,26 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
     JxlPixelFormat format = { 4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
 
     JxlDecoderStatus decode_status = JXL_DEC_NEED_MORE_INPUT;
-    uint8_t buffer [BUFFER_SIZE];
 
     gpointer image_buffer = NULL;
     GList *frame_list = NULL;
     JxlBasicInfo info;
     JxlFrameHeader frame_header;
-
-    int read = 0;
     gboolean success = FALSE;
+
+    gsize bytes_read = 0;
+    const uint8_t* data = file_mapping_get_data(mapping, &bytes_read);
+
+    if (JXL_DEC_SUCCESS != JxlDecoderSetInput (dec, data, bytes_read))
+    {
+        decode_status = JXL_DEC_ERROR;
+    }
+    JxlDecoderCloseInput(dec);
 
     while (JXL_DEC_ERROR != decode_status)
     {
-        if (JXL_DEC_NEED_MORE_INPUT == decode_status)
-        {
-            JxlDecoderReleaseInput (dec);
-            const gsize nbr = file_mapping_read (mapping, buffer, read, BUFFER_SIZE);
-            read += nbr;
-            if (nbr > 0)
-            {
-                if (JXL_DEC_SUCCESS != JxlDecoderSetInput (dec, buffer, nbr))
-                {
-                    break;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-        else if (JXL_DEC_BASIC_INFO == decode_status)
+        decode_status = JxlDecoderProcessInput (dec);
+        if (JXL_DEC_BASIC_INFO == decode_status)
         {
             if (JXL_DEC_SUCCESS != JxlDecoderGetBasicInfo (dec, &info))
             {
@@ -121,7 +109,7 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
             if (JXL_DEC_SUCCESS
                 != JxlDecoderSetImageOutBuffer (dec, &format, image_buffer,
                                                 info.xsize * info.ysize
-                                                    * format.num_channels))
+                                                * format.num_channels))
             {
                 break;
             }
@@ -154,9 +142,10 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
             frame_list = g_list_reverse (frame_list);
             success = TRUE;
             break;
+        } else if (JXL_DEC_NEED_MORE_INPUT == decode_status)
+        {
+            break;
         }
-
-        decode_status = JxlDecoderProcessInput (dec);
     }
 
     // Decoding failed
