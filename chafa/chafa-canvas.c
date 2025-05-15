@@ -293,6 +293,20 @@ eval_symbol (ChafaCanvas *canvas, ChafaWorkCell *wcell, gint sym_index,
     else
     {
         eval_symbol_colors (canvas, wcell, sym, &eval);
+
+        /* Reject symbols that would cause us to pick a foreground color
+         * that matches the terminal's FG color less well than our background
+         * color does. E.g. if the terminal's FG/BG is white on black, we
+         * will arrange for the FG color to always be brighter than the BG. */
+
+        if (chafa_color_diff_fast (&eval.colors.colors [CHAFA_COLOR_PAIR_FG],
+                                   &canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG])
+            > chafa_color_diff_fast (&eval.colors.colors [CHAFA_COLOR_PAIR_BG],
+                                     &canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG])
+            && best_eval_inout->error != SYMBOL_ERROR_MAX)
+        {
+            return;
+        }
     }
 
     if (canvas->use_quantized_error)
