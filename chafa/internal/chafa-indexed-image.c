@@ -537,7 +537,7 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
     draw_pixels (&ctx);
 
     memset (indexed_image->pixels + indexed_image->width * dest_height,
-            0,
+            chafa_palette_get_transparent_index (&indexed_image->palette),
             indexed_image->width * (indexed_image->height - dest_height));
 
     smol_scale_destroy (ctx.scale_ctx);
