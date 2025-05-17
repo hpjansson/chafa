@@ -75,6 +75,10 @@ typedef enum
 }
 Tristate;
 
+/* Dimensions are set to GRID_AUTO with --grid auto. This means the user
+ * wants us to pick appropriate grid parameters based on the view size */
+#define GRID_AUTO -2
+
 typedef struct
 {
     gchar *executable_name;
@@ -389,8 +393,8 @@ print_summary (void)
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
-    "      --grid=CxR     Lay out images in a grid of C columns and R rows per\n"
-    "                     screenful. Either C or R may be omitted, e.g. --grid 4.\n"
+    "      --grid=CxR     Lay out images in a grid of CxR columns/rows per screenful.\n"
+    "                     C or R may be omitted, e.g. \"--grid 4\". Can be \"auto\".\n"
     "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
     "                     rows at the bottom as a safety margin. Can be used to\n"
     "                     prevent images from scrolling out. Defaults to 1.\n"
@@ -1207,27 +1211,35 @@ parse_grid_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
     gboolean result = TRUE;
     gint width, height;
 
-    parse_2d_size (value, &width, &height);
+    if (!strcasecmp (value, "auto"))
+    {
+        width = GRID_AUTO;
+        height = GRID_AUTO;
+    }
+    else
+    {
+        parse_2d_size (value, &width, &height);
 
-    if (width < 0 && height < 0)
-    {
-        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Grid size must be specified as [width]x[height], [width]x or x[height], e.g 4x4, 4x or x4.");
-        result = FALSE;
-    }
-    else if (width == 0 || height == 0)
-    {
-        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Grid size must be at least 1x1.");
-        result = FALSE;
-    }
-    else if (width < 0)
-    {
-        width = -1;
-    }
-    else if (height < 0)
-    {
-        height = -1;
+        if (width < 0 && height < 0)
+        {
+            g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                         "Grid size must be specified as [width]x[height], [width]x or x[height], e.g 4x4, 4x or x4.");
+            result = FALSE;
+        }
+        else if (width == 0 || height == 0)
+        {
+            g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                         "Grid size must be at least 1x1.");
+            result = FALSE;
+        }
+        else if (width < 0)
+        {
+            width = -1;
+        }
+        else if (height < 0)
+        {
+            height = -1;
+        }
     }
 
     options.grid_width = width;
@@ -2052,21 +2064,6 @@ parse_options (int *argc, char **argv [])
         fuzz_options_with_file (&options, (*argv) [1]);
     }
 
-    /* Set default alignment depending on run mode */
-
-    if (options.horiz_align == CHAFA_ALIGN_MAX)
-    {
-        options.horiz_align = ((options.grid_width > 0 || options.grid_height > 0)
-                               ? CHAFA_ALIGN_CENTER
-                               : CHAFA_ALIGN_START);
-    }
-    if (options.vert_align == CHAFA_ALIGN_MAX)
-    {
-        options.vert_align = ((options.grid_width > 0 || options.grid_height > 0)
-                              ? CHAFA_ALIGN_END
-                              : CHAFA_ALIGN_START);
-    }
-
     /* Synchronous probe for sixels, default colors, etc. */
 
     if ((options.probe == TRISTATE_TRUE
@@ -2239,9 +2236,6 @@ parse_options (int *argc, char **argv [])
         }
     }
 
-    options.have_parking_row = ((using_detected_size || options.vert_align == CHAFA_ALIGN_END)
-                                && options.margin_bottom == 0) ? FALSE : TRUE;
-
     /* Now we've established the pixel mode, apply dependent defaults */
 
     if (options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
@@ -2294,6 +2288,38 @@ parse_options (int *argc, char **argv [])
             options.passthrough = passthrough;
         }
     }
+
+    /* Resolve grid dimensions if necessary. Items need to be a bit bigger
+     * in symbols mode in order to be legible. */
+
+    if (options.grid_width == GRID_AUTO || options.grid_height == GRID_AUTO)
+    {
+        gint item_width = (MIN (options.width,
+                                options.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS ? 19 : 12));
+
+        options.grid_width = options.width / item_width;
+        options.grid_height = -1;
+    }
+
+    /* Set default alignment depending on run mode */
+
+    if (options.horiz_align == CHAFA_ALIGN_MAX)
+    {
+        options.horiz_align = ((options.grid_width > 0 || options.grid_height > 0)
+                               ? CHAFA_ALIGN_CENTER
+                               : CHAFA_ALIGN_START);
+    }
+    if (options.vert_align == CHAFA_ALIGN_MAX)
+    {
+        options.vert_align = ((options.grid_width > 0 || options.grid_height > 0)
+                              ? CHAFA_ALIGN_END
+                              : CHAFA_ALIGN_START);
+    }
+
+    /* Optionally establish parking row for the cursor */
+
+    options.have_parking_row = ((using_detected_size || options.vert_align == CHAFA_ALIGN_END)
+                                && options.margin_bottom == 0) ? FALSE : TRUE;
 
     /* Apply tmux workarounds only if both detected and desired, and a
      * graphics protocol is desired */

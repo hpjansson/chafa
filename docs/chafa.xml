@@ -197,7 +197,8 @@ Lay out images in a grid of <replaceable>cols</replaceable> columns and
 <replaceable>rows</replaceable> rows per screenful. Either
 <replaceable>cols</replaceable> or <replaceable>rows</replaceable> may be
 omitted, e.g. --grid 4 or --grid x4, in which case cell allocations
-will be approximately square.
+will be approximately square. If "auto" is specified, dimensions will be
+picked automatically.
 </para></listitem>
 </varlistentry>
 
