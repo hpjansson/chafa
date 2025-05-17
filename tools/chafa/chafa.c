@@ -116,6 +116,7 @@ typedef struct
     gboolean relative;
     gboolean relative_set;
     gboolean fit_to_width;
+    gboolean grid_on;
     gboolean label;
     gboolean use_unicode;
     ChafaAlign horiz_align;
@@ -396,7 +397,7 @@ print_summary (void)
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
-    "      --grid=CxR     Lay out images in a grid of CxR columns/rows per screenful.\n"
+    "  -g, --grid=CxR     Lay out images in a grid of CxR columns/rows per screenful.\n"
     "                     C or R may be omitted, e.g. \"--grid 4\". Can be \"auto\".\n"
     "  -l, --label=BOOL   Labeling [on, off]. Prints filenames below images. Defaults\n"
     "                     to off.\n"
@@ -1222,10 +1223,15 @@ parse_grid_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
     gboolean result = TRUE;
     gint width, height;
 
-    if (!strcasecmp (value, "auto"))
+    if (!strcasecmp (value, "auto") || !strcasecmp (value, "on"))
     {
-        width = GRID_AUTO;
-        height = GRID_AUTO;
+        width = height = GRID_AUTO;
+        options.grid_on = TRUE;
+    }
+    else if (!strcasecmp (value, "off"))
+    {
+        width = height = -1;
+        options.grid_on = FALSE;
     }
     else
     {
@@ -1246,10 +1252,12 @@ parse_grid_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
         else if (width < 0)
         {
             width = -1;
+            options.grid_on = TRUE;
         }
         else if (height < 0)
         {
             height = -1;
+            options.grid_on = TRUE;
         }
     }
 
@@ -1957,6 +1965,7 @@ parse_options (int *argc, char **argv [])
         { "fuzz-options", '\0', 0, G_OPTION_ARG_NONE,    &options.fuzz_options, "Fuzz the options", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "grid",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_grid_arg,        "Grid", NULL },
+        { "grid-on",     'g',  0, G_OPTION_ARG_NONE,     &options.grid_on,      "Grid on", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "label",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_label_arg,       "Print labels", NULL },
         { "label-on",    'l',  0, G_OPTION_ARG_NONE,     &options.label,        "Print labels on", NULL },
@@ -2026,6 +2035,7 @@ parse_options (int *argc, char **argv [])
     options.view_height = -1;  /* Unset */
     options.width = -1;  /* Unset */
     options.height = -1;  /* Unset */
+    options.grid_on = FALSE;
     options.grid_width = -1;  /* Unset */
     options.grid_height = -1;  /* Unset */
     options.fit_to_width = FALSE;
@@ -2054,6 +2064,13 @@ parse_options (int *argc, char **argv [])
     {
         g_printerr ("%s: %s\n", options.executable_name, error->message);
         goto out;
+    }
+
+    /* Parser kludges */
+
+    if (options.grid_on && options.grid_width == -1 && options.grid_height == -1)
+    {
+        options.grid_width = options.grid_height = GRID_AUTO;
     }
 
     /* If help, version info or config dump was requested, print it and bail out */
