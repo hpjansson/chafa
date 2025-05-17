@@ -501,8 +501,8 @@ chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, ChafaTermInfo *te
     g_snprintf (buf,
                 CHAFA_TERM_SEQ_LENGTH_MAX,
                 "\"1;1;%d;%d",
-                sixel_canvas->image->width,
-                sixel_canvas->image->height);
+                sixel_canvas->width,
+                sixel_canvas->height);
     chafa_passthrough_encoder_append (&ptenc, buf);
 
     ctx.sixel_canvas = sixel_canvas;
