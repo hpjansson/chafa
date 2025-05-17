@@ -2465,8 +2465,6 @@ pixel_to_cell_dimensions (gdouble scale,
                           gint width, gint height,
                           gint *width_out, gint *height_out)
 {
-    gint extra_height;
-
     /* Scale can't be zero or negative */
     scale = MAX (scale, 0.00001);
 
@@ -2476,8 +2474,6 @@ pixel_to_cell_dimensions (gdouble scale,
     if (cell_height < 1)
         cell_height = 20;
 
-    extra_height = options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS ? 5 : 0;
-
     if (width_out)
     {
         *width_out = ((int) (width * scale) + cell_width - 1) / cell_width;
@@ -2486,7 +2482,7 @@ pixel_to_cell_dimensions (gdouble scale,
 
     if (height_out)
     {
-        *height_out = ((int) (height * scale) + cell_height - 1 + extra_height) / cell_height;
+        *height_out = ((int) (height * scale) + cell_height - 1) / cell_height;
         *height_out = MAX (*height_out, 1);
     }
 }
