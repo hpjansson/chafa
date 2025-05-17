@@ -1221,17 +1221,18 @@ static gboolean
 parse_grid_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result = TRUE;
+    gboolean b = FALSE;
     gint width, height;
 
-    if (!strcasecmp (value, "auto") || !strcasecmp (value, "on"))
+    if (parse_boolean_token (value, &b))
+    {
+        width = height = (b ? GRID_AUTO : -1);
+        options.grid_on = b;
+    }
+    else if (!g_ascii_strcasecmp (value, "auto"))
     {
         width = height = GRID_AUTO;
         options.grid_on = TRUE;
-    }
-    else if (!strcasecmp (value, "off"))
-    {
-        width = height = -1;
-        options.grid_on = FALSE;
     }
     else
     {
