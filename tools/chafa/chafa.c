@@ -47,6 +47,7 @@
 #include "media-loader.h"
 #include "named-colors.h"
 #include "placement-counter.h"
+#include "util.h"
 
 /* Include after glib.h for G_OS_WIN32 */
 #ifdef G_OS_WIN32
@@ -115,6 +116,8 @@ typedef struct
     gboolean relative;
     gboolean relative_set;
     gboolean fit_to_width;
+    gboolean label;
+    gboolean use_unicode;
     ChafaAlign horiz_align;
     ChafaAlign vert_align;
     gint view_width, view_height;
@@ -395,6 +398,8 @@ print_summary (void)
     "                     a real number or a fraction. Defaults to 1/2.\n"
     "      --grid=CxR     Lay out images in a grid of CxR columns/rows per screenful.\n"
     "                     C or R may be omitted, e.g. \"--grid 4\". Can be \"auto\".\n"
+    "  -l, --label=BOOL   Labeling [on, off]. Prints filenames below images. Defaults\n"
+    "                     to off.\n"
     "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
     "                     rows at the bottom as a safety margin. Can be used to\n"
     "                     prevent images from scrolling out. Defaults to 1.\n"
@@ -1065,6 +1070,12 @@ static gboolean
 parse_symbols_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     options.symbols_specified = TRUE;
+
+    /* FIXME: Implement a more convenient/consistent way to turn off Unicode in
+     * labels etc. */
+    if (value && !strcasecmp (value, "ascii"))
+        options.use_unicode = FALSE;
+
     return chafa_symbol_map_apply_selectors (options.symbol_map, value, error);
 }
 
@@ -1523,6 +1534,19 @@ parse_center_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
 }
 
 static gboolean
+parse_label_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_boolean_token (value, &options.label);
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Label mode must be one of [on, off].");
+
+    return result;
+}
+
+static gboolean
 parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result;
@@ -1934,6 +1958,8 @@ parse_options (int *argc, char **argv [])
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "grid",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_grid_arg,        "Grid", NULL },
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
+        { "label",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_label_arg,       "Print labels", NULL },
+        { "label-on",    'l',  0, G_OPTION_ARG_NONE,     &options.label,        "Print labels on", NULL },
         { "margin-bottom", '\0', 0, G_OPTION_ARG_INT,    &options.margin_bottom,  "Bottom margin", NULL },
         { "margin-right", '\0', 0, G_OPTION_ARG_INT,     &options.margin_right,  "Right margin", NULL },
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
@@ -2021,6 +2047,8 @@ parse_options (int *argc, char **argv [])
     options.is_conhost_mode = FALSE;
     options.cell_width = 10;
     options.cell_height = 20;
+    options.label = FALSE;
+    options.use_unicode = TRUE;
 
     if (!g_option_context_parse (context, argc, argv, &error))
     {
@@ -2586,12 +2614,13 @@ write_vertical_spaces (gint n)
 }
 
 static void
-write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
+write_image_prologue (const gchar *path,
+                      gboolean is_first_file, gboolean is_first_frame,
                       gboolean is_animation, gint dest_height)
 {
     /* Insert a blank line between files in continuous (!clear) mode */
     if (is_first_frame && !options.clear && !is_first_file)
-        write_vertical_spaces (1 + (!options.have_parking_row ? 1 : 0));
+        write_vertical_spaces (1 + (options.have_parking_row ? 0 : 1));
 
     if (options.clear)
     {
@@ -2618,6 +2647,15 @@ write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
         write_cursor_down_scroll_n (dest_height);
         chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_UP, dest_height, -1);
         chafa_term_print_seq (term, CHAFA_TERM_SEQ_SAVE_CURSOR_POS, -1);
+
+        /* Print label before animation starts */
+        if (options.label)
+        {
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN, dest_height, -1);
+            path_print_label (term, path, options.horiz_align, options.view_width,
+                              options.use_unicode);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
+        }
     }
     else if (!options.clear && !is_first_frame)
     {
@@ -2627,7 +2665,7 @@ write_image_prologue (gboolean is_first_file, gboolean is_first_frame,
 }
 
 static void
-write_image_epilogue (gint dest_width)
+write_image_epilogue (const gchar *path, gboolean is_animation, gint dest_width)
 {
     gint left_space;
 
@@ -2654,6 +2692,21 @@ write_image_epilogue (gint dest_width)
         if (options.relative)
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
                                   left_space + dest_width, -1);
+
+        if (options.label)
+        {
+            if (!is_animation)
+            {
+                path_print_label (term, path, options.horiz_align, options.view_width,
+                                  options.use_unicode);
+
+                if (options.relative)
+                    chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
+                                          options.view_width, -1);
+            }
+
+            write_vertical_spaces (1);
+        }
     }
     else /* CHAFA_PIXEL_MODE_SIXELS */
     {
@@ -2669,6 +2722,24 @@ write_image_epilogue (gint dest_width)
         if (options.relative && left_space > 0)
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
                                   left_space, -1);
+
+        if (options.label)
+        {
+            if (!is_animation)
+            {
+                if (!options.relative)
+                    chafa_term_write (term, "\r", 1);
+
+                path_print_label (term, path, options.horiz_align, options.view_width,
+                                  options.use_unicode);
+
+                if (options.relative)
+                    chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
+                                          options.view_width, -1);
+            }
+
+            write_vertical_spaces (1);
+        }
     }
 }
 
@@ -2990,13 +3061,13 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
             {
                 chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
-                write_image_prologue (is_first_file, is_first_frame, is_animation, dest_height);
+                write_image_prologue (filename, is_first_file, is_first_frame, is_animation, dest_height);
                 write_image (gsa, dest_width);
 
                 /* No inter-frame epilogue in animations; this prevents unwanted
                  * scrolling when we get the sixel overshoot quirk wrong (#255). */
                 if (!is_animation)
-                    write_image_epilogue (dest_width);
+                    write_image_epilogue (filename, is_animation, dest_width);
 
                 if (!chafa_term_flush (term))
                 {
@@ -3040,7 +3111,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
            && !options.watch && anim_elapsed_s < anim_duration_s);
 
     if (is_animation)
-        write_image_epilogue (dest_width);
+        write_image_epilogue (filename, is_animation, dest_width);
 
 out:
     /* We need two IDs per animation in order to do flicker-free flips. If the
@@ -3156,6 +3227,8 @@ run_grid (GList *filenames)
                           options.use_exact_size == TRISTATE_TRUE
                           ? CHAFA_TUCK_SHRINK_TO_FIT
                           : (options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT));
+    grid_layout_set_print_labels (grid_layout, options.label);
+    grid_layout_set_use_unicode (grid_layout, options.use_unicode);
 
     for (l = filenames; l; l = g_list_next (l))
     {

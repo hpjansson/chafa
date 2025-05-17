@@ -21,8 +21,8 @@
 #include <chafa.h>
 #include "grid-layout.h"
 #include "media-loader.h"
+#include "util.h"
 
-#define CHAR_BUF_SIZE 1024
 #define MAX_COLS 1024
 
 struct GridLayout
@@ -38,6 +38,8 @@ struct GridLayout
     gint n_items, next_item;
     guint finished_push : 1;
     guint finished_chunks : 1;
+    guint print_labels : 1;
+    guint use_unicode : 1;
 };
 
 static void
@@ -174,31 +176,11 @@ out:
     return success;
 }
 
-static void
-print_rep_char (ChafaTerm *term, gchar c, gint n)
-{
-    gchar buf_s [CHAR_BUF_SIZE];
-    gchar *buf_m = NULL;
-    gchar *buf = buf_s;
-    gint i;
-
-    if (n > CHAR_BUF_SIZE)
-    {
-        buf_m = g_malloc (n);
-        buf = buf_m;
-    }
-
-    for (i = 0; i < n; i++)
-        buf [i] = c;
-
-    chafa_term_write (term, buf, n);
-    g_free (buf_m);
-}
-
 static gboolean
 print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
 {
     GString **item_gsa [MAX_COLS];
+    GList *paths = NULL;
     gint item_height [MAX_COLS];
     gint col_width, row_height;
     gint n_cols_produced;
@@ -216,6 +198,7 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
     {
         if (format_item (grid, grid->next_path->data, &item_gsa [n_cols_produced]))
         {
+            paths = g_list_prepend (paths, grid->next_path->data);
             n_cols_produced++;
         }
         else
@@ -232,6 +215,8 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
         grid->finished_chunks = TRUE;
         return FALSE;
     }
+
+    paths = g_list_reverse (paths);
 
     for (i = 0; i < row_height; i++)
     {
@@ -268,11 +253,27 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
         chafa_term_write (term, "\n", 1);
     }
 
+    if (grid->print_labels)
+    {
+        GList *l = paths;
+
+        for (j = 0; l && j < n_cols_produced; j++)
+        {
+            const gchar *path = l->data;
+            path_print_label (term, path, grid->halign, col_width, grid->use_unicode);
+            chafa_term_write (term, " ", 1);
+            l = g_list_next (l);
+        }
+
+        chafa_term_write (term, "\n", 1);
+    }
+
     chafa_term_write (term, "\n", 1);
 
     for (i = 0; i < n_cols_produced; i++)
         chafa_free_gstring_array (item_gsa [i]);
 
+    g_list_free (paths);
     return TRUE;
 }
 
@@ -280,6 +281,7 @@ static gboolean
 print_grid_image (GridLayout *grid, ChafaTerm *term)
 {
     GString **item_gsa [1] = { NULL };
+    const gchar *path = "?";
     gint col_width, row_height;
     gint i, j;
 
@@ -299,6 +301,7 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
             /* FIXME: Use a placeholder image */
         }
 
+        path = grid->next_path->data;
         grid->next_path = g_list_next (grid->next_path);
     }
 
@@ -307,7 +310,7 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
     if (grid->next_item != 0 &&
         (grid->next_item % grid->n_cols == 0 || !item_gsa [0]))
     {
-        for (i = 0; i < row_height + 1; i++)
+        for (i = 0; i < row_height + (grid->print_labels ? 1 : 0) + 1; i++)
         {
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN_SCROLL, -1);
         }
@@ -344,6 +347,17 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
         gint col_row_data_len = item_gsa [0] [j]->len;
         chafa_term_write (term, item_gsa [0] [j]->str, col_row_data_len);
     }
+
+    /* Print label */
+
+    if (grid->print_labels)
+    {
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN, row_height, -1);
+        path_print_label (term, path, grid->halign, col_width, grid->use_unicode);
+    }
+
+    /* Prepare for next image */
 
     chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
     chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_RIGHT, col_width + 1, -1);
@@ -451,6 +465,22 @@ grid_layout_set_tuck (GridLayout *grid, ChafaTuck tuck)
     g_return_if_fail (grid != NULL);
 
     grid->tuck = tuck;
+}
+
+void
+grid_layout_set_print_labels (GridLayout *grid, gboolean print_labels)
+{
+    g_return_if_fail (grid != NULL);
+
+    grid->print_labels = print_labels;
+}
+
+void
+grid_layout_set_use_unicode (GridLayout *grid, gboolean use_unicode)
+{
+    g_return_if_fail (grid != NULL);
+
+    grid->use_unicode = use_unicode;
 }
 
 void

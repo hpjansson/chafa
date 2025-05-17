@@ -203,6 +203,14 @@ picked automatically.
 </varlistentry>
 
 <varlistentry>
+<term><option>-l, --label <replaceable>bool</replaceable></option></term>
+<listitem><para>
+Labeling [on, off]. When this is enabled, each image will be labeled with
+its filename. Defaults to off.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--margin-bottom <replaceable>num</replaceable></option></term>
 <listitem><para>
 When terminal size is detected, reserve at least this many rows at the bottom

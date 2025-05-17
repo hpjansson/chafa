@@ -24,6 +24,7 @@
 #include <chafa.h>
 #include "util.h"
 
+#define CHAR_BUF_SIZE 1024
 #define ROWSTRIDE_ALIGN 16
 
 #define PAD_TO_N(p, n) (((p) + ((n) - 1)) & ~((unsigned) (n) - 1))
@@ -170,4 +171,109 @@ rotate_image (gpointer *src, guint *width, guint *height, guint *rowstride,
     *width = dest_width;
     *height = dest_height;
     *rowstride = dest_rowstride;
+}
+
+gchar *
+ellipsize_string (const gchar *str, gint len_max, gboolean use_unicode)
+{
+    const gchar *p;
+    gchar *ellipsized;
+    gint i, j;
+
+    if (!str || len_max <= 0)
+        return g_strdup ("");
+
+    for (p = str, i = 0; *p && i < len_max; i++)
+    {
+        p = g_utf8_next_char (p);
+    }
+
+    j = p - str;
+    if (*p && !*g_utf8_next_char (p))
+        return g_strdup (str);
+
+    ellipsized = g_malloc (j + 7);
+    memcpy (ellipsized, str, j);
+
+    if (*p)
+    {
+        if (use_unicode)
+        {
+            /* U+2026, Unicode ellipsis */
+            j += g_unichar_to_utf8 (0x2026, ellipsized + j);
+        }
+        else
+        {
+            *(ellipsized + (j++)) = '>';
+        }
+    }
+    *(ellipsized + j) = '\0';
+
+    return ellipsized;
+}
+
+gchar *
+path_get_ellipsized_basename (const gchar *path, gint len_max, gboolean use_unicode)
+{
+    gchar *basename;
+    gchar *ellipsized;
+
+    if (len_max <= 0)
+        return g_strdup ("");
+    if (!path)
+        return g_strdup ("?");
+
+    basename = g_path_get_basename (path);
+    ellipsized = ellipsize_string (basename, len_max, use_unicode);
+
+    g_free (basename);
+    return ellipsized;
+}
+
+void
+print_rep_char (ChafaTerm *term, gchar c, gint n)
+{
+    gchar buf_s [CHAR_BUF_SIZE];
+    gchar *buf_m = NULL;
+    gchar *buf = buf_s;
+    gint i;
+
+    if (n > CHAR_BUF_SIZE)
+    {
+        buf_m = g_malloc (n);
+        buf = buf_m;
+    }
+
+    for (i = 0; i < n; i++)
+        buf [i] = c;
+
+    chafa_term_write (term, buf, n);
+    g_free (buf_m);
+}
+
+void
+path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
+                  gint field_width, gboolean use_unicode)
+{
+    gchar *label = path_get_ellipsized_basename (path, field_width - 1, use_unicode);
+    gint label_len = g_utf8_strlen (label, -1);
+
+    if (halign == CHAFA_ALIGN_START)
+    {
+        chafa_term_write (term, label, strlen (label));
+        print_rep_char (term, ' ', field_width - label_len);
+    }
+    else if (halign == CHAFA_ALIGN_CENTER)
+    {
+        print_rep_char (term, ' ', (field_width - label_len) / 2);
+        chafa_term_write (term, label, strlen (label));
+        print_rep_char (term, ' ', (field_width - label_len + 1) / 2);
+    }
+    else
+    {
+        print_rep_char (term, ' ', field_width - label_len);
+        chafa_term_write (term, label, strlen (label));
+    }
+
+    g_free (label);
 }
