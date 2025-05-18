@@ -1,6 +1,77 @@
 Chafa releases
 ==============
 
+1.16.0 (2025-05-18)
+-------------------
+
+This is a feature release with lots of additional polish and some new API.
+
+Thanks to everyone who chipped in with issues and code. Special thanks to
+@AnonymouX47 for helping out with the grid implementation and for going above
+and beyond with QA and bugfixing in general.
+
+* Added terminal probing. Currently we can determine geometry, colors and
+  sixel capabilities this way. This supplements the existing heuristics.
+
+* The internal terminal database and heuristics were refactored for clarity,
+  with new API added to simplify the configuration process.
+
+* I/O is now threaded, resulting in improved responsiveness and pipelining.
+
+* New option: --grid=WxH, --grid=[auto|on|off] or -g. This lays out multiple
+  images in a grid for easy browsing.
+
+* New option: --label=[on|off] or -l. Labels each image with its filename. Works
+  in both continuous and grid layouts.
+
+* New option: --probe=[auto|on|off]. Controls whether to actively probe the
+  terminal. Can take a real number denoting how long to wait for a response.
+
+* Sixel quality improved significantly. The quantizer was reimplemented with
+  modern algorithms (github#174), and blue noise dithering was introduced
+  (github#238).
+
+* The new blue noise dithering is also available in symbols mode, and can be
+  turned on with '--dither noise'. It can be turned off with '--dither none'.
+
+* Numerous small improvements were made to sixel handling:
+  - Terminal cursor placement quirks are now represented and handled.
+  - Images can now cover their cell extents completely.
+  - Workaround for animations "walking up the screen" on quirky terminals.
+
+* The JPEG XL loader was improved with optional memory mapping and better
+  container support (@oupson).
+
+* Enabled wildcard expansion in Windows builds (github#266).
+
+* Added completions for the fish shell (Hoang Nguyen) and updated those for
+  zsh (Sebastian Stark).
+
+* Bug fixes:
+  github#111  Provide auto detection of background for perception of
+              transparency (found by Akash Patel).
+  github#228  Sixel capability not detected in foot + tmux (found by @amigthea).
+  github#236  Ghostty shows pwd/lock indicator when using Chafa (found by
+              Eduard Rozenberg).
+  github#238  Sixel image quality significantly different from img2sixel and
+              ImageMagick (found by Rashil Gandhi).
+  github#239  Chafa leaves echo on (found by @veltza).
+  github#245  JPEG file not recognized (found by Lionel Dricot).
+  github#246  Examples using deprecated functions (found by @sechshelme).
+  github#249  Sixel detection doesn't set default values (found by @veltza).
+  github#254  -t 1 doesn't work with -f iterm (@AnonymouX47).
+  github#255  Animations scroll/walk up the screen (found by @AnonymouX47).
+  github#265  Enable Kitty image protocol for Warp (found by Soham Parmar).
+  github#266  On Windows, in a cmd.exe window, filename wildcard expansion is
+              broken (found by @garoto).
+  github#273  -t 1 messes up some images (found by @AnonymouX47).
+  github#274  -f {kitty,iterm} swaps BG color channels for SVG (found by
+              @AnonymouX47).
+  github#278  Images not always padded to cell boundary (found by @veltza).
+  [unfiled]   Fix broken bashisms resulting in logic failure (Eli Schwartz).
+  [unfiled]   Small leak in chafa_canvas_print_rows() (@korei999).
+  [unfiled]   Uninitialized histogram in nearest-neighbor interp.
+
 1.14.5 (2024-11-03)
 -------------------
 
