@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; ent su: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2024 oupson
+/* Copyright (C) 2024-2025 oupson
  *
  * This file is part of Chafa, a program that shows pictures on text terminals.
  *

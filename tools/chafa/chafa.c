@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2018-2024 Hans Petter Jansson
+/* Copyright (C) 2018-2025 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that shows pictures on text terminals.
  *
@@ -322,7 +322,7 @@ collect_variable_arguments (int *argc, char **argv [], gint first_arg)
 }
 
 static const gchar copyright_notice [] =
-    "Copyright (C) 2018-2024 Hans Petter Jansson et al.\n"
+    "Copyright (C) 2018-2025 Hans Petter Jansson et al.\n"
     "Incl. libnsgif copyright (C) 2004 Richard Wilson, copyright (C) 2008 Sean Fox\n"
     "Incl. LodePNG copyright (C) 2005-2018 Lode Vandevenne\n"
     "Incl. QOI decoder copyright (C) 2021 Dominic Szablewski\n\n"

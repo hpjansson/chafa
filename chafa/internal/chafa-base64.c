@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2021-2024 Hans Petter Jansson
+/* Copyright (C) 2021-2025 Hans Petter Jansson
  *
  * This file is part of Chafa, a program that shows pictures on text terminals.
  *
