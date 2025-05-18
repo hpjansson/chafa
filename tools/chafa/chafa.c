@@ -177,6 +177,15 @@ typedef struct
 }
 TermSize;
 
+#ifdef G_OS_WIN32
+/* Enable command line globbing on Windows.
+ *
+ * This is MinGW-specific. If you'd like it to work in MSVC, please get in
+ * touch. There are a couple of glob-alikes floating around - for instance,
+ * the one in MPV is portable and appropriately licensed. */
+extern int _CRT_glob = 1;
+#endif
+
 static GlobalOptions options;
 static TermSize detected_term_size;
 static gboolean using_detected_size = FALSE;
