@@ -7,19 +7,23 @@ git log. For a complete list, you could try:
 
 git log --pretty="format:%an <%ae>" | sort -f | uniq
 
-Per 2024-06-17, this yields the following (sans duplicates):
+Per 2025-05-18, this yields the following (sans duplicates):
 
 alkahest <cyphergothic@protonmail.com>
+AnonymouX47 <anonymoux47@gmail.com>
 begasus <begasus@gmail.com>
 Biswapriyo Nath <nathbappai@gmail.com>
 Daniel Eklöf <daniel@ekloef.se>
 data-man <dataman@tutanota.com>
 Delgan <delgan.py@gmail.com>
+Eli Schwartz <eschwartz@gentoo.org>
 Emanuel Haupt <ehaupt@critical.ch>
 Erica <e@mage.black>
 Felix Yan <felixonmars@archlinux.org>
 Hans Petter Jansson <hpj@hpjansson.org>
+Hoang Nguyen <folliekazetani@protonmail.com>
 Johan Mattsson <39247600+mjunix@users.noreply.github.com>
+korei999 <ju7t1xe@gmail.com>
 Launch Lee <80872691+LaunchLee@users.noreply.github.com>
 Michael Vetter <jubalh@iodoru.org>
 Mikel Olasagasti Uranga <mikel@olasagasti.info>
@@ -30,6 +34,7 @@ Ricardo Arguello <ricardo.arguello@gmail.com>
 Robert-André Mauchin <zebob.m@gmail.com>
 Roman Wagner <roman.wagner@pm.me>
 Samuel Thibault <samuel.thibault@ens-lyon.org>
+Sebastian Stark <sstark@mailbox.org>
 Simon Law <sfllaw@sfllaw.ca>
 sitiom <sitiom@proton.me>
 Sotiris Papatheodorou <sotiris@papatheodorou.xyz>
