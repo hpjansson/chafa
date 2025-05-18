@@ -487,7 +487,7 @@ prepare_pixels_1_worker_nearest (ChafaBatchInfo *batch, PrepareContext *prep_ctx
     gint rowstride;
     PreparePixelsBatch1Ret *ret;
 
-    ret = g_new (PreparePixelsBatch1Ret, 1);
+    ret = g_new0 (PreparePixelsBatch1Ret, 1);
     batch->ret_p = ret;
 
     dest_y = batch->first_row;
