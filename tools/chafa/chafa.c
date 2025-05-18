@@ -2126,20 +2126,14 @@ parse_options (int *argc, char **argv [])
 
         if (!options.fg_color_set)
         {
-            gint32 color = options.invert
-                ? chafa_term_get_default_bg_color (term)
-                : chafa_term_get_default_fg_color (term);
-
+            gint32 color = chafa_term_get_default_fg_color (term);
             if (color >= 0)
                 options.fg_color = color;
         }
 
         if (!options.bg_color_set)
         {
-            gint32 color = options.invert
-                ? chafa_term_get_default_fg_color (term)
-                : chafa_term_get_default_bg_color (term);
-
+            gint32 color = chafa_term_get_default_bg_color (term);
             if (color >= 0)
                 options.bg_color = color;
         }
