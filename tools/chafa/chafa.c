@@ -3012,6 +3012,8 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                     virt_src_height = uncorrected_src_height / options.font_ratio;
                 else
                     virt_src_height = uncorrected_src_height;
+
+                virt_src_height = MAX (virt_src_height, 1);
             }
             else
             {
