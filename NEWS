@@ -1,6 +1,16 @@
 Chafa releases
 ==============
 
+1.16.1 (2025-05-21)
+-------------------
+
+This release fixes two important bugs.
+
+* Bug fixes:
+  github#282  Fish completion not included in release tarball (found by
+              @knuxify).
+  github#283  Piping and redirection are broken in Windows (found by @veltza).
+
 1.16.0 (2025-05-18)
 -------------------
 
