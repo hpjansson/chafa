@@ -165,7 +165,7 @@ destroy_lines (ConhostRow * lines, gsize s)
     g_free (lines);
 }
 
-gboolean
+static gboolean
 safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
 {
     gsize total_written = 0;
