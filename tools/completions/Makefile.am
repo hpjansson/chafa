@@ -1,5 +1,6 @@
 PREFIX=/usr/share
 EXTRA_DIST = \
+	fish-completion.fish \
 	zsh-completion.zsh
 
 .PHONY: install-zsh-completion
