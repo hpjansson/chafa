@@ -2,6 +2,7 @@
 
 #include <chafa.h>
 #include <stdio.h>
+#include <string.h>
 
 static void
 formatting_test (void)
