@@ -118,6 +118,140 @@ struct ChafaTerm
     guint out_shutdown_done : 1;
 };
 
+/* ------------------ *
+ * MS Windows helpers *
+ * ------------------ */
+
+#ifdef G_OS_WIN32
+
+static gint win32_global_init_depth;
+
+static UINT win32_saved_console_output_cp;
+static UINT win32_saved_console_input_cp;
+
+static gboolean win32_input_is_file;
+static gboolean win32_output_is_file;
+
+static void
+win32_global_init (void)
+{
+    HANDLE chd;
+
+    if (g_atomic_int_add (&win32_global_init_depth, 1) > 0)
+        return;
+
+    win32_saved_console_output_cp = GetConsoleOutputCP ();
+    win32_saved_console_input_cp = GetConsoleCP ();
+
+    /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
+    chd = GetStdHandle (STD_INPUT_HANDLE);
+    if (chd != INVALID_HANDLE_VALUE)
+    {
+        DWORD bitmask = ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
+
+        if (!SetConsoleMode (chd, bitmask))
+        {
+            if (GetLastError () == ERROR_INVALID_HANDLE)
+                win32_input_is_file = TRUE;
+        }
+    }
+
+    /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
+    chd = GetStdHandle (STD_OUTPUT_HANDLE);
+    if (chd != INVALID_HANDLE_VALUE)
+    {
+        DWORD bitmask =
+            ENABLE_PROCESSED_OUTPUT
+            | ENABLE_WRAP_AT_EOL_OUTPUT
+            | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+        if (!SetConsoleMode (chd, bitmask))
+        {
+            if (GetLastError () == ERROR_INVALID_HANDLE)
+            {
+                win32_output_is_file = TRUE;
+            }
+            else
+            {
+                /* Compatibility with older MS Windows versions */
+                SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+            }
+        }
+    }
+
+    /* Set UTF-8 code page output */
+    SetConsoleOutputCP (65001);
+
+    /* Set UTF-8 code page input, for good measure */
+    SetConsoleCP (65001);
+}
+
+static void
+win32_global_deinit (void)
+{
+    if (g_atomic_int_dec_and_test (&win32_global_init_depth))
+        return;
+
+    SetConsoleOutputCP (win32_saved_console_output_cp);
+    SetConsoleCP (win32_saved_console_input_cp);
+}
+
+static void
+win32_term_init (ChafaTerm *term)
+{
+    if (term->in_fd >= 0)
+        setmode (term->in_fd, O_BINARY);
+    setmode (term->out_fd, O_BINARY);
+    win32_global_init ();
+}
+
+static void
+win32_term_deinit (ChafaTerm *term)
+{
+    win32_global_deinit ();
+}
+
+static gboolean
+safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
+{
+    gsize total_written = 0;
+
+    if (chd == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    while (total_written < len)
+    {
+        DWORD n_written = 0;
+
+        if (win32_output_is_file)
+        {
+            /* WriteFile() and fwrite() seem to work equally well despite various
+             * claims that the former does poorly in a UTF-8 environment. The
+             * resulting files look good in my tests, but note that catting them
+             * out with 'type' introduces lots of artefacts. */
+#if 0
+            if (!WriteFile (chd, data, len - total_written, &n_written, NULL))
+                return FALSE;
+#else
+            if ((n_written = fwrite (data, 1, len - total_written, stdout)) < 1)
+                return FALSE;
+#endif
+        }
+        else
+        {
+            if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
+                return FALSE;
+        }
+
+        data += n_written;
+        total_written += n_written;
+    }
+
+    return TRUE;
+}
+
+#endif /* G_OS_WIN32 */
+
 /* -------------------------------- *
  * Low-level I/O and tty whispering *
  * -------------------------------- */
@@ -731,103 +865,6 @@ handle_event (ChafaTerm *term, ChafaEvent *event)
     }
 }
 
-/* ------------------ *
- * MS Windows helpers *
- * ------------------ */
-
-#ifdef G_OS_WIN32
-static gint win32_global_init_depth;
-
-static UINT win32_saved_console_output_cp;
-static UINT win32_saved_console_input_cp;
-
-static gboolean win32_input_is_file;
-static gboolean win32_output_is_file;
-
-static void
-win32_global_init (void)
-{
-    HANDLE chd;
-
-    if (g_atomic_int_add (&win32_global_init_depth, 1) > 0)
-        return;
-
-    win32_saved_console_output_cp = GetConsoleOutputCP ();
-    win32_saved_console_input_cp = GetConsoleCP ();
-
-    /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
-    chd = GetStdHandle (STD_INPUT_HANDLE);
-    if (chd != INVALID_HANDLE_VALUE)
-    {
-        DWORD bitmask = ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
-
-        if (!SetConsoleMode (chd, bitmask))
-        {
-            if (GetLastError () == ERROR_INVALID_HANDLE)
-            {
-                win32_input_is_file = TRUE;
-            }
-        }
-    }
-
-    /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
-    chd = GetStdHandle (STD_OUTPUT_HANDLE);
-    if (chd != INVALID_HANDLE_VALUE)
-    {   
-        DWORD bitmask = ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT;
-
-#if 0
-        if (!options.is_conhost_mode)
-#endif
-        bitmask |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-        if (!SetConsoleMode (chd, bitmask))
-        {
-            if (GetLastError () == ERROR_INVALID_HANDLE)
-            {
-                win32_output_is_file = TRUE;
-            }
-            else
-            {
-                /* Compatibility with older MS Windows versions */
-                SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-            }
-        }   
-    }
-
-    /* Set UTF-8 code page output */
-    SetConsoleOutputCP (65001);
-
-    /* Set UTF-8 code page input, for good measure */
-    SetConsoleCP (65001);
-}
-
-static void
-win32_global_deinit (void)
-{
-    if (g_atomic_int_dec_and_test (&win32_global_init_depth))
-        return;
-
-    SetConsoleOutputCP (win32_saved_console_output_cp);
-    SetConsoleCP (win32_saved_console_input_cp);
-}
-
-static void
-win32_term_init (ChafaTerm *term)
-{
-    if (term->in_fd >= 0)
-        setmode (term->in_fd, O_BINARY);
-    setmode (term->out_fd, O_BINARY);
-    win32_global_init ();
-}
-
-static void
-win32_term_deinit (ChafaTerm *term)
-{
-    win32_global_deinit ();
-}
-#endif
-
 /* ----------------------- *
  * Mid-level I/O machinery *
  * ----------------------- */
@@ -1074,7 +1111,9 @@ new_default (void)
 
     g_mutex_init (&term->mutex);
     g_cond_init (&term->cond);
-    term->in_thread = g_thread_new ("term-in", in_thread_main, term);
+
+    if (term->in_fd >= 0)
+        term->in_thread = g_thread_new ("term-in", in_thread_main, term);
     term->out_thread = g_thread_new ("term-out", out_thread_main, term);
 
     g_strfreev (envp);
@@ -1102,12 +1141,14 @@ chafa_term_destroy (ChafaTerm *term)
     chafa_wakeup_signal (term->wakeup);
     g_cond_broadcast (&term->cond);
 
-    while (!term->in_shutdown_done || !term->out_shutdown_done)
+    while ((term->in_thread && !term->in_shutdown_done)
+           || !term->out_shutdown_done)
         g_cond_wait (&term->cond, &term->mutex);
 
     g_mutex_unlock (&term->mutex);
 
-    g_thread_join (term->in_thread);
+    if (term->in_thread)
+        g_thread_join (term->in_thread);
     g_thread_join (term->out_thread);
 
     g_mutex_clear (&term->mutex);
