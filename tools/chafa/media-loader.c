@@ -59,10 +59,12 @@ typedef enum
 }
 LoaderType;
 
+typedef gpointer (NewFromMappingFunc) (gpointer, gint, gint);
+
 static const struct
 {
     const gchar * const name;
-    gpointer (*new_from_mapping) (gpointer);
+    void (*new_from_mapping) (void);
     gpointer (*new_from_path) (gconstpointer);
     void (*destroy) (gpointer);
     gboolean (*get_is_animation) (gpointer);
@@ -76,7 +78,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_GIF] =
     {
         "GIF",
-        (gpointer (*)(gpointer)) gif_loader_new_from_mapping,
+        (void (*)(void)) gif_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) gif_loader_destroy,
         (gboolean (*)(gpointer)) gif_loader_get_is_animation,
@@ -88,7 +90,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_PNG] =
     {
         "PNG",
-        (gpointer (*)(gpointer)) png_loader_new_from_mapping,
+        (void (*)(void)) png_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) png_loader_destroy,
         (gboolean (*)(gpointer)) png_loader_get_is_animation,
@@ -100,7 +102,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_XWD] =
     {
         "XWD",
-        (gpointer (*)(gpointer)) xwd_loader_new_from_mapping,
+        (void (*)(void)) xwd_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) xwd_loader_destroy,
         (gboolean (*)(gpointer)) xwd_loader_get_is_animation,
@@ -112,7 +114,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_QOI] =
     {
         "QOI",
-        (gpointer (*)(gpointer)) qoi_loader_new_from_mapping,
+        (void (*)(void)) qoi_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) qoi_loader_destroy,
         (gboolean (*)(gpointer)) qoi_loader_get_is_animation,
@@ -125,7 +127,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_JPEG] =
     {
         "JPEG",
-        (gpointer (*)(gpointer)) jpeg_loader_new_from_mapping,
+        (void (*)(void)) jpeg_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) jpeg_loader_destroy,
         (gboolean (*)(gpointer)) jpeg_loader_get_is_animation,
@@ -139,7 +141,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_SVG] =
     {
         "SVG",
-        (gpointer (*)(gpointer)) svg_loader_new_from_mapping,
+        (void (*)(void)) svg_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) svg_loader_destroy,
         (gboolean (*)(gpointer)) svg_loader_get_is_animation,
@@ -153,7 +155,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_TIFF] =
     {
         "TIFF",
-        (gpointer (*)(gpointer)) tiff_loader_new_from_mapping,
+        (void (*)(void)) tiff_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) tiff_loader_destroy,
         (gboolean (*)(gpointer)) tiff_loader_get_is_animation,
@@ -167,7 +169,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_WEBP] =
     {
         "WebP",
-        (gpointer (*)(gpointer)) webp_loader_new_from_mapping,
+        (void (*)(void)) webp_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) webp_loader_destroy,
         (gboolean (*)(gpointer)) webp_loader_get_is_animation,
@@ -181,7 +183,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_AVIF] =
     {
         "AVIF",
-        (gpointer (*)(gpointer)) avif_loader_new_from_mapping,
+        (void (*)(void)) avif_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
         (void (*)(gpointer)) avif_loader_destroy,
         (gboolean (*)(gpointer)) avif_loader_get_is_animation,
@@ -195,7 +197,7 @@ loader_vtable [LOADER_TYPE_LAST] =
     [LOADER_TYPE_JXL] =
     {
     "JXL",
-    (gpointer (*)(gpointer)) jxl_loader_new_from_mapping,
+    (void (*)(void)) jxl_loader_new_from_mapping,
         (gpointer (*)(gconstpointer)) NULL,
     (void (*)(gpointer)) jxl_loader_destroy,
     (gboolean (*)(gpointer)) jxl_loader_get_is_animation,
@@ -222,7 +224,7 @@ ascii_strcasecmp_ptrs (const void *a, const void *b)
 }
 
 MediaLoader *
-media_loader_new (const gchar *path, GError **error)
+media_loader_new (const gchar *path, gint target_width, gint target_height, GError **error)
 {
     MediaLoader *loader;
     FileMapping *mapping = NULL;
@@ -243,7 +245,8 @@ media_loader_new (const gchar *path, GError **error)
 
         if (mapping && loader_vtable [i].new_from_mapping)
         {
-            loader->loader = loader_vtable [i].new_from_mapping (mapping);
+            loader->loader = (*(NewFromMappingFunc *) loader_vtable [i].new_from_mapping)
+                (mapping, target_width, target_height);
         }
         else if (loader_vtable [i].new_from_path)
         {

@@ -59,7 +59,9 @@ svg_loader_new (void)
 }
 
 static void
-calc_dimensions (RsvgHandle *rsvg, guint *width_out, guint *height_out)
+calc_dimensions (RsvgHandle *rsvg,
+                 gint target_width, gint target_height,
+                 guint *width_out, guint *height_out)
 {
 #if !LIBRSVG_CHECK_VERSION(2, 52, 0)
     RsvgDimensionData dim = { 0 };
@@ -79,9 +81,35 @@ calc_dimensions (RsvgHandle *rsvg, guint *width_out, guint *height_out)
     height = dim.height;
 #endif
 
-    /* FIXME: It would've been nice to know the size of the final viewport;
-     * that is, the terminal's dimensions in pixels. We could pass this in
-     * if we change the internal API. */
+    width = MAX (width, 1);
+    height = MAX (height, 1);
+
+    /* Target dimensions can be zero or negative if unspecified */
+
+    if (target_width < 1)
+        target_width = width;
+    if (target_height < 1)
+        target_height = height;
+
+    /* Avoid generating tiny images that will be subjected to ugly
+     * upscaling later */
+
+    if ((width < target_width && height < target_height)
+        || (width > target_width && height > target_height))
+    {
+        if (target_width / width > target_height / height)
+        {
+            height *= (gdouble) target_width / width;
+            width *= (gdouble) target_width / width;
+        }
+        else
+        {
+            width *= (gdouble) target_height / height;
+            height *= (gdouble) target_height / height;
+        }
+    }
+
+    /* Enforce maximum surface size */
 
     if (width > DIMENSION_MAX || height > DIMENSION_MAX)
     {
@@ -102,7 +130,7 @@ calc_dimensions (RsvgHandle *rsvg, guint *width_out, guint *height_out)
 }
 
 SvgLoader *
-svg_loader_new_from_mapping (FileMapping *mapping)
+svg_loader_new_from_mapping (FileMapping *mapping, gint target_width, gint target_height)
 {
     SvgLoader *loader = NULL;
     gboolean success = FALSE;
@@ -147,7 +175,7 @@ svg_loader_new_from_mapping (FileMapping *mapping)
     if (!rsvg)
         goto out;
 
-    calc_dimensions (rsvg, &width, &height);
+    calc_dimensions (rsvg, target_width, target_height, &width, &height);
     if (width < 1 || width >= (1 << 28)
         || height < 1 || height >= (1 << 28)
         || (width * (guint64) height >= (1 << 29)))

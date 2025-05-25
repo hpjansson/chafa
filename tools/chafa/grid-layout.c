@@ -131,6 +131,24 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
     return canvas;
 }
 
+static void
+get_approx_canvas_size_px (ChafaCanvasConfig *config, gint *target_width_out,
+                           gint *target_height_out)
+{
+    gint cell_width_px, cell_height_px;
+
+    chafa_canvas_config_get_cell_geometry (config, &cell_width_px, &cell_height_px);
+    if (cell_width_px < 1 || cell_height_px < 1)
+    {
+        cell_width_px = 10;
+        cell_height_px = 20;
+    }
+
+    chafa_canvas_config_get_geometry (config, target_width_out, target_height_out);
+    *target_width_out *= cell_width_px;
+    *target_height_out *= cell_height_px;
+}
+
 static gboolean
 format_item (GridLayout *grid, const gchar *path, GString ***gsa)
 {
@@ -141,8 +159,10 @@ format_item (GridLayout *grid, const gchar *path, GString ***gsa)
     GError *error = NULL;
     gint src_width, src_height, src_rowstride;
     gboolean success = FALSE;
+    gint target_width, target_height;
 
-    media_loader = media_loader_new (path, &error);
+    get_approx_canvas_size_px (grid->canvas_config, &target_width, &target_height);
+    media_loader = media_loader_new (path, target_width, target_height, &error);
     if (!media_loader)
     {
         /* FIXME: Use a placeholder image */
