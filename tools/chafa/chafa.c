@@ -3147,9 +3147,7 @@ out:
         media_loader_destroy (media_loader);
     g_timer_destroy (timer);
 
-    if (error)
-        g_error_free (error);
-
+    g_clear_error (&error);
     return result;
 }
 

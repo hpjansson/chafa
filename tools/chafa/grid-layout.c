@@ -146,6 +146,7 @@ format_item (GridLayout *grid, const gchar *path, GString ***gsa)
     if (!media_loader)
     {
         /* FIXME: Use a placeholder image */
+        g_clear_error (&error);
         goto out;
     }
 
