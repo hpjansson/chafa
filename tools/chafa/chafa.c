@@ -2918,7 +2918,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
 
     timer = g_timer_new ();
 
-    media_loader = media_loader_new (filename, &error);
+    media_loader = media_loader_new (filename, -1, -1, &error);
     if (!media_loader)
     {
         if (!quiet)

@@ -26,7 +26,7 @@ G_BEGIN_DECLS
 
 typedef struct MediaLoader MediaLoader;
 
-MediaLoader *media_loader_new (const gchar *path, GError **error);
+MediaLoader *media_loader_new (const gchar *path, gint target_width, gint target_height, GError **error);
 void media_loader_destroy (MediaLoader *loader);
 
 gboolean media_loader_get_is_animation (MediaLoader *loader);

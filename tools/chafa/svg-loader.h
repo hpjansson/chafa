@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 
 typedef struct SvgLoader SvgLoader;
 
-SvgLoader *svg_loader_new_from_mapping (FileMapping *mapping);
+SvgLoader *svg_loader_new_from_mapping (FileMapping *mapping, gint target_width, gint target_height);
 void svg_loader_destroy (SvgLoader *loader);
 
 gboolean svg_loader_get_is_animation (SvgLoader *loader);
