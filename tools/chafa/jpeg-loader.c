@@ -245,6 +245,11 @@ my_jpeg_error_exit (j_common_ptr cinfo)
     longjmp (my_jerr->setjmp_buffer, 1);
 }
 
+static void
+my_jpeg_output_message (j_common_ptr cinfo)
+{
+}
+
 /* --- Magic probe --- */
 
 static gboolean
@@ -342,6 +347,8 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 
     cinfo.err = jpeg_std_error ((struct jpeg_error_mgr *) &my_jerr);     
     my_jerr.jerr.error_exit = my_jpeg_error_exit;
+    my_jerr.jerr.output_message = my_jpeg_output_message;
+
     if (setjmp (my_jerr.setjmp_buffer))
     {
 #ifdef ENABLE_DEBUG
