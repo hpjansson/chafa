@@ -120,25 +120,29 @@ precalc_bilinear_array (uint16_t *array,
                           dest_clip_before_px,
                           &i);
 
-    /* Main range */
-    precalc_linear_range (array,
-                          1 << n_halvings,
-                          dest_dim_prehalving_px - (1 << n_halvings),
-                          first_sample_ofs [1],
-                          sample_step,
-                          src_dim_px,
-                          dest_clip_before_px,
-                          &i);
+    /* Check to prevent overruns when the output size is exactly 1 */
+    if (dest_dim_prehalving_px > (1U << n_halvings))
+    {
+        /* Main range */
+        precalc_linear_range (array,
+                              1 << n_halvings,
+                              dest_dim_prehalving_px - (1 << n_halvings),
+                              first_sample_ofs [1],
+                              sample_step,
+                              src_dim_px,
+                              dest_clip_before_px,
+                              &i);
 
-    /* Right fringe */
-    precalc_linear_range (array,
-                          dest_dim_prehalving_px - (1 << n_halvings),
-                          dest_dim_prehalving_px,
-                          first_sample_ofs [2],
-                          sample_step,
-                          src_dim_px,
-                          dest_clip_before_px,
-                          &i);
+        /* Right fringe */
+        precalc_linear_range (array,
+                              dest_dim_prehalving_px - (1 << n_halvings),
+                              dest_dim_prehalving_px,
+                              first_sample_ofs [2],
+                              sample_step,
+                              src_dim_px,
+                              dest_clip_before_px,
+                              &i);
+    }
 }
 
 static void
