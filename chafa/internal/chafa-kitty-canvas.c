@@ -461,7 +461,9 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas,
     {
         /* Make IDs in the first <256 range predictable, but as the range
          * cycles we add one to skip over every ID==0 */
-        if (placement_id > 255)
+        if (placement_id < 1)
+            placement_id = 1;
+        else if (placement_id > 255)
             placement_id = 1 + (placement_id % 255);
 
         build_unicode_virtual (kitty_canvas, term_info, out_str,
