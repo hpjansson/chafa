@@ -41,7 +41,7 @@ G_BEGIN_DECLS
 #define CHAFA_VERSION_1_12 (G_ENCODE_VERSION (1, 12))
 #define CHAFA_VERSION_1_14 (G_ENCODE_VERSION (1, 14))
 #define CHAFA_VERSION_1_16 (G_ENCODE_VERSION (1, 16))
-#define CHAFA_VERSION_1_16 (G_ENCODE_VERSION (1, 18))
+#define CHAFA_VERSION_1_18 (G_ENCODE_VERSION (1, 18))
 
 /* Evaluates to the current stable version; for development cycles,
  * this means the next stable target. */
