@@ -8,7 +8,6 @@ Minor Features/UX
 -----------------
 
 - Accept -o, --output to write to file.
-- Verbose output. Show file names. Call it --annotate.
 - Add a --test option to print a test page.
 - Add a --show-symbols op to print matching symbols.
 - If FG color is transparent, see if we can use an inverted symbol and swap
@@ -17,8 +16,7 @@ Minor Features/UX
     weird handling with background picture set?
     - Except in FGBG modes.
 - Test with more terminals.
-  - PuTTY on Windows 8, 10?
-    - Windows 7 fonts support half, solid, some borders.
+  - PuTTY on Windows 10?
   - Terminology.
     - Emulate tycat.
   - Emacs ansi-term.
@@ -39,7 +37,6 @@ Minor Features/UX
   - XPM. https://en.wikipedia.org/wiki/X_PixMap
   - PBM, PGM, PPM. https://en.wikipedia.org/wiki/Netpbm
 - Run image decoders (and Chafa backend?) in sandboxed subprocess.
-- "Auto" modes for ChafaCanvasMode and ChafaPixelMode.
 
 Major features
 --------------
@@ -80,7 +77,6 @@ The Fine Material
 - Tips.
   - For scrolling, use e.g. chafa input.jpg -s 200 | less -S
   - Rate-controlled playback with e.g. cat input.txt | pv -qL 100k
-  - Playback with awk + proper inter-frame delay.
   - X11 applications in terminal
     $ Xvfb :99 -ac -fbdir t -screen 0 1440x900x24 &
     $ DISPLAY=:99 lament -root &
@@ -90,6 +86,3 @@ The Fine Material
     - Run as different user.
   - Using (unreleased) ffmpeg driver:
     $ ./ffmpeg -i movie.mkv -pix_fmt rgba -f chafa -color 16 -symbols vhalf,space -fill ascii -
-  - Compact listing of icons:
-    $ montage -tile 6x -background none -geometry 64x64+1+1 /usr/share/icons/Mint-X/*/16/*.png - \
-      | chafa -s 80
