@@ -29,11 +29,18 @@ typedef struct ChafaByteFifo ChafaByteFifo;
 ChafaByteFifo *chafa_byte_fifo_new (void);
 void chafa_byte_fifo_destroy (ChafaByteFifo *byte_fifo);
 
+gint64 chafa_byte_fifo_get_pos (ChafaByteFifo *byte_fifo);
 gint chafa_byte_fifo_get_len (ChafaByteFifo *byte_fifo);
 void chafa_byte_fifo_push (ChafaByteFifo *byte_fifo, gconstpointer src, gint src_len);
 gint chafa_byte_fifo_pop (ChafaByteFifo *byte_fifo, gpointer dest, gint dest_len);
 gconstpointer chafa_byte_fifo_peek (ChafaByteFifo *byte_fifo, gint *len);
 gint chafa_byte_fifo_drop (ChafaByteFifo *byte_fifo, gint len);
+gint chafa_byte_fifo_search (ChafaByteFifo *byte_fifo,
+                             gconstpointer data, gint data_len,
+                             gint64 *pos);
+gpointer chafa_byte_fifo_split_next (ChafaByteFifo *byte_fifo,
+                                     gconstpointer separator, gint separator_len,
+                                     gint64 *restart_pos, gint *len_out);
 
 G_END_DECLS
 
