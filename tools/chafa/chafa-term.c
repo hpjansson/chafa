@@ -37,6 +37,8 @@
 
 #include "chafa.h"
 #include "chafa-byte-fifo.h"
+#include "chafa-stream-reader.h"
+#include "chafa-stream-writer.h"
 #include "chafa-term.h"
 
 /* Include after glib.h for G_OS_WIN32 */
@@ -64,15 +66,14 @@
 #define READ_BUF_MAX 4096
 #define WRITE_BUF_MAX 4096
 
-/* Max fifo size before forced sync */
-#define IN_FIFO_DEFAULT_MAX 16384
-#define OUT_FIFO_DEFAULT_MAX (1 << 20)
-
 struct ChafaTerm
 {
     ChafaTermInfo *term_info;
     ChafaTermInfo *default_term_info;
     ChafaParser *parser;
+    ChafaStreamReader *reader;
+    ChafaStreamWriter *writer;
+    ChafaStreamWriter *err_writer;
 
     gint width_cells, height_cells;
     gint width_px, height_px;
@@ -102,20 +103,8 @@ struct ChafaTerm
 
     /* I/O bookkeeping */
 
-    GThread *in_thread, *out_thread;
-    ChafaByteFifo *in_fifo, *out_fifo, *err_fifo;
-    GMutex mutex;
-    GCond cond;
-    ChafaWakeup *wakeup;
     GQueue *event_queue;
     guint in_idle_id;
-    gint in_fd, out_fd, err_fd;
-    gint in_buf_max, out_buf_max;
-
-    guint out_drained : 1;
-    guint shutdown_reqd : 1;
-    guint in_shutdown_done : 1;
-    guint out_shutdown_done : 1;
 };
 
 /* ------------------ *
@@ -124,13 +113,8 @@ struct ChafaTerm
 
 #ifdef G_OS_WIN32
 
-static gint win32_global_init_depth;
-
 static UINT win32_saved_console_output_cp;
 static UINT win32_saved_console_input_cp;
-
-static gboolean win32_input_is_file;
-static gboolean win32_output_is_file;
 
 static void
 win32_global_init (void)
@@ -142,42 +126,6 @@ win32_global_init (void)
 
     win32_saved_console_output_cp = GetConsoleOutputCP ();
     win32_saved_console_input_cp = GetConsoleCP ();
-
-    /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
-    chd = GetStdHandle (STD_INPUT_HANDLE);
-    if (chd != INVALID_HANDLE_VALUE)
-    {
-        DWORD bitmask = ENABLE_PROCESSED_INPUT | ENABLE_VIRTUAL_TERMINAL_INPUT;
-
-        if (!SetConsoleMode (chd, bitmask))
-        {
-            if (GetLastError () == ERROR_INVALID_HANDLE)
-                win32_input_is_file = TRUE;
-        }
-    }
-
-    /* Enable ANSI escape sequence parsing etc. on MS Windows command prompt */
-    chd = GetStdHandle (STD_OUTPUT_HANDLE);
-    if (chd != INVALID_HANDLE_VALUE)
-    {
-        DWORD bitmask =
-            ENABLE_PROCESSED_OUTPUT
-            | ENABLE_WRAP_AT_EOL_OUTPUT
-            | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-        if (!SetConsoleMode (chd, bitmask))
-        {
-            if (GetLastError () == ERROR_INVALID_HANDLE)
-            {
-                win32_output_is_file = TRUE;
-            }
-            else
-            {
-                /* Compatibility with older MS Windows versions */
-                SetConsoleMode (chd,ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-            }
-        }
-    }
 
     /* Set UTF-8 code page output */
     SetConsoleOutputCP (65001);
@@ -199,9 +147,6 @@ win32_global_deinit (void)
 static void
 win32_term_init (ChafaTerm *term)
 {
-    if (term->in_fd >= 0)
-        setmode (term->in_fd, O_BINARY);
-    setmode (term->out_fd, O_BINARY);
     win32_global_init ();
 }
 
@@ -211,299 +156,37 @@ win32_term_deinit (ChafaTerm *term)
     win32_global_deinit ();
 }
 
-static gboolean
-safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
+static HANDLE
+win32_get_reader_handle (ChafaTerm *term)
 {
-    gsize total_written = 0;
-
-    if (chd == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    while (total_written < len)
+    if (term->reader)
     {
-        DWORD n_written = 0;
-
-        if (win32_output_is_file)
-        {
-            /* WriteFile() and fwrite() seem to work equally well despite various
-             * claims that the former does poorly in a UTF-8 environment. The
-             * resulting files look good in my tests, but note that catting them
-             * out with 'type' introduces lots of artefacts. */
-#if 0
-            if (!WriteFile (chd, data, len - total_written, &n_written, NULL))
-                return FALSE;
-#else
-            if ((n_written = fwrite (data, 1, len - total_written, stdout)) < 1)
-                return FALSE;
-#endif
-        }
-        else
-        {
-            if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
-                return FALSE;
-        }
-
-        data += n_written;
-        total_written += n_written;
+        gint fd = chafa_stream_reader_get_fd (term->reader);
+        if (fd >= 0)
+            return _get_osfhandle (fd);
     }
 
-    return TRUE;
+    return INVALID_HANDLE_VALUE;
 }
 
-#endif /* G_OS_WIN32 */
+static HANDLE
+win32_get_writer_handle (ChafaTerm *term)
+{
+    if (term->reader)
+    {
+        gint fd = chafa_stream_reader_get_fd (term->reader);
+        if (fd >= 0)
+            return _get_osfhandle (fd);
+    }
+
+    return INVALID_HANDLE_VALUE;
+}
+
+#endif
 
 /* -------------------------------- *
  * Low-level I/O and tty whispering *
  * -------------------------------- */
-
-static gsize
-safe_read (gint fd, void *buf, gsize len)
-{
-   gsize ntotal = 0;
-   guint8 *buffer = buf;
-
-   while (len > 0)
-   {
-       unsigned int nread;
-       int iread;
-       int saved_errno;
-
-       /* Passing nread > INT_MAX to read is implementation defined in POSIX
-        * 1003.1, therefore despite the unsigned argument portable code must
-        * limit the value to INT_MAX.
-        */
-       if (len > INT_MAX)
-           nread = INT_MAX;
-       else
-           nread = (unsigned int)/*SAFE*/len;
-
-       iread = read (fd, buffer, nread);
-       saved_errno = errno;
-
-       if (iread == -1)
-       {
-           /* A read can terminate early with 0 bytes read because of EINTR,
-            * yet it still returns -1 otherwise end of file cannot be distinguished. */
-           if (saved_errno != EINTR)
-           {
-               /* I.e. a permanent failure */
-               return 0;
-           }
-       }
-       else if (iread < 0)
-       {
-           /* Not a valid 'read' result: */
-           return 0;
-       }
-       else if (iread > 0)
-       {
-           /* Continue reading until a permanent failure, or EOF */
-           buffer += iread;
-           len -= (unsigned int)/*SAFE*/iread;
-           ntotal += (unsigned int)/*SAFE*/iread;
-       }
-       else
-       {
-           return ntotal;
-       }
-   }
-
-   return ntotal; /* len == 0 */
-}
-
-static gboolean
-safe_write (gint fd, gconstpointer buf, gsize len)
-{
-    const guint8 *buffer = buf;
-    gboolean success = FALSE;
-
-    while (len > 0)
-    {
-       guint to_write;
-       gint n_written;
-       gint saved_errno;
-
-       if (len > INT_MAX)
-           to_write = INT_MAX;
-       else
-           to_write = (unsigned int) len;
-
-       n_written = write (fd, buffer, to_write);
-       saved_errno = errno;
-
-       if (n_written == -1)
-       {
-           if (saved_errno != EINTR)
-               goto out;
-       }
-       else if (n_written < 0)
-       {
-           /* Not a valid 'write' result */
-           goto out;
-       }
-       else if (n_written > 0)
-       {
-           /* Continue writing until permanent failure or entire buffer written */
-           buffer += n_written;
-           len -= (unsigned int) n_written;
-       }
-    }
-
-    success = TRUE;
-
-out:
-    return success;
-}
-
-static gboolean
-write_to_stderr (ChafaTerm *term, gconstpointer buf, gsize len)
-{
-    gboolean result = TRUE;
-
-    if (len == 0)
-        return TRUE;
-
-#ifdef G_OS_WIN32
-    {
-        HANDLE chd = GetStdHandle (STD_ERROR_HANDLE);
-        gsize total_written = 0;
-        const void * const newline = "\r\n";
-        const gchar *p0, *p1, *end;
-
-        /* On MS Windows, we convert line feeds to DOS-style CRLF as we go. */
-
-        for (p0 = buf, end = p0 + len;
-             chd != INVALID_HANDLE_VALUE && total_written < len;
-             p0 = p1)
-        {
-            p1 = memchr (p0, '\n', end - p0);
-            if (!p1)
-                p1 = end;
-
-            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
-                break;
-
-            total_written += p1 - p0;
-
-            if (p1 != end)
-            {
-                if (!safe_WriteConsoleA (chd, newline, 2))
-                    break;
-
-                p1 += 1;
-                total_written += 1;
-            }
-        }
-
-        result = total_written == len ? TRUE : FALSE;
-    }
-#else
-    {
-        result = safe_write (term->err_fd, buf, len);
-    }
-#endif
-
-    return result;
-}
-
-static gboolean
-write_to_stdout (ChafaTerm *term, gconstpointer buf, gsize len)
-{
-    gboolean result = TRUE;
-
-    if (len == 0)
-        return TRUE;
-
-#ifdef G_OS_WIN32
-    {
-        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
-        gsize total_written = 0;
-        const void * const newline = "\r\n";
-        const gchar *p0, *p1, *end;
-
-        /* On MS Windows, we convert line feeds to DOS-style CRLF as we go. */
-
-        for (p0 = buf, end = p0 + len;
-             chd != INVALID_HANDLE_VALUE && total_written < len;
-             p0 = p1)
-        {
-            p1 = memchr (p0, '\n', end - p0);
-            if (!p1)
-                p1 = end;
-
-            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
-                break;
-
-            total_written += p1 - p0;
-
-            if (p1 != end)
-            {
-                if (!safe_WriteConsoleA (chd, newline, 2))
-                    break;
-
-                p1 += 1;
-                total_written += 1;
-            }
-        }
-
-        result = total_written == len ? TRUE : FALSE;
-    }
-#else
-    {
-        result = safe_write (term->out_fd, buf, len);
-    }
-#endif
-
-    return result;
-}
-
-static gint
-read_from_stdin (ChafaTerm *term, guchar *out, gint max)
-{
-    GPollFD poll_fds [2];
-    gint result = -1;
-
-    if (term->in_fd < 0)
-        goto out;
-
-#ifdef G_OS_WIN32
-    poll_fds [0].fd = (gintptr) GetStdHandle (STD_INPUT_HANDLE);
-#else
-    poll_fds [0].fd = term->in_fd;
-#endif
-    poll_fds [0].events = G_IO_IN | G_IO_HUP | G_IO_ERR;
-    poll_fds [0].revents = 0;
-
-    poll_fds [1].revents = 0;
-    chafa_wakeup_get_pollfd (term->wakeup, &poll_fds [1]);
-
-    g_poll (poll_fds, 2, -1);
-
-    /* Check for wakeup call; this means we should exit immediately */
-    if (poll_fds [1].revents)
-        goto out;
-
-    if (poll_fds [0].revents & G_IO_IN)
-    {
-#ifdef G_OS_WIN32
-        {
-            HANDLE chd = GetStdHandle (STD_INPUT_HANDLE);
-            DWORD n_read = 0;
-
-            ReadConsoleA (chd, out, max, &n_read, NULL);
-            result = n_read;
-        }
-#else /* !G_OS_WIN32 */
-        {
-            /* Non-blocking read */
-            result = read (term->in_fd, out, max);
-        }
-#endif
-    }
-
-out:
-    return result;
-}
 
 #ifdef HAVE_TERMIOS_H
 static void
@@ -512,7 +195,10 @@ ensure_raw_mode_enabled (ChafaTerm *term, struct termios *saved_termios,
 {
     struct termios t;
 
-    tcgetattr (term->in_fd, saved_termios);
+    if (!term->reader)
+        return;
+
+    tcgetattr (chafa_stream_reader_get_fd (term->reader), saved_termios);
 
     t = *saved_termios;
     t.c_lflag &= ~(ECHO | ICANON);
@@ -520,23 +206,21 @@ ensure_raw_mode_enabled (ChafaTerm *term, struct termios *saved_termios,
     if (t.c_lflag != saved_termios->c_lflag)
     {
         *termios_changed = TRUE;
-        tcsetattr (term->in_fd, TCSANOW, &t);
+        tcsetattr (chafa_stream_reader_get_fd (term->reader), TCSANOW, &t);
     }
     else
     {
         *termios_changed = FALSE;
     }
 }
-#endif
 
-#ifdef HAVE_TERMIOS_H
 static void
 restore_termios (ChafaTerm *term, const struct termios *saved_termios, gboolean *termios_changed)
 {
-    if (!*termios_changed)
+    if (!term->reader || !*termios_changed)
         return;
 
-    tcsetattr (term->in_fd, TCSANOW, saved_termios);
+    tcsetattr (chafa_stream_reader_get_fd (term->reader), TCSANOW, saved_termios);
 }
 #endif
 
@@ -551,7 +235,7 @@ get_tty_size (ChafaTerm *term)
 
 #ifdef G_OS_WIN32
     {
-        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
+        HANDLE chd = win32_get_writer_handle (term);
         CONSOLE_SCREEN_BUFFER_INFO csb_info;
 
         if (chd != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo (chd, &csb_info))
@@ -564,13 +248,21 @@ get_tty_size (ChafaTerm *term)
     {
         struct winsize w;
         gboolean have_winsz = FALSE;
+        gint in_fd = -1, out_fd = -1, err_fd = -1;
+
+        if (term->reader)
+            in_fd = chafa_stream_reader_get_fd (term->reader);
+        if (term->writer)
+            out_fd = chafa_stream_writer_get_fd (term->writer);
+        if (term->err_writer)
+            err_fd = chafa_stream_writer_get_fd (term->err_writer);
 
         /* FIXME: Use tcgetwinsize() when it becomes more widely available.
          * See: https://www.austingroupbugs.net/view.php?id=1151#c3856 */
 
-        if ((term->out_fd >= 0 && ioctl (term->out_fd, TIOCGWINSZ, &w) >= 0)
-            || (term->err_fd >= 0 && ioctl (term->err_fd, TIOCGWINSZ, &w) >= 0)
-            || (term->in_fd >= 0 && ioctl (term->in_fd, TIOCGWINSZ, &w) >= 0))
+        if ((out_fd >= 0 && ioctl (out_fd, TIOCGWINSZ, &w) >= 0)
+            || (err_fd >= 0 && ioctl (err_fd, TIOCGWINSZ, &w) >= 0)
+            || (in_fd >= 0 && ioctl (in_fd, TIOCGWINSZ, &w) >= 0))
             have_winsz = TRUE;
 
 # ifdef HAVE_CTERMID
@@ -873,181 +565,41 @@ static ChafaEvent *
 in_sync_pull (ChafaTerm *term, gint timeout_ms)
 {
     ChafaEvent *event = NULL;
-    gint64 end_time;
+    gint64 end_time_us = -1;
 
     if ((event = chafa_parser_pop_event (term->parser)))
         return event;
 
     if (timeout_ms > 0)
-        end_time = g_get_monotonic_time () + timeout_ms * 1000;
-
-    g_mutex_lock (&term->mutex);
+        end_time_us = g_get_monotonic_time () + timeout_ms * 1000;
 
     for (;;)
     {
         guchar buf [READ_BUF_MAX];
         gint len;
 
-        /* FIXME: Can use peek here and save copying */
-        len = chafa_byte_fifo_pop (term->in_fifo, buf, READ_BUF_MAX);
+        /* TODO: Break on EOF */
+
+        len = chafa_stream_reader_read (term->reader, buf, READ_BUF_MAX);
         chafa_parser_push_data (term->parser, buf, len);
 
         if ((event = chafa_parser_pop_event (term->parser)))
             break;
 
-        if (timeout_ms > 0)
+        if (timeout_ms <= 0)
         {
-            if (g_get_monotonic_time () >= end_time)
-                break;
-
-            g_cond_wait_until (&term->cond, &term->mutex, end_time);
+            /* Wait indefinitely */
+            chafa_stream_reader_wait (term->reader, -1);
         }
         else
         {
-            g_cond_wait (&term->cond, &term->mutex);
+            /* Bail out if end time passed */
+            if (!chafa_stream_reader_wait_until (term->reader, end_time_us))
+                break;
         }
     }
 
-    g_mutex_unlock (&term->mutex);
     return event;
-}
-
-static gboolean
-in_idle_func (gpointer data)
-{
-    ChafaTerm *term = data;
-
-    /* Dispatch read events in main thread */
-
-    g_mutex_lock (&term->mutex);
-    term->in_idle_id = 0;
-
-    for (;;)
-    {
-        guchar buf [READ_BUF_MAX];
-        gint len;
-
-        /* FIXME: Can use peek here and save copying */
-        len = chafa_byte_fifo_pop (term->in_fifo, buf, READ_BUF_MAX);
-        if (len < 1)
-            break;
-
-        chafa_parser_push_data (term->parser, buf, len);
-    }
-
-    g_mutex_unlock (&term->mutex);
-
-    /* TODO: Actually dispatch the events from parser */
-
-    return G_SOURCE_REMOVE;
-}
-
-static gpointer
-in_thread_main (gpointer data)
-{
-    ChafaTerm *term = data;
-
-    for (;;)
-    {
-        guchar buf [READ_BUF_MAX];
-        gint len;
-
-        len = read_from_stdin (term, buf, READ_BUF_MAX);
-
-        g_mutex_lock (&term->mutex);
-
-        if (len < 0 || term->shutdown_reqd)
-        {
-            break;
-        }
-        else if (len > 0)
-        {
-            chafa_byte_fifo_push (term->in_fifo, buf, len);
-            g_cond_broadcast (&term->cond);
-            if (!term->in_idle_id)
-                term->in_idle_id = g_idle_add (in_idle_func, term);
-        }
-
-        while (chafa_byte_fifo_get_len (term->in_fifo) > IN_FIFO_DEFAULT_MAX
-               && !term->shutdown_reqd)
-            g_cond_wait (&term->cond, &term->mutex);
-
-        if (term->shutdown_reqd)
-            break;
-
-        g_mutex_unlock (&term->mutex);
-    }
-
-    term->in_shutdown_done = TRUE;
-    g_cond_broadcast (&term->cond);
-    g_mutex_unlock (&term->mutex);
-    return NULL;
-}
-
-static gpointer
-out_thread_main (gpointer data)
-{
-    ChafaTerm *term = data;
-    gboolean io_error = FALSE;
-
-    for (;;)
-    {
-        guchar buf [WRITE_BUF_MAX];
-        gint len;
-        gboolean to_err = FALSE;
-
-        g_mutex_lock (&term->mutex);
-
-        if (io_error || term->shutdown_reqd)
-            break;
-
-        if (!chafa_byte_fifo_get_len (term->out_fifo)
-            && !chafa_byte_fifo_get_len (term->err_fifo))
-        {
-            /* Pending output has now left the process. Signal main thread; it
-             * may be waiting to finish a flush */
-            term->out_drained = TRUE;
-            g_cond_broadcast (&term->cond);
-        }
-
-        len = 0;
-
-        while (!term->shutdown_reqd)
-        {
-            len = chafa_byte_fifo_pop (term->err_fifo, buf, WRITE_BUF_MAX);
-            if (len)
-            {
-                to_err = TRUE;
-                break;
-            }
-
-            len = chafa_byte_fifo_pop (term->out_fifo, buf, WRITE_BUF_MAX);
-            if (len)
-            {
-                break;
-            }
-
-            g_cond_wait (&term->cond, &term->mutex);
-        }
-
-        g_mutex_unlock (&term->mutex);
-
-        if (to_err)
-        {
-            if (!write_to_stderr (term, buf, len))
-                io_error = TRUE;
-        }
-        else
-        {
-            if (!write_to_stdout (term, buf, len))
-                io_error = TRUE;
-        }
-    }
-
-    term->out_shutdown_done = TRUE;
-    g_cond_broadcast (&term->cond);
-    g_mutex_unlock (&term->mutex);
-    return NULL;
 }
 
 /* --------------------- *
@@ -1055,16 +607,26 @@ out_thread_main (gpointer data)
  * --------------------- */
 
 static ChafaTerm *
-new_default (void)
+term_new_full (ChafaTermInfo *term_info, gint in_fd, gint out_fd, gint err_fd)
 {
     ChafaTerm *term;
-    gchar **envp;
-
-    envp = g_get_environ ();
 
     term = g_new0 (ChafaTerm, 1);
 
-    term->term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
+    if (term_info)
+    {
+        chafa_term_info_ref (term_info);
+        term->term_info = term_info;
+    }
+    else
+    {
+        gchar **envp;
+
+        envp = g_get_environ ();
+        term->term_info = chafa_term_db_detect (chafa_term_db_get_default (), envp);
+        g_strfreev (envp);
+    }
+
     term->parser = chafa_parser_new (term->term_info);
 
     term->width_cells = -1;
@@ -1077,88 +639,65 @@ new_default (void)
     term->default_fg_rgb = -1;
     term->default_bg_rgb = -1;
 
-    term->in_buf_max = IN_FIFO_DEFAULT_MAX;
-    term->out_buf_max = OUT_FIFO_DEFAULT_MAX;
-
-    term->in_fifo = chafa_byte_fifo_new ();
-    term->out_fifo = chafa_byte_fifo_new ();
-    term->err_fifo = chafa_byte_fifo_new ();
-
-    term->wakeup = chafa_wakeup_new ();
     term->event_queue = g_queue_new ();
 
-    term->in_fd = fileno (stdin);
-    term->out_fd = fileno (stdout);
-    term->err_fd = fileno (stderr);
-
-    if (!isatty (term->in_fd))
-        term->in_fd = -1;
+    if (in_fd >= 0)
+        term->reader = chafa_stream_reader_new_from_fd (in_fd);
+    if (out_fd >= 0)
+        term->writer = chafa_stream_writer_new_from_fd (out_fd);
+    if (err_fd >= 0)
+        term->err_writer = chafa_stream_writer_new_from_fd (err_fd);
 
 #ifdef G_OS_WIN32
     win32_term_init (term);
-#else
-    if (term->in_fd >= 0)
-        g_unix_set_fd_nonblocking (term->in_fd, TRUE, NULL);
-    g_unix_set_fd_nonblocking (term->out_fd, FALSE, NULL);
-    g_unix_set_fd_nonblocking (term->err_fd, FALSE, NULL);
 #endif
 
-    if (term->in_fd >= 0 && term->out_fd >= 0
-        && isatty (term->in_fd) && isatty (term->out_fd))
+    if (term->reader && chafa_stream_reader_is_console (term->reader)
+        && term->writer && chafa_stream_writer_is_console (term->writer))
         term->interactive_supported = TRUE;
 
     get_tty_size (term);
-
-    g_mutex_init (&term->mutex);
-    g_cond_init (&term->cond);
-
-    if (term->in_fd >= 0)
-        term->in_thread = g_thread_new ("term-in", in_thread_main, term);
-    term->out_thread = g_thread_new ("term-out", out_thread_main, term);
-
-    g_strfreev (envp);
     return term;
+}
+
+static ChafaTerm *
+term_new_default (void)
+{
+    return term_new_full (NULL,
+                          fileno (stdin),
+                          fileno (stdout),
+                          fileno (stderr));
 }
 
 static ChafaTerm *
 instantiate_singleton (G_GNUC_UNUSED gpointer data)
 {
-    return new_default ();
+    return term_new_default ();
 }
 
 /* ---------- *
  * Public API *
  * ---------- */
 
+ChafaTerm *
+chafa_term_new (ChafaTermInfo *term_info, gint in_fd, gint out_fd, gint err_fd)
+{
+    return term_new_full (term_info, in_fd, out_fd, err_fd);
+}
+
 void
 chafa_term_destroy (ChafaTerm *term)
 {
     g_return_if_fail (term != NULL);
 
-    g_mutex_lock (&term->mutex);
+    if (term->reader)
+        chafa_stream_reader_unref (term->reader);
+    if (term->writer)
+        chafa_stream_writer_unref (term->writer);
+    if (term->err_writer)
+        chafa_stream_writer_unref (term->err_writer);
 
-    term->shutdown_reqd = TRUE;
-    chafa_wakeup_signal (term->wakeup);
-    g_cond_broadcast (&term->cond);
-
-    while ((term->in_thread && !term->in_shutdown_done)
-           || !term->out_shutdown_done)
-        g_cond_wait (&term->cond, &term->mutex);
-
-    g_mutex_unlock (&term->mutex);
-
-    if (term->in_thread)
-        g_thread_join (term->in_thread);
-    g_thread_join (term->out_thread);
-
-    g_mutex_clear (&term->mutex);
-    g_cond_clear (&term->cond);
-    chafa_wakeup_free (term->wakeup);
     g_queue_free_full (term->event_queue, g_free);
-
-    chafa_byte_fifo_destroy (term->in_fifo);
-    chafa_byte_fifo_destroy (term->out_fifo);
-    chafa_byte_fifo_destroy (term->err_fifo);
 
     chafa_term_info_unref (term->term_info);
     if (term->default_term_info)
@@ -1179,13 +718,16 @@ chafa_term_get_default (void)
 gint
 chafa_term_get_buffer_max (ChafaTerm *term)
 {
-    return term->out_buf_max;
+    if (term->writer)
+        return chafa_stream_writer_get_buffer_max (term->writer);
+    return -1;
 }
 
 void
-chafa_term_set_buffer_max (ChafaTerm *term, gint max)
+chafa_term_set_buffer_max (ChafaTerm *term, gint buf_max)
 {
-    term->out_buf_max = max < 1 ? -1 : max;
+    if (term->writer)
+        chafa_stream_writer_set_buffer_max (term->writer, buf_max);
 }
 
 ChafaTermInfo *
@@ -1198,11 +740,9 @@ ChafaEvent *
 chafa_term_read_event (ChafaTerm *term, guint timeout_ms)
 {
     ChafaEvent *event = NULL;
-    gint64 start_time;
-    gint remain_ms = timeout_ms;
 
-    if (term->in_fd < 0)
-        return NULL;
+    if (!term->reader)
+        goto out;
 
     event = g_queue_pop_tail (term->event_queue);
     if (event)
@@ -1211,19 +751,7 @@ chafa_term_read_event (ChafaTerm *term, guint timeout_ms)
     if (term->in_eof_seen)
         goto out;
 
-    if (timeout_ms > 0)
-        start_time = g_get_monotonic_time ();
-
-    while (!(event = in_sync_pull (term, timeout_ms > 0 ? remain_ms : -1)))
-    {
-        if (timeout_ms > 0)
-        {
-            remain_ms -= (g_get_monotonic_time () - start_time) / 1000;
-            if (remain_ms <= 0)
-                break;
-        }
-    }
-
+    event = in_sync_pull (term, timeout_ms);
     handle_event (term, event);
 
 out:
@@ -1233,46 +761,10 @@ out:
 void
 chafa_term_write (ChafaTerm *term, gconstpointer data, gint len)
 {
-    while (len > 0)
-    {
-        gint n_written;
+    if (!term->writer)
+        return;
 
-        g_mutex_lock (&term->mutex);
-
-        /* Wait for partial drain if necessary */
-
-        for (;;)
-        {
-            gint queued = chafa_byte_fifo_get_len (term->out_fifo);
-
-            if (queued == 0 || queued + len <= term->out_buf_max)
-                break;
-
-            if (term->out_shutdown_done)
-            {
-                g_mutex_unlock (&term->mutex);
-                goto out;
-            }
-
-            g_cond_wait (&term->cond, &term->mutex);
-        }
-
-        /* Push and signal */
-
-        term->out_drained = FALSE;
-        n_written = MIN (len, term->out_buf_max);
-
-        chafa_byte_fifo_push (term->out_fifo, data, n_written);
-
-        len -= n_written;
-        data = ((const gchar *) data) + n_written;
-
-        g_cond_broadcast (&term->cond);
-        g_mutex_unlock (&term->mutex);
-    }
-
-out:
-    return;
+    chafa_stream_writer_write (term->writer, data, len);
 }
 
 gint
@@ -1280,54 +772,62 @@ chafa_term_print (ChafaTerm *term, const gchar *format, ...)
 {
     gchar *str = NULL;
     va_list args;
-    gint result;
+    gint len = -1;
+
+    if (!term->writer)
+        return -1;
 
     va_start (args, format);
-    result = g_vasprintf (&str, format, args);
+    len = g_vasprintf (&str, format, args);
     va_end (args);
 
-    if (result > 0)
-        chafa_term_write (term, str, result);
+    if (len > 0)
+        chafa_stream_writer_write (term->writer, str, len);
 
     g_free (str);
-    return result;
+    return len;
 }
 
-void
+gint
 chafa_term_print_seq (ChafaTerm *term, ChafaTermSeq seq, ...)
 {
     va_list args;
     gchar *str;
+    gint len = -1;
+
+    if (!term->writer)
+        return -1;
 
     va_start (args, seq);
     str = chafa_term_info_emit_seq_valist (term->term_info, seq, &args);
     va_end (args);
 
     if (str)
-        chafa_term_write (term, str, strlen (str));
+    {
+        len = strlen (str);
+        chafa_stream_writer_write (term->writer, str, len);
+    }
 
     g_free (str);
+    return len;
 }
 
 gboolean
 chafa_term_flush (ChafaTerm *term)
 {
-    g_mutex_lock (&term->mutex);
-    while (!term->out_drained)
-        g_cond_wait (&term->cond, &term->mutex);
-    g_mutex_unlock (&term->mutex);
+    if (!term->writer)
+        return FALSE;
 
-    return TRUE;
+    return chafa_stream_writer_flush (term->writer);
 }
 
 void
 chafa_term_write_err (ChafaTerm *term, gconstpointer data, gint len)
 {
-    g_mutex_lock (&term->mutex);
-    term->out_drained = FALSE;
-    chafa_byte_fifo_push (term->err_fifo, data, len);
-    g_cond_broadcast (&term->cond);
-    g_mutex_unlock (&term->mutex);
+    if (!term->err_writer)
+        return;
+
+    chafa_stream_writer_write (term->err_writer, data, len);
 }
 
 gint

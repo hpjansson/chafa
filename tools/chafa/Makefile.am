@@ -9,6 +9,10 @@ chafa_SOURCES = \
 	chafa-byte-fifo.h \
 	chafa-parser.c \
 	chafa-parser.h \
+	chafa-stream-reader.c \
+	chafa-stream-reader.h \
+	chafa-stream-writer.c \
+	chafa-stream-writer.h \
 	chafa-term.c \
 	chafa-term.h \
 	chafa-wakeup.c \
