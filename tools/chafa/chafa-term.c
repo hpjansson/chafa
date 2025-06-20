@@ -64,7 +64,6 @@
 
 /* Stack buffer size */
 #define READ_BUF_MAX 4096
-#define WRITE_BUF_MAX 4096
 
 struct ChafaTerm
 {
