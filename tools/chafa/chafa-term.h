@@ -27,8 +27,10 @@ G_BEGIN_DECLS
 
 typedef struct ChafaTerm ChafaTerm;
 
-ChafaTerm *chafa_term_get_default (void);
+ChafaTerm *chafa_term_new (ChafaTermInfo *term_info, gint in_fd, gint out_fd, gint err_fd);
 void chafa_term_destroy (ChafaTerm *term);
+
+ChafaTerm *chafa_term_get_default (void);
 
 gint chafa_term_get_buffer_max (ChafaTerm *term);
 void chafa_term_set_buffer_max (ChafaTerm *term, gint max);
