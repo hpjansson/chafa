@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <string.h>  /* strlen */
 #include "chafa.h"
 #include "internal/chafa-passthrough-encoder.h"
 
