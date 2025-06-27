@@ -134,6 +134,18 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
  * Low-level I/O and tty whispering *
  * -------------------------------- */
 
+static void
+wait_for_pipe (gint fd)
+{
+    GPollFD poll_fds [1];
+
+    poll_fds [0].fd = fd;
+    poll_fds [0].events = G_IO_OUT | G_IO_HUP | G_IO_ERR;
+    poll_fds [0].revents = 0;
+
+    g_poll (poll_fds, 1, -1);
+}
+
 static gboolean
 safe_write (gint fd, gconstpointer buf, gsize len)
 {
@@ -156,8 +168,16 @@ safe_write (gint fd, gconstpointer buf, gsize len)
 
        if (n_written == -1)
        {
-           if (saved_errno != EINTR)
+           if (saved_errno == EAGAIN)
+           {
+               /* It's a nonblocking pipe; wait for it to become ready,
+                * then try again. */
+               wait_for_pipe (fd);
+           }
+           else if (saved_errno != EINTR)
+           {
                goto out;
+           }
        }
        else if (n_written < 0)
        {
@@ -286,8 +306,8 @@ maybe_start_thread (ChafaStreamWriter *stream_writer)
     if (stream_writer->thread)
         return;
 
-    /* Worker thread blocks on write */
-    g_unix_set_fd_nonblocking (stream_writer->fd, FALSE, NULL);
+    /* The writer will work with both blocking and non-blocking FDs. */
+    g_unix_set_fd_nonblocking (stream_writer->fd, TRUE, NULL);
     stream_writer->thread = g_thread_new ("stream-writer", thread_main, stream_writer);
 }
 
