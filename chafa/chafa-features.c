@@ -245,13 +245,13 @@ chafa_set_n_threads (gint n)
 gint
 chafa_get_n_actual_threads (void)
 {
-    gint n_threads;
+    gint n_actual_threads;
 
-    n_threads = chafa_get_n_threads ();
-    if (n_threads < 0)
-        n_threads = g_get_num_processors ();
-    if (n_threads <= 0)
-        n_threads = 1;
+    n_actual_threads = chafa_get_n_threads ();
+    if (n_actual_threads < 0)
+        n_actual_threads = g_get_num_processors ();
+    if (n_actual_threads <= 0)
+        n_actual_threads = 1;
 
-    return n_threads;
+    return n_actual_threads;
 }
