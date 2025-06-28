@@ -3092,12 +3092,7 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
                 if (!is_animation)
                     write_image_epilogue (filename, is_animation, dest_width);
 
-                if (!chafa_term_flush (term))
-                {
-                    chafa_free_gstring_array (gsa);
-                    goto out;
-                }
-
+                chafa_term_flush (term);
                 chafa_free_gstring_array (gsa);
             }
 
