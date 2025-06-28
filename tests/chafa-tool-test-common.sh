@@ -47,6 +47,8 @@ get_supported_loaders () {
 [ "x$1" = "xlong" ] && long="yes"
 
 tool="${top_builddir}/tools/chafa/chafa"
+timeout_cmd="$(which timeout)"
+[ "x${timeout_cmd}" = "x" ] && timeout_cmd="$(which gtimeout)"
 
 if [ "x$long" = "xyes" ]; then
     formats="symbol sixel kitty iterm"

@@ -28,6 +28,7 @@ term_info_test_SOURCES = \
 if WANT_TOOLS
 TOOL_CHECKS = \
 	chafa-tool-bad-test.sh \
+	chafa-tool-closed-test.sh \
 	chafa-tool-cmode-test.sh \
 	chafa-tool-format-test.sh \
 	chafa-tool-grid-test.sh \
