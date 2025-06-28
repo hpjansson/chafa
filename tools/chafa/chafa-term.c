@@ -640,11 +640,16 @@ term_new_full (ChafaTermInfo *term_info, gint in_fd, gint out_fd, gint err_fd)
 
     term->event_queue = g_queue_new ();
 
-    if (in_fd >= 0)
+    /* Verify that the fds are open before we do anything else with them. The
+     * default terminal uses stdio (0, 1, 2), but these may have been closed by
+     * the calling process. The fds may be reused later, e.g. when the
+     * application opens a file. */
+
+    if (in_fd >= 0 && fcntl (in_fd, F_GETFL) >= 0)
         term->reader = chafa_stream_reader_new_from_fd (in_fd);
-    if (out_fd >= 0)
+    if (out_fd >= 0 && fcntl (out_fd, F_GETFL) >= 0)
         term->writer = chafa_stream_writer_new_from_fd (out_fd);
-    if (err_fd >= 0)
+    if (err_fd >= 0 && fcntl (err_fd, F_GETFL) >= 0)
         term->err_writer = chafa_stream_writer_new_from_fd (err_fd);
 
 #ifdef G_OS_WIN32
