@@ -528,7 +528,7 @@ chafa_stream_writer_flush (ChafaStreamWriter *stream_writer)
     maybe_start_thread (stream_writer);
 
     g_mutex_lock (&stream_writer->mutex);
-    while (!stream_writer->drained)
+    while (!stream_writer->shutdown_done && !stream_writer->drained)
         g_cond_wait (&stream_writer->cond, &stream_writer->mutex);
     g_mutex_unlock (&stream_writer->mutex);
 
