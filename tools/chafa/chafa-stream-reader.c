@@ -46,7 +46,6 @@
 # endif
 # include <wchar.h>
 # include <io.h>
-# include "conhost.h"
 #else
 # include <glib-unix.h>
 #endif
@@ -72,7 +71,7 @@ struct ChafaStreamReader
     ChafaWakeup *wakeup;
     GQueue *event_queue;
 #ifdef G_OS_WIN32
-    FileHandle fd_win32;
+    HANDLE fd_win32;
 #endif
     gint fd;
     guint idle_id;
@@ -92,7 +91,7 @@ struct ChafaStreamReader
  * -------------------------------- */
 
 static gint
-read_from_fd (ChafaStreamReader *stream_reader, guchar *out, gint max)
+read_from_stream (ChafaStreamReader *stream_reader, guchar *out, gint max)
 {
     GPollFD poll_fds [2];
     gint result = -1;
@@ -120,21 +119,30 @@ read_from_fd (ChafaStreamReader *stream_reader, guchar *out, gint max)
     if (poll_fds [0].revents & G_IO_IN)
     {
 #ifdef G_OS_WIN32
-        {
-            DWORD n_read = 0;
+        DWORD n_read = 0;
+        gboolean op_success = FALSE;
 
-            if (stream_reader->is_console)
-                ReadConsoleA (stream_reader->fd_win32, out, max, &n_read, NULL);
-            else
-                ReadFileA (stream_reader->fd_win32, out, max, &n_read, NULL); /* XXX */
+        if (stream_reader->is_console)
+            op_success = ReadConsoleA (stream_reader->fd_win32, out, max, &n_read, NULL);
+        else
+            op_success = ReadFile (stream_reader->fd_win32, out, max, &n_read, NULL);
+
+        if (op_success)
             result = n_read;
-        }
+        else if (GetLastError () != ERROR_IO_PENDING)
+            result = -1;
 #else /* !G_OS_WIN32 */
+        /* Non-blocking read */
+        result = read (stream_reader->fd, out, max);
+        if (result < 1)
         {
-            /* Non-blocking read */
-            result = read (stream_reader->fd, out, max);
+            result = (errno == EAGAIN || errno == EINTR) ? 0 : -1;
         }
 #endif
+    }
+    else if (poll_fds [0].revents & (G_IO_HUP | G_IO_ERR))
+    {
+        result = -1;
     }
 
 out:
@@ -185,11 +193,14 @@ thread_main (gpointer data)
         guchar buf [READ_BUF_MAX];
         gint len;
 
-        len = read_from_fd (stream_reader, buf, READ_BUF_MAX);
+        len = read_from_stream (stream_reader, buf, READ_BUF_MAX);
 
         g_mutex_lock (&stream_reader->mutex);
 
-        if (len < 0 || stream_reader->shutdown_reqd)
+        if (len < 0)
+            stream_reader->eof_seen = TRUE;
+
+        if (stream_reader->eof_seen || stream_reader->shutdown_reqd)
         {
             break;
         }
@@ -225,7 +236,9 @@ maybe_start_thread (ChafaStreamReader *stream_reader)
         return;
 
     /* Reader thread sits in poll() and does non-blocking reads */
+#ifndef G_OS_WIN32
     g_unix_set_fd_nonblocking (stream_reader->fd, TRUE, NULL);
+#endif
     stream_reader->thread = g_thread_new ("stream-reader", thread_main, stream_reader);
 }
 
@@ -245,7 +258,7 @@ chafa_stream_reader_init (ChafaStreamReader *stream_reader, gint fd)
     g_cond_init (&stream_reader->cond);
 
 #ifdef G_OS_WIN32
-    stream_reader->fd_win32 = _get_osfhandle (stream_reader->fd);
+    stream_reader->fd_win32 = (HANDLE) _get_osfhandle (stream_reader->fd);
     setmode (stream_reader->fd, O_BINARY);
 
     if (SetConsoleMode (stream_reader->fd_win32,
@@ -274,6 +287,12 @@ chafa_stream_reader_destroy (ChafaStreamReader *stream_reader)
     g_return_if_fail (stream_reader != NULL);
 
     g_mutex_lock (&stream_reader->mutex);
+
+    if (stream_reader->idle_id)
+    {
+        g_source_remove (stream_reader->idle_id);
+        stream_reader->idle_id = 0;
+    }
 
     stream_reader->shutdown_reqd = TRUE;
     chafa_wakeup_signal (stream_reader->wakeup);

@@ -114,12 +114,11 @@ struct ChafaTerm
 
 static UINT win32_saved_console_output_cp;
 static UINT win32_saved_console_input_cp;
+static gint win32_global_init_depth;
 
 static void
 win32_global_init (void)
 {
-    HANDLE chd;
-
     if (g_atomic_int_add (&win32_global_init_depth, 1) > 0)
         return;
 
@@ -136,7 +135,7 @@ win32_global_init (void)
 static void
 win32_global_deinit (void)
 {
-    if (g_atomic_int_dec_and_test (&win32_global_init_depth))
+    if (!g_atomic_int_dec_and_test (&win32_global_init_depth))
         return;
 
     SetConsoleOutputCP (win32_saved_console_output_cp);
@@ -162,7 +161,7 @@ win32_get_reader_handle (ChafaTerm *term)
     {
         gint fd = chafa_stream_reader_get_fd (term->reader);
         if (fd >= 0)
-            return _get_osfhandle (fd);
+            return (HANDLE) _get_osfhandle (fd);
     }
 
     return INVALID_HANDLE_VALUE;
@@ -175,7 +174,7 @@ win32_get_writer_handle (ChafaTerm *term)
     {
         gint fd = chafa_stream_reader_get_fd (term->reader);
         if (fd >= 0)
-            return _get_osfhandle (fd);
+            return (HANDLE) _get_osfhandle (fd);
     }
 
     return INVALID_HANDLE_VALUE;
@@ -605,6 +604,23 @@ in_sync_pull (ChafaTerm *term, gint timeout_ms)
  * Construct and destroy *
  * --------------------- */
 
+static gboolean
+fd_is_valid (gint fd)
+{
+    gboolean result;
+
+    if (fd < 0)
+        return FALSE;
+
+#ifdef G_OS_WIN32
+    result = ((HANDLE) _get_osfhandle (fd) != INVALID_HANDLE_VALUE) ? TRUE : FALSE;
+#else
+    result = (fcntl (fd, F_GETFL) >= 0) ? TRUE : FALSE;
+#endif
+
+    return result;
+}
+
 static ChafaTerm *
 term_new_full (ChafaTermInfo *term_info, gint in_fd, gint out_fd, gint err_fd)
 {
@@ -645,11 +661,11 @@ term_new_full (ChafaTermInfo *term_info, gint in_fd, gint out_fd, gint err_fd)
      * the calling process. The fds may be reused later, e.g. when the
      * application opens a file. */
 
-    if (in_fd >= 0 && fcntl (in_fd, F_GETFL) >= 0)
+    if (fd_is_valid (in_fd))
         term->reader = chafa_stream_reader_new_from_fd (in_fd);
-    if (out_fd >= 0 && fcntl (out_fd, F_GETFL) >= 0)
+    if (fd_is_valid (out_fd))
         term->writer = chafa_stream_writer_new_from_fd (out_fd);
-    if (err_fd >= 0 && fcntl (err_fd, F_GETFL) >= 0)
+    if (fd_is_valid (err_fd))
         term->err_writer = chafa_stream_writer_new_from_fd (err_fd);
 
 #ifdef G_OS_WIN32
@@ -706,6 +722,10 @@ chafa_term_destroy (ChafaTerm *term)
     chafa_term_info_unref (term->term_info);
     if (term->default_term_info)
         chafa_term_info_unref (term->default_term_info);
+
+#ifdef G_OS_WIN32
+    win32_term_deinit (term);
+#endif
 
     g_free (term);
 }
