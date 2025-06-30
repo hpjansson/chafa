@@ -46,7 +46,6 @@
 # endif
 # include <wchar.h>
 # include <io.h>
-# include "conhost.h"
 #else
 # include <glib-unix.h>
 #endif
@@ -72,7 +71,7 @@ struct ChafaStreamWriter
     ChafaWakeup *wakeup;
     GQueue *event_queue;
 #ifdef G_OS_WIN32
-    FileHandle fd_win32;
+    HANDLE fd_win32;
 #endif
     gint fd;
     gint buf_max;
@@ -90,34 +89,29 @@ struct ChafaStreamWriter
 #ifdef G_OS_WIN32
 
 static gboolean
-safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
+safe_WriteConsoleA (ChafaStreamWriter *stream_writer, const gchar *data, gsize len)
 {
     gsize total_written = 0;
 
-    if (chd == INVALID_HANDLE_VALUE)
-        return FALSE;
+    g_assert (stream_writer->fd_win32 != INVALID_HANDLE_VALUE);
 
     while (total_written < len)
     {
         DWORD n_written = 0;
 
-        if (win32_output_is_file)
+        if (stream_writer->is_console)
+        {
+            if (!WriteConsoleA (stream_writer->fd_win32, data, len - total_written, &n_written, NULL))
+                return FALSE;
+        }
+        else
         {
             /* WriteFile() and fwrite() seem to work equally well despite various
              * claims that the former does poorly in a UTF-8 environment. The
              * resulting files look good in my tests, but note that catting them
              * out with 'type' introduces lots of artefacts. */
-#if 0
-            if (!WriteFile (chd, data, len - total_written, &n_written, NULL))
-                return FALSE;
-#else
-            if ((n_written = fwrite (data, 1, len - total_written, stdout)) < 1)
-                return FALSE;
-#endif
-        }
-        else
-        {
-            if (!WriteConsoleA (chd, data, len - total_written, &n_written, NULL))
+
+            if (!WriteFile (stream_writer->fd_win32, data, len - total_written, &n_written, NULL))
                 return FALSE;
         }
 
@@ -128,11 +122,7 @@ safe_WriteConsoleA (HANDLE chd, const gchar *data, gsize len)
     return TRUE;
 }
 
-#endif /* G_OS_WIN32 */
-
-/* -------------------------------- *
- * Low-level I/O and tty whispering *
- * -------------------------------- */
+#else /* !G_OS_WIN32 */
 
 static void
 wait_for_pipe (gint fd)
@@ -198,8 +188,14 @@ out:
     return success;
 }
 
+#endif
+
+/* -------------------------------- *
+ * Low-level I/O and tty whispering *
+ * -------------------------------- */
+
 static gboolean
-write_to_stdout (ChafaStreamWriter *stream_writer, gconstpointer buf, gsize len)
+write_to_stream (ChafaStreamWriter *stream_writer, gconstpointer buf, gsize len)
 {
     gboolean result = TRUE;
 
@@ -208,7 +204,6 @@ write_to_stdout (ChafaStreamWriter *stream_writer, gconstpointer buf, gsize len)
 
 #ifdef G_OS_WIN32
     {
-        HANDLE chd = GetStdHandle (STD_OUTPUT_HANDLE);
         gsize total_written = 0;
         const void * const newline = "\r\n";
         const gchar *p0, *p1, *end;
@@ -216,21 +211,21 @@ write_to_stdout (ChafaStreamWriter *stream_writer, gconstpointer buf, gsize len)
         /* On MS Windows, we convert line feeds to DOS-style CRLF as we go. */
 
         for (p0 = buf, end = p0 + len;
-             chd != INVALID_HANDLE_VALUE && total_written < len;
+             stream_writer->fd_win32 != INVALID_HANDLE_VALUE && total_written < len;
              p0 = p1)
         {
             p1 = memchr (p0, '\n', end - p0);
             if (!p1)
                 p1 = end;
 
-            if (!safe_WriteConsoleA (chd, p0, p1 - p0))
+            if (!safe_WriteConsoleA (stream_writer, p0, p1 - p0))
                 break;
 
             total_written += p1 - p0;
 
             if (p1 != end)
             {
-                if (!safe_WriteConsoleA (chd, newline, 2))
+                if (!safe_WriteConsoleA (stream_writer, newline, 2))
                     break;
 
                 p1 += 1;
@@ -290,7 +285,7 @@ thread_main (gpointer data)
 
         g_mutex_unlock (&stream_writer->mutex);
 
-        if (!write_to_stdout (stream_writer, buf, len))
+        if (!write_to_stream (stream_writer, buf, len))
             io_error = TRUE;
     }
 
@@ -306,8 +301,6 @@ maybe_start_thread (ChafaStreamWriter *stream_writer)
     if (stream_writer->thread)
         return;
 
-    /* The writer will work with both blocking and non-blocking FDs. */
-    g_unix_set_fd_nonblocking (stream_writer->fd, TRUE, NULL);
     stream_writer->thread = g_thread_new ("stream-writer", thread_main, stream_writer);
 }
 
@@ -327,7 +320,7 @@ chafa_stream_writer_init (ChafaStreamWriter *stream_writer, gint fd)
     g_cond_init (&stream_writer->cond);
 
 #ifdef G_OS_WIN32
-    stream_writer->fd_win32 = _get_osfhandle (stream_writer->fd);
+    stream_writer->fd_win32 = (HANDLE) _get_osfhandle (stream_writer->fd);
     setmode (stream_writer->fd, O_BINARY);
 
     if (SetConsoleMode (stream_writer->fd_win32,
@@ -343,7 +336,7 @@ chafa_stream_writer_init (ChafaStreamWriter *stream_writer, gint fd)
         {
             /* Legacy MS Windows */
             stream_writer->is_console = TRUE;
-            SetConsoleMode (chd, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+            SetConsoleMode (stream_writer->fd_win32, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
         }
     }
 #else
