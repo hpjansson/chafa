@@ -231,7 +231,7 @@ chafa_set_n_threads (gint n)
 {
     g_return_if_fail (n >= -1);
 
-    return g_atomic_int_set (&n_threads, n);
+    g_atomic_int_set (&n_threads, n);
 }
 
 /**
