@@ -546,7 +546,6 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
     PnnBin *bins = NULL;
     PnnBinIndex *heap = NULL;
     gfloat weight = 1.0f;
-    gfloat err;
     gint quan_rt = 1;
     gint max_bins, n_bins;
     gint extbins;
@@ -646,6 +645,7 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
         gfloat n2;
         gfloat d;
         PnnBinIndex b1;
+        gfloat err;
 
         for (;;)
         {

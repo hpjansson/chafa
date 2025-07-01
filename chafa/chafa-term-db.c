@@ -924,14 +924,14 @@ match_env_rule (const EnvRule *r, const gchar *value)
 }
 
 static gint
-match_term_def (const TermDef *term_def, gchar **envp)
+match_term_def (const TermDef *td, gchar **envp)
 {
     gint best_pri = G_MININT;
     gint i;
 
-    for (i = 0; i < ENV_RULE_MAX && term_def->env_rules [i].key; i++)
+    for (i = 0; i < ENV_RULE_MAX && td->env_rules [i].key; i++)
     {
-        const EnvRule *r = &term_def->env_rules [i];
+        const EnvRule *r = &td->env_rules [i];
         const gchar *value;
         gboolean m = FALSE;
 
