@@ -3441,9 +3441,11 @@ static const SmolImplementation implementation =
         /* Horizontal filters */
         {
             /* 24bpp */
+            NULL
         },
         {
             /* 32bpp */
+            NULL
         },
         {
             /* 64bpp */
@@ -3476,9 +3478,11 @@ static const SmolImplementation implementation =
         /* Vertical filters */
         {
             /* 24bpp */
+            NULL
         },
         {
             /* 32bpp */
+            NULL
         },
         {
             /* 64bpp */

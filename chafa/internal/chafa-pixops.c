@@ -36,9 +36,13 @@
 #define INDEXED_8_CROP_PCT  10
 #define INDEXED_2_CROP_PCT  20
 
+#if 0
+/* Disabled because static asserts aren't in C99 */
+
 /* Ensure there's no overflow in normalize_ch() */
 G_STATIC_ASSERT (FIXED_MULT * INTENSITY_MAX * (gint64) 255 <= G_MAXINT);
 G_STATIC_ASSERT (FIXED_MULT * INTENSITY_MAX * (gint64) -255 >= G_MININT);
+#endif
 
 typedef struct
 {
