@@ -20,6 +20,7 @@
 #include "config.h"
 #include "chafa.h"
 #include "internal/chafa-private.h"
+#include <stdint.h>
 
 /**
  * SECTION:chafa-frame
@@ -126,11 +127,13 @@ chafa_frame_new_steal (gpointer data,
  * Since: 1.14
  **/
 ChafaFrame *
-chafa_frame_new_borrow (gpointer data,
+chafa_frame_new_borrow (gconstpointer data,
                         ChafaPixelType pixel_type,
                         gint width, gint height, gint rowstride)
 {
-    return new_frame (data, pixel_type, width, height, rowstride, FALSE);
+    /* Suppress the warning we get with -Wcast-qual. We honor the constness
+     * by tracking it with the data_is_owned flag. */
+    return new_frame ((gpointer)(uintptr_t) data, pixel_type, width, height, rowstride, FALSE);
 }
 
 /**

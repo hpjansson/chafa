@@ -37,7 +37,7 @@ ChafaFrame *chafa_frame_new_steal (gpointer data,
                                    ChafaPixelType pixel_type,
                                    gint width, gint height, gint rowstride);
 CHAFA_AVAILABLE_IN_1_14
-ChafaFrame *chafa_frame_new_borrow (gpointer data,
+ChafaFrame *chafa_frame_new_borrow (gconstpointer data,
                                     ChafaPixelType pixel_type,
                                     gint width, gint height, gint rowstride);
 
