@@ -281,12 +281,12 @@ jpeg_loader_new (void)
     return g_new0 (JpegLoader, 1);
 }
 
-static gint
+static guchar
 convert_cmyk_ch_to_rgb (gint k, gint cmy)
 {
     gint v = k * cmy + 128;
     v = ((v >> 8) + v) >> 8;
-    return CLAMP (k - v, 0, 255);
+    return (guchar) CLAMP (k - v, 0, 255);
 }
 
 static void

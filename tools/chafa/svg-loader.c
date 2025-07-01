@@ -81,15 +81,15 @@ calc_dimensions (RsvgHandle *rsvg,
     height = dim.height;
 #endif
 
-    width = MAX (width, 1);
-    height = MAX (height, 1);
+    width = MAX (width, 1.0);
+    height = MAX (height, 1.0);
 
     /* Target dimensions can be zero or negative if unspecified */
 
     if (target_width < 1)
-        target_width = width;
+        target_width = (gint) lrint (width);
     if (target_height < 1)
-        target_height = height;
+        target_height = (gint) lrint (height);
 
     /* Avoid generating tiny images that will be subjected to ugly
      * upscaling later */
@@ -125,8 +125,8 @@ calc_dimensions (RsvgHandle *rsvg,
         }
     }
 
-    *width_out = lrint (width);
-    *height_out = lrint (height);
+    *width_out = (guint) lrint (width);
+    *height_out = (guint) lrint (height);
 }
 
 SvgLoader *
