@@ -204,11 +204,11 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES, "\033[?%vc" },
 
     { CHAFA_TERM_SEQ_RESET_DEFAULT_FG, "\033]110\033\\" },
-    { CHAFA_TERM_SEQ_SET_DEFAULT_FG, "\033]10;rgb:%1/%2/%3\e\\" },
+    { CHAFA_TERM_SEQ_SET_DEFAULT_FG, "\033]10;rgb:%1/%2/%3\033\\" },
     { CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, "\033]10;?\033\\" },
 
     { CHAFA_TERM_SEQ_RESET_DEFAULT_BG, "\033]111\033\\" },
-    { CHAFA_TERM_SEQ_SET_DEFAULT_BG, "\033]11;rgb:%1/%2/%3\e\\" },
+    { CHAFA_TERM_SEQ_SET_DEFAULT_BG, "\033]11;rgb:%1/%2/%3\033\\" },
     { CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, "\033]11;?\033\\" },
 
     /* XTWINOPS */
