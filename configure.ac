@@ -38,8 +38,6 @@ dnl --- Standard setup ---
 
 BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26 \
 -Wall -Wextra \
--Wc11-c2x-compat \
--Wc99-c11-compat \
 -Wcast-qual \
 -Wdisabled-optimization \
 -Wdouble-promotion \
@@ -47,7 +45,6 @@ BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26 \
 -Wpointer-arith \
 -Wshadow \
 -Wstrict-overflow=2 \
--Wtrampolines \
 -Wundef \
 -Wunused-macros \
 -Wwrite-strings \
@@ -83,10 +80,13 @@ LT_INIT([win32-dll])
 
 dnl --- Check for extra compiler warnings ---
 
-AX_CHECK_COMPILE_FLAG([-Wstack-usage=131072],[BASE_CFLAGS="$BASE_CFLAGS -Wstack-usage=131072"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wc11-c2x-compat],[BASE_CFLAGS="$BASE_CFLAGS -Wc11-c2x-compat"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wc99-c11-compat],[BASE_CFLAGS="$BASE_CFLAGS -Wc99-c11-compat"],,[-Werror])
 AX_CHECK_COMPILE_FLAG([-Wfor-loop-analysis],[BASE_CFLAGS="$BASE_CFLAGS -Wfor-loop-analysis"],,[-Werror])
 AX_CHECK_COMPILE_FLAG([-Wlogical-op],[BASE_CFLAGS="$BASE_CFLAGS -Wlogical-op"],,[-Werror])
 AX_CHECK_COMPILE_FLAG([-Wlogical-op-parentheses],[BASE_CFLAGS="$BASE_CFLAGS -Wlogical-op-parentheses"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wstack-usage=131072],[BASE_CFLAGS="$BASE_CFLAGS -Wstack-usage=131072"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wtrampolines],[BASE_CFLAGS="$BASE_CFLAGS -Wtrampolines"],,[-Werror])
 
 dnl --- Required standards ---
 
