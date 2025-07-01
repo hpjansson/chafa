@@ -53,7 +53,7 @@ calc_grain_shift (gint size)
 
 void
 chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
-                   gdouble intensity,
+                   gfloat intensity,
                    gint grain_width, gint grain_height)
 {
     memset (dither, 0, sizeof (*dither));
@@ -73,11 +73,11 @@ chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
     {
         dither->texture_size_shift = 6;
         dither->texture_size_mask = (1 << 6) - 1;
-        dither->texture_data = chafa_gen_noise_matrix (dither->intensity * 0.1);
+        dither->texture_data = chafa_gen_noise_matrix (dither->intensity * 0.1f);
     }
     else if (mode == CHAFA_DITHER_MODE_DIFFUSION)
     {
-        dither->intensity = MIN (dither->intensity, 1.0);
+        dither->intensity = MIN (dither->intensity, 1.0f);
     }
 }
 

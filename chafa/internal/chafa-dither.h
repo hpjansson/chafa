@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 typedef struct
 {
     ChafaDitherMode mode;
-    gdouble intensity;
+    gfloat intensity;
     gint grain_width_shift;
     gint grain_height_shift;
 
@@ -38,7 +38,7 @@ typedef struct
 ChafaDither;
 
 void chafa_dither_init (ChafaDither *dither, ChafaDitherMode mode,
-                        gdouble intensity,
+                        gfloat intensity,
                         gint grain_width, gint grain_height);
 void chafa_dither_deinit (ChafaDither *dither);
 void chafa_dither_copy (const ChafaDither *src, ChafaDither *dest);

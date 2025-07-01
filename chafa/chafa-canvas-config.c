@@ -60,11 +60,11 @@ chafa_canvas_config_init (ChafaCanvasConfig *canvas_config)
     canvas_config->dither_mode = CHAFA_DITHER_MODE_NONE;
     canvas_config->dither_grain_width = 4;
     canvas_config->dither_grain_height = 4;
-    canvas_config->dither_intensity = 1.0;
+    canvas_config->dither_intensity = 1.0f;
     canvas_config->fg_color_packed_rgb = 0xffffff;
     canvas_config->bg_color_packed_rgb = 0x000000;
     canvas_config->alpha_threshold = 127;
-    canvas_config->work_factor = 0.5;
+    canvas_config->work_factor = 0.5f;
     canvas_config->preprocessing_enabled = TRUE;
     canvas_config->optimizations = CHAFA_OPTIMIZATION_ALL;
     canvas_config->fg_only_enabled = FALSE;
