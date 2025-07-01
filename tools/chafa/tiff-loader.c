@@ -122,9 +122,11 @@ my_tiff_map (thandle_t obj, void **base, toff_t *len)
     /* When the TIFFMap delegate is non-NULL, libtiff will use it preferentially.
      *
      * Our map is read-only, while base points to non-const. Fingers crossed
-     * libtiff doesn't actually try to write to it during read operations. */
+     * libtiff doesn't actually try to write to it during read operations.
+     *
+     * The int cast prevents a warning from -Wcast-qual. */
 
-    *base = (void *) loader->file_data;
+    *base = (void *)(intptr_t) loader->file_data;
     *len = loader->file_data_len;
     return 0;
 }

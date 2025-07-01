@@ -853,7 +853,7 @@ parse_fraction_or_real (const gchar *str, gdouble *real_out)
 
     if (sep)
     {
-        width = g_ascii_strtoll (p0, (gchar **) &end, 10);
+        width = g_ascii_strtoll (p0, (gchar **)(intptr_t) &end, 10);
         if (!end || end == p0)
             goto out;
         end = utf8_skip_spaces (end);
@@ -862,7 +862,7 @@ parse_fraction_or_real (const gchar *str, gdouble *real_out)
 
         sep = g_utf8_next_char (sep);
         p0 = utf8_skip_spaces (sep);
-        height = g_ascii_strtoll (p0, (gchar **) &end, 10);
+        height = g_ascii_strtoll (p0, (gchar **)(intptr_t) &end, 10);
         if (end == p0)
             goto out;
         end = utf8_skip_spaces (end);
@@ -874,7 +874,7 @@ parse_fraction_or_real (const gchar *str, gdouble *real_out)
     }
     else
     {
-        ratio = g_strtod (p0, (gchar **) &end);
+        ratio = g_strtod (p0, (gchar **)(intptr_t) &end);
         if (!end || end == p0)
             goto out;
         end = utf8_skip_spaces (end);
@@ -2875,7 +2875,7 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
     ChafaCanvas *canvas;
 
     canvas = chafa_canvas_new (config);
-    frame = chafa_frame_new_borrow ((gpointer) pixels, pixel_type,
+    frame = chafa_frame_new_borrow (pixels, pixel_type,
                                     src_width, src_height, src_rowstride);
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);

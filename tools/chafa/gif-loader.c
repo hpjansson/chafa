@@ -148,7 +148,7 @@ gif_loader_new_from_mapping (FileMapping *mapping)
 
     do
     {
-        code = gif_initialise (&loader->gif, loader->file_data_len, (gpointer) loader->file_data);
+        code = gif_initialise (&loader->gif, loader->file_data_len, loader->file_data);
 
         if (code != GIF_OK && code != GIF_WORKING)
             goto out;

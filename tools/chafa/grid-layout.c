@@ -114,7 +114,7 @@ build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
     ChafaCanvas *canvas;
 
     canvas = chafa_canvas_new (config);
-    frame = chafa_frame_new_borrow ((gpointer) pixels, pixel_type,
+    frame = chafa_frame_new_borrow (pixels, pixel_type,
                                     src_width, src_height, src_rowstride);
     image = chafa_image_new ();
     chafa_image_set_frame (image, frame);

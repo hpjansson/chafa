@@ -226,7 +226,7 @@ my_jpeg_mem_src (j_decompress_ptr cinfo, const void *buffer, long nbytes)
     src->resync_to_restart = jpeg_resync_to_restart;  /* Use default method */
     src->term_source = term_source;
     src->bytes_in_buffer = nbytes;
-    src->next_input_byte = (JOCTET *) buffer;
+    src->next_input_byte = (const JOCTET *) buffer;
 }
 
 /* --- Error handler --- */
