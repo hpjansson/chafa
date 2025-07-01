@@ -159,7 +159,7 @@ tiff_loader_new_from_mapping (FileMapping *mapping)
 {
     TiffLoader *loader = NULL;
     gboolean success = FALSE;
-    uint8_t *frame_data = NULL;
+    gpointer frame_data = NULL;
     TIFF *tiff = NULL;
     gint samples_per_pixel = 4;
     uint32_t width, height;
