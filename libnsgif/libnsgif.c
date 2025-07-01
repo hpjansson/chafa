@@ -935,7 +935,7 @@ void gif_create(gif_animation *gif, gif_bitmap_callback_vt *bitmap_callbacks)
 
 
 /* exported function documented in libnsgif.h */
-gif_result gif_initialise(gif_animation *gif, size_t size, unsigned char *data)
+gif_result gif_initialise(gif_animation *gif, size_t size, const unsigned char *data)
 {
         const unsigned char *gif_data;
         unsigned int index;
