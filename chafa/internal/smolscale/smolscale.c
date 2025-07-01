@@ -858,7 +858,7 @@ find_repacks (const SmolImplementation **implementations,
                     do_reorder (mid_order, dest_order,
                                 reorder_meta [SMOL_REPACK_SIGNATURE_GET_REORDER (dest_meta->signature)].dest);
 
-                    if (*((uint32_t *) dest_order) == *((uint32_t *) dest_pmeta->order))
+                    if (*((const uint32_t *) dest_order) == *((const uint32_t *) dest_pmeta->order))
                     {
                         /* Success */
                         goto out;

@@ -1274,7 +1274,7 @@ weight_pixel_128bpp (const uint64_t *p,
 }
 
 static SMOL_INLINE void
-sum_parts_64bpp (const uint64_t ** SMOL_RESTRICT parts_in,
+sum_parts_64bpp (const uint64_t * SMOL_RESTRICT *parts_in,
                  uint64_t * SMOL_RESTRICT accum,
                  uint32_t n)
 {
@@ -1292,7 +1292,7 @@ sum_parts_64bpp (const uint64_t ** SMOL_RESTRICT parts_in,
 }
 
 static SMOL_INLINE void
-sum_parts_128bpp (const uint64_t ** SMOL_RESTRICT parts_in,
+sum_parts_128bpp (const uint64_t * SMOL_RESTRICT *parts_in,
                   uint64_t * SMOL_RESTRICT accum,
                   uint32_t n)
 {
@@ -1344,7 +1344,7 @@ scale_128bpp_half (uint64_t accum,
 static SMOL_INLINE void
 scale_and_store_128bpp (const uint64_t * SMOL_RESTRICT accum,
                         uint64_t multiplier,
-                        uint64_t ** SMOL_RESTRICT row_parts_out)
+                        uint64_t * SMOL_RESTRICT *row_parts_out)
 {
     *(*row_parts_out)++ = scale_128bpp_half (accum [0], multiplier);
     *(*row_parts_out)++ = scale_128bpp_half (accum [1], multiplier);
@@ -1990,13 +1990,13 @@ interp_horizontal_bilinear_0h_128bpp (const SmolScaleCtx *scale_ctx,
 
         p0 = row_parts_in + *(precalc_x++) * 2;
         n4 = _mm_set1_epi16 (*(precalc_x++));
-        n0 = _mm_load_si128 ((__m128i *) p0);
-        n1 = _mm_load_si128 ((__m128i *) p0 + 1);
+        n0 = _mm_load_si128 ((const __m128i *) p0);
+        n1 = _mm_load_si128 ((const __m128i *) p0 + 1);
 
         p0 = row_parts_in + *(precalc_x++) * 2;
         n5 = _mm_set1_epi16 (*(precalc_x++));
-        n2 = _mm_load_si128 ((__m128i *) p0);
-        n3 = _mm_load_si128 ((__m128i *) p0 + 1);
+        n2 = _mm_load_si128 ((const __m128i *) p0);
+        n3 = _mm_load_si128 ((const __m128i *) p0 + 1);
 
         m0 = _mm256_set_m128i (n2, n0);
         m1 = _mm256_set_m128i (n3, n1);
@@ -2020,8 +2020,8 @@ interp_horizontal_bilinear_0h_128bpp (const SmolScaleCtx *scale_ctx,
         f = *(precalc_x++);
 
         factors = _mm_set1_epi32 ((uint32_t) f);
-        m0 = _mm_stream_load_si128 ((__m128i *) p0);
-        m1 = _mm_stream_load_si128 ((__m128i *) p0 + 1);
+        m0 = _mm_load_si128 ((const __m128i *) p0);
+        m1 = _mm_load_si128 ((const __m128i *) p0 + 1);
 
         m0 = LERP_SIMD128_EPI32_AND_MASK (m0, m1, factors, mask128);
         _mm_store_si128 ((__m128i *) row_parts_out, m0);
@@ -2062,13 +2062,13 @@ interp_horizontal_bilinear_##n_halvings##h_128bpp (const SmolScaleCtx *scale_ctx
 \
             p0 = row_parts_in + *(precalc_x++) * 2; \
             n4 = _mm_set1_epi16 (*(precalc_x++)); \
-            n0 = _mm_load_si128 ((__m128i *) p0); \
-            n1 = _mm_load_si128 ((__m128i *) p0 + 1); \
+            n0 = _mm_load_si128 ((const __m128i *) p0); \
+            n1 = _mm_load_si128 ((const __m128i *) p0 + 1); \
 \
             p0 = row_parts_in + *(precalc_x++) * 2; \
             n5 = _mm_set1_epi16 (*(precalc_x++)); \
-            n2 = _mm_load_si128 ((__m128i *) p0); \
-            n3 = _mm_load_si128 ((__m128i *) p0 + 1); \
+            n2 = _mm_load_si128 ((const __m128i *) p0); \
+            n3 = _mm_load_si128 ((const __m128i *) p0 + 1); \
 \
             m0 = _mm256_set_m128i (n2, n0); \
             m1 = _mm256_set_m128i (n3, n1); \
@@ -2143,7 +2143,7 @@ interp_horizontal_boxes_64bpp (const SmolScaleCtx *scale_ctx,
         pp = src_row_parts + ofs0;
 
         accum = weight_pixel_64bpp (*(pp++), f0);
-        sum_parts_64bpp ((const uint64_t ** SMOL_RESTRICT) &pp, &accum, n);
+        sum_parts_64bpp (&pp, &accum, n);
         accum += weight_pixel_64bpp (*pp, f1);
 
         *(dest_row_parts++) = scale_64bpp (accum, scale_ctx->hdim.span_mul);
@@ -2183,7 +2183,7 @@ interp_horizontal_boxes_128bpp (const SmolScaleCtx *scale_ctx,
         weight_pixel_128bpp (pp, accum, f0);
         pp += 2;
 
-        sum_parts_128bpp ((const uint64_t ** SMOL_RESTRICT) &pp, accum, n);
+        sum_parts_128bpp (&pp, accum, n);
 
         weight_pixel_128bpp (pp, t, f1);
         accum [0] += t [0];
@@ -2191,7 +2191,7 @@ interp_horizontal_boxes_128bpp (const SmolScaleCtx *scale_ctx,
 
         scale_and_store_128bpp (accum,
                                 scale_ctx->hdim.span_mul,
-                                (uint64_t ** SMOL_RESTRICT) &dest_row_parts);
+                                (uint64_t * SMOL_RESTRICT *) &dest_row_parts);
     }
 }
 

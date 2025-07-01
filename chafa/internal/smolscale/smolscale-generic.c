@@ -1260,7 +1260,7 @@ weight_pixel_128bpp (const uint64_t *p,
 }
 
 static SMOL_INLINE void
-sum_parts_64bpp (const uint64_t ** SMOL_RESTRICT parts_in,
+sum_parts_64bpp (const uint64_t * SMOL_RESTRICT *parts_in,
                  uint64_t * SMOL_RESTRICT accum,
                  uint32_t n)
 {
@@ -1278,7 +1278,7 @@ sum_parts_64bpp (const uint64_t ** SMOL_RESTRICT parts_in,
 }
 
 static SMOL_INLINE void
-sum_parts_128bpp (const uint64_t ** SMOL_RESTRICT parts_in,
+sum_parts_128bpp (const uint64_t * SMOL_RESTRICT *parts_in,
                   uint64_t * SMOL_RESTRICT accum,
                   uint32_t n)
 {
@@ -1328,7 +1328,7 @@ scale_128bpp_half (uint64_t accum,
 static SMOL_INLINE void
 scale_and_store_128bpp (const uint64_t * SMOL_RESTRICT accum,
                         uint64_t multiplier,
-                        uint64_t ** SMOL_RESTRICT dest_row_parts)
+                        uint64_t * SMOL_RESTRICT *dest_row_parts)
 {
     *(*dest_row_parts)++ = scale_128bpp_half (accum [0], multiplier);
     *(*dest_row_parts)++ = scale_128bpp_half (accum [1], multiplier);
@@ -1683,7 +1683,7 @@ interp_horizontal_boxes_64bpp (const SmolScaleCtx *scale_ctx,
         pp = src_row_parts + ofs0;
 
         accum = weight_pixel_64bpp (*(pp++), f0);
-        sum_parts_64bpp ((const uint64_t ** SMOL_RESTRICT) &pp, &accum, n);
+        sum_parts_64bpp (&pp, &accum, n);
         accum += weight_pixel_64bpp (*pp, f1);
 
         *(dest_row_parts++) = scale_64bpp (accum, scale_ctx->hdim.span_mul);
@@ -1723,7 +1723,7 @@ interp_horizontal_boxes_128bpp (const SmolScaleCtx *scale_ctx,
         weight_pixel_128bpp (pp, accum, f0);
         pp += 2;
 
-        sum_parts_128bpp ((const uint64_t ** SMOL_RESTRICT) &pp, accum, n);
+        sum_parts_128bpp ((const uint64_t * SMOL_RESTRICT *) &pp, accum, n);
 
         weight_pixel_128bpp (pp, t, f1);
         accum [0] += t [0];
@@ -1731,7 +1731,7 @@ interp_horizontal_boxes_128bpp (const SmolScaleCtx *scale_ctx,
 
         scale_and_store_128bpp (accum,
                                 scale_ctx->hdim.span_mul,
-                                (uint64_t ** SMOL_RESTRICT) &dest_row_parts);
+                                (uint64_t * SMOL_RESTRICT *) &dest_row_parts);
     }
 }
 
