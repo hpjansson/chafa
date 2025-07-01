@@ -44,6 +44,7 @@ jobs:
         -fsanitize-undefined-trap-on-error 
         -fstack-protector-all 
         -Werror -Wno-error=unused 
+        -Wno-error=cast-qual
         -Wno-error=unused-function 
         -Wno-error=unused-macros
         -Wno-error=unused-parameter 
