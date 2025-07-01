@@ -51,11 +51,8 @@ fetch_canvas_pixel_block (const ChafaPixel *src_image, gint src_width,
 
     for ( ; row_p < end_p; row_p += src_width)
     {
-        const ChafaPixel *p0 = row_p;
-        const ChafaPixel *p1 = p0 + CHAFA_SYMBOL_WIDTH_PIXELS;
-
-        for ( ; p0 < p1; p0++)
-            pixels_out [i++] = *p0;
+        memcpy (&pixels_out [i], row_p, CHAFA_SYMBOL_WIDTH_PIXELS * sizeof (ChafaPixel));
+        i += CHAFA_SYMBOL_WIDTH_PIXELS;
     }
 }
 
