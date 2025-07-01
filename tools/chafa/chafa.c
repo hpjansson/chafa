@@ -2900,6 +2900,34 @@ typedef enum
 }
 RunResult;
 
+/* Prescaling is for structured formats like SVG where the intrinsic size may be
+ * too small or too large and we'd rather rasterize to something closer to our
+ * final output size. */
+static void
+calc_prescale_size_px (gint *prescale_width_out, gint *prescale_height_out)
+{
+    gint cell_width_px, cell_height_px;
+
+    if (options.cell_width <= 0 || options.cell_height <= 0)
+    {
+        cell_width_px = 10;
+        cell_height_px = 20;
+    }
+    else
+    {
+        cell_width_px = options.cell_width;
+        cell_height_px = options.cell_height;
+    }
+
+    *prescale_width_out = cell_width_px
+        * (options.width > 0 ? options.width : options.view_width);
+    *prescale_height_out = cell_height_px
+        * (options.height > 0 ? options.height : options.view_height);
+
+    *prescale_width_out = MAX (*prescale_width_out, 160);
+    *prescale_height_out = MAX (*prescale_height_out, 160);
+}
+
 static RunResult
 run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
 {
@@ -2914,11 +2942,13 @@ run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_fr
     gint frame_count = 0;
     RunResult result = FILE_FAILED;
     gint dest_width = 0, dest_height = 0;
+    gint prescale_width, prescale_height;
     GError *error = NULL;
 
     timer = g_timer_new ();
 
-    media_loader = media_loader_new (filename, -1, -1, &error);
+    calc_prescale_size_px (&prescale_width, &prescale_height);
+    media_loader = media_loader_new (filename, prescale_width, prescale_height, &error);
     if (!media_loader)
     {
         if (!quiet)
