@@ -43,7 +43,6 @@ BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26 \
 -Wcast-qual \
 -Wdisabled-optimization \
 -Wdouble-promotion \
--Wlogical-op \
 -Wmissing-prototypes \
 -Wpointer-arith \
 -Wshadow \
