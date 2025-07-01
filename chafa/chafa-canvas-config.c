@@ -477,11 +477,11 @@ chafa_canvas_config_set_transparency_threshold (ChafaCanvasConfig *config, gfloa
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
-    g_return_if_fail (alpha_threshold >= 0.0);
-    g_return_if_fail (alpha_threshold <= 1.0);
+    g_return_if_fail (alpha_threshold >= 0.0f);
+    g_return_if_fail (alpha_threshold <= 1.0f);
 
     /* Invert the scale; internally it's more like an opacity threshold */
-    config->alpha_threshold = 256.0 * (1.0 - alpha_threshold);
+    config->alpha_threshold = 256.0f * (1.0f - alpha_threshold);
 }
 
 /**
@@ -586,7 +586,7 @@ chafa_canvas_config_set_work_factor (ChafaCanvasConfig *config, gfloat work_fact
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
-    g_return_if_fail (work_factor >= 0.0 && work_factor <= 1.0);
+    g_return_if_fail (work_factor >= 0.0f && work_factor <= 1.0f);
 
     config->work_factor = work_factor;
 }
@@ -752,7 +752,7 @@ chafa_canvas_config_set_dither_intensity (ChafaCanvasConfig *config, gfloat inte
 {
     g_return_if_fail (config != NULL);
     g_return_if_fail (config->refs > 0);
-    g_return_if_fail (intensity >= 0.0);
+    g_return_if_fail (intensity >= 0.0f);
 
     config->dither_intensity = intensity;
 }

@@ -1419,7 +1419,7 @@ ChafaCanvas *
 chafa_canvas_new (const ChafaCanvasConfig *config)
 {
     ChafaCanvas *canvas;
-    gdouble dither_intensity = 1.0;
+    gfloat dither_intensity = 1.0f;
 
     if (config)
     {

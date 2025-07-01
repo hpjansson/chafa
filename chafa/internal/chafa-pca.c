@@ -23,7 +23,7 @@
 #include "internal/chafa-pca.h"
 
 #define PCA_POWER_MAX_ITERATIONS 1000
-#define PCA_POWER_MIN_ERROR 0.0001
+#define PCA_POWER_MIN_ERROR 0.0001f
 
 static gfloat
 pca_converge (const ChafaVec3f32 *vecs_in, gint n_vecs,

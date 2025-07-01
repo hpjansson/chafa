@@ -67,6 +67,7 @@ chafa_calc_canvas_geometry (gint src_width,
                             gboolean stretch)
 {
     gint dest_width = -1, dest_height = -1;
+    gdouble font_ratio_dbl = (gdouble) font_ratio;
 
     g_return_if_fail (src_width >= 0);
     g_return_if_fail (src_height >= 0);
@@ -102,7 +103,7 @@ chafa_calc_canvas_geometry (gint src_width,
 
         if (dest_height_inout)
         {
-            *dest_height_inout = ((src_height + 7) / 8) * font_ratio + 0.5;
+            *dest_height_inout = ((src_height + 7) / 8) * font_ratio_dbl + 0.5;
             *dest_height_inout = MAX (*dest_height_inout, 1);
         }
 
@@ -121,23 +122,23 @@ chafa_calc_canvas_geometry (gint src_width,
         gdouble dest_aspect;
 
         src_aspect = src_width / (gdouble) src_height;
-        dest_aspect = (dest_width / (gdouble) dest_height) * font_ratio;
+        dest_aspect = (dest_width / (gdouble) dest_height) * font_ratio_dbl;
 
         if (dest_width < 1)
         {
-            dest_width = ceil (dest_height * (src_aspect / font_ratio));
+            dest_width = ceil (dest_height * (src_aspect / font_ratio_dbl));
         }
         else if (dest_height < 1)
         {
-            dest_height = ceil ((dest_width / src_aspect) * font_ratio);
+            dest_height = ceil ((dest_width / src_aspect) * font_ratio_dbl);
         }
         else if (src_aspect > dest_aspect)
         {
-            dest_height = ceil (dest_width * (font_ratio / src_aspect));
+            dest_height = ceil (dest_width * (font_ratio_dbl / src_aspect));
         }
         else
         {
-            dest_width = ceil (dest_height * (src_aspect / font_ratio));
+            dest_width = ceil (dest_height * (src_aspect / font_ratio_dbl));
         }
     }
 
