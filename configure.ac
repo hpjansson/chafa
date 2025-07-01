@@ -37,10 +37,34 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 dnl --- Standard setup ---
 
 BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26 \
--Wall -Wextra -Wmissing-prototypes -Wwrite-strings -Wunused-macros -Wundef \
--Wpointer-arith -Werror=format-security"
+-Wall -Wextra \
+-Wc11-c2x-compat \
+-Wc99-c11-compat \
+-Wcast-qual \
+-Wdisabled-optimization \
+-Wdouble-promotion \
+-Wlogical-op \
+-Wmissing-prototypes \
+-Wpointer-arith \
+-Wshadow \
+-Wstrict-overflow=2 \
+-Wtrampolines \
+-Wundef \
+-Wunused-macros \
+-Wwrite-strings \
+-Werror=format-security"
 
-# May want to look into -Wconversion sometime. For now, it's just too much noise.
+# More potential warnings:
+#
+# -Wconversion
+# -Wsign-conversion
+
+# This can cause the build to stop, but there may be local modifications
+# like distro patches etc. that are useful but not strictly conformant. Let's
+# be nice and spare any innocent bystanders.
+if test "x$CHAFA_MAINTAINER" != "x"; then
+  BASE_CFLAGS="-std=c99 $BASE_CFLAGS"
+fi
 
 AC_USE_SYSTEM_EXTENSIONS
 AM_SANITY_CHECK
