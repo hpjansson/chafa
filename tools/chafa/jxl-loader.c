@@ -211,7 +211,7 @@ jxl_loader_new_from_mapping (FileMapping *mapping)
     }
 
     return loader;
-};
+}
 
 void
 jxl_cleanup_frame_list (GList *frame_list)
