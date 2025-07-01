@@ -4628,7 +4628,7 @@ static unsigned readChunk_iTXt(LodePNGInfo* info, const LodePNGDecoderSettings* 
       if(!error) error = lodepng_add_itext_sized(info, key, langtag, transkey, (char*)str, size);
       lodepng_free(str);
     } else {
-      error = lodepng_add_itext_sized(info, key, langtag, transkey, (char*)(data + begin), length);
+      error = lodepng_add_itext_sized(info, key, langtag, transkey, (const char*)(data + begin), length);
     }
 
     break;
