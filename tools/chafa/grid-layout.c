@@ -49,7 +49,8 @@ update_geometry (GridLayout *grid)
     gint n_cols, n_rows;
     gint item_width, item_height;
     gint cell_width_px, cell_height_px;
-    gint font_ratio;
+
+    /* FIXME: May want to honor font_ratio */
 
     if (!grid->canvas_config)
         return;
