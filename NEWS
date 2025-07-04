@@ -1,6 +1,23 @@
 Chafa releases
 ==============
 
+1.16.2 (2025-07-04)
+-------------------
+
+This is a bugfix release. It also improves I/O robustness and SVG rendering
+quality.
+
+* Bug fixes:
+  github#288  SVG scaling seems to be done after bitmap conversion (found by
+              @joveian).
+  [unfiled]   MinGW: Undeclared function error for strlen() (Carlo Bramini).
+  [unfiled]   Assert when using chafa_canvas_draw_all_pixels() with Kitty
+              passthrough (found by @ravachol).
+  [unfiled]   Hangs when running with closed stdin (found by Xavier Moffett).
+  [unfiled]   Potential overrun when output dimension is exactly 1 pixel.
+  [unfiled]   Small memory leak on failed load in the grid layout.
+  [unfiled]   Occasional warnings from JPEG loader that should not be printed.
+
 1.16.1 (2025-05-21)
 -------------------
 
