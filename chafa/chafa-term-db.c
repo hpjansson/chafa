@@ -853,7 +853,7 @@ parse_version (const gchar *version_str)
     if (!version_str)
         return -1;
 
-    for (i = 0; version_str [i]; i++)
+    for (i = 0; version_str [i] && ver < G_MAXINT64 / 10 + 9; i++)
     {
         gint n = version_str [i] - (gint) '0';
 
