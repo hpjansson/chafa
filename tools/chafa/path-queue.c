@@ -67,7 +67,6 @@ struct PathQueue
 
     GQueue *queue;
     PathSource *current_src;
-    GList *current_list_item;
     ChafaStreamReader *current_reader;
     gchar *current_path_token;
     gint n_processed;
@@ -109,7 +108,6 @@ clear_current_src (PathQueue *path_queue)
 {
     path_source_destroy (path_queue->current_src);
     path_queue->current_src = NULL;
-    path_queue->current_list_item = NULL;
     if (path_queue->current_reader)
     {
         maybe_close_fd (path_queue->current_reader);
@@ -130,7 +128,7 @@ check_src_end (PathQueue *path_queue)
         case PATH_SOURCE_PATH:
             break;
         case PATH_SOURCE_PATH_LIST:
-            if (!path_queue->current_list_item)
+            if (!path_queue->current_src->data)
                 clear_current_src (path_queue);
             break;
         case PATH_SOURCE_STREAM:
@@ -170,9 +168,7 @@ ensure_current_src (PathQueue *path_queue)
             if (!path_queue->current_src)
                 break;
 
-            if (path_queue->current_src->type == PATH_SOURCE_PATH_LIST)
-                path_queue->current_list_item = path_queue->current_src->data;
-            else if (path_queue->current_src->type == PATH_SOURCE_STREAM)
+            if (path_queue->current_src->type == PATH_SOURCE_STREAM)
                 open_current_stream (path_queue);
         }
 
@@ -338,6 +334,7 @@ gchar *
 path_queue_try_pop (PathQueue *path_queue)
 {
     gchar *path = NULL;
+    GList *l;
 
     if (!ensure_current_src (path_queue))
         return NULL;
@@ -349,9 +346,10 @@ path_queue_try_pop (PathQueue *path_queue)
             clear_current_src (path_queue);
             break;
         case PATH_SOURCE_PATH_LIST:
-            /* FIXME: Can steal and free list items incrementally */
-            path = g_strdup (path_queue->current_list_item->data);
-            path_queue->current_list_item = g_list_next (path_queue->current_list_item);
+            l = path_queue->current_src->data;
+            path = l->data;
+            path_queue->current_src->data =
+                g_list_delete_link (path_queue->current_src->data, l);
             break;
         case PATH_SOURCE_STREAM:
             pop_stream_path_token (path_queue);
