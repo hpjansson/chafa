@@ -2829,6 +2829,62 @@ CHAFA_TERM_SEQ_DEF(query_cell_size_px, QUERY_CELL_SIZE_PX, 0, none, char)
  **/
 CHAFA_TERM_SEQ_DEF(cell_size_px, CELL_SIZE_PX, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_px, guint width_px)
 
+/* --- Available in 1.18+ --- */
+
+#undef CHAFA_TERM_SEQ_AVAILABILITY
+#define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_18
+
+/**
+ * chafa_term_info_emit_begin_hyperlink:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_HYPERLINK.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.18
+ **/
+CHAFA_TERM_SEQ_DEF(begin_hyperlink, BEGIN_HYPERLINK, 0, none, char)
+
+/**
+ * chafa_term_info_emit_begin_hyperlink_anchor:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.18
+ **/
+CHAFA_TERM_SEQ_DEF(begin_hyperlink_anchor, BEGIN_HYPERLINK_ANCHOR, 0, none, char)
+
+/**
+ * chafa_term_info_emit_end_hyperlink:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_END_HYPERLINK.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.18
+ **/
+CHAFA_TERM_SEQ_DEF(end_hyperlink, END_HYPERLINK, 0, none, char)
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 
 #undef CHAFA_TERM_SEQ_ARGS

@@ -222,6 +222,12 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX, "\033[16t" },
     { CHAFA_TERM_SEQ_CELL_SIZE_PX, "\033[6;%1;%2t" },
 
+    /* OSC 8 hyperlinks */
+
+    { CHAFA_TERM_SEQ_BEGIN_HYPERLINK, "\033]8;;" },
+    { CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR, "\033\\" },
+    { CHAFA_TERM_SEQ_END_HYPERLINK, "\033]8;;\033\\" },
+
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
 
