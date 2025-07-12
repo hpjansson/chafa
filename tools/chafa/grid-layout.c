@@ -34,12 +34,12 @@ struct GridLayout
     ChafaAlign halign;
     ChafaAlign valign;
     ChafaTuck tuck;
-    GList *paths, *next_path;
+    PathQueue *path_queue;
     gint n_items, next_item;
-    guint finished_push : 1;
     guint finished_chunks : 1;
     guint print_labels : 1;
     guint use_unicode : 1;
+    guint is_printing : 1;
 };
 
 static void
@@ -216,19 +216,21 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
     for (i = 0; i < MAX_COLS; i++)
         item_height [i] = G_MAXINT;
 
-    for (n_cols_produced = 0; n_cols_produced < grid->n_cols && grid->next_path; )
+    for (n_cols_produced = 0; n_cols_produced < grid->n_cols && !path_queue_is_empty (grid->path_queue); )
     {
-        if (format_item (grid, grid->next_path->data, &item_gsa [n_cols_produced]))
+        gchar *path = path_queue_pop (grid->path_queue);
+
+        if (format_item (grid, path, &item_gsa [n_cols_produced]))
         {
-            paths = g_list_prepend (paths, grid->next_path->data);
+            paths = g_list_prepend (paths, path);
             n_cols_produced++;
         }
         else
         {
             /* FIXME: Use a placeholder image */
+            g_free (path);
         }
 
-        grid->next_path = g_list_next (grid->next_path);
         grid->next_item++;
     }
 
@@ -295,7 +297,7 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
     for (i = 0; i < n_cols_produced; i++)
         chafa_free_gstring_array (item_gsa [i]);
 
-    g_list_free (paths);
+    g_list_free_full (paths, g_free);
     return TRUE;
 }
 
@@ -303,7 +305,7 @@ static gboolean
 print_grid_image (GridLayout *grid, ChafaTerm *term)
 {
     GString **item_gsa [1] = { NULL };
-    const gchar *path = "?";
+    gchar *path = NULL;
     gint col_width, row_height;
     gint i, j;
 
@@ -316,16 +318,18 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
 
     /* Format first available item */
 
-    while (grid->next_path && !item_gsa [0])
+    while (!path_queue_is_empty (grid->path_queue) && !item_gsa [0])
     {
-        if (!format_item (grid, grid->next_path->data, &item_gsa [0]))
+        path = path_queue_pop (grid->path_queue);
+
+        if (!format_item (grid, path, &item_gsa [0]))
         {
             /* FIXME: Use a placeholder image */
         }
-
-        path = grid->next_path->data;
-        grid->next_path = g_list_next (grid->next_path);
     }
+
+    if (!path)
+        path = g_strdup ("?");
 
     /* Optional: End previous row */
 
@@ -344,6 +348,7 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
     if (!item_gsa [0])
     {
         grid->finished_chunks = TRUE;
+        g_free (path);
         return FALSE;
     }
 
@@ -387,6 +392,7 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
     grid->next_item++;
 
     chafa_free_gstring_array (item_gsa [0]);
+    g_free (path);
     return TRUE;
 }
 
@@ -420,8 +426,19 @@ grid_layout_destroy (GridLayout *grid)
         chafa_canvas_config_unref (grid->canvas_config);
     if (grid->term_info)
         chafa_term_info_unref (grid->term_info);
-    g_list_free_full (g_steal_pointer (&grid->paths), g_free);
+    if (grid->path_queue)
+        path_queue_unref (grid->path_queue);
     g_free (grid);
+}
+
+void
+grid_layout_set_path_queue (GridLayout *grid, PathQueue *path_queue)
+{
+    if (path_queue)
+        path_queue_ref (path_queue);
+    if (grid->path_queue)
+        path_queue_unref (grid->path_queue);
+    grid->path_queue = path_queue;
 }
 
 void
@@ -505,28 +522,17 @@ grid_layout_set_use_unicode (GridLayout *grid, gboolean use_unicode)
     grid->use_unicode = use_unicode;
 }
 
-void
-grid_layout_push_path (GridLayout *grid, const gchar *path)
-{
-    g_return_if_fail (grid != NULL);
-    g_return_if_fail (path != NULL);
-    g_return_if_fail (grid->finished_push == FALSE);
-
-    grid->paths = g_list_prepend (grid->paths, g_strdup (path));
-}
-
 gboolean
 grid_layout_print_chunk (GridLayout *grid, ChafaTerm *term)
 {
     g_return_val_if_fail (grid != NULL, FALSE);
 
-    if (!grid->finished_push)
+    if (!grid->is_printing)
     {
-        grid->paths = g_list_reverse (grid->paths);
-        grid->n_items = g_list_length (grid->paths);
-        grid->next_path = grid->paths;
-        grid->finished_push = TRUE;
+        grid->is_printing = TRUE;
 
+        if (!grid->path_queue)
+            grid->path_queue = path_queue_new ();
         if (!grid->canvas_config)
             grid->canvas_config = chafa_canvas_config_new ();
         if (!grid->term_info)

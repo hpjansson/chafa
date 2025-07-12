@@ -22,6 +22,7 @@
 
 #include <glib.h>
 #include "chafa-term.h"
+#include "path-queue.h"
 
 G_BEGIN_DECLS
 
@@ -30,6 +31,7 @@ typedef struct GridLayout GridLayout;
 GridLayout *grid_layout_new (void);
 void grid_layout_destroy (GridLayout *grid);
 
+void grid_layout_set_path_queue (GridLayout *grid, PathQueue *path_queue);
 void grid_layout_set_canvas_config (GridLayout *grid, ChafaCanvasConfig *canvas_config);
 void grid_layout_set_term_info (GridLayout *grid, ChafaTermInfo *term_info);
 void grid_layout_set_view_size (GridLayout *grid, gint width, gint height);
@@ -38,8 +40,6 @@ void grid_layout_set_align (GridLayout *grid, ChafaAlign halign, ChafaAlign vali
 void grid_layout_set_tuck (GridLayout *grid, ChafaTuck tuck);
 void grid_layout_set_print_labels (GridLayout *grid, gboolean print_labels);
 void grid_layout_set_use_unicode (GridLayout *grid, gboolean use_unicode);
-
-void grid_layout_push_path (GridLayout *grid, const gchar *path);
 
 gboolean grid_layout_print_chunk (GridLayout *grid, ChafaTerm *term);
 

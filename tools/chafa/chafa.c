@@ -46,6 +46,7 @@
 #include "grid-layout.h"
 #include "media-loader.h"
 #include "named-colors.h"
+#include "path-queue.h"
 #include "placement-counter.h"
 #include "util.h"
 
@@ -203,6 +204,8 @@ static UINT saved_console_input_cp;
 #endif
 
 static ChafaTerm *term;
+static PathQueue *global_path_queue;
+static gint global_path_queue_n_stdin;
 
 #ifdef HAVE_SIGACTION
 static void
@@ -367,6 +370,8 @@ print_summary (void)
 
     "\nGeneral options:\n"
 
+    "      --files=PATH   Read list of files to process from PATH, or \"-\" for stdin.\n"
+    "      --files0=PATH  Similar to --files, using NUL separator instead of newline.\n"
     "  -h, --help         Show help.\n"
     "      --probe=ARG    Probe terminal's capabilities and wait for response [auto,\n"
     "                     on, off]. A positive real number denotes the maximum time\n"
@@ -1093,6 +1098,26 @@ static gboolean
 parse_fill_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     return chafa_symbol_map_apply_selectors (options.fill_symbol_map, value, error);
+}
+
+static gboolean
+parse_files_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, G_GNUC_UNUSED GError **error)
+{
+    if (!strcmp (value, "-"))
+        global_path_queue_n_stdin++;
+
+    path_queue_push_stream (global_path_queue, value, "\n", 1);
+    return TRUE;
+}
+
+static gboolean
+parse_files0_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, G_GNUC_UNUSED GError **error)
+{
+    if (!strcmp (value, "-"))
+        global_path_queue_n_stdin++;
+
+    path_queue_push_stream (global_path_queue, value, "\0", 1);
+    return TRUE;
 }
 
 static gboolean
@@ -1969,6 +1994,8 @@ parse_options (int *argc, char **argv [])
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
         { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
+        { "files",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_files_arg,       "File list", NULL },
+        { "files0",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_files0_arg,      "File list (NUL-separated)", NULL },
         { "fit-width",   '\0', 0, G_OPTION_ARG_NONE,     &options.fit_to_width, "Fit to width", NULL },
         { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
@@ -2400,21 +2427,21 @@ parse_options (int *argc, char **argv [])
     {
         options.args = collect_variable_arguments (argc, argv, 1);
     }
-    else if (!isatty (STDIN_FILENO))
+    else if (global_path_queue_n_stdin < 1 && !isatty (STDIN_FILENO))
     {
         /* Receiving data through a pipe, and no file arguments. Act as if
          * invoked with "chafa -". */
 
         options.args = g_list_append (NULL, g_strdup ("-"));
     }
-    else
+    else if (path_queue_get_length (global_path_queue) == 0)
     {
-        /* No arguments, no pipe, and no cry for help. */
+        /* No arguments, no pipe, no file lists, and no cry for help. */
         print_brief_summary ();
         goto out;
     }
 
-    if (count_dash_strings (options.args) > 1)
+    if (count_dash_strings (options.args) + global_path_queue_n_stdin > 1)
     {
         g_printerr ("%s: Dash '-' to pipe from standard input can be used at most once.\n",
                     options.executable_name);
@@ -2423,7 +2450,7 @@ parse_options (int *argc, char **argv [])
 
     if (options.watch)
     {
-        if (g_list_length (options.args) != 1)
+        if (g_list_length (options.args) != 1 || path_queue_get_length (global_path_queue) != 0)
         {
             g_printerr ("%s: Can only use --watch with exactly one file.\n", options.executable_name);
             goto out;
@@ -3221,19 +3248,22 @@ run_watch (const gchar *filename)
 }
 
 static int
-run_all (GList *filenames)
+run_all (PathQueue *path_queue)
 {
-    GList *l;
     gdouble still_duration_s = options.file_duration_s > 0.0 ? options.file_duration_s : 0.0;
     gint n_processed = 0;
     gint n_failed = 0;
 
-    for (l = filenames; l && !interrupted_by_user; l = g_list_next (l))
+    while (!interrupted_by_user)
     {
-        gchar *filename = l->data;
+        gchar *path;
         RunResult result;
 
-        result = run (filename, l->prev ? FALSE : TRUE, TRUE, FALSE);
+        path = path_queue_pop (path_queue);
+        if (!path)
+            break;
+
+        result = run (path, n_processed > 0 ? FALSE : TRUE, TRUE, FALSE);
 
         n_processed++;
         if (result == FILE_FAILED)
@@ -3253,12 +3283,11 @@ run_all (GList *filenames)
 }
 
 static gint
-run_grid (GList *filenames)
+run_grid (PathQueue *path_queue)
 {
     ChafaCanvasConfig *canvas_config;
     GridLayout *grid_layout;
     gint n_processed = 0;
-    GList *l;
 
     /* The prototype canvas' size isn't used for anything; set it to a legal value */
     canvas_config = build_config (1, 1, FALSE);
@@ -3275,19 +3304,14 @@ run_grid (GList *filenames)
                           : (options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT));
     grid_layout_set_print_labels (grid_layout, options.label);
     grid_layout_set_use_unicode (grid_layout, options.use_unicode);
-
-    for (l = filenames; l; l = g_list_next (l))
-    {
-        grid_layout_push_path (grid_layout, l->data);
-        n_processed++;
-    }
+    grid_layout_set_path_queue (grid_layout, global_path_queue);
 
     while (!interrupted_by_user && grid_layout_print_chunk (grid_layout, term))
         ;
 
+    n_processed = path_queue_get_n_processed (path_queue);
     chafa_canvas_config_unref (canvas_config);
     grid_layout_destroy (grid_layout);
-
     return 0;
 }
 
@@ -3318,6 +3342,7 @@ proc_init (void)
     g_thread_pool_set_max_unused_threads (-1);
 
     term = chafa_term_get_default ();
+    global_path_queue = path_queue_new ();
 }
 
 int
@@ -3332,18 +3357,20 @@ main (int argc, char *argv [])
 
     if (options.args)
     {
-        tty_options_init ();
-
-        if (options.grid_width > 0 || options.grid_height > 0)
-            ret = run_grid (options.args);
-        else if (options.watch)
-            ret = run_watch (options.args->data);
-        else
-            ret = run_all (options.args);
-
-        tty_options_deinit ();
+        path_queue_push_path_list_steal (global_path_queue, options.args);
+        options.args = NULL;
     }
 
+    tty_options_init ();
+
+    if (options.grid_width > 0 || options.grid_height > 0)
+        ret = run_grid (global_path_queue);
+    else if (options.watch)
+        ret = run_watch (path_queue_try_pop (global_path_queue));
+    else
+        ret = run_all (global_path_queue);
+
+    tty_options_deinit ();
     chafa_term_flush (term);
 
     retire_passthrough_workarounds_tmux ();
@@ -3357,5 +3384,7 @@ main (int argc, char *argv [])
         chafa_symbol_map_unref (options.fill_symbol_map);
     if (options.term_info)
         chafa_term_info_unref (options.term_info);
+
+    path_queue_unref (global_path_queue);
     return ret;
 }
