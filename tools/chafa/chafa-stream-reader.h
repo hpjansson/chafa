@@ -27,6 +27,9 @@ G_BEGIN_DECLS
 typedef struct ChafaStreamReader ChafaStreamReader;
 
 ChafaStreamReader *chafa_stream_reader_new_from_fd (gint fd);
+ChafaStreamReader *chafa_stream_reader_new_from_fd_full (gint fd,
+                                                         gconstpointer token_separator,
+                                                         gint token_separator_len);
 void chafa_stream_reader_ref (ChafaStreamReader *stream_reader);
 void chafa_stream_reader_unref (ChafaStreamReader *stream_reader);
 
@@ -34,9 +37,12 @@ gint chafa_stream_reader_get_fd (ChafaStreamReader *stream_reader);
 gboolean chafa_stream_reader_is_console (ChafaStreamReader *stream_reader);
 
 gint chafa_stream_reader_read (ChafaStreamReader *stream_reader, gpointer out, gint max_len);
+gint chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out, gint max_len);
 
 gboolean chafa_stream_reader_wait_until (ChafaStreamReader *stream_reader, gint64 end_time_us);
 void chafa_stream_reader_wait (ChafaStreamReader *stream_reader, gint timeout_ms);
+
+gboolean chafa_stream_reader_is_eof (ChafaStreamReader *stream_reader);
 
 G_END_DECLS
 
