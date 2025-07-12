@@ -3281,7 +3281,9 @@ run_all (PathQueue *path_queue)
     if (!options.have_parking_row)
         chafa_term_write (term, "\n", 1);
 
-    return (n_processed - n_failed < 1) ? 2 : (n_failed > 0) ? 1 : 0;
+    /* Zero files processed is not a failure, since we may be processing an
+     * empty file list. */
+    return (n_failed > 0 && n_failed == n_processed) ? 2 : (n_failed > 0) ? 1 : 0;
 }
 
 static gint
@@ -3361,6 +3363,10 @@ main (int argc, char *argv [])
         options.args = NULL;
     }
 
+    /* --version and --help can skip all the init/deinit stuff */
+    if (path_queue_get_length (global_path_queue) == 0)
+        goto out;
+
     tty_options_init ();
 
     if (options.grid_width > 0 || options.grid_height > 0)
@@ -3387,6 +3393,7 @@ main (int argc, char *argv [])
 
     retire_passthrough_workarounds_tmux ();
 
+out:
     if (placement_counter)
         placement_counter_destroy (placement_counter);
 
