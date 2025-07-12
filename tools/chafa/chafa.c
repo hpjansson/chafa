@@ -3287,7 +3287,6 @@ run_grid (PathQueue *path_queue)
 {
     ChafaCanvasConfig *canvas_config;
     GridLayout *grid_layout;
-    gint n_processed = 0;
 
     /* The prototype canvas' size isn't used for anything; set it to a legal value */
     canvas_config = build_config (1, 1, FALSE);
@@ -3304,12 +3303,11 @@ run_grid (PathQueue *path_queue)
                           : (options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT));
     grid_layout_set_print_labels (grid_layout, options.label);
     grid_layout_set_use_unicode (grid_layout, options.use_unicode);
-    grid_layout_set_path_queue (grid_layout, global_path_queue);
+    grid_layout_set_path_queue (grid_layout, path_queue);
 
     while (!interrupted_by_user && grid_layout_print_chunk (grid_layout, term))
         ;
 
-    n_processed = path_queue_get_n_processed (path_queue);
     chafa_canvas_config_unref (canvas_config);
     grid_layout_destroy (grid_layout);
     return 0;
