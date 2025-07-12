@@ -808,7 +808,7 @@ find_repacks (const SmolImplementation **implementations,
               const SmolRepackMeta **src_repack, const SmolRepackMeta **dest_repack)
 {
     int src_impl, dest_impl;
-    const SmolRepackMeta *src_meta, *dest_meta = NULL;
+    const SmolRepackMeta *src_meta = NULL, *dest_meta = NULL;
     uint16_t src_to_mid_sig, mid_to_dest_sig;
     uint16_t sig_mask;
     int reorder_dest_alpha_ch;
