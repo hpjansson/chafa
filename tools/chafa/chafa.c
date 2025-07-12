@@ -3364,7 +3364,8 @@ main (int argc, char *argv [])
     }
 
     /* --version and --help can skip all the init/deinit stuff */
-    if (path_queue_get_length (global_path_queue) == 0)
+    if (options.skip_processing
+        || path_queue_get_length (global_path_queue) == 0)
         goto out;
 
     tty_options_init ();
