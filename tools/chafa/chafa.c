@@ -3273,6 +3273,8 @@ run_all (PathQueue *path_queue)
         {
             interruptible_usleep (still_duration_s * 1000000.0);
         }
+
+        g_free (path);
     }
 
     /* Emit linefeed after last image when cursor was not in parking row */
@@ -3362,11 +3364,23 @@ main (int argc, char *argv [])
     tty_options_init ();
 
     if (options.grid_width > 0 || options.grid_height > 0)
+    {
         ret = run_grid (global_path_queue);
+    }
     else if (options.watch)
-        ret = run_watch (path_queue_try_pop (global_path_queue));
+    {
+        gchar *path = path_queue_try_pop (global_path_queue);
+
+        if (path)
+        {
+            ret = run_watch (path);
+            g_free (path);
+        }
+    }
     else
+    {
         ret = run_all (global_path_queue);
+    }
 
     tty_options_deinit ();
     chafa_term_flush (term);
