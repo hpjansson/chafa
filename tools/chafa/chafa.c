@@ -119,6 +119,7 @@ typedef struct
     gboolean fit_to_width;
     gboolean grid_on;
     gboolean label;
+    Tristate link_labels;
     gboolean use_unicode;
     ChafaAlign horiz_align;
     ChafaAlign vert_align;
@@ -415,6 +416,8 @@ print_summary (void)
     "                     C or R may be omitted, e.g. \"--grid 4\". Can be \"auto\".\n"
     "  -l, --label=BOOL   Labeling [on, off]. Prints filenames below images. Defaults\n"
     "                     to off.\n"
+    "      --link=BOOL    Link labels [auto, on, off]. Turns labels into clickable\n"
+    "                     hyperlinks. Use with \"-l on\". Defaults to auto.\n"
     "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
     "                     rows at the bottom as a safety margin. Can be used to\n"
     "                     prevent images from scrolling out. Defaults to 1.\n"
@@ -1590,6 +1593,19 @@ parse_label_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_G
 }
 
 static gboolean
+parse_link_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result;
+
+    result = parse_tristate_token (value, &options.link_labels);
+    if (!result)
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Link mode must be one of [auto, on, off].");
+
+    return result;
+}
+
+static gboolean
 parse_preprocess_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
     gboolean result;
@@ -2006,6 +2022,7 @@ parse_options (int *argc, char **argv [])
         { "invert",      '\0', 0, G_OPTION_ARG_NONE,     &options.invert,       "Invert foreground/background", NULL },
         { "label",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_label_arg,       "Print labels", NULL },
         { "label-on",    'l',  0, G_OPTION_ARG_NONE,     &options.label,        "Print labels on", NULL },
+        { "link",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_link_arg,        "Link labels", NULL },
         { "margin-bottom", '\0', 0, G_OPTION_ARG_INT,    &options.margin_bottom,  "Bottom margin", NULL },
         { "margin-right", '\0', 0, G_OPTION_ARG_INT,     &options.margin_right,  "Right margin", NULL },
         { "optimize",    'O',  0, G_OPTION_ARG_INT,      &options.optimization_level,  "Optimization", NULL },
@@ -2095,6 +2112,7 @@ parse_options (int *argc, char **argv [])
     options.cell_width = 10;
     options.cell_height = 20;
     options.label = FALSE;
+    options.link_labels = TRISTATE_AUTO;
     options.use_unicode = TRUE;
 
     if (!g_option_context_parse (context, argc, argv, &error))
@@ -2421,6 +2439,11 @@ parse_options (int *argc, char **argv [])
         goto out;
     }
 
+    /* Resolve whether to hyperlink */
+
+    if (options.link_labels == TRISTATE_AUTO)
+        options.link_labels = isatty (STDOUT_FILENO) ? TRISTATE_TRUE : TRISTATE_FALSE;
+
     /* Collect filenames and validate count and correct usage of stdin */
 
     if (*argc > 1)
@@ -2701,7 +2724,8 @@ write_image_prologue (const gchar *path,
         {
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN, dest_height, -1);
             path_print_label (term, path, options.horiz_align, options.view_width,
-                              options.use_unicode);
+                              options.use_unicode,
+                              options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
         }
     }
@@ -2746,7 +2770,8 @@ write_image_epilogue (const gchar *path, gboolean is_animation, gint dest_width)
             if (!is_animation)
             {
                 path_print_label (term, path, options.horiz_align, options.view_width,
-                                  options.use_unicode);
+                                  options.use_unicode,
+                                  options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
 
                 if (options.relative)
                     chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
@@ -2779,7 +2804,8 @@ write_image_epilogue (const gchar *path, gboolean is_animation, gint dest_width)
                     chafa_term_write (term, "\r", 1);
 
                 path_print_label (term, path, options.horiz_align, options.view_width,
-                                  options.use_unicode);
+                                  options.use_unicode,
+                                  options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
 
                 if (options.relative)
                     chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
@@ -3306,6 +3332,7 @@ run_grid (PathQueue *path_queue)
                           ? CHAFA_TUCK_SHRINK_TO_FIT
                           : (options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT));
     grid_layout_set_print_labels (grid_layout, options.label);
+    grid_layout_set_link_labels (grid_layout, options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
     grid_layout_set_use_unicode (grid_layout, options.use_unicode);
     grid_layout_set_path_queue (grid_layout, path_queue);
 

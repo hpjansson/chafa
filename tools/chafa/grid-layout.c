@@ -38,6 +38,7 @@ struct GridLayout
     gint n_items, next_item;
     guint finished_chunks : 1;
     guint print_labels : 1;
+    guint link_labels : 1;
     guint use_unicode : 1;
     guint is_printing : 1;
 };
@@ -284,7 +285,8 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
         for (j = 0; l && j < n_cols_produced; j++)
         {
             const gchar *path = l->data;
-            path_print_label (term, path, grid->halign, col_width, grid->use_unicode);
+            path_print_label (term, path, grid->halign, col_width,
+                              grid->use_unicode, grid->link_labels);
             chafa_term_write (term, " ", 1);
             l = g_list_next (l);
         }
@@ -381,7 +383,8 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
     {
         chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
         chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN, row_height, -1);
-        path_print_label (term, path, grid->halign, col_width, grid->use_unicode);
+        path_print_label (term, path, grid->halign, col_width,
+                          grid->use_unicode, grid->link_labels);
     }
 
     /* Prepare for next image */
@@ -512,6 +515,14 @@ grid_layout_set_print_labels (GridLayout *grid, gboolean print_labels)
     g_return_if_fail (grid != NULL);
 
     grid->print_labels = print_labels;
+}
+
+void
+grid_layout_set_link_labels (GridLayout *grid, gboolean link_labels)
+{
+    g_return_if_fail (grid != NULL);
+
+    grid->link_labels = link_labels;
 }
 
 void

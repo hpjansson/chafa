@@ -52,7 +52,7 @@ gchar *path_get_ellipsized_basename (const gchar *path, gint len_max,
                                      gboolean use_unicode);
 void print_rep_char (ChafaTerm *term, gchar c, gint n);
 void path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
-                       gint field_width, gboolean use_unicode);
+                       gint field_width, gboolean use_unicode, gboolean link_label);
 
 G_END_DECLS
 

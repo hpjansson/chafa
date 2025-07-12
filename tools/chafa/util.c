@@ -251,28 +251,62 @@ print_rep_char (ChafaTerm *term, gchar c, gint n)
     g_free (buf_m);
 }
 
+static void
+print_linked_label (ChafaTerm *term, const gchar *path, const gchar *label,
+                    gboolean link_label)
+{
+    gchar *link_str = NULL;
+
+    if (link_label)
+    {
+        gchar *abs_path = NULL;
+
+        if (!g_path_is_absolute (path))
+            abs_path = g_canonicalize_filename (path, NULL);
+
+        link_str = g_strdup_printf ("file://%s%s",
+                                    g_get_host_name (),
+                                    abs_path ? abs_path : path);
+        g_free (abs_path);
+    }
+
+    if (link_str)
+    {
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_BEGIN_HYPERLINK, -1);
+        chafa_term_write (term, link_str, strlen (link_str));
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR, -1);
+        chafa_term_write (term, label, strlen (label));
+        chafa_term_print_seq (term, CHAFA_TERM_SEQ_END_HYPERLINK, -1);
+        g_free (link_str);
+    }
+    else
+    {
+        chafa_term_write (term, label, strlen (label));
+    }
+}
+
 void
 path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
-                  gint field_width, gboolean use_unicode)
+                  gint field_width, gboolean use_unicode, gboolean link_label)
 {
     gchar *label = path_get_ellipsized_basename (path, field_width - 1, use_unicode);
     gint label_len = g_utf8_strlen (label, -1);
 
     if (halign == CHAFA_ALIGN_START)
     {
-        chafa_term_write (term, label, strlen (label));
+        print_linked_label (term, path, label, link_label);
         print_rep_char (term, ' ', field_width - label_len);
     }
     else if (halign == CHAFA_ALIGN_CENTER)
     {
         print_rep_char (term, ' ', (field_width - label_len) / 2);
-        chafa_term_write (term, label, strlen (label));
+        print_linked_label (term, path, label, link_label);
         print_rep_char (term, ' ', (field_width - label_len + 1) / 2);
     }
     else
     {
         print_rep_char (term, ' ', field_width - label_len);
-        chafa_term_write (term, label, strlen (label));
+        print_linked_label (term, path, label, link_label);
     }
 
     g_free (label);
