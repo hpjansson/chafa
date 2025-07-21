@@ -33,7 +33,7 @@
 #include "png-loader.h"
 
 #define BYTES_PER_PIXEL 4
-#define IMAGE_BUFFER_SIZE_MAX 0xffffffffU
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct PngLoader
 {

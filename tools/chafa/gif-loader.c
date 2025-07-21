@@ -33,7 +33,7 @@
 #include "gif-loader.h"
 
 #define BYTES_PER_PIXEL 4
-#define MAX_IMAGE_BYTES (128 * 1024 * 1024)
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct GifLoader
 {
@@ -51,7 +51,7 @@ struct GifLoader
 static void *
 bitmap_create (int width, int height)
 {
-    if ((width * (gint64) height) > (MAX_IMAGE_BYTES / BYTES_PER_PIXEL))
+    if ((width * (gint64) height * BYTES_PER_PIXEL) > IMAGE_BUFFER_SIZE_MAX)
         return NULL;
 
     return g_malloc0 (width * height * BYTES_PER_PIXEL);

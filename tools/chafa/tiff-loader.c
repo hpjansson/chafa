@@ -39,6 +39,7 @@
  * ----------------------- */
 
 #define BYTES_PER_PIXEL 4
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct TiffLoader
 {
@@ -203,7 +204,7 @@ tiff_loader_new_from_mapping (FileMapping *mapping)
 
     if (width < 1 || width > (1 << 28)
         || height < 1 || height > (1 << 28)
-        || (width * (guint64) height >= (1 << 29)))
+        || (width * (guint64) height * BYTES_PER_PIXEL > IMAGE_BUFFER_SIZE_MAX))
         goto out;
 
     /* An opaque image with unassociated alpha set to 0xff is equivalent to

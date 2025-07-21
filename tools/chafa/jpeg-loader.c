@@ -38,6 +38,7 @@
 
 #define BYTES_PER_PIXEL 3
 #define ROWSTRIDE_ALIGN 16
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 #define PAD_TO_N(p, n) (((p) + ((n) - 1)) & ~((unsigned) (n) - 1))
 #define ROWSTRIDE_PAD(rowstride) (PAD_TO_N ((rowstride), (ROWSTRIDE_ALIGN)))
@@ -318,7 +319,7 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 {
     guint width, height;
     guint rowstride;
-    struct jpeg_decompress_struct cinfo;
+    struct jpeg_decompress_struct cinfo = { 0 };
     struct my_jpeg_error_mgr my_jerr;
     JpegLoader * volatile loader = NULL;
     gpointer frame_data = NULL;
@@ -345,7 +346,7 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
 
     /* Prepare to decode */
 
-    cinfo.err = jpeg_std_error ((struct jpeg_error_mgr *) &my_jerr);     
+    cinfo.err = jpeg_std_error ((struct jpeg_error_mgr *) &my_jerr);
     my_jerr.jerr.error_exit = my_jpeg_error_exit;
     my_jerr.jerr.output_message = my_jpeg_output_message;
 
@@ -361,6 +362,7 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     }
 
     jpeg_create_decompress (&cinfo);
+    cinfo.mem->max_memory_to_use = IMAGE_BUFFER_SIZE_MAX;
     have_decompress = TRUE;
 
     my_jpeg_mem_src (&cinfo, loader->file_data, loader->file_data_len);
@@ -387,6 +389,9 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
     if (width < 1 || width >= (1 << 28)
         || height < 1 || height >= (1 << 28)
         || (width * (guint64) height >= (1 << 29)))
+        goto out;
+
+    if (height * rowstride > IMAGE_BUFFER_SIZE_MAX)
         goto out;
 
     rowstride = ROWSTRIDE_PAD (width * BYTES_PER_PIXEL);

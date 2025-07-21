@@ -35,6 +35,7 @@
 
 #define N_CHANNELS 4
 #define BYTES_PER_PIXEL N_CHANNELS
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct AvifLoader
 {
@@ -184,6 +185,9 @@ avif_loader_new_from_mapping (FileMapping *mapping)
     loader->width = image->width;
     loader->height = image->height;
     loader->rowstride = loader->width * BYTES_PER_PIXEL;
+
+    if (loader->height * loader->rowstride > IMAGE_BUFFER_SIZE_MAX)
+        goto out;
 
     success = TRUE;
 

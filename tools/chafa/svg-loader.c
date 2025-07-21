@@ -36,6 +36,8 @@
 
 #define DIMENSION_MAX 4096
 #define MAGIC_BUF_SIZE 4096
+#define BYTES_PER_PIXEL 4
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 /* Cairo uses native byte order */
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -181,7 +183,7 @@ svg_loader_new_from_mapping (FileMapping *mapping, gint target_width, gint targe
     calc_dimensions (rsvg, target_width, target_height, &width, &height);
     if (width < 1 || width >= (1 << 28)
         || height < 1 || height >= (1 << 28)
-        || (width * (guint64) height >= (1 << 29)))
+        || (width * (guint64) height * BYTES_PER_PIXEL > IMAGE_BUFFER_SIZE_MAX))
         goto locked_out;
 
     loader->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);

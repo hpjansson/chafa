@@ -33,6 +33,8 @@
 
 #define DEBUG(x)
 
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
+
 typedef struct
 {
     guint32 header_size;          /* Size of the header in bytes */
@@ -243,6 +245,9 @@ load_header (XwdLoader *loader)
     ASSERT_HEADER (h->bytes_per_line * h->pixmap_height < (1UL << 31) - 65536 - 256 * 32);
 
     ASSERT_HEADER (compute_pixel_type (loader) < CHAFA_PIXEL_MAX);
+
+    if (h->pixmap_height * (gsize) h->bytes_per_line > IMAGE_BUFFER_SIZE_MAX)
+        return FALSE;
 
     loader->file_data = file_mapping_get_data (loader->mapping, &loader->file_data_len);
     if (!loader->file_data)

@@ -27,6 +27,8 @@
 
 #include "jxl-loader.h"
 
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
+
 GList *jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping);
 
 void jxl_cleanup_frame_list (GList *frame_list);
@@ -79,6 +81,7 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
     JxlBasicInfo info;
     JxlFrameHeader frame_header;
     gboolean success = FALSE;
+    guint64 total_alloced = 0;
 
     gsize bytes_read = 0;
     const uint8_t* data = file_mapping_get_data(mapping, &bytes_read);
@@ -102,6 +105,10 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
             {
                 format.num_channels = 3;
             }
+
+            total_alloced += info.xsize * info.ysize * format.num_channels;
+            if (total_alloced > IMAGE_BUFFER_SIZE_MAX)
+                break;
             image_buffer = g_malloc (info.xsize * info.ysize * format.num_channels);
         }
         else if (JXL_DEC_NEED_IMAGE_OUT_BUFFER == decode_status)
@@ -135,6 +142,9 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, FileMapping *mapping
                 = frame_header.duration * 1000 * info.animation.tps_denominator / num;
             frame_list = g_list_prepend (frame_list, frame);
 
+            total_alloced += info.xsize * info.ysize * format.num_channels;
+            if (total_alloced > IMAGE_BUFFER_SIZE_MAX)
+                break;
             image_buffer = g_malloc (info.xsize * info.ysize * format.num_channels);
         }
         else if (JXL_DEC_SUCCESS == decode_status)

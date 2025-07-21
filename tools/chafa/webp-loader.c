@@ -35,6 +35,7 @@
 
 #define DEFAULT_FRAME_DURATION_MS 50
 #define BYTES_PER_PIXEL 4
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct WebpLoader
 {
@@ -106,7 +107,7 @@ webp_loader_new_from_mapping (FileMapping *mapping)
 
     if (anim_info.canvas_width < 1 || anim_info.canvas_width >= (1 << 28)
         || anim_info.canvas_height < 1 || anim_info.canvas_height >= (1 << 28)
-        || (anim_info.canvas_width * (guint64) anim_info.canvas_height >= (1 << 29)))
+        || (anim_info.canvas_width * (guint64) anim_info.canvas_height * BYTES_PER_PIXEL > IMAGE_BUFFER_SIZE_MAX))
         goto out;
 
     if (anim_info.frame_count < 1)

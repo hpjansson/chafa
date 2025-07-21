@@ -519,7 +519,9 @@ void *qoi_decode(const void *data, int size, qoi_desc *desc, int channels) {
 		/* hpj: The following avoids slow decode on crafted files,
 		 * and Chafa doesn't handle bigger images anyway */
 		desc->width > 65535 ||
-		desc->height > 65535
+		desc->height > 65535 ||
+		/* hpj: This vetoes image buffers bigger than 1GB */
+		desc->width * (unsigned long long) desc->height * channels > (0xffffffffU >> 2)
 	) {
 		return NULL;
 	}
