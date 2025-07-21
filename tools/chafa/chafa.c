@@ -207,6 +207,7 @@ static UINT saved_console_input_cp;
 static ChafaTerm *term;
 static PathQueue *global_path_queue;
 static gint global_path_queue_n_stdin;
+static gint global_n_path_streams;
 
 #ifdef HAVE_SIGACTION
 static void
@@ -1106,6 +1107,8 @@ parse_fill_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
 static gboolean
 parse_files_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, G_GNUC_UNUSED GError **error)
 {
+    global_n_path_streams++;
+
     if (!strcmp (value, "-"))
         global_path_queue_n_stdin++;
 
@@ -1116,6 +1119,8 @@ parse_files_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_G
 static gboolean
 parse_files0_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, G_GNUC_UNUSED GError **error)
 {
+    global_n_path_streams++;
+
     if (!strcmp (value, "-"))
         global_path_queue_n_stdin++;
 
@@ -2519,7 +2524,8 @@ parse_options (int *argc, char **argv [])
 
     if (options.file_duration_s < 0.0
         && (!options.is_interactive
-            || (options.args && options.args->next)))
+            || (options.args && options.args->next)
+            || (global_n_path_streams > 0)))
     {
         /* Apply a zero default duration when we have multiple files or it looks
          * like we're part of a pipe; we don't want to get stuck if the user is
