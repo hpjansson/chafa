@@ -132,6 +132,7 @@ calc_dimensions (RsvgHandle *rsvg,
 SvgLoader *
 svg_loader_new_from_mapping (FileMapping *mapping, gint target_width, gint target_height)
 {
+    static GMutex mutex;
     SvgLoader *loader = NULL;
     gboolean success = FALSE;
     RsvgHandle *rsvg = NULL;
@@ -170,20 +171,22 @@ svg_loader_new_from_mapping (FileMapping *mapping, gint target_width, gint targe
     if (!loader->file_data)
         goto out;
 
+    g_mutex_lock (&mutex);
+
     /* Malformed SVGs will typically fail here */
     rsvg = rsvg_handle_new_from_data (loader->file_data, loader->file_data_len, NULL);
     if (!rsvg)
-        goto out;
+        goto locked_out;
 
     calc_dimensions (rsvg, target_width, target_height, &width, &height);
     if (width < 1 || width >= (1 << 28)
         || height < 1 || height >= (1 << 28)
         || (width * (guint64) height >= (1 << 29)))
-        goto out;
+        goto locked_out;
 
     loader->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
     if (!loader->surface)
-        goto out;
+        goto locked_out;
 
     cr = cairo_create (loader->surface);
 
@@ -191,13 +194,16 @@ svg_loader_new_from_mapping (FileMapping *mapping, gint target_width, gint targe
     viewport.width = width;
     viewport.height = height;
     if (!rsvg_handle_render_document (rsvg, cr, &viewport, NULL))
-        goto out;
+        goto locked_out;
 #else
     if (!rsvg_handle_render_cairo (rsvg, cr))
-        goto out;
+        goto locked_out;
 #endif
 
     success = TRUE;
+
+locked_out:
+    g_mutex_unlock (&mutex);
 
 out:
     if (cr)
