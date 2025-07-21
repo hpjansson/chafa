@@ -20,7 +20,7 @@
 #include "config.h"
 #include <chafa.h>
 #include "grid-layout.h"
-#include "media-loader.h"
+#include "media-pipeline.h"
 #include "util.h"
 
 #define MAX_COLS 1024
@@ -35,6 +35,7 @@ struct GridLayout
     ChafaAlign valign;
     ChafaTuck tuck;
     PathQueue *path_queue;
+    MediaPipeline *media_pipeline;
     gint n_items, next_item;
     guint finished_chunks : 1;
     guint print_labels : 1;
@@ -152,23 +153,17 @@ get_approx_canvas_size_px (ChafaCanvasConfig *config, gint *target_width_out,
 }
 
 static gboolean
-format_item (GridLayout *grid, const gchar *path, GString ***gsa)
+format_item (GridLayout *grid, MediaLoader *media_loader, GString ***gsa)
 {
-    MediaLoader *media_loader = NULL;
     ChafaPixelType pixel_type;
     gconstpointer pixels;
     ChafaCanvas *canvas = NULL;
-    GError *error = NULL;
     gint src_width, src_height, src_rowstride;
     gboolean success = FALSE;
-    gint target_width, target_height;
 
-    get_approx_canvas_size_px (grid->canvas_config, &target_width, &target_height);
-    media_loader = media_loader_new (path, target_width, target_height, &error);
     if (!media_loader)
     {
         /* FIXME: Use a placeholder image */
-        g_clear_error (&error);
         goto out;
     }
 
@@ -194,8 +189,6 @@ format_item (GridLayout *grid, const gchar *path, GString ***gsa)
 out:
     if (canvas)
         chafa_canvas_unref (canvas);
-    if (media_loader)
-        media_loader_destroy (media_loader);
     return success;
 }
 
@@ -217,11 +210,15 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
     for (i = 0; i < MAX_COLS; i++)
         item_height [i] = G_MAXINT;
 
-    for (n_cols_produced = 0; n_cols_produced < grid->n_cols && !path_queue_is_empty (grid->path_queue); )
+    for (n_cols_produced = 0; n_cols_produced < grid->n_cols; )
     {
-        gchar *path = path_queue_pop (grid->path_queue);
+        gchar *path;
+        MediaLoader *loader;
 
-        if (format_item (grid, path, &item_gsa [n_cols_produced]))
+        if (!media_pipeline_pop (grid->media_pipeline, &path, &loader, NULL /* FIXME */))
+            break;
+
+        if (format_item (grid, loader, &item_gsa [n_cols_produced]))
         {
             paths = g_list_prepend (paths, path);
             n_cols_produced++;
@@ -231,6 +228,9 @@ print_grid_row_symbols (GridLayout *grid, ChafaTerm *term)
             /* FIXME: Use a placeholder image */
             g_free (path);
         }
+
+        if (loader)
+            media_loader_destroy (loader);
 
         grid->next_item++;
     }
@@ -320,14 +320,22 @@ print_grid_image (GridLayout *grid, ChafaTerm *term)
 
     /* Format first available item */
 
-    while (!path_queue_is_empty (grid->path_queue) && !item_gsa [0])
+    while (!item_gsa [0])
     {
-        path = path_queue_pop (grid->path_queue);
+        MediaLoader *loader;
 
-        if (!format_item (grid, path, &item_gsa [0]))
+        if (!media_pipeline_pop (grid->media_pipeline, &path, &loader, NULL /* FIXME */))
+            break;
+
+        if (!format_item (grid, loader, &item_gsa [0]))
         {
             /* FIXME: Use a placeholder image */
+            g_free (path);
+            path = NULL;
         }
+
+        if (loader)
+            media_loader_destroy (loader);
     }
 
     if (!path)
@@ -431,6 +439,8 @@ grid_layout_destroy (GridLayout *grid)
         chafa_term_info_unref (grid->term_info);
     if (grid->path_queue)
         path_queue_unref (grid->path_queue);
+    if (grid->media_pipeline)
+        media_pipeline_destroy (grid->media_pipeline);
     g_free (grid);
 }
 
@@ -540,6 +550,8 @@ grid_layout_print_chunk (GridLayout *grid, ChafaTerm *term)
 
     if (!grid->is_printing)
     {
+        gint target_width, target_height;
+
         grid->is_printing = TRUE;
 
         if (!grid->path_queue)
@@ -548,6 +560,9 @@ grid_layout_print_chunk (GridLayout *grid, ChafaTerm *term)
             grid->canvas_config = chafa_canvas_config_new ();
         if (!grid->term_info)
             grid->term_info = chafa_term_db_get_fallback_info (chafa_term_db_get_default ());
+
+        get_approx_canvas_size_px (grid->canvas_config, &target_width, &target_height);
+        grid->media_pipeline = media_pipeline_new (grid->path_queue, target_width, target_height);
 
         update_geometry (grid);
     }

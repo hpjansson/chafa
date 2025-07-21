@@ -44,7 +44,7 @@
 #include "chafa-term.h"
 #include "font-loader.h"
 #include "grid-layout.h"
-#include "media-loader.h"
+#include "media-pipeline.h"
 #include "named-colors.h"
 #include "path-queue.h"
 #include "placement-counter.h"
@@ -2988,35 +2988,22 @@ calc_prescale_size_px (gint *prescale_width_out, gint *prescale_height_out)
 }
 
 static RunResult
-run_generic (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
+run_generic (const gchar *filename, MediaLoader *media_loader,
+             gboolean is_first_file, gboolean is_first_frame)
 {
     gboolean is_animation = FALSE;
     gdouble anim_duration_s = options.file_duration_s >= 0.0 ? options.file_duration_s : G_MAXDOUBLE;
     gdouble anim_elapsed_s = 0.0;
     GTimer *timer;
     gint loop_n = 0;
-    MediaLoader *media_loader;
     GString **gsa;
     gint placement_id = -1;
     gint frame_count = 0;
     RunResult result = FILE_FAILED;
     gint dest_width = 0, dest_height = 0;
-    gint prescale_width, prescale_height;
     GError *error = NULL;
 
     timer = g_timer_new ();
-
-    calc_prescale_size_px (&prescale_width, &prescale_height);
-    media_loader = media_loader_new (filename, prescale_width, prescale_height, &error);
-    if (!media_loader)
-    {
-        if (!quiet)
-            g_printerr ("%s: Failed to open '%s': %s\n",
-                        options.executable_name,
-                        filename,
-                        error->message);
-        goto out;
-    }
 
     if (interrupted_by_user)
         goto out;
@@ -3227,18 +3214,16 @@ out:
     if (placement_id >= 0 && !(frame_count % 2))
         placement_id = placement_counter_get_next_id (placement_counter);
 
-    if (media_loader)
-        media_loader_destroy (media_loader);
     g_timer_destroy (timer);
-
     g_clear_error (&error);
     return result;
 }
 
 static RunResult
-run (const gchar *filename, gboolean is_first_file, gboolean is_first_frame, gboolean quiet)
+run (const gchar *path, MediaLoader *loader,
+     gboolean is_first_file, gboolean is_first_frame)
 {
-    return run_generic (filename, is_first_file, is_first_frame, quiet);
+    return run_generic (path, loader, is_first_file, is_first_frame);
 }
 
 static int
@@ -3247,6 +3232,9 @@ run_watch (const gchar *filename)
     GTimer *timer;
     gboolean is_first_frame = TRUE;
     gdouble duration_s = options.file_duration_s >= 0.0 ? options.file_duration_s : G_MAXDOUBLE;
+    gint prescale_width, prescale_height;
+
+    calc_prescale_size_px (&prescale_width, &prescale_height);
 
     timer = g_timer_new ();
 
@@ -3256,10 +3244,14 @@ run_watch (const gchar *filename)
 
         if (!stat (filename, &sbuf))
         {
+            MediaLoader *media_loader;
+
             /* Sadly we can't rely on timestamps to tell us when to reload
              * the file, since they can take way too long to update. */
 
-            run (filename, TRUE, is_first_frame, TRUE);
+            media_loader = media_loader_new (filename, prescale_width, prescale_height, NULL);
+            if (media_loader)
+                run (filename, media_loader, TRUE, is_first_frame);
             is_first_frame = FALSE;
 
             g_usleep (10000);
@@ -3282,20 +3274,41 @@ run_watch (const gchar *filename)
 static int
 run_all (PathQueue *path_queue)
 {
+    MediaPipeline *pipeline;
     gdouble still_duration_s = options.file_duration_s > 0.0 ? options.file_duration_s : 0.0;
     gint n_processed = 0;
     gint n_failed = 0;
+    gint prescale_width, prescale_height;
+
+    calc_prescale_size_px (&prescale_width, &prescale_height);
+    pipeline = media_pipeline_new (path_queue, prescale_width, prescale_height);
 
     while (!interrupted_by_user)
     {
-        gchar *path;
+        gchar *path = NULL;
+        MediaLoader *media_loader = NULL;
+        GError *error = NULL;
         RunResult result;
 
-        path = path_queue_pop (path_queue);
-        if (!path)
+        if (!media_pipeline_pop (pipeline, &path, &media_loader, &error))
             break;
 
-        result = run (path, n_processed > 0 ? FALSE : TRUE, TRUE, FALSE);
+        if (!media_loader)
+        {
+            if (error)
+            {
+                g_printerr ("%s: Failed to open '%s': %s\n",
+                            options.executable_name,
+                            path ? path : "?",
+                            error->message);
+                g_error_free (error);
+            }
+
+            g_free (path);
+            continue;
+        }
+
+        result = run (path, media_loader, n_processed > 0 ? FALSE : TRUE, TRUE);
 
         n_processed++;
         if (result == FILE_FAILED)
@@ -3306,6 +3319,7 @@ run_all (PathQueue *path_queue)
             interruptible_usleep (still_duration_s * 1000000.0);
         }
 
+        media_loader_destroy (media_loader);
         g_free (path);
     }
 
