@@ -391,10 +391,10 @@ jpeg_loader_new_from_mapping (FileMapping *mapping)
         || (width * (guint64) height >= (1 << 29)))
         goto out;
 
+    rowstride = ROWSTRIDE_PAD (width * BYTES_PER_PIXEL);
     if (height * rowstride > IMAGE_BUFFER_SIZE_MAX)
         goto out;
 
-    rowstride = ROWSTRIDE_PAD (width * BYTES_PER_PIXEL);
     frame_data = g_malloc (height * (guint64) rowstride);
 
     /* Decoding loop */
