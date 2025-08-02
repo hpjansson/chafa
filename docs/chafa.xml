@@ -43,7 +43,7 @@ emulators and everything in between.
 </para>
 <para>
 You can specify one or more input files, but the default behavior is slightly
-different with multiple files -- for instance, animations will not loop forever
+different with multiple files; for instance, animations will not loop forever
 when there is more than one input file.
 </para>
 </refsect1>
@@ -59,7 +59,7 @@ Show a brief help text.
 </varlistentry>
 
 <varlistentry>
-<term><option>--probe <replaceable>ARG</replaceable></option></term>
+<term><option>--probe <replaceable>arg</replaceable></option></term>
 <listitem><para>
 Probe terminal's capabilities and wait for response [auto, on, off].
 A positive real number denotes the maximum time to wait for a response,
