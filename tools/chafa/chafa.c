@@ -42,14 +42,14 @@
 
 #include <chafa.h>
 #include "chafa-term.h"
-#include "font-loader.h"
-#include "grid-layout.h"
-#include "media-pipeline.h"
-#include "named-colors.h"
-#include "options.h"
-#include "path-queue.h"
-#include "placement-counter.h"
-#include "util.h"
+#include "chicle-font-loader.h"
+#include "chicle-grid-layout.h"
+#include "chicle-media-pipeline.h"
+#include "chicle-named-colors.h"
+#include "chicle-options.h"
+#include "chicle-path-queue.h"
+#include "chicle-placement-counter.h"
+#include "chicle-util.h"
 
 /* Include after glib.h for G_OS_WIN32 */
 #ifdef G_OS_WIN32
@@ -73,7 +73,7 @@ extern int _CRT_glob = 1;
 #endif
 
 static volatile sig_atomic_t interrupted_by_user = FALSE;
-static PlacementCounter *placement_counter;
+static ChiclePlacementCounter *placement_counter;
 
 #ifdef HAVE_TERMIOS_H
 static struct termios saved_termios;
@@ -293,9 +293,9 @@ write_image_prologue (const gchar *path,
         if (options.label)
         {
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_DOWN, dest_height, -1);
-            path_print_label (term, path, options.horiz_align, options.view_width,
-                              options.use_unicode,
-                              options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
+            chicle_path_print_label (term, path, options.horiz_align, options.view_width,
+                                     options.use_unicode,
+                                     options.link_labels != CHICLE_TRISTATE_FALSE ? TRUE : FALSE);
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_RESTORE_CURSOR_POS, -1);
         }
     }
@@ -339,9 +339,9 @@ write_image_epilogue (const gchar *path, gboolean is_animation, gint dest_width)
         {
             if (!is_animation)
             {
-                path_print_label (term, path, options.horiz_align, options.view_width,
-                                  options.use_unicode,
-                                  options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
+                chicle_path_print_label (term, path, options.horiz_align, options.view_width,
+                                         options.use_unicode,
+                                         options.link_labels != CHICLE_TRISTATE_FALSE ? TRUE : FALSE);
 
                 if (options.relative)
                     chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
@@ -373,9 +373,9 @@ write_image_epilogue (const gchar *path, gboolean is_animation, gint dest_width)
                 if (!options.relative)
                     chafa_term_write (term, "\r", 1);
 
-                path_print_label (term, path, options.horiz_align, options.view_width,
-                                  options.use_unicode,
-                                  options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
+                chicle_path_print_label (term, path, options.horiz_align, options.view_width,
+                                         options.use_unicode,
+                                         options.link_labels != CHICLE_TRISTATE_FALSE ? TRUE : FALSE);
 
                 if (options.relative)
                     chafa_term_print_seq (term, CHAFA_TERM_SEQ_CURSOR_LEFT,
@@ -552,7 +552,7 @@ calc_prescale_size_px (gint *prescale_width_out, gint *prescale_height_out)
 }
 
 static RunResult
-run_generic (const gchar *filename, MediaLoader *media_loader,
+run_generic (const gchar *filename, ChicleMediaLoader *media_loader,
              gboolean is_first_file, gboolean is_first_frame)
 {
     gboolean is_animation = FALSE;
@@ -576,12 +576,12 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
         && options.passthrough != CHAFA_PASSTHROUGH_NONE)
     {
         if (!placement_counter)
-            placement_counter = placement_counter_new ();
+            placement_counter = chicle_placement_counter_new ();
 
-        placement_id = placement_counter_get_next_id (placement_counter);
+        placement_id = chicle_placement_counter_get_next_id (placement_counter);
     }
 
-    is_animation = options.animate ? media_loader_get_is_animation (media_loader) : FALSE;
+    is_animation = options.animate ? chicle_media_loader_get_is_animation (media_loader) : FALSE;
     result = is_animation ? FILE_WAS_ANIMATION : FILE_WAS_STILL;
 
     do
@@ -590,11 +590,11 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
 
         /* Outer loop repeats animation if desired */
 
-        media_loader_goto_first_frame (media_loader);
+        chicle_media_loader_goto_first_frame (media_loader);
 
         for (have_frame = TRUE;
              have_frame && !interrupted_by_user && (loop_n == 0 || anim_elapsed_s < anim_duration_s);
-             have_frame = media_loader_goto_next_frame (media_loader))
+             have_frame = chicle_media_loader_goto_next_frame (media_loader))
         {
             gdouble elapsed_ms, remain_ms;
             gint delay_ms;
@@ -609,7 +609,7 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
 
             g_timer_start (timer);
 
-            if (options.use_exact_size == TRISTATE_TRUE)
+            if (options.use_exact_size == CHICLE_TRISTATE_TRUE)
             {
                 /* True */
                 tuck = CHAFA_TUCK_SHRINK_TO_FIT;
@@ -627,23 +627,23 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
                 }
             }
 
-            pixels = media_loader_get_frame_data (media_loader,
-                                                  &pixel_type,
-                                                  &src_width,
-                                                  &src_height,
-                                                  &src_rowstride);
+            pixels = chicle_media_loader_get_frame_data (media_loader,
+                                                         &pixel_type,
+                                                         &src_width,
+                                                         &src_height,
+                                                         &src_rowstride);
             /* FIXME: This shouldn't happen -- but if it does, our
              * options for handling it gracefully here aren't great.
              * Needs refactoring. */
             if (!pixels)
                 break;
 
-            delay_ms = media_loader_get_frame_delay (media_loader);
+            delay_ms = chicle_media_loader_get_frame_delay (media_loader);
 
             /* Hack to work around the fact that chafa_calc_canvas_geometry() doesn't
              * support arbitrary scaling. Instead, we manipulate the source size to
              * achieve the desired effect. */
-            if (using_detected_size && options.scale < SCALE_MAX - 0.1)
+            if (using_detected_size && options.scale < CHICLE_SCALE_MAX - 0.1)
             {
                 pixel_to_cell_dimensions (options.scale,
                                           options.cell_width, options.cell_height,
@@ -664,7 +664,7 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
                 virt_src_height = uncorrected_src_height = src_height;
             }
 
-            if (options.use_exact_size == TRISTATE_TRUE)
+            if (options.use_exact_size == CHICLE_TRISTATE_TRUE)
             {
                 dest_width = virt_src_width;
                 dest_height = virt_src_height;
@@ -680,10 +680,10 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
                                         &dest_width,
                                         &dest_height,
                                         options.font_ratio,
-                                        options.scale >= SCALE_MAX - 0.1 ? TRUE : FALSE,
+                                        options.scale >= CHICLE_SCALE_MAX - 0.1 ? TRUE : FALSE,
                                         options.stretch);
 
-            if (options.use_exact_size == TRISTATE_AUTO
+            if (options.use_exact_size == CHICLE_TRISTATE_AUTO
                 && dest_width == uncorrected_src_width
                 && dest_height == uncorrected_src_height)
             {
@@ -734,7 +734,7 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
                 remain_ms /= options.anim_speed_multiplier;
                 remain_ms = MAX (remain_ms - elapsed_ms, 0);
 
-                if (remain_ms > 0.0001 && 1000.0 / (gdouble) remain_ms < ANIM_FPS_MAX)
+                if (remain_ms > 0.0001 && 1000.0 / (gdouble) remain_ms < CHICLE_ANIM_FPS_MAX)
                     interruptible_usleep (remain_ms * 1000.0);
 
                 anim_elapsed_s += MAX (elapsed_ms, delay_ms) / 1000.0;
@@ -759,7 +759,7 @@ out:
      * final frame got the higher ID, increment the global counter so the next
      * image doesn't clobber it. */
     if (placement_id >= 0 && !(frame_count % 2))
-        placement_id = placement_counter_get_next_id (placement_counter);
+        placement_id = chicle_placement_counter_get_next_id (placement_counter);
 
     g_timer_destroy (timer);
     g_clear_error (&error);
@@ -767,7 +767,7 @@ out:
 }
 
 static RunResult
-run (const gchar *path, MediaLoader *loader,
+run (const gchar *path, ChicleMediaLoader *loader,
      gboolean is_first_file, gboolean is_first_frame)
 {
     return run_generic (path, loader, is_first_file, is_first_frame);
@@ -791,12 +791,12 @@ run_watch (const gchar *filename)
 
         if (!stat (filename, &sbuf))
         {
-            MediaLoader *media_loader;
+            ChicleMediaLoader *media_loader;
 
             /* Sadly we can't rely on timestamps to tell us when to reload
              * the file, since they can take way too long to update. */
 
-            media_loader = media_loader_new (filename, prescale_width, prescale_height, NULL);
+            media_loader = chicle_media_loader_new (filename, prescale_width, prescale_height, NULL);
             if (media_loader)
                 run (filename, media_loader, TRUE, is_first_frame);
             is_first_frame = FALSE;
@@ -819,25 +819,25 @@ run_watch (const gchar *filename)
 }
 
 static int
-run_all (PathQueue *path_queue)
+run_all (ChiclePathQueue *path_queue)
 {
-    MediaPipeline *pipeline;
+    ChicleMediaPipeline *pipeline;
     gdouble still_duration_s = options.file_duration_s > 0.0 ? options.file_duration_s : 0.0;
     gint n_processed = 0;
     gint n_failed = 0;
     gint prescale_width, prescale_height;
 
     calc_prescale_size_px (&prescale_width, &prescale_height);
-    pipeline = media_pipeline_new (path_queue, prescale_width, prescale_height);
+    pipeline = chicle_media_pipeline_new (path_queue, prescale_width, prescale_height);
 
     while (!interrupted_by_user)
     {
         gchar *path = NULL;
-        MediaLoader *media_loader = NULL;
+        ChicleMediaLoader *media_loader = NULL;
         GError *error = NULL;
         RunResult result;
 
-        if (!media_pipeline_pop (pipeline, &path, &media_loader, &error))
+        if (!chicle_media_pipeline_pop (pipeline, &path, &media_loader, &error))
             break;
 
         if (!media_loader)
@@ -866,7 +866,7 @@ run_all (PathQueue *path_queue)
             interruptible_usleep (still_duration_s * 1000000.0);
         }
 
-        media_loader_destroy (media_loader);
+        chicle_media_loader_destroy (media_loader);
         g_free (path);
     }
 
@@ -880,34 +880,34 @@ run_all (PathQueue *path_queue)
 }
 
 static gint
-run_grid (PathQueue *path_queue)
+run_grid (ChiclePathQueue *path_queue)
 {
     ChafaCanvasConfig *canvas_config;
-    GridLayout *grid_layout;
+    ChicleGridLayout *grid_layout;
 
     /* The prototype canvas' size isn't used for anything; set it to a legal value */
     canvas_config = build_config (1, 1, FALSE);
 
-    grid_layout = grid_layout_new ();
-    grid_layout_set_view_size (grid_layout, options.width, options.height);
-    grid_layout_set_grid_size (grid_layout, options.grid_width, options.grid_height);
-    grid_layout_set_canvas_config (grid_layout, canvas_config);
-    grid_layout_set_term_info (grid_layout, options.term_info);
-    grid_layout_set_align (grid_layout, options.horiz_align, options.vert_align);
-    grid_layout_set_tuck (grid_layout,
-                          options.use_exact_size == TRISTATE_TRUE
-                          ? CHAFA_TUCK_SHRINK_TO_FIT
-                          : (options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT));
-    grid_layout_set_print_labels (grid_layout, options.label);
-    grid_layout_set_link_labels (grid_layout, options.link_labels != TRISTATE_FALSE ? TRUE : FALSE);
-    grid_layout_set_use_unicode (grid_layout, options.use_unicode);
-    grid_layout_set_path_queue (grid_layout, path_queue);
+    grid_layout = chicle_grid_layout_new ();
+    chicle_grid_layout_set_view_size (grid_layout, options.width, options.height);
+    chicle_grid_layout_set_grid_size (grid_layout, options.grid_width, options.grid_height);
+    chicle_grid_layout_set_canvas_config (grid_layout, canvas_config);
+    chicle_grid_layout_set_term_info (grid_layout, options.term_info);
+    chicle_grid_layout_set_align (grid_layout, options.horiz_align, options.vert_align);
+    chicle_grid_layout_set_tuck (grid_layout,
+                                 options.use_exact_size == CHICLE_TRISTATE_TRUE
+                                 ? CHAFA_TUCK_SHRINK_TO_FIT
+                                 : (options.stretch ? CHAFA_TUCK_STRETCH : CHAFA_TUCK_FIT));
+    chicle_grid_layout_set_print_labels (grid_layout, options.label);
+    chicle_grid_layout_set_link_labels (grid_layout, options.link_labels != CHICLE_TRISTATE_FALSE ? TRUE : FALSE);
+    chicle_grid_layout_set_use_unicode (grid_layout, options.use_unicode);
+    chicle_grid_layout_set_path_queue (grid_layout, path_queue);
 
-    while (!interrupted_by_user && grid_layout_print_chunk (grid_layout, term))
+    while (!interrupted_by_user && chicle_grid_layout_print_chunk (grid_layout, term))
         ;
 
     chafa_canvas_config_unref (canvas_config);
-    grid_layout_destroy (grid_layout);
+    chicle_grid_layout_destroy (grid_layout);
     return 0;
 }
 
@@ -938,7 +938,7 @@ proc_init (void)
     g_thread_pool_set_max_unused_threads (-1);
 
     term = chafa_term_get_default ();
-    global_path_queue = path_queue_new ();
+    global_path_queue = chicle_path_queue_new ();
 }
 
 int
@@ -948,18 +948,18 @@ main (int argc, char *argv [])
 
     proc_init ();
 
-    if (!parse_options (&argc, &argv))
+    if (!chicle_parse_options (&argc, &argv))
         exit (2);
 
     if (options.args)
     {
-        path_queue_push_path_list_steal (global_path_queue, options.args);
+        chicle_path_queue_push_path_list_steal (global_path_queue, options.args);
         options.args = NULL;
     }
 
     /* --version and --help can skip all the init/deinit stuff */
     if (options.skip_processing
-        || path_queue_get_length (global_path_queue) == 0)
+        || chicle_path_queue_get_length (global_path_queue) == 0)
         goto out;
 
     tty_options_init ();
@@ -970,7 +970,7 @@ main (int argc, char *argv [])
     }
     else if (options.watch)
     {
-        gchar *path = path_queue_try_pop (global_path_queue);
+        gchar *path = chicle_path_queue_try_pop (global_path_queue);
 
         if (path)
         {
@@ -986,11 +986,11 @@ main (int argc, char *argv [])
     tty_options_deinit ();
     chafa_term_flush (term);
 
-    retire_passthrough_workarounds_tmux ();
+    chicle_retire_passthrough_workarounds_tmux ();
 
 out:
     if (placement_counter)
-        placement_counter_destroy (placement_counter);
+        chicle_placement_counter_destroy (placement_counter);
 
     if (options.symbol_map)
         chafa_symbol_map_unref (options.symbol_map);
@@ -999,6 +999,6 @@ out:
     if (options.term_info)
         chafa_term_info_unref (options.term_info);
 
-    path_queue_unref (global_path_queue);
+    chicle_path_queue_unref (global_path_queue);
     return ret;
 }

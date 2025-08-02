@@ -17,70 +17,70 @@ chafa_SOURCES = \
 	chafa-term.h \
 	chafa-wakeup.c \
 	chafa-wakeup.h \
-	file-mapping.c \
-	file-mapping.h \
-	font-loader.c \
-	font-loader.h \
-	gif-loader.c \
-	gif-loader.h \
-	grid-layout.c \
-	grid-layout.h \
-	media-loader.c \
-	media-loader.h \
-	media-pipeline.c \
-	media-pipeline.h \
-	options.c \
-	options.h \
-	path-queue.c \
-	path-queue.h \
-	placement-counter.c \
-	placement-counter.h \
-	png-loader.c \
-	png-loader.h \
-	named-colors.c \
-	named-colors.h \
+	chicle-file-mapping.c \
+	chicle-file-mapping.h \
+	chicle-font-loader.c \
+	chicle-font-loader.h \
+	chicle-gif-loader.c \
+	chicle-gif-loader.h \
+	chicle-grid-layout.c \
+	chicle-grid-layout.h \
+	chicle-media-loader.c \
+	chicle-media-loader.h \
+	chicle-media-pipeline.c \
+	chicle-media-pipeline.h \
+	chicle-options.c \
+	chicle-options.h \
+	chicle-path-queue.c \
+	chicle-path-queue.h \
+	chicle-placement-counter.c \
+	chicle-placement-counter.h \
+	chicle-png-loader.c \
+	chicle-png-loader.h \
+	chicle-named-colors.c \
+	chicle-named-colors.h \
 	qoi.h \
-	qoi-loader.c \
-	qoi-loader.h \
-	util.c \
-	util.h \
-	xwd-loader.c \
-	xwd-loader.h
+	chicle-qoi-loader.c \
+	chicle-qoi-loader.h \
+	chicle-util.c \
+	chicle-util.h \
+	chicle-xwd-loader.c \
+	chicle-xwd-loader.h
 
 if HAVE_AVIF
 chafa_SOURCES += \
-	avif-loader.c \
-	avif-loader.h
+	chicle-avif-loader.c \
+	chicle-avif-loader.h
 endif
 
 if HAVE_JPEG
 chafa_SOURCES += \
-	jpeg-loader.c \
-	jpeg-loader.h
+	chicle-jpeg-loader.c \
+	chicle-jpeg-loader.h
 endif
 
 if HAVE_TIFF
 chafa_SOURCES += \
-	tiff-loader.c \
-	tiff-loader.h
+	chicle-tiff-loader.c \
+	chicle-tiff-loader.h
 endif
 
 if HAVE_SVG
 chafa_SOURCES += \
-	svg-loader.c \
-	svg-loader.h
+	chicle-svg-loader.c \
+	chicle-svg-loader.h
 endif
 
 if HAVE_WEBP
 chafa_SOURCES += \
-	webp-loader.c \
-	webp-loader.h
+	chicle-webp-loader.c \
+	chicle-webp-loader.h
 endif
 
 if HAVE_JXL
 chafa_SOURCES += \
-	jxl-loader.c \
-	jxl-loader.h
+	chicle-jxl-loader.c \
+	chicle-jxl-loader.h
 endif
 
 # We can pass -rpath so the binary knows where to find libchafa.so when
