@@ -52,6 +52,32 @@ when there is more than one input file.
 <variablelist>
 
 <varlistentry>
+<term><option>--files <replaceable>path</replaceable></option></term>
+<listitem><para>
+Read a list of paths to process from <replaceable>path</replaceable>,
+or '-' for stdin. The paths must be separated by newlines.
+</para><para>
+Can be specified multiple times. Any additional paths on the command line
+will be processed last.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--files0 <replaceable>path</replaceable></option></term>
+<listitem><para>
+Read a list of paths to process from <replaceable>path</replaceable>,
+or '-' for stdin. The paths must be separated by NUL bytes. This is more
+robust if your file system allows newlines in filenames (as POSIX does).
+Useful in conjunction with other tools that support it, e.g.:
+</para><para>
+<command>find . -type f -print0 | chafa --files0 -</command>
+</para><para>
+Can be specified multiple times. Any additional paths on the command line
+will be processed last.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>-h, --help</option></term>
 <listitem><para>
 Show a brief help text.
