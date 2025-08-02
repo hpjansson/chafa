@@ -29,6 +29,8 @@ chafa_SOURCES = \
 	media-loader.h \
 	media-pipeline.c \
 	media-pipeline.h \
+	options.c \
+	options.h \
 	path-queue.c \
 	path-queue.h \
 	placement-counter.c \
