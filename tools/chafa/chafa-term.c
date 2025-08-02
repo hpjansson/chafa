@@ -48,7 +48,6 @@
 # endif
 # include <wchar.h>
 # include <io.h>
-# include "conhost.h"
 #else
 # include <glib-unix.h>
 #endif

@@ -57,7 +57,6 @@
 # endif
 # include <wchar.h>
 # include <io.h>
-# include "conhost.h"
 #endif
 
 /* Maximum size of stack-allocated read/write buffer */
@@ -164,9 +163,6 @@ typedef struct
     gboolean fuzz_options;
 
     ChafaTermInfo *term_info;
-    
-    gboolean output_utf_16_on_windows;
-    gboolean is_conhost_mode;
 
     gboolean do_dump_detect;
 }
@@ -384,11 +380,7 @@ print_summary (void)
 
     "\nOutput encoding:\n"
 
-#ifdef G_OS_WIN32
-    "  -f, --format=FORMAT  Set output format; one of [conhost, iterm, kitty, sixels,\n"
-#else
     "  -f, --format=FORMAT  Set output format; one of [iterm, kitty, sixels,\n"
-#endif
     "                     symbols]. Iterm, kitty and sixels yield much higher\n"
     "                     quality but enjoy limited support. Symbols mode yields\n"
     "                     beautiful character art.\n"
@@ -1152,25 +1144,10 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
     {
         pixel_mode = CHAFA_PIXEL_MODE_ITERM2;
     }
-    else if (!strcasecmp (value, "conhost"))
-    {
-#ifdef G_OS_WIN32
-        options.is_conhost_mode = TRUE;
-        pixel_mode = CHAFA_PIXEL_MODE_SYMBOLS;
-#else
-        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-                     "Conhost output is only available on MS Windows.");
-        result = FALSE;
-#endif 
-    }
     else
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
-#ifdef G_OS_WIN32
-                     "Output format given as '%s'. Must be one of [conhost, iterm, kitty, sixels, symbols].",
-#else
                      "Output format given as '%s'. Must be one of [iterm, kitty, sixels, symbols].",
-#endif
                      value);
         result = FALSE;
     }
@@ -1753,7 +1730,7 @@ tty_options_init (void)
         }
 #endif
 
-        if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG)
         {
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_DISABLE_CURSOR, -1);
         }
@@ -1773,7 +1750,7 @@ tty_options_deinit (void)
 {
     if (!options.polite)
     {
-        if (options.mode != CHAFA_CANVAS_MODE_FGBG && !options.is_conhost_mode)
+        if (options.mode != CHAFA_CANVAS_MODE_FGBG)
         {
             chafa_term_print_seq (term, CHAFA_TERM_SEQ_ENABLE_CURSOR, -1);
         }
@@ -2112,8 +2089,6 @@ parse_options (int *argc, char **argv [])
     options.anim_fps = -1.0;
     options.anim_speed_multiplier = 1.0;
     options.use_exact_size = TRISTATE_AUTO;
-    options.output_utf_16_on_windows = FALSE;
-    options.is_conhost_mode = FALSE;
     options.cell_width = 10;
     options.cell_height = 20;
     options.label = FALSE;
@@ -2564,22 +2539,6 @@ parse_options (int *argc, char **argv [])
         options.optimizations |= CHAFA_OPTIMIZATION_SKIP_CELLS;
 
     chafa_set_n_threads (options.n_threads);
-
-#ifdef G_OS_WIN32
-    if (options.is_conhost_mode)
-    {    
-        options.output_utf_16_on_windows = TRUE;
-        if (options.mode == CHAFA_CANVAS_MODE_INDEXED_240
-            || options.mode == CHAFA_CANVAS_MODE_INDEXED_256
-            || options.mode == CHAFA_CANVAS_MODE_TRUECOLOR)
-            options.mode = CHAFA_CANVAS_MODE_INDEXED_16;
-    }
-
-#else 
-    /* Force it to not output UTF16 when not Windows */
-    options.output_utf_16_on_windows = FALSE;
-    options.is_conhost_mode = FALSE;
-#endif
 
     result = TRUE;
 
@@ -3143,35 +3102,18 @@ run_generic (const gchar *filename, MediaLoader *media_loader,
                                    placement_id >= 0 ? placement_id + ((frame_count++) % 2) : -1,
                                    tuck);
 
-#ifdef G_OS_WIN32
-            if (options.is_conhost_mode)
-            {
-                ConhostRow *lines;
-                gssize s;
+            chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
 
-                s = canvas_to_conhost (canvas, &lines);
-                g_assert (s >= 0);
+            write_image_prologue (filename, is_first_file, is_first_frame, is_animation, dest_height);
+            write_image (gsa, dest_width);
 
-                write_image_conhost (lines, (gsize) s);
-                destroy_lines (lines, (gsize) s);
-            }
-            else
-#endif
-            {
-                chafa_canvas_print_rows (canvas, options.term_info, &gsa, NULL);
+            /* No inter-frame epilogue in animations; this prevents unwanted
+             * scrolling when we get the sixel overshoot quirk wrong (#255). */
+            if (!is_animation)
+                write_image_epilogue (filename, is_animation, dest_width);
 
-                write_image_prologue (filename, is_first_file, is_first_frame, is_animation, dest_height);
-                write_image (gsa, dest_width);
-
-                /* No inter-frame epilogue in animations; this prevents unwanted
-                 * scrolling when we get the sixel overshoot quirk wrong (#255). */
-                if (!is_animation)
-                    write_image_epilogue (filename, is_animation, dest_width);
-
-                chafa_term_flush (term);
-                chafa_free_gstring_array (gsa);
-            }
-
+            chafa_term_flush (term);
+            chafa_free_gstring_array (gsa);
             chafa_canvas_unref (canvas);
             chafa_canvas_config_unref (config);
 
