@@ -756,13 +756,6 @@ out:
     return result;
 }
 
-static RunResult
-run (const gchar *path, ChicleMediaLoader *loader,
-     gboolean is_first_file, gboolean is_first_frame)
-{
-    return run_generic (path, loader, is_first_file, is_first_frame);
-}
-
 static int
 run_watch (const gchar *filename)
 {
@@ -788,7 +781,7 @@ run_watch (const gchar *filename)
 
             media_loader = chicle_media_loader_new (filename, prescale_width, prescale_height, NULL);
             if (media_loader)
-                run (filename, media_loader, TRUE, is_first_frame);
+                run_generic (filename, media_loader, TRUE, is_first_frame);
             is_first_frame = FALSE;
 
             g_usleep (10000);
@@ -809,7 +802,7 @@ run_watch (const gchar *filename)
 }
 
 static int
-run_all (ChiclePathQueue *path_queue)
+run_vertical (ChiclePathQueue *path_queue)
 {
     ChicleMediaPipeline *pipeline;
     gdouble still_duration_s = options.file_duration_s > 0.0 ? options.file_duration_s : 0.0;
@@ -845,7 +838,7 @@ run_all (ChiclePathQueue *path_queue)
             continue;
         }
 
-        result = run (path, media_loader, n_processed > 0 ? FALSE : TRUE, TRUE);
+        result = run_generic (path, media_loader, n_processed > 0 ? FALSE : TRUE, TRUE);
 
         n_processed++;
         if (result == FILE_FAILED)
@@ -970,7 +963,7 @@ main (int argc, char *argv [])
     }
     else
     {
-        ret = run_all (global_path_queue);
+        ret = run_vertical (global_path_queue);
     }
 
     tty_options_deinit ();
