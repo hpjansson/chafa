@@ -20,7 +20,9 @@
 #ifndef __CHAFA_WAKEUP_H__
 #define __CHAFA_WAKEUP_H__
 
-#include <glib/gpoll.h>
+#include <glib.h>
+
+G_BEGIN_DECLS
 
 typedef struct _ChafaWakeup ChafaWakeup;
 
@@ -31,5 +33,7 @@ void            chafa_wakeup_get_pollfd     (ChafaWakeup *wakeup,
 					     GPollFD *poll_fd);
 void            chafa_wakeup_signal         (ChafaWakeup *wakeup);
 void            chafa_wakeup_acknowledge    (ChafaWakeup *wakeup);
+
+G_END_DECLS
 
 #endif

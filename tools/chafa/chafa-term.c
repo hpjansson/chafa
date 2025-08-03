@@ -19,21 +19,15 @@
 
 #include "config.h"
 
-#include <stdio.h>
+#include <sys/types.h>  /* open */
+#include <fcntl.h>  /* open */
+#include <unistd.h>  /* STDOUT_FILENO */
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>  /* ioctl */
 #endif
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
-#include <sys/types.h>  /* open */
-#include <sys/stat.h>  /* stat */
-#include <fcntl.h>  /* open */
-#include <unistd.h>  /* STDOUT_FILENO */
-#include <glib/gstdio.h>
-
-/* Our copy of glib's internal GWakeup */
-#include "chafa-wakeup.h"
 
 #include "chafa.h"
 #include "chafa-byte-fifo.h"

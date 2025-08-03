@@ -19,33 +19,28 @@
 
 #include "config.h"
 
-#include <errno.h>
-#include <stdio.h>
 #include <string.h>  /* strspn, strlen, strcmp, strncmp, memset */
 #include <locale.h>  /* setlocale */
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>  /* ioctl */
-#endif
 #include <sys/types.h>  /* open */
 #include <sys/stat.h>  /* stat */
 #include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
+#include <stdlib.h>  /* exit */
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>  /* ioctl */
+#endif
 #ifdef HAVE_SIGACTION
 # include <signal.h>  /* sigaction */
 #endif
-#include <stdlib.h>  /* exit */
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
-
-#include <glib/gstdio.h>
 
 #include <chafa.h>
 #include "chafa-term.h"
 #include "chicle-font-loader.h"
 #include "chicle-grid-layout.h"
 #include "chicle-media-pipeline.h"
-#include "chicle-named-colors.h"
 #include "chicle-options.h"
 #include "chicle-path-queue.h"
 #include "chicle-placement-counter.h"
@@ -77,11 +72,6 @@ static ChiclePlacementCounter *placement_counter;
 
 #ifdef HAVE_TERMIOS_H
 static struct termios saved_termios;
-#endif
-
-#ifdef G_OS_WIN32
-static UINT saved_console_output_cp;
-static UINT saved_console_input_cp;
 #endif
 
 #ifdef HAVE_SIGACTION
