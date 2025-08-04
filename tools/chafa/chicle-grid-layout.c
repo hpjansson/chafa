@@ -102,38 +102,6 @@ update_geometry (ChicleGridLayout *grid)
     chafa_canvas_config_set_geometry (grid->canvas_config, item_width, item_height);
 }
 
-static ChafaCanvas *
-build_canvas (ChafaPixelType pixel_type, const guint8 *pixels,
-              gint src_width, gint src_height, gint src_rowstride,
-              const ChafaCanvasConfig *config,
-              gint placement_id,
-              ChafaAlign halign,
-              ChafaAlign valign,
-              ChafaTuck tuck)
-{
-    ChafaFrame *frame;
-    ChafaImage *image;
-    ChafaPlacement *placement;
-    ChafaCanvas *canvas;
-
-    canvas = chafa_canvas_new (config);
-    frame = chafa_frame_new_borrow (pixels, pixel_type,
-                                    src_width, src_height, src_rowstride);
-    image = chafa_image_new ();
-    chafa_image_set_frame (image, frame);
-
-    placement = chafa_placement_new (image, placement_id);
-    chafa_placement_set_tuck (placement, tuck);
-    chafa_placement_set_halign (placement, halign);
-    chafa_placement_set_valign (placement, valign);
-    chafa_canvas_set_placement (canvas, placement);
-
-    chafa_placement_unref (placement);
-    chafa_image_unref (image);
-    chafa_frame_unref (frame);
-    return canvas;
-}
-
 static void
 get_approx_canvas_size_px (ChafaCanvasConfig *config, gint *target_width_out,
                            gint *target_height_out)
@@ -150,46 +118,6 @@ get_approx_canvas_size_px (ChafaCanvasConfig *config, gint *target_width_out,
     chafa_canvas_config_get_geometry (config, target_width_out, target_height_out);
     *target_width_out *= cell_width_px;
     *target_height_out *= cell_height_px;
-}
-
-static gboolean
-format_item (ChicleGridLayout *grid, ChicleMediaLoader *media_loader, GString ***gsa)
-{
-    ChafaPixelType pixel_type;
-    gconstpointer pixels;
-    ChafaCanvas *canvas = NULL;
-    gint src_width, src_height, src_rowstride;
-    gboolean success = FALSE;
-
-    if (!media_loader)
-    {
-        /* FIXME: Use a placeholder image */
-        goto out;
-    }
-
-    pixels = chicle_media_loader_get_frame_data (media_loader,
-                                                 &pixel_type,
-                                                 &src_width,
-                                                 &src_height,
-                                                 &src_rowstride);
-    if (!pixels)
-    {
-        /* FIXME: Use a placeholder image */
-        goto out;
-    }
-
-    canvas = build_canvas (pixel_type, pixels,
-                           src_width, src_height, src_rowstride, grid->canvas_config,
-                           -1,
-                           grid->halign, grid->valign,
-                           grid->tuck);
-    chafa_canvas_print_rows (canvas, grid->term_info, gsa, NULL);
-    success = TRUE;
-
-out:
-    if (canvas)
-        chafa_canvas_unref (canvas);
-    return success;
 }
 
 static gboolean
@@ -213,12 +141,16 @@ print_grid_row_symbols (ChicleGridLayout *grid, ChafaTerm *term)
     for (n_cols_produced = 0; n_cols_produced < grid->n_cols; )
     {
         gchar *path;
-        ChicleMediaLoader *loader;
 
-        if (!chicle_media_pipeline_pop (grid->media_pipeline, &path, &loader, NULL /* FIXME */))
+        item_gsa [n_cols_produced] = NULL;
+        if (!chicle_media_pipeline_pop (grid->media_pipeline,
+                                        &path,
+                                        NULL,
+                                        &item_gsa [n_cols_produced],
+                                        NULL /* FIXME */))
             break;
 
-        if (format_item (grid, loader, &item_gsa [n_cols_produced]))
+        if (item_gsa [n_cols_produced])
         {
             paths = g_list_prepend (paths, path);
             n_cols_produced++;
@@ -228,9 +160,6 @@ print_grid_row_symbols (ChicleGridLayout *grid, ChafaTerm *term)
             /* FIXME: Use a placeholder image */
             g_free (path);
         }
-
-        if (loader)
-            chicle_media_loader_destroy (loader);
 
         grid->next_item++;
     }
@@ -322,20 +251,19 @@ print_grid_image (ChicleGridLayout *grid, ChafaTerm *term)
 
     while (!item_gsa [0])
     {
-        ChicleMediaLoader *loader;
-
-        if (!chicle_media_pipeline_pop (grid->media_pipeline, &path, &loader, NULL /* FIXME */))
+        if (!chicle_media_pipeline_pop (grid->media_pipeline,
+                                        &path,
+                                        NULL,
+                                        &item_gsa [0],
+                                        NULL /* FIXME */))
             break;
 
-        if (!format_item (grid, loader, &item_gsa [0]))
+        if (!item_gsa [0])
         {
             /* FIXME: Use a placeholder image */
             g_free (path);
             path = NULL;
         }
-
-        if (loader)
-            chicle_media_loader_destroy (loader);
     }
 
     if (!path)
@@ -563,6 +491,14 @@ chicle_grid_layout_print_chunk (ChicleGridLayout *grid, ChafaTerm *term)
 
         get_approx_canvas_size_px (grid->canvas_config, &target_width, &target_height);
         grid->media_pipeline = chicle_media_pipeline_new (grid->path_queue, target_width, target_height);
+        chicle_media_pipeline_set_want_loader (grid->media_pipeline, FALSE);
+        chicle_media_pipeline_set_want_output (grid->media_pipeline, TRUE);
+        chicle_media_pipeline_set_formatting (grid->media_pipeline,
+                                              grid->canvas_config,
+                                              grid->term_info,
+                                              grid->halign,
+                                              grid->valign,
+                                              grid->tuck);
 
         update_geometry (grid);
     }
