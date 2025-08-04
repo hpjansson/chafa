@@ -20,7 +20,7 @@
 #ifndef __CHICLE_MEDIA_PIPELINE_H__
 #define __CHICLE_MEDIA_PIPELINE_H__
 
-#include <glib.h>
+#include <chafa.h>
 #include "chicle-media-loader.h"
 #include "chicle-path-queue.h"
 
@@ -33,9 +33,21 @@ ChicleMediaPipeline *chicle_media_pipeline_new (ChiclePathQueue *path_queue,
                                                 gint target_height);
 void chicle_media_pipeline_destroy (ChicleMediaPipeline *pipeline);
 
+void chicle_media_pipeline_set_want_loader (ChicleMediaPipeline *pipeline,
+                                            gboolean want_loader);
+void chicle_media_pipeline_set_want_output (ChicleMediaPipeline *pipeline,
+                                            gboolean want_output);
+void chicle_media_pipeline_set_formatting (ChicleMediaPipeline *pipeline,
+                                           ChafaCanvasConfig *canvas_config,
+                                           ChafaTermInfo *term_info,
+                                           ChafaAlign halign,
+                                           ChafaAlign valign,
+                                           ChafaTuck tuck);
+
 gboolean chicle_media_pipeline_pop (ChicleMediaPipeline *pipeline,
                                     gchar **path_out,
                                     ChicleMediaLoader **loader_out,
+                                    GString ***output_out,
                                     GError **error_out);
 
 G_END_DECLS

@@ -812,6 +812,8 @@ run_vertical (ChiclePathQueue *path_queue)
 
     calc_prescale_size_px (&prescale_width, &prescale_height);
     pipeline = chicle_media_pipeline_new (path_queue, prescale_width, prescale_height);
+    chicle_media_pipeline_set_want_loader (pipeline, TRUE);
+    chicle_media_pipeline_set_want_output (pipeline, FALSE);
 
     while (!interrupted_by_user)
     {
@@ -820,7 +822,7 @@ run_vertical (ChiclePathQueue *path_queue)
         GError *error = NULL;
         RunResult result;
 
-        if (!chicle_media_pipeline_pop (pipeline, &path, &media_loader, &error))
+        if (!chicle_media_pipeline_pop (pipeline, &path, &media_loader, NULL, &error))
             break;
 
         if (!media_loader)
