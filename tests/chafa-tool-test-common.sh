@@ -44,7 +44,11 @@ get_supported_loaders () {
 
 [ "x${top_srcdir}" = "x" ] && top_srcdir="${srcdir}/.."
 [ "x${top_builddir}" = "x" ] && top_builddir=".."
-[ "x$1" = "xlong" ] && long="yes"
+
+# Passing "long" as the first argument will run a much longer test
+# cycle with more permutations.
+long="no"
+[ $# -ge 1 ] && [ "x$1" = "xlong" ] && long="yes"
 
 tool="${top_builddir}/tools/chafa/chafa"
 timeout_cmd="$(which timeout)"
