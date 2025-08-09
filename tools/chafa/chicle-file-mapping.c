@@ -51,6 +51,10 @@
 # endif
 #endif
 
+#ifndef MAP_FAILED
+# define MAP_FAILED ((void *) -1)
+#endif
+
 /* MS Windows needs files to be explicitly opened as O_BINARY. However, this
  * flag is not always defined in our cross builds. */
 #ifndef O_BINARY
@@ -476,7 +480,8 @@ map_or_read_file (ChicleFileMapping *file_mapping)
 #endif
         }
 
-        if (file_mapping->data)
+        if (file_mapping->data != NULL
+            && file_mapping->data != MAP_FAILED)
         {
             file_mapping->is_mmapped = TRUE;
         }
