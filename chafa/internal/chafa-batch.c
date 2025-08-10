@@ -25,19 +25,12 @@
 #include "chafa.h"
 #include "internal/chafa-batch.h"
 
-#define DEBUG(x)
-
-#define N_THREADS_OVERSHOOT 2
-
-static GMutex chafa_batch_mutex;
-static GCond chafa_batch_cond;
-static gint chafa_batch_n_threads_waiting;
-static gint chafa_batch_n_threads_active;
+static gint chafa_batch_n_threads_global;
 
 static gint
 allocate_threads (gint max_threads, gint n_batches)
 {
-    gint n_threads_inactive;
+    gint prev_n_threads;
     gint n_threads;
 
     /* GThreadPool supports sharing threads between pools, but there is no
@@ -45,46 +38,39 @@ allocate_threads (gint max_threads, gint n_batches)
      * called from multiple threads, we risk creating N * M workers, which
      * can result in hundreds of threads.
      *
-     * Therefore, we use a mutex to gatekeep the global thread count. We
-     * allocate threads greedily to maximize intra-batch parallelism (good for
-     * animations and few/intermittent stills), with a small overshoot factor
-     * to permute the allocation over time if there are lots of incoming
-     * batches. In the latter case, most batches will eventually be assigned a
-     * single thread each, which is ideal for inter-batch parallelism. */
+     * Therefore, we maintain a global count of active threads and allocate
+     * each caller's allotment from that. The minimum allocation is 1 thread,
+     * in which case the operation is performed in the calling thread. Single-
+     * threaded tasks are allowed to overshoot the maximum, so maximum
+     * concurrency will be N + M - 1, where N is the number of calling threads
+     * and M is the requisition from chafa_get_n_actual_threads(). For typical
+     * workloads, average concurrency will likely be close to M. */
 
-    g_atomic_int_inc (&chafa_batch_n_threads_waiting);
-    g_mutex_lock (&chafa_batch_mutex);
+    prev_n_threads = 0;
+    n_threads = MIN (max_threads, n_batches);
 
-    while (chafa_batch_n_threads_active >= max_threads + N_THREADS_OVERSHOOT)
-        g_cond_wait (&chafa_batch_cond, &chafa_batch_mutex);
+    /* Geometric backoff: The first iteration adds to the global, subsequent
+     * iterations subtract until we're happy. */
 
-    n_threads_inactive = max_threads - chafa_batch_n_threads_active
-        - chafa_batch_n_threads_waiting + 1;
-    n_threads_inactive = MAX (n_threads_inactive, 1);
-    n_threads = MIN (n_threads_inactive, n_batches);
+    for (;;)
+    {
+        gint next_n_global = n_threads
+            + g_atomic_int_add (&chafa_batch_n_threads_global,
+                                n_threads - prev_n_threads);
+        if (next_n_global <= max_threads || n_threads == 1)
+            break;
 
-    chafa_batch_n_threads_active += n_threads;
-    DEBUG (g_printerr ("ChafaBatch active threads: %d (+%d)\n", chafa_batch_n_threads_active, n_threads));
-
-    g_atomic_int_dec_and_test (&chafa_batch_n_threads_waiting);
-    g_mutex_unlock (&chafa_batch_mutex);
+        prev_n_threads = n_threads;
+        n_threads /= 2;
+    }
 
     return n_threads;
 }
 
 static void
-deallocate_threads (gint max_threads, gint n_threads)
+deallocate_threads (gint n_threads)
 {
-    g_mutex_lock (&chafa_batch_mutex);
-    chafa_batch_n_threads_active -= n_threads;
-
-    if (chafa_batch_n_threads_active + n_threads >= max_threads
-        && chafa_batch_n_threads_active < max_threads)
-    {
-        g_cond_broadcast (&chafa_batch_cond);
-    }
-
-    g_mutex_unlock (&chafa_batch_mutex);
+    g_atomic_int_add (&chafa_batch_n_threads_global, -n_threads);
 }
 
 void
@@ -191,5 +177,5 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
     }
 
     g_free (batches);
-    deallocate_threads (max_threads, n_threads);
+    deallocate_threads (n_threads);
 }
