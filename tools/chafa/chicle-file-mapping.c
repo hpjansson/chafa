@@ -66,7 +66,7 @@
 #endif
 
 /* The absolute maximum size file we'll try to open */
-#define FILE_SIZE_MAX ((gint64) 2 * 1024 * 1024 * 1024)
+#define FILE_SIZE_MAX ((gint64) 2 * 1024 * 1024 * 1024 - 2)
 
 /* Streams bigger than this must be cached in a file */
 #define FILE_MEMORY_CACHE_MAX (4 * 1024 * 1024)
