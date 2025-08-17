@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <stdio.h>  /* ctermid */
 #include <sys/types.h>  /* open */
 #include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
