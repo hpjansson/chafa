@@ -1254,7 +1254,7 @@ smol_scale_new_simple (const void *src_pixels,
 {
     SmolScaleCtx *scale_ctx;
 
-    scale_ctx = calloc (sizeof (SmolScaleCtx), 1);
+    scale_ctx = calloc (1,sizeof (SmolScaleCtx));
     smol_scale_init (scale_ctx,
                      src_pixels,
                      src_pixel_type,
@@ -1354,7 +1354,7 @@ smol_scale_new_full (const void *src_pixels,
 {
     SmolScaleCtx *scale_ctx;
 
-    scale_ctx = calloc (sizeof (SmolScaleCtx), 1);
+    scale_ctx = calloc (1, sizeof (SmolScaleCtx));
     smol_scale_init (scale_ctx,
                      src_pixels,
                      src_pixel_type,
