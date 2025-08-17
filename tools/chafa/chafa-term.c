@@ -677,9 +677,9 @@ static ChafaTerm *
 term_new_default (void)
 {
     return term_new_full (NULL,
-                          fileno (stdin),
-                          fileno (stdout),
-                          fileno (stderr));
+                          STDIN_FILENO,
+                          STDOUT_FILENO,
+                          STDERR_FILENO);
 }
 
 static ChafaTerm *
