@@ -29,6 +29,7 @@
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
+#include <glib/gprintf.h>  /* g_vasprintf */
 
 #include "chafa.h"
 #include "chafa-byte-fifo.h"
