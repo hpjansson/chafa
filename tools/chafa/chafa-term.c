@@ -30,6 +30,7 @@
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
 #include <glib/gprintf.h>  /* g_vasprintf */
+#include <glib/gstdio.h>  /* g_open, g_close */
 
 #include "chafa.h"
 #include "chafa-byte-fifo.h"
