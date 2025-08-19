@@ -23,6 +23,7 @@
 #include <sys/stat.h>  /* stat */
 #include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
+#include <glib/gprintf.h>  /* g_vasprintf */
 
 /* Our copy of glib's internal GWakeup */
 #include "chafa-wakeup.h"
