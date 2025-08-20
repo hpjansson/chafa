@@ -129,8 +129,25 @@ read_from_stream (ChafaStreamReader *stream_reader, guchar *out, gint max)
         else if (GetLastError () != ERROR_IO_PENDING)
             result = -1;
 #else /* !G_OS_WIN32 */
-        /* Non-blocking read */
+        /* Do a non-blocking read. We're forced to turn it on and off again:
+         *
+         * - If we're reading from stdin, we can't leave it in non-blocking
+         *   mode, as it'll confuse subsequent shell commands (github#293).
+         *
+         * - We can't do blocking reads because there'd be no way to
+         *   interrupt the read(); GThread doesn't support signals akin to
+         *   pthread_sigqueue(), and we can't use the pthreads API directly
+         *   since GLib may be using a different implementation behind the
+         *   scenes.
+         *
+         * So we have this awkward workaround. There's a chance we get
+         * killed while fd is still non-blocking, but in practice it's
+         * very small. */
+
+        g_unix_set_fd_nonblocking (stream_reader->fd, TRUE, NULL);
         result = read (stream_reader->fd, out, max);
+        g_unix_set_fd_nonblocking (stream_reader->fd, FALSE, NULL);
+
         if (result < 1)
         {
             result = (errno == EAGAIN || errno == EINTR) ? 0 : -1;
@@ -231,10 +248,6 @@ maybe_start_thread (ChafaStreamReader *stream_reader)
     if (stream_reader->thread)
         return;
 
-    /* Reader thread sits in poll() and does non-blocking reads */
-#ifndef G_OS_WIN32
-    g_unix_set_fd_nonblocking (stream_reader->fd, TRUE, NULL);
-#endif
     stream_reader->thread = g_thread_new ("stream-reader", thread_main, stream_reader);
 }
 
