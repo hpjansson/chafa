@@ -66,8 +66,21 @@ init_features (void)
         have_sse41 = TRUE;
 # endif
 
+    /* For popcnt, AMD does not appear to need the SSE 4.2 check, but the Intel
+     * documentation[1] says the following in section 12.12.3:
+     *
+     * > Before an application attempts to use the POPCNT instruction, it
+     * > must check that the processor supports Intel SSE4.2 (if
+     * > CPUID.01H:ECX.SSE4_2[bit 20] = 1) and POPCNT (if
+     * > CPUID.01H:ECX.POPCNT[bit 23] = 1).
+     *
+     * [1] https://software.intel.com/en-us/download/intel-64-and-ia-32-architectures-sdm-combined-volumes-1-2a-2b-2c-2d-3a-3b-3c-3d-and-4
+     *
+     * So we check both. */
+
 # ifdef HAVE_POPCNT_INTRINSICS
-    if (__builtin_cpu_supports ("popcnt"))
+    if (__builtin_cpu_supports ("sse4.2")
+        && __builtin_cpu_supports ("popcnt"))
         have_popcnt = TRUE;
 # endif
 
