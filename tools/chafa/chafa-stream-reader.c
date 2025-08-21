@@ -129,6 +129,8 @@ read_from_stream (ChafaStreamReader *stream_reader, guchar *out, gint max)
         else if (GetLastError () != ERROR_IO_PENDING)
             result = -1;
 #else /* !G_OS_WIN32 */
+        gint saved_errno;
+
         /* Do a non-blocking read. We're forced to turn it on and off again:
          *
          * - If we're reading from stdin, we can't leave it in non-blocking
@@ -146,11 +148,12 @@ read_from_stream (ChafaStreamReader *stream_reader, guchar *out, gint max)
 
         g_unix_set_fd_nonblocking (stream_reader->fd, TRUE, NULL);
         result = read (stream_reader->fd, out, max);
+        saved_errno = errno;
         g_unix_set_fd_nonblocking (stream_reader->fd, FALSE, NULL);
 
         if (result < 1)
         {
-            result = (errno == EAGAIN || errno == EINTR) ? 0 : -1;
+            result = (saved_errno == EAGAIN || saved_errno == EINTR) ? 0 : -1;
         }
 #endif
     }
