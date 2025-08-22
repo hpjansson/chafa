@@ -57,7 +57,7 @@ fetch_canvas_pixel_block (const ChafaPixel *src_image, gint src_width,
 }
 
 static void
-calc_colors_plain (const ChafaPixel *block, ChafaColorAccum *accums, const guint8 *cov)
+extract_cell_mean_colors_plain (const ChafaPixel *block, ChafaColorAccum *accums, const guint8 *cov)
 {
     const guint8 *in_u8 = (const guint8 *) block;
     gint i;
@@ -82,14 +82,14 @@ chafa_work_cell_get_mean_colors_for_symbol (const ChafaWorkCell *wcell, const Ch
 
 #ifdef HAVE_AVX2_INTRINSICS
     if (chafa_have_avx2 ())
-        calc_colors_avx2 (wcell->pixels, accums, sym->mask_u32);
+        chafa_extract_cell_mean_colors_avx2 (wcell->pixels, accums, sym->mask_u32);
     else
 #elif defined(HAVE_MMX_INTRINSICS)
     if (chafa_have_mmx ())
-        calc_colors_mmx (wcell->pixels, accums, covp);
+        chafa_extract_cell_mean_colors_mmx (wcell->pixels, accums, covp);
     else
 #endif
-        calc_colors_plain (wcell->pixels, accums, covp);
+        extract_cell_mean_colors_plain (wcell->pixels, accums, covp);
 
     if (sym->fg_weight > 1)
         chafa_color_accum_div_scalar (&accums [1], sym->fg_weight);

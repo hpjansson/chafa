@@ -207,18 +207,18 @@ gint *chafa_gen_noise_matrix (gdouble magnitude);
 /* Math stuff */
 
 #ifdef HAVE_MMX_INTRINSICS
-void calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov);
+void chafa_extract_cell_mean_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov);
 #endif
 
 #ifdef HAVE_SSE41_INTRINSICS
-gint calc_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov) G_GNUC_PURE;
+gint chafa_calc_cell_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov);
 #endif
 
 #ifdef HAVE_AVX2_INTRINSICS
-gint calc_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
-                      const guint32 *sym_mask_u32) G_GNUC_PURE;
-void calc_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
-                       const guint32 *sym_mask_u32);
+gint chafa_calc_cell_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
+                                 const guint32 *sym_mask_u32);
+void chafa_extract_cell_mean_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
+                                          const guint32 *sym_mask_u32);
 void chafa_color_accum_div_scalar_avx2 (ChafaColorAccum *accum, guint16 divisor);
 #endif
 

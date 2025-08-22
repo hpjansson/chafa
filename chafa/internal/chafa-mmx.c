@@ -24,7 +24,7 @@
 #include "internal/chafa-private.h"
 
 void
-calc_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov)
+chafa_extract_cell_mean_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov)
 {
     __m64 accum [2] = { 0 };
     const guint32 *u32p0 = (const guint32 *) pixels;

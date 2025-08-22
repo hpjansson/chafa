@@ -189,7 +189,7 @@ eval_symbol_colors_wide (ChafaCanvas *canvas, ChafaWorkCell *wcell_a, ChafaWorkC
 }
 
 static gint
-calc_error_plain (const ChafaPixel *block, const ChafaColorPair *color_pair, const guint8 *cov)
+calc_cell_error_plain (const ChafaPixel *block, const ChafaColorPair *color_pair, const guint8 *cov)
 {
     gint error = 0;
     gint i;
@@ -243,15 +243,15 @@ eval_symbol_error (const ChafaWorkCell *wcell,
 
 #ifdef HAVE_AVX2_INTRINSICS
     if (chafa_have_avx2 ())
-        error = calc_error_avx2 (wcell->pixels, &pair, sym->mask_u32);
+        error = chafa_calc_cell_error_avx2 (wcell->pixels, &pair, sym->mask_u32);
     else
 #endif
 #ifdef HAVE_SSE41_INTRINSICS
     if (chafa_have_sse41 ())
-        error = calc_error_sse41 (wcell->pixels, &pair, covp);
+        error = chafa_calc_cell_error_sse41 (wcell->pixels, &pair, covp);
     else
 #endif
-        error = calc_error_plain (wcell->pixels, &pair, covp);
+        error = calc_cell_error_plain (wcell->pixels, &pair, covp);
 
     eval->error = error;
 }

@@ -37,8 +37,8 @@
 #endif
 
 gint
-calc_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
-                 const guint32 *sym_mask_u32)
+chafa_calc_cell_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
+                            const guint32 *sym_mask_u32)
 {
     __m256i err_8x_u32 = { 0 };
     __m128i err_4x_u32;
@@ -81,8 +81,8 @@ calc_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *color_pair,
 }
 
 void
-calc_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
-                  const guint32 *sym_mask_u32)
+chafa_extract_cell_mean_colors_avx2 (const ChafaPixel *pixels, ChafaColorAccum *accums_out,
+                                     const guint32 *sym_mask_u32)
 {
     const __m128i *pixels_4x_p = (const __m128i *) pixels;
     const __m128i *sym_mask_4x_p = (const __m128i *) sym_mask_u32;
