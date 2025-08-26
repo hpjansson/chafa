@@ -48,10 +48,10 @@ chafa_calc_cell_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *colo
     const __m128i *sym_mask_4x_p = (const __m128i *) sym_mask_u32;
     gint i;
 
-    fg_4x_u32 = _mm_set1_epi32 (CHAFA_COLOR8_GET_U32 (color_pair->colors [CHAFA_COLOR_PAIR_FG]));
+    fg_4x_u32 = _mm_set1_epi32 (chafa_color8_to_u32 (color_pair->colors [CHAFA_COLOR_PAIR_FG]));
     fg_4x_u64 = _mm256_cvtepu8_epi16 (fg_4x_u32);
 
-    bg_4x_u32 = _mm_set1_epi32 (CHAFA_COLOR8_GET_U32 (color_pair->colors [CHAFA_COLOR_PAIR_BG]));
+    bg_4x_u32 = _mm_set1_epi32 (chafa_color8_to_u32 (color_pair->colors [CHAFA_COLOR_PAIR_BG]));
     bg_4x_u64 = _mm256_cvtepu8_epi16 (bg_4x_u32);
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS / 4; i++)

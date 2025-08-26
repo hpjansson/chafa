@@ -99,9 +99,9 @@ quantize_pixel (const ChafaPalette *palette, ChafaColorSpace color_space,
     /* Sixel color resolution is only slightly less than 7 bits per channel,
      * so eliminate the low-order bits to get better hash performance. Also
      * mask out the alpha channel. */
-    CHAFA_COLOR8_SET_U32 (cached_color, CHAFA_COLOR8_GET_U32 (color) & GUINT32_FROM_BE (0xfefefe00));
+    cached_color = chafa_color8_from_u32 (chafa_color8_to_u32 (color) & GUINT32_FROM_BE (0xfefefe00));
 
-    index = chafa_color_hash_lookup (color_hash, CHAFA_COLOR8_GET_U32 (cached_color));
+    index = chafa_color_hash_lookup (color_hash, chafa_color8_to_u32 (cached_color));
 
     if (index < 0)
     {
@@ -116,7 +116,7 @@ quantize_pixel (const ChafaPalette *palette, ChafaColorSpace color_space,
 
         /* Don't insert transparent pixels, since color hash does not store transparency */
         if (index != chafa_palette_get_transparent_index (palette))
-            chafa_color_hash_replace (color_hash, CHAFA_COLOR8_GET_U32 (cached_color), index);
+            chafa_color_hash_replace (color_hash, chafa_color8_to_u32 (cached_color), index);
     }
 
     return index;

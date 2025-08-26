@@ -31,9 +31,6 @@ G_BEGIN_DECLS
 
 #define CHAFA_PALETTE_INDEX_MAX 259
 
-#define CHAFA_COLOR8_GET_U32(col) (*((const guint32 *) (col).ch))
-#define CHAFA_COLOR8_SET_U32(col, u32) (*((guint32 *) (col).ch) = (u32))
-
 /* Color space agnostic */
 typedef struct
 {
@@ -81,13 +78,29 @@ chafa_color8_store_to_rgba8 (ChafaColor col, gpointer p)
 }
 
 static inline ChafaColor
+chafa_color8_from_u32 (guint32 u32)
+{
+    ChafaColorConv cc;
+    cc.u.u32 = u32;
+    return cc.u.col;
+}
+
+static inline guint32
+chafa_color8_to_u32 (ChafaColor col)
+{
+    ChafaColorConv cc;
+    cc.u.col = col;
+    return cc.u.u32;
+}
+
+static inline ChafaColor
 chafa_color_average_2 (ChafaColor color_a, ChafaColor color_b)
 {
     ChafaColor avg = { 0 };
 
-    CHAFA_COLOR8_SET_U32 (avg,
-        ((CHAFA_COLOR8_GET_U32 (color_a) >> 1) & 0x7f7f7f7f)
-        + ((CHAFA_COLOR8_GET_U32 (color_b) >> 1) & 0x7f7f7f7f));
+    avg = chafa_color8_from_u32 (
+        ((chafa_color8_to_u32 (color_a) >> 1) & 0x7f7f7f7f)
+        + ((chafa_color8_to_u32 (color_a) >> 1) & 0x7f7f7f7f));
 
     return avg;
 }

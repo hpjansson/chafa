@@ -26,19 +26,18 @@
 gint
 chafa_calc_cell_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov)
 {
-    const guint32 *u32p0 = (const guint32 *) pixels;
     guint32 cpair_u32 [2];
     __m128i err = { 0 };
     gint i;
 
-    memcpy (&cpair_u32 [0], color_pair->colors [0].ch, sizeof (guint32));
-    memcpy (&cpair_u32 [1], color_pair->colors [1].ch, sizeof (guint32));
+    cpair_u32 [0] = chafa_color8_to_u32 (color_pair->colors [0]);
+    cpair_u32 [1] = chafa_color8_to_u32 (color_pair->colors [1]);
 
     for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
     {
         __m128i t0, t1, t;
 
-        t0 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (u32p0 [i]));
+        t0 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (chafa_color8_to_u32 (pixels [i].col)));
         t1 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (cpair_u32 [cov [i]]));
 
         t = t0 - t1;

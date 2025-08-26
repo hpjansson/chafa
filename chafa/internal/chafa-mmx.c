@@ -27,7 +27,6 @@ void
 chafa_extract_cell_mean_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *accums_out, const guint8 *cov)
 {
     __m64 accum [2] = { 0 };
-    const guint32 *u32p0 = (const guint32 *) pixels;
     __m64 m64b;
     gint i;
 
@@ -39,7 +38,7 @@ chafa_extract_cell_mean_colors_mmx (const ChafaPixel *pixels, ChafaColorAccum *a
         __m64 m64a;
 
         m64p1 = &accum [cov [i]];
-        m64a = _mm_cvtsi32_si64 (u32p0 [i]);
+        m64a = _mm_cvtsi32_si64 (chafa_color8_to_u32 (pixels [i].col));
         m64a = _mm_unpacklo_pi8 (m64a, m64b);
         *m64p1 = _mm_adds_pi16 (*m64p1, m64a);
     }
