@@ -100,7 +100,7 @@ chafa_color_average_2 (ChafaColor color_a, ChafaColor color_b)
 
     avg = chafa_color8_from_u32 (
         ((chafa_color8_to_u32 (color_a) >> 1) & 0x7f7f7f7f)
-        + ((chafa_color8_to_u32 (color_a) >> 1) & 0x7f7f7f7f));
+        + ((chafa_color8_to_u32 (color_b) >> 1) & 0x7f7f7f7f));
 
     return avg;
 }
