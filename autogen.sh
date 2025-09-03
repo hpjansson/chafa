@@ -26,7 +26,7 @@ MY_ECHO=$(which echo)
         DIE=1
 }
 
-(libtoolize --version) < /dev/null > /dev/null 2>&1 || {
+(libtoolize --version || glibtoolize --version) < /dev/null > /dev/null 2>&1 || {
         MISSING_TOOLS="${MISSING_TOOLS}libtool "
         DIE=1
 }
@@ -71,7 +71,9 @@ fi
 am_opt="--include-deps --add-missing"
 
 ${MY_ECHO} "Running libtoolize..."
-libtoolize --force --copy
+
+LIBTOOLIZE=$(which libtoolize glibtoolize 2>/dev/null | head -n1)
+${LIBTOOLIZE} --force --copy
 
 GTKDOCIZE=$(which gtkdocize 2>/dev/null)
 
