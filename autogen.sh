@@ -16,6 +16,10 @@ MISSING_TOOLS=
 MY_ECHO=$(which echo)
 [ x$MY_ECHO = x ] && MY_ECHO=echo
 
+SGR0=$(tput sgr0 2>/dev/null)
+SETAF1=$(tput setaf 1 2>/dev/null)
+SETAF3=$(tput setaf 3 2>/dev/null)
+
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
         MISSING_TOOLS="${MISSING_TOOLS}autoconf "
         DIE=1
@@ -38,8 +42,8 @@ MY_ECHO=$(which echo)
 
 if test "$DIE" -eq 1; then
         ${MY_ECHO}
-        ${MY_ECHO} -e "Missing mandatory tools:\e[1;31m $MISSING_TOOLS"
-        ${MY_ECHO} -e "\e[0m"
+        ${MY_ECHO} "Missing mandatory tools:${SETAF1} $MISSING_TOOLS"
+        ${MY_ECHO} "${SGR0}"
         ${MY_ECHO} "These are required for building Chafa from its git repository."
         ${MY_ECHO} "You should be able to install them using your operating system's"
         ${MY_ECHO} "package manager (apt-get, yum, zypper or similar). Alternately"
@@ -78,8 +82,8 @@ ${LIBTOOLIZE} --force --copy
 GTKDOCIZE=$(which gtkdocize 2>/dev/null)
 
 if test -z $GTKDOCIZE; then
-        ${MY_ECHO} -e "Missing optional tool:\e[1;33m gtk-doc"
-        ${MY_ECHO} -e "\e[0m"
+        ${MY_ECHO} "Missing optional tool:${SETAF3} gtk-doc"
+        ${MY_ECHO} "${SGR0}"
         ${MY_ECHO} "Without this, no developer documentation will be generated."
         ${MY_ECHO}
         rm -f gtk-doc.make

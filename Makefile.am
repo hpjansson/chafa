@@ -1,5 +1,9 @@
 SUBDIRS = chafa docs examples libnsgif lodepng tools tests
 
+SGR0=$$(tput sgr0 2>/dev/null)
+SETAF9=$$(tput setaf 9 2>/dev/null)
+SETAF11=$$(tput setaf 11 2>/dev/null)
+
 EXTRA_DIST = \
 	HACKING \
 	README.md \
@@ -16,6 +20,6 @@ all-local:
 	@echo --- Success! You can now run tools/chafa/chafa, or install everything
 	@echo --- using "make install" or "sudo make install".
 	@echo ---
-	@echo -e '--- \e[0;91mNOTE:\e[0m You may have to run \e[0;93msudo ldconfig\e[0m after installing.'
+	@echo --- ${SETAF9}NOTE:${SGR0} You may have to run ${SETAF11}msudo ldconfig${SGR0} after installing.
 	@echo ---
 	@echo
