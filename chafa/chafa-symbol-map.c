@@ -260,7 +260,7 @@ bitmap_to_argb (guint64 bitmap, guint8 *argb, gint rowstride)
             guint32 *p32 = (guint32 *) p;
 
             /* Set = 0xffffffff, clear = 0x00000000 */
-            *p32 = (-(guint32) ((bitmap >> 63) & 1));
+            *p32 = ((guint32) -(gint64) ((bitmap >> 63) & 1));
             p += 4;
             bitmap <<= 1;
         }
