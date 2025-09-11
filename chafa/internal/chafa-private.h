@@ -201,8 +201,7 @@ void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasConfig *src);
 
-gint *chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude);
-gint *chafa_gen_noise_matrix (gdouble magnitude);
+gint *chafa_gen_bayer_matrix (gint matrix_size, gfloat magnitude);
 
 /* Math stuff */
 

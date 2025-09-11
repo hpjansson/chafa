@@ -224,7 +224,7 @@ static const unsigned char blue_noise_src [CHAFA_NOISE_TEXTURE_ARRAY_LEN] =
 };
 
 gint *
-chafa_gen_noise_matrix (gdouble magnitude)
+chafa_gen_noise_matrix (gfloat magnitude)
 {
     gint *matrix;
     gint i;
@@ -233,7 +233,7 @@ chafa_gen_noise_matrix (gdouble magnitude)
 
     for (i = 0; i < CHAFA_NOISE_TEXTURE_ARRAY_LEN; i++)
     {
-        matrix [i] = ((gdouble) blue_noise_src [i] - 128.0) * magnitude + 0.5;
+        matrix [i] = ((gfloat) blue_noise_src [i] - 128.0f) * magnitude + 0.5f;
     }
 
     return matrix;

@@ -201,10 +201,10 @@ fill_matrix_r (gint *matrix, gint matrix_size, gint sub_size, gint x, gint y, gi
 }
 
 static void
-fill_matrix (gint *matrix, gint matrix_size, gdouble magnitude)
+fill_matrix (gint *matrix, gint matrix_size, gfloat magnitude)
 {
     gint maxval = matrix_size * matrix_size;
-    gdouble maxval_d = maxval;
+    gfloat maxval_f = maxval;
     gint i;
 
     fill_matrix_r (matrix, matrix_size, matrix_size, 0, 0, 0, 1);
@@ -213,12 +213,12 @@ fill_matrix (gint *matrix, gint matrix_size, gdouble magnitude)
 
     for (i = 0; i < matrix_size * matrix_size; i++)
     {
-        matrix [i] = ((gdouble) matrix [i] - maxval_d / 2.0) * (256.0 / maxval_d) * magnitude + 0.5;
+        matrix [i] = ((gfloat) matrix [i] - maxval_f / 2.0f) * (256.0f / maxval_f) * magnitude + 0.5f;
     }
 }
 
 gint *
-chafa_gen_bayer_matrix (gint matrix_size, gdouble magnitude)
+chafa_gen_bayer_matrix (gint matrix_size, gfloat magnitude)
 {
     gint *matrix;
 

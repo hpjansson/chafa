@@ -209,7 +209,7 @@ draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 static void
 distribute_error (ChafaColorAccum error_in, ChafaColorAccum *error_out_0,
                   ChafaColorAccum *error_out_1, ChafaColorAccum *error_out_2,
-                  ChafaColorAccum *error_out_3, gdouble intensity)
+                  ChafaColorAccum *error_out_3, gfloat intensity)
 {
     gint i;
 

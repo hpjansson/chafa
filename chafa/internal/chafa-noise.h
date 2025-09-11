@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 #define CHAFA_NOISE_TEXTURE_N_PIXELS (CHAFA_NOISE_TEXTURE_DIM * CHAFA_NOISE_TEXTURE_DIM)
 #define CHAFA_NOISE_TEXTURE_ARRAY_LEN (CHAFA_NOISE_TEXTURE_N_PIXELS * CHAFA_NOISE_TEXTURE_N_CHANNELS)
 
-gint *chafa_gen_noise_matrix (gdouble magnitude);
+gint *chafa_gen_noise_matrix (gfloat magnitude);
 
 G_END_DECLS
 
