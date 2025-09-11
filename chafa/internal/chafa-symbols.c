@@ -423,7 +423,7 @@ octant_bits_to_unichar (guint8 octant_bits)
     int data = find_unicode_octant_map_data (octant_bits);
 
     if (data < 0)
-        return (octant_bits + (guint32) data) | 0x1cd00;
+        return (gunichar) (((guint32) (octant_bits + data)) | 0x1cd00);
 
     if (data == 0x00)
         return 0x00a0;
