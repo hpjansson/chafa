@@ -179,9 +179,18 @@ chafa_vec3f32_get_magnitude (const ChafaVec3f32 *v)
 static inline void
 chafa_vec3f32_normalize (ChafaVec3f32 *out, const ChafaVec3f32 *in)
 {
+    gfloat mag;
     gfloat m;
 
-    m = 1.0f / chafa_vec3f32_get_magnitude (in);
+    mag = chafa_vec3f32_get_magnitude (in);
+    if (mag == .0f)
+    {
+        /* Normalize zero-length to (0,0,0) */
+        out->v [0] = out->v [1] = out->v [2] = .0f;
+        return;
+    }
+
+    m = 1.0f / mag;
     out->v [0] = in->v [0] * m;
     out->v [1] = in->v [1] * m;
     out->v [2] = in->v [2] * m;
