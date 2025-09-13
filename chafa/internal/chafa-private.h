@@ -238,6 +238,7 @@ static inline guint64 chafa_slow_pop_count (guint64 v) G_GNUC_UNUSED;
 static inline gint chafa_population_count_u64 (guint64 v) G_GNUC_UNUSED;
 static inline void chafa_population_count_vu64 (const guint64 *vv, gint *vc, gint n) G_GNUC_UNUSED;
 
+__attribute__ ((no_sanitize ("integer")))
 static inline guint64
 chafa_slow_pop_count (guint64 v)
 {
