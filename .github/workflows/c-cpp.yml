@@ -38,21 +38,23 @@ jobs:
       working-directory: ./build
       run: >
         CFLAGS='
-        -g 
-        -O2 
+        -g
+        -O2
         -fsanitize=address,undefined 
         -fsanitize-undefined-trap-on-error 
         -fstack-protector-all 
-        -Werror -Wno-error=unused 
+        -Werror
+        -Wno-error=attributes
         -Wno-error=cast-qual
-        -Wno-error=unused-function 
+        -Wno-error=unused
+        -Wno-error=unused-function
         -Wno-error=unused-macros
-        -Wno-error=unused-parameter 
-        -Wno-error=unused-variable 
-        -Wno-error=unused-const-variable 
-        -Wno-error=unused-value 
-        -Wno-error=comment 
-        -Wno-error=missing-braces' 
+        -Wno-error=unused-parameter
+        -Wno-error=unused-variable
+        -Wno-error=unused-const-variable
+        -Wno-error=unused-value
+        -Wno-error=comment
+        -Wno-error=missing-braces'
         ../autogen.sh --prefix=/usr --enable-gtk-doc --enable-man
         
         make -j4
