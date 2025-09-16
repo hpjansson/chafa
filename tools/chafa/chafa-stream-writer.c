@@ -117,7 +117,7 @@ safe_WriteConsoleA (ChafaStreamWriter *stream_writer, const gchar *data, gsize l
 
 #else /* !G_OS_WIN32 */
 
-static void
+static gboolean
 wait_for_pipe (gint fd)
 {
     GPollFD poll_fds [1];
@@ -127,6 +127,8 @@ wait_for_pipe (gint fd)
     poll_fds [0].revents = 0;
 
     g_poll (poll_fds, 1, -1);
+
+    return (poll_fds [0].revents & (G_IO_HUP | G_IO_ERR)) ? FALSE : TRUE;
 }
 
 static gboolean
@@ -153,9 +155,18 @@ safe_write (gint fd, gconstpointer buf, gsize len)
        {
            if (saved_errno == EAGAIN)
            {
+# ifdef __gnu_hurd__
+               /* On GNU/Hurd we get EAGAIN if the remote end closed the pipe,
+                * and if the pipe is made blocking it simply stalls. This makes
+                * our >&- redirection test fail. Therefore we bail out here
+                * as the least bad option. */
+               goto out;
+# else
                /* It's a nonblocking pipe; wait for it to become ready,
                 * then try again. */
-               wait_for_pipe (fd);
+               if (!wait_for_pipe (fd))
+                   goto out;
+# endif
            }
            else if (saved_errno != EINTR)
            {
