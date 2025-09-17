@@ -902,6 +902,7 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     struct termios saved_termios;
     gboolean termios_changed = FALSE;
 #endif
+    gint printed_len = 0;
 
     if (term->probe_success)
         return TRUE;
@@ -917,13 +918,20 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     ensure_raw_mode_enabled (term, &saved_termios, &termios_changed);
 #endif
 
-    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, -1);
-    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, -1);
-    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS, -1);
-    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX, -1);
-    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX, -1);
-    chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, -1);
+    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, -1);
+    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, -1);
+    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS, -1);
+    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX, -1);
+    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX, -1);
+    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, -1);
     term->probe_attempt = TRUE;
+
+    if (printed_len == 0)
+    {
+        /* Terminal doesn't support any of the probe sequences */
+        term->probe_success = FALSE;
+        return FALSE;
+    }
 
     while ((event = in_sync_pull (term, timeout_ms > 0 ? remain_ms : -1)))
     {
