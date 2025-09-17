@@ -950,7 +950,7 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     {
         /* Terminal doesn't support any of the probe sequences */
         term->probe_success = FALSE;
-        return FALSE;
+        goto out;
     }
 
     while ((event = in_sync_pull (term, timeout_ms > 0 ? remain_ms : -1)))
@@ -968,6 +968,8 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
                 break;
         }
     }
+
+out:
 
 #ifdef HAVE_TERMIOS_H
     restore_termios (term, &saved_termios, &termios_changed);
