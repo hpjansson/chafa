@@ -348,6 +348,21 @@ supplement_seqs (ChafaTermInfo *dest, ChafaTermInfo *src,
         supplement_seq (dest, src, seqs [i]);
 }
 
+static gint
+print_multiple (ChafaTerm *term, const gint *print_seqs)
+{
+    gint n_printed = 0;
+    gint i;
+
+    for (i = 0; print_seqs [i] > -1; i++)
+    {
+        if (chafa_term_print_seq (term, print_seqs [i], -1) > 0)
+            n_printed++;
+    }
+
+    return n_printed;
+}
+
 /* ----------------------- *
  * Internal event handling *
  * ----------------------- */
@@ -902,7 +917,17 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     struct termios saved_termios;
     gboolean termios_changed = FALSE;
 #endif
-    gint printed_len = 0;
+    const gint probe_seqs [] =
+    {
+        CHAFA_TERM_SEQ_QUERY_DEFAULT_FG,
+        CHAFA_TERM_SEQ_QUERY_DEFAULT_BG,
+        CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS,
+        CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX,
+        CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX,
+        CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES,
+        -1
+    };
+    gint n_probes = 0;
 
     if (term->probe_success)
         return TRUE;
@@ -918,15 +943,10 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     ensure_raw_mode_enabled (term, &saved_termios, &termios_changed);
 #endif
 
-    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_FG, -1);
-    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_DEFAULT_BG, -1);
-    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS, -1);
-    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX, -1);
-    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX, -1);
-    printed_len += chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, -1);
+    n_probes = print_multiple (term, probe_seqs);
     term->probe_attempt = TRUE;
 
-    if (printed_len == 0)
+    if (n_probes == 0)
     {
         /* Terminal doesn't support any of the probe sequences */
         term->probe_success = FALSE;
