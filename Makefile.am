@@ -20,6 +20,6 @@ all-local:
 	@echo --- Success! You can now run tools/chafa/chafa, or install everything
 	@echo --- using "make install" or "sudo make install".
 	@echo ---
-	@echo --- ${SETAF9}NOTE:${SGR0} You may have to run ${SETAF11}msudo ldconfig${SGR0} after installing.
+	@echo --- ${SETAF9}NOTE:${SGR0} You may have to run ${SETAF11}sudo ldconfig${SGR0} after installing.
 	@echo ---
 	@echo
