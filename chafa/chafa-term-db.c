@@ -662,7 +662,7 @@ static const TermDef term_def [] =
 
     { TERM_TYPE_TERM, "ghostty", VARIANT_NONE, VERSION_NONE,
       { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM", "xterm-ghostty", 10 },
-        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "ghostty", 0 } ,
+        { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "ghostty", 0 },
         { ENV_OP_INCL, ENV_CMP_ISSET,  "GHOSTTY_BIN_DIR", NULL, 0 } },
       { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
         kitty_seqs, kitty_virt_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE,
