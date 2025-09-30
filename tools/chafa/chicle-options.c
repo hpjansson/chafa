@@ -1723,7 +1723,7 @@ chicle_retire_passthrough_workarounds_tmux (void)
     gboolean result = FALSE;
     gchar *standard_output = NULL;
     gchar *standard_error = NULL;
-    gchar *cmd;
+    gchar *cmd = NULL;
     gint wait_status = -1;
 
     if (!tmux_allow_passthrough_is_changed)
@@ -1748,6 +1748,7 @@ chicle_retire_passthrough_workarounds_tmux (void)
         tmux_allow_passthrough_is_changed = FALSE;
     }
 
+    g_free (cmd);
     g_free (standard_output);
     g_free (standard_error);
     return result;
