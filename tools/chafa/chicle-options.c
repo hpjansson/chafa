@@ -248,10 +248,11 @@ print_summary (void)
     "      --fit-width    Fit images to view's width, possibly exceeding its height.\n"
     "      --font-ratio=W/H  Target font's width/height ratio. Can be specified as\n"
     "                     a real number or a fraction. Defaults to 1/2.\n"
-    "  -g, --grid=CxR     Lay out images in a grid of CxR columns/rows per screenful.\n"
+    "      --grid=CxR     Lay out images in a grid of CxR columns/rows per screenful.\n"
     "                     C or R may be omitted, e.g. \"--grid 4\". Can be \"auto\".\n"
-    "  -l, --label=BOOL   Labeling [on, off]. Prints filenames below images. Defaults\n"
-    "                     to off.\n"
+    "  -g                 Alias for \"--grid auto\".\n"
+    "      --label=BOOL   Labeling [on, off]. Filenames below images. Default off.\n"
+    "  -l                 Alias for \"--label on\".\n"
     "      --link=BOOL    Link labels [auto, on, off]. Turns labels into clickable\n"
     "                     hyperlinks. Use with \"-l on\". Defaults to auto.\n"
     "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
@@ -336,9 +337,10 @@ print_summary (void)
 
     "\nExamples:\n"
 
-    "  $ chafa --scale max in.jpg                         # As big as will fit\n"
-    "  $ chafa --clear --align mid,mid -d 5 *.gif         # A well-paced slideshow\n"
-    "  $ chafa -f symbols --symbols ascii -c none in.png  # Old-school ASCII art\n\n"
+    "  $ chafa --scale max in.jpg                           # As big as will fit\n"
+    "  $ chafa --clear --align mid,mid -d 5 *.gif           # Centered slideshow\n"
+    "  $ chafa -f symbols --symbols ascii -c none in.png    # Old-school ASCII art\n"
+    "  $ find /usr -type f -print0 | chafa --files0 - -g -l # System images (Unix)\n\n"
 
     "If your OS comes with manual pages, you can type 'man chafa' for more.\n";
 
