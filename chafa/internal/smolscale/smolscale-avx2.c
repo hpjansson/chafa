@@ -145,8 +145,8 @@ precalc_bilinear_array (uint16_t *array,
         first_sample_ofs [1] = (sample_step * (SMOL_SUBPIXEL_MUL - dest_ofs_spx)) / SMOL_SUBPIXEL_MUL;
     }
 
-    first_sample_ofs [2] = (((uint64_t) src_dim_spx * SMOL_BILIN_MULTIPLIER) / SMOL_SUBPIXEL_MUL)
-        + ((sample_step - SMOL_BILIN_MULTIPLIER) / 2)
+    first_sample_ofs [2] = ((((uint64_t) src_dim_spx * SMOL_BILIN_MULTIPLIER * 2) / SMOL_SUBPIXEL_MUL)
+        + sample_step - SMOL_BILIN_MULTIPLIER) / 2
         - sample_step * (1U << n_halvings);
 
     /* Left fringe */
