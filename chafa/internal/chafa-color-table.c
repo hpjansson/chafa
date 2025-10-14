@@ -84,9 +84,9 @@ compare_entries (gconstpointer a, gconstpointer b)
 }
 
 static gint
-scalar_project_vec3i32 (const ChafaVec3i32 *a, const ChafaVec3i32 *b, guint32 b_mul)
+scalar_project_vec3i32 (const ChafaVec3i32 *a, const ChafaVec3i32 *b, gint32 b_mul)
 {
-    guint64 d = chafa_vec3i32_dot_64 (a, b);
+    gint64 d = chafa_vec3i32_dot_64 (a, b);
 
     /* I replaced the following (a division, three multiplications and
      * two additions) with a multiplication and a right shift:
@@ -104,11 +104,11 @@ color_diff (guint32 a, guint32 b)
     gint diff;
     gint n;
 
-    n = (gint) ((b & 0xff) - (gint) (a & 0xff)) * FIXED_MUL;
+    n = ((gint) (b & 0xff) - (gint) (a & 0xff)) * FIXED_MUL;
     diff = n * n;
-    n = (gint) (((b >> 8) & 0xff) - (gint) ((a >> 8) & 0xff)) * FIXED_MUL;
+    n = ((gint) ((b >> 8) & 0xff) - (gint) ((a >> 8) & 0xff)) * FIXED_MUL;
     diff += n * n;
-    n = (gint) (((b >> 16) & 0xff) - (gint) ((a >> 16) & 0xff)) * FIXED_MUL;
+    n = ((gint) ((b >> 16) & 0xff) - (gint) ((a >> 16) & 0xff)) * FIXED_MUL;
     diff += n * n;
 
     return diff;

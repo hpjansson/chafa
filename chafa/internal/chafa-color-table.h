@@ -46,7 +46,7 @@ typedef struct
     ChafaVec3i32 eigenvectors [2];
     ChafaVec3i32 average;
 
-    guint eigen_mul [2];
+    gint eigen_mul [2];
 }
 ChafaColorTable;
 
