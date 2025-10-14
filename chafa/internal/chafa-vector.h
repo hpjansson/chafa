@@ -81,7 +81,9 @@ chafa_vec3i32_dot_32 (const ChafaVec3i32 *v, const ChafaVec3i32 *u)
 static inline gint64
 chafa_vec3i32_dot_64 (const ChafaVec3i32 *v, const ChafaVec3i32 *u)
 {
-    return v->v [0] * u->v [0] + v->v [1] * u->v [1] + v->v [2] * u->v [2];
+    return (gint64) v->v [0] * u->v [0]
+        + (gint64) v->v [1] * u->v [1]
+        + (gint64) v->v [2] * u->v [2];
 }
 
 static inline void
