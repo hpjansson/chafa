@@ -858,7 +858,7 @@ gif_internal_decode_frame(gif_animation *gif,
                                                 burst_bytes = x;
                                         }
                                         x -= burst_bytes;
-                                        while (burst_bytes-- > 0) {
+                                        while (burst_bytes > 0) {
                                                 colour = *--stack_pos;
                                                 if (((gif->frames[frame].transparency) &&
                                                      (colour != gif->frames[frame].transparency_index)) ||
@@ -866,6 +866,7 @@ gif_internal_decode_frame(gif_animation *gif,
                                                         *frame_scanline = colour_table[colour];
                                                 }
                                                 frame_scanline++;
+                                                burst_bytes--;
                                         }
                                 } else {
                                         res = lzw_decode(gif->lzw_ctx, &stack_pos);
