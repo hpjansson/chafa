@@ -781,7 +781,10 @@ run_watch (const gchar *filename)
 
             media_loader = chicle_media_loader_new (filename, prescale_width, prescale_height, NULL);
             if (media_loader)
+            {
                 run_generic (filename, media_loader, TRUE, is_first_frame);
+                chicle_media_loader_destroy (media_loader);
+            }
             is_first_frame = FALSE;
 
             g_usleep (10000);
@@ -825,6 +828,8 @@ run_vertical (ChiclePathQueue *path_queue)
         if (!chicle_media_pipeline_pop (pipeline, &path, &media_loader, NULL, &error))
             break;
 
+        n_processed++;
+
         if (!media_loader)
         {
             if (error)
@@ -837,12 +842,11 @@ run_vertical (ChiclePathQueue *path_queue)
             }
 
             g_free (path);
+            n_failed++;
             continue;
         }
 
-        result = run_generic (path, media_loader, n_processed > 0 ? FALSE : TRUE, TRUE);
-
-        n_processed++;
+        result = run_generic (path, media_loader, n_processed > 1 ? FALSE : TRUE, TRUE);
         if (result == FILE_FAILED)
             n_failed++;
 
