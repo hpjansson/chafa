@@ -13,6 +13,17 @@ run_cmd_single_file () {
     sh -c "$cmd" || exit $?
 }
 
+run_cmd_multiple_files () {
+    cmd="$1"; shift
+    flist=
+    for fname in $*; do
+        flist="$flist ${top_srcdir}/tests/data/$1"; shift
+    done
+    cmd="$cmd $flist >/dev/null"
+    echo "$cmd" >&2
+    sh -c "$cmd"
+}
+
 run_cmd_all_safe_files () {
     # Only run on files for which we're guaranteed to have loaders.
     # '$dir/*.{gif,png,xwd}' is a Bash-ism, so we can't use it.

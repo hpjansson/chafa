@@ -34,7 +34,8 @@ TOOL_CHECKS = \
 	chafa-tool-grid-test.sh \
 	chafa-tool-loader-test.sh \
 	chafa-tool-options-test.sh \
-	chafa-tool-pipe-test.sh
+	chafa-tool-pipe-test.sh \
+	chafa-tool-retval-test.sh
 else
 TOOL_CHECKS =
 endif
