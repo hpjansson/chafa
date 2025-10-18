@@ -53,6 +53,12 @@ chafa_SOURCES += \
 	chicle-avif-loader.h
 endif
 
+if HAVE_HEIF
+chafa_SOURCES += \
+	chicle-heif-loader.c \
+	chicle-heif-loader.h
+endif
+
 if HAVE_JPEG
 chafa_SOURCES += \
 	chicle-jpeg-loader.c \
@@ -89,11 +95,11 @@ endif
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(JXL_CFLAGS) $(AVIF_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(JXL_CFLAGS) $(AVIF_CFLAGS) $(HEIF_CFLAGS) $(FREETYPE_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(JXL_LIBS) $(AVIF_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la -lm $(WIN32_LDADD)
+chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(JXL_LIBS) $(AVIF_LIBS) $(HEIF_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la -lm $(WIN32_LDADD)
 
 # On Microsoft Windows, we compile a resource file with windres and link it in.
 # This enables UTF-8 support in filenames, environment variables, etc.

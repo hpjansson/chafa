@@ -11,6 +11,7 @@ EXTRA_DIST = \
 	noise-32x32.xwd \
 	pixel.avif \
 	pixel.gif \
+	pixel.heif \
 	pixel.jpeg \
 	pixel.jxl \
 	pixel.png \

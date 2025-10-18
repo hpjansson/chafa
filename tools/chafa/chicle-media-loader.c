@@ -41,6 +41,7 @@
 #include "chicle-webp-loader.h"
 #include "chicle-avif-loader.h"
 #include "chicle-jxl-loader.h"
+#include "chicle-heif-loader.h"
 
 typedef enum
 {
@@ -54,6 +55,7 @@ typedef enum
     LOADER_TYPE_AVIF,
     LOADER_TYPE_SVG,
     LOADER_TYPE_JXL,
+    LOADER_TYPE_HEIF,
 
     LOADER_TYPE_LAST
 }
@@ -205,6 +207,21 @@ loader_vtable [LOADER_TYPE_LAST] =
         (gboolean (*)(gpointer)) chicle_jxl_loader_goto_next_frame,
         (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) chicle_jxl_loader_get_frame_data,
         (gint (*) (gpointer)) chicle_jxl_loader_get_frame_delay
+    },
+#endif
+#ifdef HAVE_HEIF
+    /* Due to its complexity and broad format support, libheif should run last */
+    [LOADER_TYPE_HEIF] =
+    {
+        "HEIF",
+        (void (*)(void)) chicle_heif_loader_new_from_mapping,
+        (gpointer (*)(gconstpointer)) NULL,
+        (void (*)(gpointer)) chicle_heif_loader_destroy,
+        (gboolean (*)(gpointer)) chicle_heif_loader_get_is_animation,
+        (void (*)(gpointer)) chicle_heif_loader_goto_first_frame,
+        (gboolean (*)(gpointer)) chicle_heif_loader_goto_next_frame,
+        (gconstpointer (*) (gpointer, gpointer, gpointer, gpointer, gpointer)) chicle_heif_loader_get_frame_data,
+        (gint (*) (gpointer)) chicle_heif_loader_get_frame_delay
     },
 #endif
 };

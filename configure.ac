@@ -135,6 +135,18 @@ AS_IF([test "$with_tools" != no], [
       with_avif=no)])
   AS_IF([test "$with_avif" != no], [AC_DEFINE([HAVE_AVIF], [1], [Define if we have AVIF support.])])
 
+  dnl libheif (optional)
+  AC_ARG_WITH(heif,
+    [AS_HELP_STRING([--without-heif], [don't build HEIF loader [default=on]])],
+    ,
+    with_heif=yes)
+  AS_IF([test "$with_heif" != no], [
+    PKG_CHECK_MODULES(HEIF, [libheif],,
+      missing_rpms="$missing_rpms libheif-devel"
+      missing_debs="$missing_debs libheif-dev"
+      with_heif=no)])
+  AS_IF([test "$with_heif" != no], [AC_DEFINE([HAVE_HEIF], [1], [Define if we have HEIF support.])])
+
   dnl libjpeg (optional)
   AC_ARG_WITH(jpeg,
     [AS_HELP_STRING([--without-jpeg], [don't build JPEG loader [default=on]])],
@@ -199,6 +211,7 @@ AM_CONDITIONAL([HAVE_SVG], [test "$with_tools" != no -a "$with_svg" != no])
 AM_CONDITIONAL([HAVE_TIFF], [test "$with_tools" != no -a "$with_tiff" != no])
 AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 AM_CONDITIONAL([HAVE_AVIF], [test "$with_tools" != no -a "$with_avif" != no])
+AM_CONDITIONAL([HAVE_HEIF], [test "$with_tools" != no -a "$with_heif" != no])
 AM_CONDITIONAL([HAVE_JXL], [test "$with_tools" != no -a "$with_jxl" != no])
 
 # Used by gtk-doc's fixxref.
@@ -531,6 +544,7 @@ colorize_vars="
   with_webp
   with_jxl
   with_avif
+  with_heif
 "
 
 dnl Only use colors if the terminal supports the aixterm-style bright ones (16 total).
@@ -588,6 +602,7 @@ echo >&AS_MESSAGE_FD "Build command-line tool ..... $pwith_tools"
 if test "x$with_tools" != xno; then
 echo >&AS_MESSAGE_FD "With AVIF loader ............ $pwith_avif"
 echo >&AS_MESSAGE_FD "With GIF loader ............. $pyes (internal)"
+echo >&AS_MESSAGE_FD "With HEIF loader ............ $pwith_heif"
 echo >&AS_MESSAGE_FD "With JPEG loader ............ $pwith_jpeg"
 echo >&AS_MESSAGE_FD "With PNG loader ............. $pyes (internal)"
 echo >&AS_MESSAGE_FD "With QOI loader ............. $pyes (internal)"
