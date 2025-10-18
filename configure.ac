@@ -336,7 +336,7 @@ AS_IF([test "$ax_cv_gcc_check_x86_cpu_init" = "yes" && test "$ax_cv_gcc_check_x8
 dnl Check for working MMX intrinsics
 AC_MSG_CHECKING(for working MMX intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -mmmx"
+CFLAGS="-mmmx ${CFLAGS}"
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
                 [[#include <mmintrin.h>]],
@@ -351,7 +351,7 @@ AM_CONDITIONAL([HAVE_MMX_INTRINSICS], [test "$ac_cv_mmx_intrinsics" = "yes"])
 dnl Check for working SSE intrinsics
 AC_MSG_CHECKING(for working SSE 4.1 intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -msse4.1"
+CFLAGS="-msse4.1 ${CFLAGS}"
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <smmintrin.h>]],
@@ -366,7 +366,7 @@ AM_CONDITIONAL([HAVE_SSE41_INTRINSICS], [test "$ac_cv_sse41_intrinsics" = "yes"]
 dnl Check for working AVX2 intrinsics
 AC_MSG_CHECKING(for working AVX2 intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -mavx2"
+CFLAGS="-mavx2 ${CFLAGS}"
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <immintrin.h>]],
@@ -381,7 +381,7 @@ AM_CONDITIONAL([HAVE_AVX2_INTRINSICS], [test "$ac_cv_avx2_intrinsics" = "yes"])
 dnl Check for working 64bit popcnt intrinsics
 AC_MSG_CHECKING(for working 64bit popcnt intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -mpopcnt"
+CFLAGS="-mpopcnt ${CFLAGS}"
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <stdint.h>
@@ -396,7 +396,7 @@ AC_MSG_RESULT(${ac_cv_popcnt64_intrinsics})
 dnl Check for working 32bit popcnt intrinsics
 AC_MSG_CHECKING(for working 32bit popcnt intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -mpopcnt"
+CFLAGS="-mpopcnt ${CFLAGS}"
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM(
 		[[#include <stdint.h>
