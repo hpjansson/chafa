@@ -380,6 +380,8 @@ chicle_path_queue_try_pop (ChiclePathQueue *path_queue)
             break;
     }
 
+    if (path)
+        path_queue->n_processed++;
     return path;
 }
 
@@ -400,7 +402,6 @@ chicle_path_queue_pop (ChiclePathQueue *path_queue)
         chicle_path_queue_wait (path_queue);
     }
 
-    path_queue->n_processed++;
     return path;
 }
 
