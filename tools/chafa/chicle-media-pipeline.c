@@ -172,7 +172,11 @@ fill_pipeline (ChicleMediaPipeline *pipeline)
         if (slot->path)
             break;
 
-        slot->path = chicle_path_queue_pop (pipeline->path_queue);
+        /* Get at least one path, more if available. If we get NULL from a
+         * blocking pop, the path queue is done. */
+        slot->path = chicle_path_queue_try_pop (pipeline->path_queue);
+        if (!slot->path && i == 0)
+            slot->path = chicle_path_queue_pop (pipeline->path_queue);
         if (!slot->path)
             break;
 
@@ -230,7 +234,6 @@ wait_for_next (ChicleMediaPipeline *pipeline,
                 g_error_free (slot->error);
 
             memset (slot, 0, sizeof (*slot));
-            fill_pipeline (pipeline);
             pipeline->first_slot++;
             result = TRUE;
             break;
