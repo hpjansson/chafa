@@ -41,6 +41,7 @@ gchar *chicle_path_queue_pop (ChiclePathQueue *path_queue);
 gint chicle_path_queue_get_length (ChiclePathQueue *path_queue);
 gboolean chicle_path_queue_is_empty (ChiclePathQueue *path_queue);
 gint chicle_path_queue_get_n_processed (ChiclePathQueue *path_queue);
+gboolean chicle_path_queue_have_stdin_source (ChiclePathQueue *path_queue);
 
 G_END_DECLS
 

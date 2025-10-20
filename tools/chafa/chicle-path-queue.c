@@ -70,6 +70,8 @@ struct ChiclePathQueue
     ChafaStreamReader *current_reader;
     gchar *current_path_token;
     gint n_processed;
+
+    guint have_stdin_source : 1;
 };
 
 static void
@@ -93,6 +95,13 @@ path_source_destroy (PathSource *src)
     }
 
     g_free (src);
+}
+
+static gboolean
+path_source_is_stdin (PathSource *src)
+{
+    return (src->type == PATH_SOURCE_STREAM
+            && !strcmp (src->data, "-")) ? TRUE : FALSE;
 }
 
 static void
@@ -147,7 +156,7 @@ open_current_stream (ChiclePathQueue *path_queue)
     g_assert (path_queue->current_reader == NULL);
     g_assert (path_queue->current_src->type == PATH_SOURCE_STREAM);
 
-    fd = !strcmp (path_queue->current_src->data, "-") ? STDIN_FILENO
+    fd = path_source_is_stdin (path_queue->current_src) ? STDIN_FILENO
         : open (path_queue->current_src->data, O_RDONLY);
 
     if (fd >= 0)
@@ -320,6 +329,9 @@ chicle_path_queue_push_stream (ChiclePathQueue *path_queue, const gchar *stream_
     src->separator [separator_len] = '\0';
 
     g_queue_push_tail (path_queue->queue, src);
+
+    if (path_source_is_stdin (src))
+        path_queue->have_stdin_source = TRUE;
 }
 
 void
@@ -411,4 +423,10 @@ gint
 chicle_path_queue_get_n_processed (ChiclePathQueue *path_queue)
 {
     return path_queue->n_processed;
+}
+
+gboolean
+chicle_path_queue_have_stdin_source (ChiclePathQueue *path_queue)
+{
+    return path_queue->have_stdin_source ? TRUE : FALSE;
 }
