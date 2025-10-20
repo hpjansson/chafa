@@ -230,7 +230,7 @@ pop_stream_path_token (ChiclePathQueue *path_queue)
         result = chafa_stream_reader_read_token (path_queue->current_reader,
                                                  &path_queue->current_path_token,
                                                  PATH_TOKEN_LEN_MAX);
-        if (result > 0)
+        if (result > 0 && !strcmp (path_queue->current_src->separator, "\n"))
         {
             /* If we're separating on \n, handle \r\n by eliminating the \r too */
             if (path_queue->current_path_token [result - 1] == '\r')
