@@ -300,7 +300,7 @@ chicle_path_queue_push_path_list_steal (ChiclePathQueue *path_queue, GList *path
 
 void
 chicle_path_queue_push_stream (ChiclePathQueue *path_queue, const gchar *stream_path,
-                        const gchar *separator, gint separator_len)
+                               const gchar *separator, gint separator_len)
 {
     PathSource *src;
 
