@@ -1896,6 +1896,11 @@ chicle_parse_options (int *argc, char **argv [])
         goto out;
     }
 
+    term = chafa_term_new (NULL,
+                           global_path_queue_n_stdin == 0 ? STDIN_FILENO : -1,
+                           STDOUT_FILENO,
+                           STDERR_FILENO);
+
     /* Parser kludges */
 
     if (options.grid_on && options.grid_width == -1 && options.grid_height == -1)

@@ -926,7 +926,6 @@ proc_init (void)
      * an image. This reduces thread churn and saves a decent amount of CPU. */
     g_thread_pool_set_max_unused_threads (-1);
 
-    term = chafa_term_get_default ();
     global_path_queue = chicle_path_queue_new ();
 }
 
