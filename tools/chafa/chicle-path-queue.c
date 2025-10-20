@@ -205,23 +205,30 @@ destroy_path_source (gpointer data)
 static gboolean
 pop_stream_path_token (ChiclePathQueue *path_queue)
 {
-    gint result;
+    gint result = 0;
 
     g_assert (path_queue->current_src->type == PATH_SOURCE_STREAM);
 
     if (path_queue->current_path_token)
         return TRUE;
 
-    result = chafa_stream_reader_read_token (path_queue->current_reader,
-                                             (gpointer *) &path_queue->current_path_token,
-                                             PATH_TOKEN_LEN_MAX);
-    if (result > 0)
+    /* Discard blank lines until we encounter a non-blank line or an error */
+    while (result == 0)
     {
-        /* If we're separating on \n, handle \r\n by eliminating the \r too */
-        if (path_queue->current_path_token [result] == '\r')
+        g_free (path_queue->current_path_token);
+        path_queue->current_path_token = NULL;
+
+        result = chafa_stream_reader_read_token (path_queue->current_reader,
+                                                 &path_queue->current_path_token,
+                                                 PATH_TOKEN_LEN_MAX);
+        if (result > 0)
         {
-            path_queue->current_path_token [result] = '\0';
-            result--;
+            /* If we're separating on \n, handle \r\n by eliminating the \r too */
+            if (path_queue->current_path_token [result - 1] == '\r')
+            {
+                path_queue->current_path_token [result - 1] = '\0';
+                result--;
+            }
         }
     }
 
