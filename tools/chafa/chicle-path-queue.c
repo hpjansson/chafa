@@ -228,7 +228,7 @@ pop_stream_path_token (ChiclePathQueue *path_queue)
         path_queue->current_path_token = NULL;
 
         result = chafa_stream_reader_read_token (path_queue->current_reader,
-                                                 &path_queue->current_path_token,
+                                                 (gpointer *) &path_queue->current_path_token,
                                                  PATH_TOKEN_LEN_MAX);
         if (result > 0 && !strcmp (path_queue->current_src->separator, "\n"))
         {
