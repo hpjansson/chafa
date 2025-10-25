@@ -465,7 +465,8 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
                                         stream_reader->token_separator_len,
                                         &stream_reader->token_restart_pos,
                                         &result);
-    if (!token && is_eof_unlocked (stream_reader))
+    if (!token &&
+        (stream_reader->eof_seen || stream_reader->shutdown_done))
     {
         gint len = chafa_byte_fifo_get_len (stream_reader->fifo);
 
