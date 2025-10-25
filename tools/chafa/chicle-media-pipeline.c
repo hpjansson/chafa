@@ -133,6 +133,9 @@ thread_func (gpointer ctx, gpointer data)
         && pipeline->term_info)
     {
         output = format_image (pipeline, loader);
+        if (!output)
+            g_set_error (&error, G_FILE_ERROR, G_FILE_ERROR_FAILED,
+                         "Decoding failed");
     }
 
     if (loader

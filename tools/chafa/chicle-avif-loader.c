@@ -123,6 +123,7 @@ maybe_decode_frame (ChicleAvifLoader *loader)
                                         image->irot.angle,
                                         axis));
 
+    loader->frame_is_decoded = TRUE;
     loader->frame_is_success = TRUE;
 
 out:
@@ -187,6 +188,10 @@ chicle_avif_loader_new_from_mapping (ChicleFileMapping *mapping)
     loader->rowstride = loader->width * BYTES_PER_PIXEL;
 
     if (loader->height * loader->rowstride > IMAGE_BUFFER_SIZE_MAX)
+        goto out;
+
+    /* Ensure we can decode a frame. If not, we'll try other loaders */
+    if (!maybe_decode_frame (loader))
         goto out;
 
     success = TRUE;

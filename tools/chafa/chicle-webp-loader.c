@@ -50,6 +50,28 @@ struct ChicleWebpLoader
     guint is_animation : 1;
 };
 
+static gboolean
+decode_next_frame (ChicleWebpLoader *loader, uint8_t **buf, int *timestamp)
+{
+    return WebPAnimDecoderGetNext (loader->anim_dec, buf, timestamp);
+}
+
+static gboolean
+maybe_decode_frame (ChicleWebpLoader *loader)
+{
+    uint8_t *buf;
+
+    if (loader->this_frame_data)
+        return TRUE;
+
+    if (decode_next_frame (loader, &buf, &loader->this_timestamp))
+    {
+        loader->this_frame_data = g_memdup (buf, loader->width * BYTES_PER_PIXEL * loader->height);
+    }
+
+    return loader->this_frame_data ? TRUE : FALSE;
+}
+
 static ChicleWebpLoader *
 chicle_webp_loader_new (void)
 {
@@ -125,6 +147,10 @@ chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping)
      * premultiplied alpha. This will speed up resampling later on. */
     loader->pixel_type = features.has_alpha ? CHAFA_PIXEL_RGBA8_UNASSOCIATED : CHAFA_PIXEL_RGBA8_PREMULTIPLIED;
 
+    /* Ensure we can decode a frame. If not, we'll try other loaders */
+    if (!maybe_decode_frame (loader))
+        return NULL;
+
     success = TRUE;
 
 out:
@@ -163,28 +189,6 @@ chicle_webp_loader_get_is_animation (ChicleWebpLoader *loader)
     g_return_val_if_fail (loader != NULL, 0);
 
     return loader->is_animation;
-}
-
-static gboolean
-decode_next_frame (ChicleWebpLoader *loader, uint8_t **buf, int *timestamp)
-{
-    return WebPAnimDecoderGetNext (loader->anim_dec, buf, timestamp);
-}
-
-static gboolean
-maybe_decode_frame (ChicleWebpLoader *loader)
-{
-    uint8_t *buf;
-
-    if (loader->this_frame_data)
-        return TRUE;
-
-    if (decode_next_frame (loader, &buf, &loader->this_timestamp))
-    {
-        loader->this_frame_data = g_memdup (buf, loader->width * BYTES_PER_PIXEL * loader->height);
-    }
-
-    return loader->this_frame_data ? TRUE : FALSE;
 }
 
 gconstpointer

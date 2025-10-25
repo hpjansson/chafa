@@ -245,6 +245,7 @@ void
 chicle_jxl_loader_destroy (ChicleJxlLoader *loader)
 {
     GList *list = loader->frames;
+
     jxl_cleanup_frame_list (list);
     g_list_free (loader->frames);
     g_free (loader);
@@ -263,10 +264,13 @@ chicle_jxl_loader_get_frame_data (ChicleJxlLoader *loader,
                                   gint *height_out,
                                   gint *rowstride_out)
 {
-    g_return_val_if_fail (loader != NULL, NULL);
-    const JxlFrame *frame = g_list_nth_data (loader->frames, loader->index);
-
+    const JxlFrame *frame;
     int num_channels;
+
+    g_return_val_if_fail (loader != NULL, NULL);
+
+    frame = g_list_nth_data (loader->frames, loader->index);
+
     if (frame->have_alpha)
     {
         num_channels = 4;

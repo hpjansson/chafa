@@ -66,6 +66,8 @@ maybe_decode_frame (ChicleGifLoader *loader)
         return loader->frame_is_success;
 
     code = gif_decode_frame (&loader->gif, loader->current_frame_index);
+
+    loader->frame_is_decoded = TRUE;
     loader->frame_is_success = (code == GIF_OK ? TRUE : FALSE);
 
     return loader->frame_is_success;
@@ -154,6 +156,10 @@ chicle_gif_loader_new_from_mapping (ChicleFileMapping *mapping)
             goto out;
     }
     while (code != GIF_OK);
+
+    /* Ensure we can decode a frame. If not, we can try other loaders */
+    if (!maybe_decode_frame (loader))
+        goto out;
 
     success = TRUE;
 
