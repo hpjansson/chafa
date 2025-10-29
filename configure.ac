@@ -203,7 +203,47 @@ AS_IF([test "$with_tools" != no], [
       missing_debs="$missing_debs libjxl-dev"
       with_jxl=no)])
   AS_IF([test "$with_jxl" != no], [AC_DEFINE([HAVE_JXL], [1], [Define if we have JXL support.])])
+
+  dnl coregraphics (auto, only macos)
+  AC_ARG_WITH(coregraphics,
+    [AS_HELP_STRING([--without-coregraphics], [don't build CoreGraphics loader [default=auto]])],
+    [],
+    [with_coregraphics=auto])
+
+  dnl CoreGraphics detection
+  have_coregraphics=no
+  COREGRAPHICS_LIBS=""
+  case "${host_os}" in
+       darwin*)
+           AS_IF([test "$with_coregraphics" != no], [
+             AC_CHECK_HEADER([CoreGraphics/CoreGraphics.h],
+                             [have_coregraphics=yes],
+                             [have_coregraphics=no])
+             AS_IF([test "$have_coregraphics" = yes], [
+               AC_CHECK_HEADER([ImageIO/ImageIO.h],
+                               [],
+                               [have_coregraphics=no])
+             ])
+           ])
+           AS_IF([test "$have_coregraphics" = yes], [
+             COREGRAPHICS_LIBS="-framework CoreGraphics -framework ImageIO -framework CoreFoundation"
+             AC_DEFINE([HAVE_COREGRAPHICS], [1], [Define if we have CoreGraphics support.])
+             with_coregraphics=yes
+           ], [
+             AS_IF([test "$with_coregraphics" = yes], [
+               AC_MSG_ERROR([CoreGraphics headers not found. Install Xcode Command Line Tools.])
+             ])
+             with_coregraphics=no
+           ])
+           ;;
+       *)
+           if "$with_coregraphics" = "yes"; then
+               AC_MSG_ERROR([CoreGraphics is available on macOS])
+           fi
+           ;;
+  esac
 ])
+AC_SUBST(COREGRAPHICS_LIBS)
 
 AM_CONDITIONAL([WANT_TOOLS], [test "$with_tools" != no])
 AM_CONDITIONAL([HAVE_JPEG], [test "$with_tools" != no -a "$with_jpeg" != no])
@@ -213,6 +253,7 @@ AM_CONDITIONAL([HAVE_WEBP], [test "$with_tools" != no -a "$with_webp" != no])
 AM_CONDITIONAL([HAVE_AVIF], [test "$with_tools" != no -a "$with_avif" != no])
 AM_CONDITIONAL([HAVE_HEIF], [test "$with_tools" != no -a "$with_heif" != no])
 AM_CONDITIONAL([HAVE_JXL], [test "$with_tools" != no -a "$with_jxl" != no])
+AM_CONDITIONAL([HAVE_COREGRAPHICS], [test "$with_tools" != no -a "$have_coregraphics" = yes])
 
 # Used by gtk-doc's fixxref.
 GLIB_PREFIX="`$PKG_CONFIG --variable=prefix glib-2.0`"
@@ -545,6 +586,7 @@ colorize_vars="
   with_jxl
   with_avif
   with_heif
+  have_coregraphics
 "
 
 dnl Only use colors if the terminal supports the aixterm-style bright ones (16 total).
@@ -611,6 +653,7 @@ echo >&AS_MESSAGE_FD "With TIFF loader ............ $pwith_tiff"
 echo >&AS_MESSAGE_FD "With WebP loader ............ $pwith_webp"
 echo >&AS_MESSAGE_FD "With JXL loader ............. $pwith_jxl"
 echo >&AS_MESSAGE_FD "With XWD loader ............. $pyes (internal)"
+echo >&AS_MESSAGE_FD "With CoreGraphics loader .... $phave_coregraphics"
 fi
 
 echo >&AS_MESSAGE_FD
