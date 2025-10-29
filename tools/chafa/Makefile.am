@@ -89,17 +89,24 @@ chafa_SOURCES += \
 	chicle-jxl-loader.h
 endif
 
+
+if HAVE_COREGRAPHICS
+chafa_SOURCES += \
+	chicle-coregraphics-loader.c \
+	chicle-coregraphics-loader.h
+endif
+
 # We can pass -rpath so the binary knows where to find libchafa.so when
 # installed outside /usr (e.g. the default /usr/local). This affects Ubuntu.
 # Resolved by running ldconfig. See Github issue #32.
 #
 # This is disabled by default.
 
-chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(JXL_CFLAGS) $(AVIF_CFLAGS) $(HEIF_CFLAGS) $(FREETYPE_CFLAGS)
+chafa_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS) $(JPEG_CFLAGS) $(SVG_CFLAGS) $(TIFF_CFLAGS) $(WEBP_CFLAGS) $(JXL_CFLAGS) $(AVIF_CFLAGS) $(HEIF_CFLAGS) $(FREETYPE_CFLAGS) $(COREGRAPHICS_CFLAGS)
 if ENABLE_RPATH
 chafa_LDFLAGS = $(CHAFA_LDFLAGS) -rpath $(libdir)
 endif
-chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(JXL_LIBS) $(AVIF_LIBS) $(HEIF_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la -lm $(WIN32_LDADD)
+chafa_LDADD = $(GLIB_LIBS) $(JPEG_LIBS) $(SVG_LIBS) $(TIFF_LIBS) $(WEBP_LIBS) $(JXL_LIBS) $(AVIF_LIBS) $(HEIF_LIBS) $(COREGRAPHICS_LIBS) $(FREETYPE_LIBS) $(top_builddir)/chafa/libchafa.la $(top_builddir)/libnsgif/libnsgif.la $(top_builddir)/lodepng/liblodepng.la -lm $(WIN32_LDADD)
 
 # On Microsoft Windows, we compile a resource file with windres and link it in.
 # This enables UTF-8 support in filenames, environment variables, etc.
