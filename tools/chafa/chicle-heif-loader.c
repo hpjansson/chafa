@@ -43,9 +43,9 @@ struct ChicleHeifLoader
     gint width, height;
     gint stride;
 
-    heif_context *ctx;
-    heif_image_handle *handle;
-    heif_image *image;
+    struct heif_context *ctx;
+    struct heif_image_handle *handle;
+    struct heif_image *image;
     const uint8_t *frame_data;
 };
 
