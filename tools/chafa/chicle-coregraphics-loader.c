@@ -2,6 +2,8 @@
 
 /* Copyright (C) 2025 Hans Petter Jansson
  *
+ * Author: Hayaki Saio <saitoha@me.com>
+ *
  * This file is part of Chafa, a program that shows pictures on text terminals.
  *
  * Chafa is free software: you can redistribute it and/or modify
@@ -18,8 +20,6 @@
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "config.h"
-
-#ifdef HAVE_COREGRAPHICS
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <CoreGraphics/CoreGraphics.h>
@@ -441,5 +441,3 @@ extract_frame_delay (CFDictionaryRef properties)
 
     return 0.0;
 }
-
-#endif /* HAVE_COREGRAPHICS */
