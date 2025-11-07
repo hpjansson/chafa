@@ -2,6 +2,8 @@
 
 /* Copyright (C) 2025 Hans Petter Jansson
  *
+ * Author: Hayaki Saio <saitoha@me.com>
+ *
  * This file is part of Chafa, a program that shows pictures on text terminals.
  *
  * Chafa is free software: you can redistribute it and/or modify

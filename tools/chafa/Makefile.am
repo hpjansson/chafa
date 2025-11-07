@@ -89,7 +89,6 @@ chafa_SOURCES += \
 	chicle-jxl-loader.h
 endif
 
-
 if HAVE_COREGRAPHICS
 chafa_SOURCES += \
 	chicle-coregraphics-loader.c \
