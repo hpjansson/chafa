@@ -237,7 +237,7 @@ AS_IF([test "$with_tools" != no], [
            ])
            ;;
        *)
-           if "$with_coregraphics" = "yes"; then
+           if test "$with_coregraphics" = "yes"; then
                AC_MSG_ERROR([CoreGraphics is available on macOS])
            fi
            ;;
