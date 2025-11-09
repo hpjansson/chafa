@@ -198,6 +198,9 @@
  * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1: Begin upload of virtual Kitty image for immediate display at cursor.
  * @CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES: Queries the terminal for its primary device attributes.
  * @CHAFA_TERM_SEQ_PRIMARY_DEVICE_ATTRIBUTES: The terminal's primary device attributes.
+ * @CHAFA_TERM_SEQ_BEGIN_HYPERLINK: Begins an OSC 8-style hyperlink. The URL follows this.
+ * @CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR: Separates an OSC 8-style hyperlink URL from its anchor (label). The label follows this.
+ * @CHAFA_TERM_SEQ_END_HYPERLINK: Ends an OSC 8-style hyperlink. Closes both the preceding #CHAFA_TERM_SEQ_BEGIN_HYPERLINK and #CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
