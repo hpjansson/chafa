@@ -1,6 +1,47 @@
 Chafa releases
 ==============
 
+1.18.0 (2025-11-09)
+-------------------
+
+This is a feature and bugfix release.
+
+* Increased GLib minimum version to 2.58 (released in 2018).
+
+* New options: --files=FNAME and --files0=FNAME. These allow reading lists of
+  input files from a file or standard input. Paths can be separated by newlines
+  or a zero byte (--files0). These options can be specified multiple times.
+
+* New option: --link=[auto|on|off]. When used with --label, this controls
+  whether each label should be an OSC 8-style hyperlink to its input file.
+
+* Multiple files can now be decoded in parallel. This greatly speeds up grid
+  mode on multi-core systems. Controllable with --threads.
+
+* ConHost support was removed due to incompleteness and lack of interest.
+
+* Image loaders:
+  - Added support for CoreGraphics loaders on MacOS (github#301, Hayaki Saito).
+  - Added support for HEIF files on all platforms (github#297).
+
+* Terminal support:
+  - Improved detection of ghostty inside tmux (github#296, reported by
+    @timsofteng).
+  - Added support for GNU/Hurd console.
+
+* Tests:
+  - Expanded symbol matching tests with more cases and detailed diagnostics.
+  - Added a test for CLI tool return values in various scenarios.
+
+* Bug fixes:
+  github#293  Don't leave stdin in non-blocking mode (found by @YanceyChiew).
+  [unfiled]   Use glibtoolize when libtoolize is unavailable (Hayaki Saito).
+  [unfiled]   GNU/Hurd: Don't stall if pipe is closed on remote end.
+  [unfiled]   _mm_empty() not always called immediately after MMX use.
+  [unfiled]   FP division by zero possible in sixel palette generation.
+  [unfiled]   Don't wait for response if probing is unsupported.
+  [unfiled]   Wrong exit code returned on some failures.
+
 1.16.2 (2025-07-04)
 -------------------
 
