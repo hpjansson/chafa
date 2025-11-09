@@ -173,6 +173,19 @@ chicle_rotate_image (gpointer *src, guint *width, guint *height, guint *rowstrid
     *rowstride = dest_rowstride;
 }
 
+void
+chicle_flatten_cntrl_inplace (gchar *str)
+{
+    gchar *p;
+
+    for (p = str; *p; p = g_utf8_next_char (p))
+    {
+        gunichar c = g_utf8_get_char (p);
+        if (g_unichar_iscntrl (c))
+            *p = '?';
+    }
+}
+
 gchar *
 chicle_ellipsize_string (const gchar *str, gint len_max, gboolean use_unicode)
 {
@@ -224,6 +237,7 @@ chicle_path_get_ellipsized_basename (const gchar *path, gint len_max, gboolean u
         return g_strdup ("?");
 
     basename = g_path_get_basename (path);
+    chicle_flatten_cntrl_inplace (basename);
     ellipsized = chicle_ellipsize_string (basename, len_max, use_unicode);
 
     g_free (basename);
@@ -290,24 +304,29 @@ chicle_path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
                          gint field_width, gboolean use_unicode, gboolean link_label)
 {
     gchar *label = chicle_path_get_ellipsized_basename (path, field_width - 1, use_unicode);
+    gchar *sanitized_path;
     gint label_len = g_utf8_strlen (label, -1);
+
+    sanitized_path = g_strdup (path);
+    chicle_flatten_cntrl_inplace (sanitized_path);
 
     if (halign == CHAFA_ALIGN_START)
     {
-        print_linked_label (term, path, label, link_label);
+        print_linked_label (term, sanitized_path, label, link_label);
         chicle_print_rep_char (term, ' ', field_width - label_len);
     }
     else if (halign == CHAFA_ALIGN_CENTER)
     {
         chicle_print_rep_char (term, ' ', (field_width - label_len) / 2);
-        print_linked_label (term, path, label, link_label);
+        print_linked_label (term, sanitized_path, label, link_label);
         chicle_print_rep_char (term, ' ', (field_width - label_len + 1) / 2);
     }
     else
     {
         chicle_print_rep_char (term, ' ', field_width - label_len);
-        print_linked_label (term, path, label, link_label);
+        print_linked_label (term, sanitized_path, label, link_label);
     }
 
     g_free (label);
+    g_free (sanitized_path);
 }
