@@ -36,7 +36,7 @@ AC_DEFINE_UNQUOTED(CHAFA_VERSION, "$CHAFA_VERSION", [Package version string])
 
 dnl --- Standard setup ---
 
-BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_26 \
+BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_58 \
 -Wall -Wextra \
 -Wcast-qual \
 -Wdisabled-optimization \
@@ -112,7 +112,7 @@ dnl AC_DEFINE([_POSIX_C_SOURCE], [200809L], [Minimum POSIX standard we need])
 
 dnl --- Dependency check ---
 
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.26)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.58)
 
 AC_ARG_WITH(tools,
   [AS_HELP_STRING([--without-tools], [don't build command-line tools [default=on]])],
