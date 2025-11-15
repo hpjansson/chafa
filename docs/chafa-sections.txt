@@ -125,6 +125,7 @@ CHAFA_VERSION_1_10
 CHAFA_VERSION_1_12
 CHAFA_VERSION_1_14
 CHAFA_VERSION_1_16
+CHAFA_VERSION_1_18
 ChafaPixelType
 chafa_calc_canvas_geometry
 </SECTION>
@@ -251,6 +252,9 @@ chafa_term_info_emit_enable_alt_screen
 chafa_term_info_emit_disable_alt_screen
 chafa_term_info_emit_begin_tmux_passthrough
 chafa_term_info_emit_end_tmux_passthrough
+chafa_term_info_emit_begin_hyperlink
+chafa_term_info_emit_begin_hyperlink_anchor
+chafa_term_info_emit_end_hyperlink
 chafa_term_info_emit_return_key
 chafa_term_info_emit_backspace_key
 chafa_term_info_emit_delete_key
