@@ -20,24 +20,38 @@
 #ifndef __CHAFA_BYTE_FIFO_H__
 #define __CHAFA_BYTE_FIFO_H__
 
+#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
+# error "Only <chafa.h> can be included directly."
+#endif
+
 #include <glib.h>
 
 G_BEGIN_DECLS
 
 typedef struct ChafaByteFifo ChafaByteFifo;
 
+CHAFA_AVAILABLE_IN_1_20
 ChafaByteFifo *chafa_byte_fifo_new (void);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_byte_fifo_destroy (ChafaByteFifo *byte_fifo);
 
+CHAFA_AVAILABLE_IN_1_20
 gint64 chafa_byte_fifo_get_pos (ChafaByteFifo *byte_fifo);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_byte_fifo_get_len (ChafaByteFifo *byte_fifo);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_byte_fifo_push (ChafaByteFifo *byte_fifo, gconstpointer src, gint src_len);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_byte_fifo_pop (ChafaByteFifo *byte_fifo, gpointer dest, gint dest_len);
+CHAFA_AVAILABLE_IN_1_20
 gconstpointer chafa_byte_fifo_peek (ChafaByteFifo *byte_fifo, gint *len);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_byte_fifo_drop (ChafaByteFifo *byte_fifo, gint len);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_byte_fifo_search (ChafaByteFifo *byte_fifo,
                              gconstpointer data, gint data_len,
                              gint64 *pos);
+CHAFA_AVAILABLE_IN_1_20
 gpointer chafa_byte_fifo_split_next (ChafaByteFifo *byte_fifo,
                                      gconstpointer separator, gint separator_len,
                                      gint64 *restart_pos, gint *len_out);

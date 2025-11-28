@@ -20,6 +20,10 @@
 #ifndef __CHAFA_PARSER_H__
 #define __CHAFA_PARSER_H__
 
+#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
+# error "Only <chafa.h> can be included directly."
+#endif
+
 #include <glib.h>
 
 G_BEGIN_DECLS
@@ -35,19 +39,31 @@ ChafaEventType;
 typedef struct ChafaEvent ChafaEvent;
 typedef struct ChafaParser ChafaParser;
 
+CHAFA_AVAILABLE_IN_1_20
 ChafaEventType chafa_event_get_type (ChafaEvent *event);
+CHAFA_AVAILABLE_IN_1_20
 gunichar chafa_event_get_unichar (ChafaEvent *event);
+CHAFA_AVAILABLE_IN_1_20
 ChafaTermSeq chafa_event_get_seq (ChafaEvent *event);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_event_get_seq_arg (ChafaEvent *event, gint n);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_event_get_n_seq_args (ChafaEvent *event);
 
+CHAFA_AVAILABLE_IN_1_20
 ChafaParser *chafa_parser_new (ChafaTermInfo *term_info);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_parser_destroy (ChafaParser *parser);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_parser_init (ChafaParser *parser_out, ChafaTermInfo *term_info);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_parser_deinit (ChafaParser *parser);
 
+CHAFA_AVAILABLE_IN_1_20
 void chafa_parser_push_data (ChafaParser *parser, gconstpointer data, gint data_len);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_parser_push_eof (ChafaParser *parser);
+CHAFA_AVAILABLE_IN_1_20
 ChafaEvent *chafa_parser_pop_event (ChafaParser *parser);
 
 G_END_DECLS

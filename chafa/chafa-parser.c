@@ -21,7 +21,6 @@
 
 #include <string.h>  /* memcpy, memset */
 #include "chafa.h"
-#include "chafa-parser.h"
 
 struct ChafaEvent
 {

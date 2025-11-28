@@ -39,6 +39,11 @@ G_BEGIN_DECLS
 #include <chafa-term-info.h>
 #include <chafa-term-db.h>
 #include <chafa-util.h>
+#include <chafa-byte-fifo.h>
+#include <chafa-parser.h>
+#include <chafa-stream-reader.h>
+#include <chafa-stream-writer.h>
+#include <chafa-term.h>
 
 G_END_DECLS
 

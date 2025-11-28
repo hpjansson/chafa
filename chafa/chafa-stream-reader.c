@@ -24,12 +24,8 @@
 #include <fcntl.h>  /* open */
 #include <unistd.h>  /* STDOUT_FILENO */
 
-/* Our copy of glib's internal GWakeup */
-#include "chafa-wakeup.h"
-
 #include "chafa.h"
-#include "chafa-byte-fifo.h"
-#include "chafa-stream-reader.h"
+#include "internal/chafa-wakeup.h"
 
 /* Include after glib.h for G_OS_WIN32 */
 #ifdef G_OS_WIN32

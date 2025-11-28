@@ -33,10 +33,6 @@
 #include <glib/gstdio.h>  /* g_open, g_close */
 
 #include "chafa.h"
-#include "chafa-byte-fifo.h"
-#include "chafa-stream-reader.h"
-#include "chafa-stream-writer.h"
-#include "chafa-term.h"
 
 /* Include after glib.h for G_OS_WIN32 */
 #ifdef G_OS_WIN32

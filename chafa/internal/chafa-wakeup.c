@@ -28,8 +28,8 @@
  * includes warnings.  We have to manually include its dependencies here
  * (and at all other use sites).
  */
-#include <glib.h>
-#include "chafa-wakeup.h"
+#include "chafa.h"
+#include "internal/chafa-wakeup.h"
 
 /*< private >
  * SECTION:gwakeup

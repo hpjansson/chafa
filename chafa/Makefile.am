@@ -13,31 +13,41 @@ libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -no-undefined -version-info 11:0:11
 libchafa_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal.la -lm
 
 libchafa_la_SOURCES = \
-	chafa-canvas.c \
+	chafa-byte-fifo.c \
 	chafa-canvas-config.c \
+	chafa-canvas.c \
 	chafa-features.c \
 	chafa-frame.c \
 	chafa-image.c \
+	chafa-parser.c \
 	chafa-placement.c \
+	chafa-stream-reader.c \
+	chafa-stream-writer.c \
 	chafa-symbol-map.c \
 	chafa-term-db.c \
 	chafa-term-info.c \
+	chafa-term.c \
 	chafa-util.c
 
 chafaincludedir=$(includedir)/chafa
 chafainclude_HEADERS = \
 	chafa.h \
-	chafa-canvas.h \
+	chafa-byte-fifo.h \
 	chafa-canvas-config.h \
+	chafa-canvas.h \
 	chafa-common.h \
 	chafa-features.h \
 	chafa-frame.h \
 	chafa-image.h \
+	chafa-parser.h \
 	chafa-placement.h \
+	chafa-stream-reader.h \
+	chafa-stream-writer.h \
 	chafa-symbol-map.h \
 	chafa-term-db.h \
 	chafa-term-info.h \
 	chafa-term-seq-def.h \
+	chafa-term.h \
 	chafa-util.h \
 	chafa-version-macros.h
 

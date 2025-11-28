@@ -5,18 +5,6 @@ bin_PROGRAMS = \
 
 chafa_SOURCES = \
 	chafa.c \
-	chafa-byte-fifo.c \
-	chafa-byte-fifo.h \
-	chafa-parser.c \
-	chafa-parser.h \
-	chafa-stream-reader.c \
-	chafa-stream-reader.h \
-	chafa-stream-writer.c \
-	chafa-stream-writer.h \
-	chafa-term.c \
-	chafa-term.h \
-	chafa-wakeup.c \
-	chafa-wakeup.h \
 	chicle-file-mapping.c \
 	chicle-file-mapping.h \
 	chicle-font-loader.c \

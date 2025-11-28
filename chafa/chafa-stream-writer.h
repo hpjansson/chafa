@@ -20,24 +20,38 @@
 #ifndef __CHAFA_STREAM_WRITER_H__
 #define __CHAFA_STREAM_WRITER_H__
 
+#if !defined (__CHAFA_H_INSIDE__) && !defined (CHAFA_COMPILATION)
+# error "Only <chafa.h> can be included directly."
+#endif
+
 #include <glib.h>
 
 G_BEGIN_DECLS
 
 typedef struct ChafaStreamWriter ChafaStreamWriter;
 
+CHAFA_AVAILABLE_IN_1_20
 ChafaStreamWriter *chafa_stream_writer_new_from_fd (gint fd);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_writer_ref (ChafaStreamWriter *stream_writer);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_writer_unref (ChafaStreamWriter *stream_writer);
 
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_stream_writer_get_fd (ChafaStreamWriter *stream_writer);
+CHAFA_AVAILABLE_IN_1_20
 gboolean chafa_stream_writer_is_console (ChafaStreamWriter *stream_writer);
 
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_stream_writer_get_buffer_max (ChafaStreamWriter *stream_writer);
+CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_writer_set_buffer_max (ChafaStreamWriter *stream_writer, gint buf_max);
 
+CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_writer_write (ChafaStreamWriter *stream_writer, gconstpointer data, gint len);
+CHAFA_AVAILABLE_IN_1_20
 gint chafa_stream_writer_print (ChafaStreamWriter *stream_writer, const gchar *format, ...);
+CHAFA_AVAILABLE_IN_1_20
 gboolean chafa_stream_writer_flush (ChafaStreamWriter *stream_writer);
 
 G_END_DECLS

@@ -37,7 +37,6 @@
 #endif
 
 #include <chafa.h>
-#include "chafa-term.h"
 #include "chicle-font-loader.h"
 #include "chicle-grid-layout.h"
 #include "chicle-media-pipeline.h"
