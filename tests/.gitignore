@@ -1,4 +1,5 @@
 /*.log
 /*.trs
+/byte-fifo-test
 /canvas-test
 /term-info-test

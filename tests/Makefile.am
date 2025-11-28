@@ -14,8 +14,12 @@ LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
 ## --- Backend tests ---
 
 noinst_PROGRAMS = \
+	byte-fifo-test \
 	canvas-test \
 	term-info-test
+
+byte_fifo_test_SOURCES = \
+	byte-fifo-test.c
 
 canvas_test_SOURCES = \
 	canvas-test.c
@@ -41,6 +45,7 @@ TOOL_CHECKS =
 endif
 
 TESTS = \
+	byte-fifo-test \
 	canvas-test \
 	term-info-test \
 	$(TOOL_CHECKS)
