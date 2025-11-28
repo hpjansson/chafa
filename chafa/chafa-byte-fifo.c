@@ -34,6 +34,8 @@ struct Buffer
 
 struct ChafaByteFifo
 {
+    gint refs;
+
     Buffer *buf_head, *buf_tail;
 
     /* Stream position of first byte. Starts at 0. Increased by _pop(). */
@@ -129,6 +131,12 @@ dequeue (ChafaByteFifo *fifo, gpointer dest, gint dest_len)
     return result_len;
 }
 
+static void
+fifo_clear (ChafaByteFifo *fifo)
+{
+    dequeue (fifo, NULL, fifo->len);
+}
+
 static gint
 fifo_search (ChafaByteFifo *fifo,
              gconstpointer data, gint data_len,
@@ -207,15 +215,37 @@ chafa_byte_fifo_new (void)
     ChafaByteFifo *fifo;
 
     fifo = g_new0 (ChafaByteFifo, 1);
+    fifo->refs = 1;
     return fifo;
 }
 
-void
-chafa_byte_fifo_destroy (ChafaByteFifo *byte_fifo)
+ChafaByteFifo *
+chafa_byte_fifo_ref (ChafaByteFifo *byte_fifo)
 {
-    g_return_if_fail (byte_fifo != NULL);
+    gint refs;
 
-    g_free (byte_fifo);
+    g_return_val_if_fail (byte_fifo != NULL, NULL);
+    refs = g_atomic_int_get (&byte_fifo->refs);
+    g_return_val_if_fail (refs > 0, NULL);
+
+    g_atomic_int_inc (&byte_fifo->refs);
+    return byte_fifo;
+}
+
+void
+chafa_byte_fifo_unref (ChafaByteFifo *byte_fifo)
+{
+    gint refs;
+
+    g_return_if_fail (byte_fifo != NULL);
+    refs = g_atomic_int_get (&byte_fifo->refs);
+    g_return_if_fail (refs > 0);
+
+    if (g_atomic_int_dec_and_test (&byte_fifo->refs))
+    {
+        fifo_clear (byte_fifo);
+        g_free (byte_fifo);
+    }
 }
 
 gint64

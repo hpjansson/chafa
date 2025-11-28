@@ -33,7 +33,9 @@ typedef struct ChafaByteFifo ChafaByteFifo;
 CHAFA_AVAILABLE_IN_1_20
 ChafaByteFifo *chafa_byte_fifo_new (void);
 CHAFA_AVAILABLE_IN_1_20
-void chafa_byte_fifo_destroy (ChafaByteFifo *byte_fifo);
+ChafaByteFifo *chafa_byte_fifo_ref (ChafaByteFifo *byte_fifo);
+CHAFA_AVAILABLE_IN_1_20
+void chafa_byte_fifo_unref (ChafaByteFifo *byte_fifo);
 
 CHAFA_AVAILABLE_IN_1_20
 gint64 chafa_byte_fifo_get_pos (ChafaByteFifo *byte_fifo);

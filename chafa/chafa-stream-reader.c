@@ -337,7 +337,7 @@ chafa_stream_reader_destroy (ChafaStreamReader *stream_reader)
     g_cond_clear (&stream_reader->cond);
     chafa_wakeup_free (stream_reader->wakeup);
 
-    chafa_byte_fifo_destroy (stream_reader->fifo);
+    chafa_byte_fifo_unref (stream_reader->fifo);
     g_free (stream_reader->token_separator);
 
     g_free (stream_reader);

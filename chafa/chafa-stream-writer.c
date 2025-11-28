@@ -368,7 +368,7 @@ chafa_stream_writer_destroy (ChafaStreamWriter *stream_writer)
     g_cond_clear (&stream_writer->cond);
     chafa_wakeup_free (stream_writer->wakeup);
 
-    chafa_byte_fifo_destroy (stream_writer->fifo);
+    chafa_byte_fifo_unref (stream_writer->fifo);
 
     g_free (stream_writer);
 }
