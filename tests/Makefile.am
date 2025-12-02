@@ -1,7 +1,7 @@
 SUBDIRS = data
 
-AM_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS)
-LDADD = $(GLIB_LIBS) $(top_builddir)/chafa/libchafa.la
+AM_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS)
+LDADD = $(GLIB_LIBS) $(top_builddir)/chafa/libchafa-test.la
 
 ## --- Test driver ---
 
@@ -13,7 +13,7 @@ LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
 
 ## --- Backend tests ---
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	byte-fifo-test \
 	canvas-test \
 	term-info-test

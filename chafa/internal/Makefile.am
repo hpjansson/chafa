@@ -2,13 +2,7 @@ SUBDIRS = smolscale
 
 ## --- Library ---
 
-noinst_LTLIBRARIES = libchafa-internal.la
-
-libchafa_internal_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
-libchafa_internal_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
-libchafa_internal_la_LIBADD = $(GLIB_LIBS) smolscale/libsmolscale.la -lm
-
-libchafa_internal_la_SOURCES = \
+libchafa_internal_sources = \
 	chafa-base64.c \
 	chafa-base64.h \
 	chafa-batch.c \
@@ -60,9 +54,23 @@ libchafa_internal_la_SOURCES = \
 	chafa-work-cell.c \
 	chafa-work-cell.h
 
+noinst_LTLIBRARIES = libchafa-internal.la
+check_LTLIBRARIES = libchafa-internal-test.la
+
+libchafa_internal_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(CHAFA_VISIBILITY_FLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
+libchafa_internal_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
+libchafa_internal_la_LIBADD = $(GLIB_LIBS) smolscale/libsmolscale.la -lm
+libchafa_internal_la_SOURCES = $(libchafa_internal_sources)
+
+libchafa_internal_test_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
+libchafa_internal_test_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
+libchafa_internal_test_la_LIBADD = $(GLIB_LIBS) smolscale/libsmolscale.la -lm
+libchafa_internal_test_la_SOURCES = $(libchafa_internal_sources)
+
 if HAVE_MMX_INTRINSICS
 noinst_LTLIBRARIES += libchafa-mmx.la
 libchafa_internal_la_LIBADD += libchafa-mmx.la
+libchafa_internal_test_la_LIBADD += libchafa-mmx.la
 libchafa_mmx_la_SOURCES = chafa-mmx.c
 libchafa_mmx_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mmmx -DCHAFA_COMPILATION
 libchafa_mmx_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
@@ -71,6 +79,7 @@ endif
 if HAVE_SSE41_INTRINSICS
 noinst_LTLIBRARIES += libchafa-sse41.la
 libchafa_internal_la_LIBADD += libchafa-sse41.la
+libchafa_internal_test_la_LIBADD += libchafa-sse41.la
 libchafa_sse41_la_SOURCES = chafa-sse41.c
 libchafa_sse41_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -msse4.1 -DCHAFA_COMPILATION
 libchafa_sse41_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
@@ -79,6 +88,7 @@ endif
 if HAVE_POPCNT_INTRINSICS
 noinst_LTLIBRARIES += libchafa-popcnt.la
 libchafa_internal_la_LIBADD += libchafa-popcnt.la
+libchafa_internal_test_la_LIBADD += libchafa-popcnt.la
 libchafa_popcnt_la_SOURCES = chafa-popcnt.c
 libchafa_popcnt_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mpopcnt -DCHAFA_COMPILATION
 libchafa_popcnt_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
@@ -87,6 +97,7 @@ endif
 if HAVE_AVX2_INTRINSICS
 noinst_LTLIBRARIES += libchafa-avx2.la
 libchafa_internal_la_LIBADD += libchafa-avx2.la
+libchafa_internal_test_la_LIBADD += libchafa-avx2.la
 libchafa_avx2_la_SOURCES = chafa-avx2.c
 libchafa_avx2_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -mavx2 -DCHAFA_COMPILATION
 libchafa_avx2_la_LDFLAGS = $(LIBCHAFA_LDFLAGS)
