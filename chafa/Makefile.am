@@ -5,14 +5,15 @@ BUILT_SOURCES =
 ## --- Library ---
 
 lib_LTLIBRARIES = libchafa.la
+check_LTLIBRARIES = libchafa-test.la
 noinst_LTLIBRARIES =
 noinst_HEADERS =
 
-libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
+libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(CHAFA_VISIBILITY_FLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
 libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -no-undefined -version-info 11:2:11
 libchafa_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal.la -lm
 
-libchafa_la_SOURCES = \
+libchafa_sources = \
 	chafa-canvas.c \
 	chafa-canvas-config.c \
 	chafa-features.c \
@@ -24,7 +25,6 @@ libchafa_la_SOURCES = \
 	chafa-term-info.c \
 	chafa-util.c
 
-chafaincludedir=$(includedir)/chafa
 chafainclude_HEADERS = \
 	chafa.h \
 	chafa-canvas.h \
@@ -40,6 +40,15 @@ chafainclude_HEADERS = \
 	chafa-term-seq-def.h \
 	chafa-util.h \
 	chafa-version-macros.h
+
+libchafa_test_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
+libchafa_test_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -no-undefined
+libchafa_test_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal-test.la -lm
+
+libchafa_la_SOURCES = $(libchafa_sources)
+libchafa_test_la_SOURCES = $(libchafa_sources)
+
+chafaincludedir=$(includedir)/chafa
 
 # Generate header prototypes with docstrings (-CC to pass through comments)
 # for terminal sequence accessors. These will be processed by gtk-doc to

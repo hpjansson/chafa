@@ -2,8 +2,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 SUBDIRS = data
 
-AM_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS)
-LDADD = $(GLIB_LIBS) $(top_builddir)/chafa/libchafa.la
+AM_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS)
+LDADD = $(GLIB_LIBS) $(top_builddir)/chafa/libchafa-test.la
 
 ## --- Test driver ---
 
@@ -15,7 +15,7 @@ LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
 
 ## --- Backend tests ---
 
-noinst_PROGRAMS = \
+check_PROGRAMS = \
 	canvas-test \
 	loader-arithmetic-test \
 	term-info-test
