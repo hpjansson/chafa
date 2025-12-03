@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include "chafa.h"
+#include "internal/chafa-byte-fifo.h"
 
 #define BUFFER_SIZE_MAX 16384
 
