@@ -5,7 +5,6 @@ BUILT_SOURCES =
 ## --- Library ---
 
 libchafa_sources = \
-	chafa-byte-fifo.c \
 	chafa-canvas-config.c \
 	chafa-canvas.c \
 	chafa-features.c \
@@ -21,9 +20,10 @@ libchafa_sources = \
 	chafa-term.c \
 	chafa-util.c
 
+chafaincludedir=$(includedir)/chafa
+
 chafainclude_HEADERS = \
 	chafa.h \
-	chafa-byte-fifo.h \
 	chafa-canvas-config.h \
 	chafa-canvas.h \
 	chafa-common.h \
@@ -57,8 +57,6 @@ libchafa_test_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal-test.la -lm
 
 libchafa_la_SOURCES = $(libchafa_sources)
 libchafa_test_la_SOURCES = $(libchafa_sources)
-
-chafaincludedir=$(includedir)/chafa
 
 # Generate header prototypes with docstrings (-CC to pass through comments)
 # for terminal sequence accessors. These will be processed by gtk-doc to

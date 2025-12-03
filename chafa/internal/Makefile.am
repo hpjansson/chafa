@@ -8,6 +8,8 @@ libchafa_internal_sources = \
 	chafa-batch.c \
 	chafa-batch.h \
 	chafa-bitfield.h \
+	chafa-byte-fifo.c \
+	chafa-byte-fifo.h \
 	chafa-canvas-internal.h \
 	chafa-canvas-printer.c \
 	chafa-canvas-printer.h \

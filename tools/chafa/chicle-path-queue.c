@@ -24,7 +24,6 @@
 #include <unistd.h>  /* STDIN_FILENO */
 
 #include "chafa.h"
-#include "chafa-byte-fifo.h"
 #include "chicle-path-queue.h"
 
 /* Include after glib.h for G_OS_WIN32 */

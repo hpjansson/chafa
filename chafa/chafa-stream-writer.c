@@ -26,6 +26,7 @@
 #include <glib/gprintf.h>  /* g_vasprintf */
 
 #include "chafa.h"
+#include "internal/chafa-byte-fifo.h"
 #include "internal/chafa-wakeup.h"
 
 /* Include after glib.h for G_OS_WIN32 */

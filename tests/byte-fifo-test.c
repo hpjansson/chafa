@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <chafa.h>
+#include "internal/chafa-byte-fifo.h"
 #include <stdio.h>
 
 static void
