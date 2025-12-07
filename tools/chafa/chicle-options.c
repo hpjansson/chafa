@@ -254,7 +254,7 @@ print_summary (void)
     "      --label=BOOL   Labeling [on, off]. Filenames below images. Default off.\n"
     "  -l                 Alias for \"--label on\".\n"
     "      --link=BOOL    Link labels [auto, on, off]. Turns labels into clickable\n"
-    "                     hyperlinks. Use with \"-l on\". Defaults to auto.\n"
+    "                     hyperlinks. Use with \"--label on\". Defaults to auto.\n"
     "      --margin-bottom=NUM  When terminal size is detected, reserve at least NUM\n"
     "                     rows at the bottom as a safety margin. Can be used to\n"
     "                     prevent images from scrolling out. Defaults to 1.\n"
@@ -1786,12 +1786,12 @@ chicle_parse_options (int *argc, char **argv [])
         { "exact-size",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_exact_size_arg,  "Whether to prefer the original image size", NULL },
         { "fg",          '\0', 0, G_OPTION_ARG_CALLBACK, parse_fg_color_arg,    "Foreground color of display", NULL },
         { "fg-only",     '\0', 0, G_OPTION_ARG_NONE,     &options.fg_only,      "Foreground only", NULL },
-        { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
         { "files",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_files_arg,       "File list", NULL },
         { "files0",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_files0_arg,      "File list (NUL-separated)", NULL },
+        { "fill",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_fill_arg,        "Fill symbols", NULL },
         { "fit-width",   '\0', 0, G_OPTION_ARG_NONE,     &options.fit_to_width, "Fit to width", NULL },
-        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "font-ratio",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_font_ratio_arg,  "Font ratio", NULL },
+        { "format",      'f',  0, G_OPTION_ARG_CALLBACK, parse_format_arg,      "Format of output pixel data (iterm, kitty, sixels or symbols)", NULL },
         { "fuzz-options", '\0', 0, G_OPTION_ARG_NONE,    &options.fuzz_options, "Fuzz the options", NULL },
         { "glyph-file",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_glyph_file_arg,  "Glyph file", NULL },
         { "grid",        '\0', 0, G_OPTION_ARG_CALLBACK, parse_grid_arg,        "Grid", NULL },
@@ -1808,7 +1808,6 @@ chicle_parse_options (int *argc, char **argv [])
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "probe",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_probe_arg,       "Terminal probing", NULL },
         { "relative",    '\0', 0, G_OPTION_ARG_CALLBACK, parse_relative_arg,    "Relative", NULL },
-        { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         { "scale",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_scale_arg,       "Scale", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
         { "speed",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_anim_speed_arg,  "Animation speed", NULL },
@@ -1818,6 +1817,7 @@ chicle_parse_options (int *argc, char **argv [])
         { "threshold",   't',  0, G_OPTION_ARG_CALLBACK, parse_threshold_arg,   "Transparency threshold", NULL },
         { "view-size",   '\0', 0, G_OPTION_ARG_CALLBACK, parse_view_size_arg,   "View size", NULL },
         { "watch",       '\0', 0, G_OPTION_ARG_NONE,     &options.watch,        "Watch a file's contents", NULL },
+        { "work",        'w',  0, G_OPTION_ARG_INT,      &options.work_factor,  "Work factor", NULL },
         /* Deprecated: Equivalent to --scale max */
         { "zoom",        '\0', 0, G_OPTION_ARG_NONE,     &options.zoom,         "Allow scaling up beyond one character per pixel", NULL },
         { 0 }
