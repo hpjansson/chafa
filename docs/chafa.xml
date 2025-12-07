@@ -217,7 +217,7 @@ fraction. Defaults to 1/2. This will only be applied in symbol mode.
 </varlistentry>
 
 <varlistentry>
-<term><option>-g, --grid <replaceable>cols</replaceable>x<replaceable>rows</replaceable></option></term>
+<term><option>--grid <replaceable>cols</replaceable>x<replaceable>rows</replaceable></option></term>
 <listitem><para>
 Lay out images in a grid of <replaceable>cols</replaceable> columns and
 <replaceable>rows</replaceable> rows per screenful. Either
@@ -229,10 +229,24 @@ picked automatically.
 </varlistentry>
 
 <varlistentry>
-<term><option>-l, --label <replaceable>bool</replaceable></option></term>
+<term><option>-g</option></term>
+<listitem><para>
+Alias for "--grid auto".
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>--label <replaceable>bool</replaceable></option></term>
 <listitem><para>
 Labeling [on, off]. When this is enabled, each image will be labeled with
 its filename. Defaults to off.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><option>-l</option></term>
+<listitem><para>
+Alias for "--label on".
 </para></listitem>
 </varlistentry>
 
