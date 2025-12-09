@@ -14,7 +14,7 @@ local options=(
   {-c,--colors}"[Set output color mode. Defaults to best guess]:MODE:(none 2 8 16/8 16 240 256 full)"
   --color-extractor"[Method for extracting color from an area. Average is the default]:EXTR:(average median)"
   --color-space"[Color space used for quantization. Defaults to rgb, which is faster but less accurate]:CS:(rgb din99d)"
-  --dither"[Set output dither mode. No effect with 24-bit color. Defaults to none]:DITHER:(none ordered diffusion)"
+  --dither"[Set output dither mode. No effect with 24-bit color. Defaults to none]:DITHER:(none ordered diffusion noise)"
   --dither-grain"[Set dimensions of dither grains in 1/8ths of a character cell. Defaults to 4x4]:WxH:(1 2 4 8)"
   --dither-intensity"[Multiplier for dither intensity. Defaults to 1.0]:NUM 0.0 - inf"
   {-d,--duration}"[The time to show each file]:SECONDS"
