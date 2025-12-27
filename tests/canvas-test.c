@@ -197,6 +197,20 @@ symbols_fgbg_test (void)
                                  41, 41, "[ .Q]", ' ', 'Q', 0.5f);
     symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
                                  100, 100, "[ a]", ' ', 'a', 0.2f);
+
+static void
+symbols_fgbg_test_st (void)
+{
+    chafa_set_n_threads (1);
+    symbols_fgbg_test ();
+    chafa_set_n_threads (-1);
+}
+
+static void
+symbols_fgbg_test_mt (void)
+{
+    chafa_set_n_threads (-1);
+    symbols_fgbg_test ();
 }
 
 int
@@ -204,7 +218,8 @@ main (int argc, char *argv [])
 {
     g_test_init (&argc, &argv, NULL);
 
-    g_test_add_func ("/canvas/symbols/fgbg", symbols_fgbg_test);
+    g_test_add_func ("/canvas/symbols/fgbg/st", symbols_fgbg_test_st);
+    g_test_add_func ("/canvas/symbols/fgbg/mt", symbols_fgbg_test_mt);
 
     return g_test_run ();
 }
