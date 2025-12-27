@@ -102,7 +102,7 @@ test_color_char (ChafaCanvas *canvas, ChafaPixelType pixel_type,
     return result;
 }
 
-static void
+static gboolean
 symbols_fgbg_test_bw_canvas (ChafaCanvas *canvas, gchar black_char, gchar white_char)
 {
     const guint8 black_pixel_rgba8 [4] = { 0x00, 0x00, 0x00, 0xff };
@@ -143,10 +143,10 @@ symbols_fgbg_test_bw_canvas (ChafaCanvas *canvas, gchar black_char, gchar white_
                                white_pixel,
                                white_char);
 
-    g_assert (result == TRUE);
+    return result;
 }
 
-static void
+static gboolean
 symbols_fgbg_test_bw_params (ChafaCanvasMode canvas_mode, gboolean fg_only,
                              gint width, gint height,
                              const gchar *selectors, gchar black_char, gchar white_char,
@@ -155,6 +155,7 @@ symbols_fgbg_test_bw_params (ChafaCanvasMode canvas_mode, gboolean fg_only,
     ChafaSymbolMap *symbol_map;
     ChafaCanvasConfig *config;
     ChafaCanvas *canvas, *canvas2;
+    gboolean result;
 
     symbol_map = chafa_symbol_map_new ();
     chafa_symbol_map_apply_selectors (symbol_map, selectors, NULL);
@@ -167,36 +168,42 @@ symbols_fgbg_test_bw_params (ChafaCanvasMode canvas_mode, gboolean fg_only,
     chafa_canvas_config_set_work_factor (config, work_factor);
 
     canvas = chafa_canvas_new (config);
-    symbols_fgbg_test_bw_canvas (canvas, black_char, white_char);
+    result = symbols_fgbg_test_bw_canvas (canvas, black_char, white_char);
 
     canvas2 = chafa_canvas_new_similar (canvas);
     chafa_canvas_unref (canvas);
-    symbols_fgbg_test_bw_canvas (canvas2, black_char, white_char);
+    result |= symbols_fgbg_test_bw_canvas (canvas2, black_char, white_char);
     chafa_canvas_unref (canvas2);
 
     chafa_canvas_config_unref (config);
     chafa_symbol_map_unref (symbol_map);
+    return result;
 }
 
 static void
 symbols_fgbg_test (void)
 {
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
-                                 10, 10, "[ a]", ' ', 'a', 0.5f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
-                                 17, 17, "[ .]", ' ', '.', 0.2f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
-                                 1, 1, "[.Q]", '.', 'Q', 0.8f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG, FALSE,
-                                 10, 10, "[ ']", ' ', '\'', 1.0f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG, TRUE,
-                                 23, 23, "[ .]", ' ', '.', 0.05f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG, FALSE,
-                                 3, 3, "[ /]", ' ', '/', 0.2f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
-                                 41, 41, "[ .Q]", ' ', 'Q', 0.5f);
-    symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
-                                 100, 100, "[ a]", ' ', 'a', 0.2f);
+    gboolean result = TRUE;
+
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
+                                           10, 10, "[ a]", ' ', 'a', 0.5f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
+                                           17, 17, "[ .]", ' ', '.', 0.2f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
+                                           1, 1, "[.Q]", '.', 'Q', 0.8f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG, FALSE,
+                                           10, 10, "[ ']", ' ', '\'', 1.0f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG, TRUE,
+                                           23, 23, "[ .]", ' ', '.', 0.05f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG, FALSE,
+                                           3, 3, "[ /]", ' ', '/', 0.2f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
+                                           41, 41, "[ .Q]", ' ', 'Q', 0.5f);
+    result &= symbols_fgbg_test_bw_params (CHAFA_CANVAS_MODE_FGBG_BGFG, TRUE,
+                                           100, 100, "[ a]", ' ', 'a', 0.2f);
+
+    g_assert (result == TRUE);
+}
 
 static void
 symbols_fgbg_test_st (void)
