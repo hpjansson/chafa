@@ -76,7 +76,7 @@ struct ChafaCanvas
 
     /* This is NULL in CHAFA_PIXEL_MODE_SYMBOLS, otherwise one of:
      * (ChafaSixelRenderer *), (ChafaKittyRenderer *), (ChafaIterm2Canvas *) */
-    gpointer pixel_canvas;
+    gpointer pixel_renderer;
 
     /* It's possible to have a single placement that covers the entire
      * canvas. In this case, it is stored here. */
