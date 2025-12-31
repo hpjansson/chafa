@@ -647,6 +647,7 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
     chafa_canvas_config_copy_contents (&canvas->config, &orig->config);
 
     canvas->pixels = NULL;
+    canvas->pixel_canvas = NULL;
     canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
     canvas->needs_clear = TRUE;
 
