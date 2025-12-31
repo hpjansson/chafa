@@ -44,6 +44,8 @@ libchafa_internal_sources = \
 	chafa-sixel-canvas.h \
 	chafa-string-util.c \
 	chafa-string-util.h \
+	chafa-symbol-renderer.c \
+	chafa-symbol-renderer.h \
 	chafa-symbols.c \
 	chafa-symbols-ascii.h \
 	chafa-symbols-block.h \
