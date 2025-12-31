@@ -375,7 +375,9 @@ destroy_pixel_canvas (ChafaCanvas *canvas)
 {
     if (canvas->pixel_canvas)
     {
-        if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
+        if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
+            chafa_symbol_renderer_destroy (canvas->pixel_canvas);
+        else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
             chafa_sixel_canvas_destroy (canvas->pixel_canvas);
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
             chafa_kitty_canvas_destroy (canvas->pixel_canvas);
