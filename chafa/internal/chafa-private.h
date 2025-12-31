@@ -30,7 +30,7 @@
 #include "internal/chafa-math-util.h"
 #include "internal/chafa-noise.h"
 #include "internal/chafa-palette.h"
-#include "internal/chafa-sixel-canvas.h"
+#include "internal/chafa-sixel-renderer.h"
 
 G_BEGIN_DECLS
 

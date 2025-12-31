@@ -26,14 +26,14 @@
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-math-util.h"
 #include "internal/chafa-passthrough-encoder.h"
-#include "internal/chafa-sixel-canvas.h"
+#include "internal/chafa-sixel-renderer.h"
 #include "internal/chafa-string-util.h"
 
 #define SIXEL_CELL_HEIGHT 6
 
 typedef struct
 {
-    ChafaSixelCanvas *sixel_canvas;
+    ChafaSixelRenderer *sixel_renderer;
     ChafaPassthroughEncoder *ptenc;
 }
 BuildSixelsCtx;
@@ -52,46 +52,46 @@ typedef struct
 }
 SixelRow;
 
-ChafaSixelCanvas *
-chafa_sixel_canvas_new (gint width, gint height,
+ChafaSixelRenderer *
+chafa_sixel_renderer_new (gint width, gint height,
                         ChafaColorSpace color_space,
                         const ChafaPalette *palette,
                         const ChafaDither *dither)
 {
-    ChafaSixelCanvas *sixel_canvas;
+    ChafaSixelRenderer *sixel_renderer;
 
-    sixel_canvas = g_new (ChafaSixelCanvas, 1);
-    sixel_canvas->width = width;
-    sixel_canvas->height = height;
-    sixel_canvas->color_space = color_space;
-    sixel_canvas->image = chafa_indexed_image_new (width, chafa_round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
+    sixel_renderer = g_new (ChafaSixelRenderer, 1);
+    sixel_renderer->width = width;
+    sixel_renderer->height = height;
+    sixel_renderer->color_space = color_space;
+    sixel_renderer->image = chafa_indexed_image_new (width, chafa_round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
                                                    palette, dither);
 
-    if (!sixel_canvas->image)
+    if (!sixel_renderer->image)
     {
-        g_free (sixel_canvas);
-        sixel_canvas = NULL;
+        g_free (sixel_renderer);
+        sixel_renderer = NULL;
     }
 
-    return sixel_canvas;
+    return sixel_renderer;
 }
 
 void
-chafa_sixel_canvas_destroy (ChafaSixelCanvas *sixel_canvas)
+chafa_sixel_renderer_destroy (ChafaSixelRenderer *sixel_renderer)
 {
-    chafa_indexed_image_destroy (sixel_canvas->image);
-    g_free (sixel_canvas);
+    chafa_indexed_image_destroy (sixel_renderer->image);
+    g_free (sixel_renderer);
 }
 
 void
-chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelType src_pixel_type,
+chafa_sixel_renderer_draw_all_pixels (ChafaSixelRenderer *sixel_renderer, ChafaPixelType src_pixel_type,
                                     gconstpointer src_pixels,
                                     gint src_width, gint src_height, gint src_rowstride,
                                     ChafaAlign halign, ChafaAlign valign,
                                     ChafaTuck tuck,
                                     gfloat quality)
 {
-    g_return_if_fail (sixel_canvas != NULL);
+    g_return_if_fail (sixel_renderer != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
     g_return_if_fail (src_pixels != NULL);
     g_return_if_fail (src_width >= 0);
@@ -100,12 +100,12 @@ chafa_sixel_canvas_draw_all_pixels (ChafaSixelCanvas *sixel_canvas, ChafaPixelTy
     if (src_width == 0 || src_height == 0)
         return;
 
-    chafa_indexed_image_draw_pixels (sixel_canvas->image,
-                                     sixel_canvas->color_space,
+    chafa_indexed_image_draw_pixels (sixel_renderer->image,
+                                     sixel_renderer->color_space,
                                      src_pixel_type,
                                      src_pixels,
                                      src_width, src_height, src_rowstride,
-                                     sixel_canvas->width, sixel_canvas->height,
+                                     sixel_renderer->width, sixel_renderer->height,
                                      halign, valign,
                                      tuck,
                                      quality);
@@ -247,7 +247,7 @@ format_pen (guint8 pen, gchar *p)
  * otherwise the first row with non-transparent pixels will have
  * garbage rendered in it */
 static gchar *
-build_sixel_row_ansi (const ChafaSixelCanvas *scanvas, const SixelRow *srow, gchar *p, gboolean force_full_width)
+build_sixel_row_ansi (const ChafaSixelRenderer *scanvas, const SixelRow *srow, gchar *p, gboolean force_full_width)
 {
     gint pen = 0;
     gboolean need_cr = FALSE;
@@ -381,21 +381,21 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     gint i;
 
     n_sixel_rows = (batch->n_rows + SIXEL_CELL_HEIGHT - 1) / SIXEL_CELL_HEIGHT;
-    srow.data = g_malloc (sizeof (SixelData) * ctx->sixel_canvas->width);
-    chafa_bitfield_init (&srow.filter_bits, ((ctx->sixel_canvas->width + FILTER_BANK_WIDTH - 1) / FILTER_BANK_WIDTH) * 256);
+    srow.data = g_malloc (sizeof (SixelData) * ctx->sixel_renderer->width);
+    chafa_bitfield_init (&srow.filter_bits, ((ctx->sixel_renderer->width + FILTER_BANK_WIDTH - 1) / FILTER_BANK_WIDTH) * 256);
 
-    sixel_ansi = p = g_malloc (256 * (ctx->sixel_canvas->width + 5) * n_sixel_rows + 1);
+    sixel_ansi = p = g_malloc (256 * (ctx->sixel_renderer->width + 5) * n_sixel_rows + 1);
 
     for (i = 0; i < n_sixel_rows; i++)
     {
         gboolean is_global_first_row = batch->first_row + i == 0;
-        gboolean is_global_last_row = batch->first_row + (i + 1) * SIXEL_CELL_HEIGHT >= ctx->sixel_canvas->height;
+        gboolean is_global_last_row = batch->first_row + (i + 1) * SIXEL_CELL_HEIGHT >= ctx->sixel_renderer->height;
 
         fetch_sixel_row (&srow,
-                         ctx->sixel_canvas->image->pixels
-                         + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
-                         ctx->sixel_canvas->image->width);
-        p = build_sixel_row_ansi (ctx->sixel_canvas, &srow, p,
+                         ctx->sixel_renderer->image->pixels
+                         + ctx->sixel_renderer->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
+                         ctx->sixel_renderer->image->width);
+        p = build_sixel_row_ansi (ctx->sixel_renderer, &srow, p,
                                   (is_global_first_row) || (is_global_last_row)
                                   ? TRUE : FALSE);
         chafa_bitfield_clear (&srow.filter_bits);
@@ -420,23 +420,23 @@ build_sixel_row_post (ChafaBatchInfo *batch, BuildSixelsCtx *ctx)
 }
 
 static void
-build_sixel_palette (ChafaSixelCanvas *sixel_canvas, ChafaPassthroughEncoder *ptenc)
+build_sixel_palette (ChafaSixelRenderer *sixel_renderer, ChafaPassthroughEncoder *ptenc)
 {
     gchar str [256 * 20 + 1];
     gchar *p = str;
     gint first_color;
     gint pen;
 
-    first_color = chafa_palette_get_first_color (&sixel_canvas->image->palette);
+    first_color = chafa_palette_get_first_color (&sixel_renderer->image->palette);
 
-    for (pen = 0; pen < chafa_palette_get_n_colors (&sixel_canvas->image->palette); pen++)
+    for (pen = 0; pen < chafa_palette_get_n_colors (&sixel_renderer->image->palette); pen++)
     {
         const ChafaColor *col;
 
-        if (pen == chafa_palette_get_transparent_index (&sixel_canvas->image->palette))
+        if (pen == chafa_palette_get_transparent_index (&sixel_renderer->image->palette))
             continue;
 
-        col = chafa_palette_get_color (&sixel_canvas->image->palette, CHAFA_COLOR_SPACE_RGB,
+        col = chafa_palette_get_color (&sixel_renderer->image->palette, CHAFA_COLOR_SPACE_RGB,
                                        first_color + pen);
         *(p++) = '#';
         p = chafa_format_dec_u8 (p, pen);
@@ -484,14 +484,14 @@ end_sixels (ChafaPassthroughEncoder *ptenc, ChafaTermInfo *term_info)
 }
 
 void
-chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, ChafaTermInfo *term_info,
-                               GString *str, ChafaPassthrough passthrough)
+chafa_sixel_renderer_build_ansi (ChafaSixelRenderer *sixel_renderer, ChafaTermInfo *term_info,
+                                 GString *str, ChafaPassthrough passthrough)
 {
     ChafaPassthroughEncoder ptenc;
     BuildSixelsCtx ctx;
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
-    g_assert (sixel_canvas->image->height % SIXEL_CELL_HEIGHT == 0);
+    g_assert (sixel_renderer->image->height % SIXEL_CELL_HEIGHT == 0);
 
     chafa_passthrough_encoder_begin (&ptenc, passthrough, term_info, str);
 
@@ -501,19 +501,19 @@ chafa_sixel_canvas_build_ansi (ChafaSixelCanvas *sixel_canvas, ChafaTermInfo *te
     g_snprintf (buf,
                 CHAFA_TERM_SEQ_LENGTH_MAX,
                 "\"1;1;%d;%d",
-                sixel_canvas->width,
-                sixel_canvas->height);
+                sixel_renderer->width,
+                sixel_renderer->height);
     chafa_passthrough_encoder_append (&ptenc, buf);
 
-    ctx.sixel_canvas = sixel_canvas;
+    ctx.sixel_renderer = sixel_renderer;
     ctx.ptenc = &ptenc;
 
-    build_sixel_palette (sixel_canvas, &ptenc);
+    build_sixel_palette (sixel_renderer, &ptenc);
 
     chafa_process_batches (&ctx,
                            (GFunc) build_sixel_row_worker,
                            (GFunc) build_sixel_row_post,
-                           sixel_canvas->image->height,
+                           sixel_renderer->image->height,
                            chafa_get_n_actual_threads (),
                            SIXEL_CELL_HEIGHT);
 

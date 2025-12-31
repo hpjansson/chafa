@@ -75,7 +75,7 @@ struct ChafaCanvas
     ChafaDither dither;
 
     /* This is NULL in CHAFA_PIXEL_MODE_SYMBOLS, otherwise one of:
-     * (ChafaSixelCanvas *), (ChafaKittyCanvas *), (ChafaIterm2Canvas *) */
+     * (ChafaSixelRenderer *), (ChafaKittyCanvas *), (ChafaIterm2Canvas *) */
     gpointer pixel_canvas;
 
     /* It's possible to have a single placement that covers the entire
@@ -90,3 +90,4 @@ struct ChafaCanvas
 G_END_DECLS
 
 #endif /* __CHAFA_CANVAS_INTERNAL_H__ */
+

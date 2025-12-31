@@ -40,8 +40,8 @@ libchafa_internal_sources = \
 	chafa-pixops.c \
 	chafa-pixops.h \
 	chafa-private.h \
-	chafa-sixel-canvas.c \
-	chafa-sixel-canvas.h \
+	chafa-sixel-renderer.c \
+	chafa-sixel-renderer.h \
 	chafa-string-util.c \
 	chafa-string-util.h \
 	chafa-symbol-renderer.c \

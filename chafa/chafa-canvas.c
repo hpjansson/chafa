@@ -378,7 +378,7 @@ destroy_pixel_canvas (ChafaCanvas *canvas)
         if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SYMBOLS)
             chafa_symbol_renderer_destroy (canvas->pixel_canvas);
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
-            chafa_sixel_canvas_destroy (canvas->pixel_canvas);
+            chafa_sixel_renderer_destroy (canvas->pixel_canvas);
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
             chafa_kitty_canvas_destroy (canvas->pixel_canvas);
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
@@ -445,19 +445,19 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
         /* Sixel mode */
 
         canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
-        canvas->pixel_canvas = chafa_sixel_canvas_new (canvas->width_pixels,
-                                                       canvas->height_pixels,
-                                                       canvas->config.color_space,
-                                                       &canvas->fg_palette,
-                                                       &canvas->dither);
-        chafa_sixel_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                            src_pixel_type,
-                                            src_pixels,
-                                            src_width, src_height,
-                                            src_rowstride,
-                                            halign, valign,
-                                            tuck,
-                                            canvas->config.work_factor);
+        canvas->pixel_canvas = chafa_sixel_renderer_new (canvas->width_pixels,
+                                                         canvas->height_pixels,
+                                                         canvas->config.color_space,
+                                                         &canvas->fg_palette,
+                                                         &canvas->dither);
+        chafa_sixel_renderer_draw_all_pixels (canvas->pixel_canvas,
+                                              src_pixel_type,
+                                              src_pixels,
+                                              src_width, src_height,
+                                              src_rowstride,
+                                              halign, valign,
+                                              tuck,
+                                              canvas->config.work_factor);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
@@ -885,8 +885,8 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
         /* Sixel mode */
 
         str = g_string_new ("");
-        chafa_sixel_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
-                                       canvas->config.passthrough);
+        chafa_sixel_renderer_build_ansi (canvas->pixel_canvas, term_info, str,
+                                         canvas->config.passthrough);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY
              && chafa_term_info_get_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1)
