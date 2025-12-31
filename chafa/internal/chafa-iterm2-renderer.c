@@ -25,7 +25,7 @@
 #include "internal/chafa-batch.h"
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
-#include "internal/chafa-iterm2-canvas.h"
+#include "internal/chafa-iterm2-renderer.h"
 #include "internal/chafa-math-util.h"
 #include "internal/chafa-string-util.h"
 
@@ -100,54 +100,54 @@ TiffTag;
 
 typedef struct
 {
-    ChafaIterm2Canvas *iterm2_canvas;
+    ChafaIterm2Renderer *iterm2_renderer;
     GString *out_str;
 }
 BuildCtx;
 
 typedef struct
 {
-    ChafaIterm2Canvas *iterm2_canvas;
+    ChafaIterm2Renderer *iterm2_renderer;
     SmolScaleCtx *scale_ctx;
 }
 DrawCtx;
 
-ChafaIterm2Canvas *
-chafa_iterm2_canvas_new (gint width, gint height)
+ChafaIterm2Renderer *
+chafa_iterm2_renderer_new (gint width, gint height)
 {
-    ChafaIterm2Canvas *iterm2_canvas;
+    ChafaIterm2Renderer *iterm2_renderer;
 
-    iterm2_canvas = g_new (ChafaIterm2Canvas, 1);
-    iterm2_canvas->width = width;
-    iterm2_canvas->height = height;
-    iterm2_canvas->rgba_image = g_malloc (width * height * sizeof (guint32));
+    iterm2_renderer = g_new (ChafaIterm2Renderer, 1);
+    iterm2_renderer->width = width;
+    iterm2_renderer->height = height;
+    iterm2_renderer->rgba_image = g_malloc (width * height * sizeof (guint32));
 
-    return iterm2_canvas;
+    return iterm2_renderer;
 }
 
 void
-chafa_iterm2_canvas_destroy (ChafaIterm2Canvas *iterm2_canvas)
+chafa_iterm2_renderer_destroy (ChafaIterm2Renderer *iterm2_renderer)
 {
-    g_free (iterm2_canvas->rgba_image);
-    g_free (iterm2_canvas);
+    g_free (iterm2_renderer->rgba_image);
+    g_free (iterm2_renderer);
 }
 
 static void
 draw_pixels_worker (ChafaBatchInfo *batch, const DrawCtx *ctx)
 {
     smol_scale_batch_full (ctx->scale_ctx,
-                           ((guint32 *) ctx->iterm2_canvas->rgba_image) + (ctx->iterm2_canvas->width * batch->first_row),
+                           ((guint32 *) ctx->iterm2_renderer->rgba_image) + (ctx->iterm2_renderer->width * batch->first_row),
                            batch->first_row,
                            batch->n_rows);
 }
 
 void
-chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixelType src_pixel_type,
-                                     gconstpointer src_pixels,
-                                     gint src_width, gint src_height, gint src_rowstride,
-                                     ChafaColor bg_color,
-                                     ChafaAlign halign, ChafaAlign valign,
-                                     ChafaTuck tuck)
+chafa_iterm2_renderer_draw_all_pixels (ChafaIterm2Renderer *iterm2_renderer, ChafaPixelType src_pixel_type,
+                                       gconstpointer src_pixels,
+                                       gint src_width, gint src_height, gint src_rowstride,
+                                       ChafaColor bg_color,
+                                       ChafaAlign halign, ChafaAlign valign,
+                                       ChafaTuck tuck)
 {
     uint8_t bg_color_rgba [4];
     DrawCtx ctx;
@@ -155,7 +155,7 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
     gint placement_x, placement_y;
     gint placement_width, placement_height;
 
-    g_return_if_fail (iterm2_canvas != NULL);
+    g_return_if_fail (iterm2_renderer != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
     g_return_if_fail (src_pixels != NULL);
     g_return_if_fail (src_width >= 0);
@@ -169,13 +169,13 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
     chafa_color8_store_to_rgba8 (bg_color, bg_color_rgba);
 
     chafa_tuck_and_align (src_width, src_height,
-                          iterm2_canvas->width, iterm2_canvas->height,
+                          iterm2_renderer->width, iterm2_renderer->height,
                           halign, valign,
                           tuck,
                           &placement_x, &placement_y,
                           &placement_width, &placement_height);
 
-    ctx.iterm2_canvas = iterm2_canvas;
+    ctx.iterm2_renderer = iterm2_renderer;
     ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
                                          (SmolPixelType) src_pixel_type,
@@ -188,9 +188,9 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                                          /* Destination */
                                          NULL,
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul? */
-                                         iterm2_canvas->width,
-                                         iterm2_canvas->height,
-                                         iterm2_canvas->width * sizeof (guint32),
+                                         iterm2_renderer->width,
+                                         iterm2_renderer->height,
+                                         iterm2_renderer->width * sizeof (guint32),
                                          /* Placement */
                                          placement_x * SMOL_SUBPIXEL_MUL,
                                          placement_y * SMOL_SUBPIXEL_MUL,
@@ -205,7 +205,7 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
     chafa_process_batches (&ctx,
                            (GFunc) draw_pixels_worker,
                            NULL,
-                           iterm2_canvas->height,
+                           iterm2_renderer->height,
                            chafa_get_n_actual_threads (),
                            1);
 
@@ -233,7 +233,7 @@ generate_tag (ChafaBase64 *base64, GString *gs,
 }
 
 void
-chafa_iterm2_canvas_build_ansi (ChafaIterm2Canvas *iterm2_canvas, ChafaTermInfo *term_info, GString *out_str, gint width_cells, gint height_cells)
+chafa_iterm2_renderer_build_ansi (ChafaIterm2Renderer *iterm2_renderer, ChafaTermInfo *term_info, GString *out_str, gint width_cells, gint height_cells)
 {
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
     ChafaBase64 base64;
@@ -249,15 +249,15 @@ chafa_iterm2_canvas_build_ansi (ChafaIterm2Canvas *iterm2_canvas, ChafaTermInfo 
 
     u32 = GUINT32_TO_LE (0x002a4949);
     chafa_base64_encode (&base64, out_str, &u32, sizeof (u32));
-    u32 = GUINT32_TO_LE (iterm2_canvas->width * iterm2_canvas->height * sizeof (guint32)
+    u32 = GUINT32_TO_LE (iterm2_renderer->width * iterm2_renderer->height * sizeof (guint32)
                          + sizeof (guint32) * 2);
     chafa_base64_encode (&base64, out_str, &u32, sizeof (u32));
 
     /* Image data */
 
     chafa_base64_encode (&base64, out_str,
-                         iterm2_canvas->rgba_image,
-                         iterm2_canvas->width * iterm2_canvas->height * sizeof (guint32));
+                         iterm2_renderer->rgba_image,
+                         iterm2_renderer->width * iterm2_renderer->height * sizeof (guint32));
 
     /* IFD */
 
@@ -266,12 +266,12 @@ chafa_iterm2_canvas_build_ansi (ChafaIterm2Canvas *iterm2_canvas, ChafaTermInfo 
 
     /* Tags */
 
-    generate_tag (&base64, out_str, TIFF_TAG_IMAGE_WIDTH, TIFF_TYPE_LONG, 1, iterm2_canvas->width);
-    generate_tag (&base64, out_str, TIFF_TAG_IMAGE_LENGTH, TIFF_TYPE_LONG, 1, iterm2_canvas->height);
+    generate_tag (&base64, out_str, TIFF_TAG_IMAGE_WIDTH, TIFF_TYPE_LONG, 1, iterm2_renderer->width);
+    generate_tag (&base64, out_str, TIFF_TAG_IMAGE_LENGTH, TIFF_TYPE_LONG, 1, iterm2_renderer->height);
 
     /* For BitsPerSample, the data field points to external data towards the end of file */
     generate_tag (&base64, out_str, TIFF_TAG_BITS_PER_SAMPLE, TIFF_TYPE_SHORT, 4,
-                  iterm2_canvas->width * iterm2_canvas->height * sizeof (guint32)
+                  iterm2_renderer->width * iterm2_renderer->height * sizeof (guint32)
                   + sizeof (guint32) * 2
                   + sizeof (guint16)
                   + sizeof (TiffTag) * 11 /* Tag count */
@@ -281,9 +281,9 @@ chafa_iterm2_canvas_build_ansi (ChafaIterm2Canvas *iterm2_canvas, ChafaTermInfo 
     generate_tag (&base64, out_str, TIFF_TAG_STRIP_OFFSETS, TIFF_TYPE_LONG, 1, sizeof (guint32) * 2);
     generate_tag (&base64, out_str, TIFF_TAG_ORIENTATION, TIFF_TYPE_SHORT, 1, TIFF_ORIENTATION_TOPLEFT);
     generate_tag (&base64, out_str, TIFF_TAG_SAMPLES_PER_PIXEL, TIFF_TYPE_SHORT, 1, 4);
-    generate_tag (&base64, out_str, TIFF_TAG_ROWS_PER_STRIP, TIFF_TYPE_LONG, 1, iterm2_canvas->height);
+    generate_tag (&base64, out_str, TIFF_TAG_ROWS_PER_STRIP, TIFF_TYPE_LONG, 1, iterm2_renderer->height);
     generate_tag (&base64, out_str, TIFF_TAG_STRIP_BYTE_COUNTS, TIFF_TYPE_LONG, 1,
-                  iterm2_canvas->width * iterm2_canvas->height * 4);
+                  iterm2_renderer->width * iterm2_renderer->height * 4);
     generate_tag (&base64, out_str, TIFF_TAG_PLANAR_CONFIGURATION, TIFF_TYPE_SHORT, 1, TIFF_PLANAR_CONFIGURATION_CONTIGUOUS);
     generate_tag (&base64, out_str, TIFF_TAG_EXTRA_SAMPLES, TIFF_TYPE_SHORT, 1, TIFF_EXTRA_SAMPLE_UNASSOC_ALPHA);
 

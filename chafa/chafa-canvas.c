@@ -382,7 +382,7 @@ destroy_pixel_canvas (ChafaCanvas *canvas)
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
             chafa_kitty_renderer_destroy (canvas->pixel_canvas);
         else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2)
-            chafa_iterm2_canvas_destroy (canvas->pixel_canvas);
+            chafa_iterm2_renderer_destroy (canvas->pixel_canvas);
 
         canvas->pixel_canvas = NULL;
     }
@@ -482,18 +482,18 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
         /* iTerm2 mode */
 
         canvas->fg_palette.alpha_threshold = canvas->config.alpha_threshold;
-        canvas->pixel_canvas = chafa_iterm2_canvas_new (canvas->width_pixels,
-                                                        canvas->height_pixels);
+        canvas->pixel_canvas = chafa_iterm2_renderer_new (canvas->width_pixels,
+                                                          canvas->height_pixels);
 
         if (canvas->pixel_canvas)
-            chafa_iterm2_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                                 src_pixel_type,
-                                                 src_pixels,
-                                                 src_width, src_height,
-                                                 src_rowstride,
-                                                 bg_color,
-                                                 halign, valign,
-                                                 tuck);
+            chafa_iterm2_renderer_draw_all_pixels (canvas->pixel_canvas,
+                                                   src_pixel_type,
+                                                   src_pixels,
+                                                   src_width, src_height,
+                                                   src_rowstride,
+                                                   bg_color,
+                                                   halign, valign,
+                                                   tuck);
     }
 }
 
@@ -906,8 +906,8 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
         /* iTerm2 mode */
 
         str = g_string_new ("");
-        chafa_iterm2_canvas_build_ansi (canvas->pixel_canvas, term_info, str,
-                                        canvas->config.width, canvas->config.height);
+        chafa_iterm2_renderer_build_ansi (canvas->pixel_canvas, term_info, str,
+                                          canvas->config.width, canvas->config.height);
     }
     else
     {

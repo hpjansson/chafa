@@ -25,7 +25,7 @@
 #include "internal/chafa-color-hash.h"
 #include "internal/chafa-dither.h"
 #include "internal/chafa-indexed-image.h"
-#include "internal/chafa-iterm2-canvas.h"
+#include "internal/chafa-iterm2-renderer.h"
 #include "internal/chafa-kitty-renderer.h"
 #include "internal/chafa-math-util.h"
 #include "internal/chafa-noise.h"
