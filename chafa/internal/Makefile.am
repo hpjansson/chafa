@@ -25,8 +25,8 @@ libchafa_internal_sources = \
 	chafa-indexed-image.h \
 	chafa-iterm2-canvas.c \
 	chafa-iterm2-canvas.h \
-	chafa-kitty-canvas.c \
-	chafa-kitty-canvas.h \
+	chafa-kitty-renderer.c \
+	chafa-kitty-renderer.h \
 	chafa-math-util.c \
 	chafa-math-util.h \
 	chafa-noise.c \

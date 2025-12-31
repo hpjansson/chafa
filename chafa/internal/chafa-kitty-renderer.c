@@ -26,21 +26,21 @@
 #include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-math-util.h"
-#include "internal/chafa-kitty-canvas.h"
+#include "internal/chafa-kitty-renderer.h"
 #include "internal/chafa-passthrough-encoder.h"
 #include "internal/chafa-pixops.h"
 #include "internal/chafa-string-util.h"
 
 typedef struct
 {
-    ChafaKittyCanvas *kitty_canvas;
+    ChafaKittyRenderer *kitty_renderer;
     GString *out_str;
 }
 BuildCtx;
 
 typedef struct
 {
-    ChafaKittyCanvas *kitty_canvas;
+    ChafaKittyRenderer *kitty_renderer;
     SmolScaleCtx *scale_ctx;
 }
 DrawCtx;
@@ -102,48 +102,48 @@ static const guint32 encoding_diacritics [ENCODING_DIACRITIC_MAX] =
     /* 297 */
 };
 
-ChafaKittyCanvas *
-chafa_kitty_canvas_new (gint width, gint height)
+ChafaKittyRenderer *
+chafa_kitty_renderer_new (gint width, gint height)
 {
-    ChafaKittyCanvas *kitty_canvas;
+    ChafaKittyRenderer *kitty_renderer;
 
-    kitty_canvas = g_new0 (ChafaKittyCanvas, 1);
-    kitty_canvas->width = width;
-    kitty_canvas->height = height;
-    kitty_canvas->rgba_image = g_try_malloc ((gsize) width * height * sizeof (guint32));
+    kitty_renderer = g_new0 (ChafaKittyRenderer, 1);
+    kitty_renderer->width = width;
+    kitty_renderer->height = height;
+    kitty_renderer->rgba_image = g_try_malloc ((gsize) width * height * sizeof (guint32));
 
-    if (!kitty_canvas->rgba_image)
+    if (!kitty_renderer->rgba_image)
     {
 #if 0
-        g_warning ("ChafaKittyCanvas: Out of memory allocating %ux%u pixels.",
+        g_warning ("ChafaKittyRenderer: Out of memory allocating %ux%u pixels.",
                    width, height);
 #endif
 
-        g_free (kitty_canvas);
-        kitty_canvas = NULL;
+        g_free (kitty_renderer);
+        kitty_renderer = NULL;
     }
 
-    return kitty_canvas;
+    return kitty_renderer;
 }
 
 void
-chafa_kitty_canvas_destroy (ChafaKittyCanvas *kitty_canvas)
+chafa_kitty_renderer_destroy (ChafaKittyRenderer *kitty_renderer)
 {
-    g_free (kitty_canvas->rgba_image);
-    g_free (kitty_canvas);
+    g_free (kitty_renderer->rgba_image);
+    g_free (kitty_renderer);
 }
 
 static void
 draw_pixels_worker (ChafaBatchInfo *batch, const DrawCtx *ctx)
 {
     smol_scale_batch_full (ctx->scale_ctx,
-                           ((guint32 *) ctx->kitty_canvas->rgba_image) + (ctx->kitty_canvas->width * batch->first_row),
+                           ((guint32 *) ctx->kitty_renderer->rgba_image) + (ctx->kitty_renderer->width * batch->first_row),
                            batch->first_row,
                            batch->n_rows);
 }
 
 void
-chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelType src_pixel_type,
+chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaPixelType src_pixel_type,
                                     gconstpointer src_pixels,
                                     gint src_width, gint src_height, gint src_rowstride,
                                     ChafaColor bg_color,
@@ -156,7 +156,7 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
     gint placement_x, placement_y;
     gint placement_width, placement_height;
 
-    g_return_if_fail (kitty_canvas != NULL);
+    g_return_if_fail (kitty_renderer != NULL);
     g_return_if_fail (src_pixel_type < CHAFA_PIXEL_MAX);
     g_return_if_fail (src_pixels != NULL);
     g_return_if_fail (src_width >= 0);
@@ -170,13 +170,13 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
     chafa_color8_store_to_rgba8 (bg_color, bg_color_rgba);
 
     chafa_tuck_and_align (src_width, src_height,
-                          kitty_canvas->width, kitty_canvas->height,
+                          kitty_renderer->width, kitty_renderer->height,
                           halign, valign,
                           tuck,
                           &placement_x, &placement_y,
                           &placement_width, &placement_height);
 
-    ctx.kitty_canvas = kitty_canvas;
+    ctx.kitty_renderer = kitty_renderer;
     ctx.scale_ctx = smol_scale_new_full (/* Source */
                                          (const guint32 *) src_pixels,
                                          (SmolPixelType) src_pixel_type,
@@ -189,9 +189,9 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                                          /* Destination */
                                          NULL,
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Opaque? */
-                                         kitty_canvas->width,
-                                         kitty_canvas->height,
-                                         kitty_canvas->width * sizeof (guint32),
+                                         kitty_renderer->width,
+                                         kitty_renderer->height,
+                                         kitty_renderer->width * sizeof (guint32),
                                          /* Placement */
                                          placement_x * SMOL_SUBPIXEL_MUL,
                                          placement_y * SMOL_SUBPIXEL_MUL,
@@ -205,7 +205,7 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
     chafa_process_batches (&ctx,
                            (GFunc) draw_pixels_worker,
                            NULL,
-                           kitty_canvas->height,
+                           kitty_renderer->height,
                            chafa_get_n_actual_threads (),
                            1);
 
@@ -252,15 +252,15 @@ end_passthrough (ChafaPassthroughEncoder *ptenc)
 }
 
 static void
-build_image_chunks (ChafaKittyCanvas *kitty_canvas, ChafaPassthroughEncoder *ptenc)
+build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder *ptenc)
 {
     const guint8 *p, *last;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
-    last = ((guint8 *) kitty_canvas->rgba_image)
-        + kitty_canvas->width * kitty_canvas->height * sizeof (guint32);
+    last = ((guint8 *) kitty_renderer->rgba_image)
+        + kitty_renderer->width * kitty_renderer->height * sizeof (guint32);
 
-    for (p = kitty_canvas->rgba_image; p < last; )
+    for (p = kitty_renderer->rgba_image; p < last; )
     {
         const guint8 *end;
 
@@ -288,7 +288,7 @@ build_image_chunks (ChafaKittyCanvas *kitty_canvas, ChafaPassthroughEncoder *pte
 }
 
 static void
-build_immediate (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
+build_immediate (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, GString *out_str,
                  gint width_cells, gint height_cells)
 {
     ChafaPassthroughEncoder ptenc;
@@ -298,14 +298,14 @@ build_immediate (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GStri
 
     *chafa_term_info_emit_begin_kitty_immediate_image_v1 (term_info, seq,
                                                           32,
-                                                          kitty_canvas->width,
-                                                          kitty_canvas->height,
+                                                          kitty_renderer->width,
+                                                          kitty_renderer->height,
                                                           width_cells,
                                                           height_cells) = '\0';
     chafa_passthrough_encoder_append (&ptenc, seq);
     chafa_passthrough_encoder_flush (&ptenc);
 
-    build_image_chunks (kitty_canvas, &ptenc);
+    build_image_chunks (kitty_renderer, &ptenc);
 
     chafa_passthrough_encoder_end (&ptenc);
 }
@@ -416,7 +416,7 @@ build_unicode_placement (ChafaTermInfo *term_info,
 }
 
 static void
-build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info, GString *out_str,
+build_unicode_virtual (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, GString *out_str,
                        gint width_cells, gint height_cells, gint placement_id,
                        ChafaPassthrough passthrough)
 {
@@ -427,8 +427,8 @@ build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info,
 
     *chafa_term_info_emit_begin_kitty_immediate_virt_image_v1 (term_info, seq,
                                                                32,
-                                                               kitty_canvas->width,
-                                                               kitty_canvas->height,
+                                                               kitty_renderer->width,
+                                                               kitty_renderer->height,
                                                                width_cells,
                                                                height_cells,
                                                                placement_id) = '\0';
@@ -436,7 +436,7 @@ build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info,
     chafa_passthrough_encoder_reset (&ptenc);
     end_passthrough (&ptenc);
 
-    build_image_chunks (kitty_canvas, &ptenc);
+    build_image_chunks (kitty_renderer, &ptenc);
 
     end_passthrough (&ptenc);
     chafa_passthrough_encoder_end (&ptenc);
@@ -446,7 +446,7 @@ build_unicode_virtual (ChafaKittyCanvas *kitty_canvas, ChafaTermInfo *term_info,
 }
 
 void
-chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas,
+chafa_kitty_renderer_build_ansi (ChafaKittyRenderer *kitty_renderer,
                                ChafaTermInfo *term_info, GString *out_str,
                                gint width_cells, gint height_cells,
                                gint placement_id,
@@ -454,7 +454,7 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas,
 {
     if (passthrough == CHAFA_PASSTHROUGH_NONE)
     {
-        build_immediate (kitty_canvas, term_info, out_str,
+        build_immediate (kitty_renderer, term_info, out_str,
                          width_cells, height_cells);
     }
     else
@@ -466,7 +466,7 @@ chafa_kitty_canvas_build_ansi (ChafaKittyCanvas *kitty_canvas,
         else if (placement_id > 255)
             placement_id = 1 + (placement_id % 255);
 
-        build_unicode_virtual (kitty_canvas, term_info, out_str,
+        build_unicode_virtual (kitty_renderer, term_info, out_str,
                                width_cells, height_cells,
                                placement_id, passthrough);
     }
