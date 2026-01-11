@@ -937,7 +937,10 @@ main (int argc, char *argv [])
     proc_init ();
 
     if (!chicle_parse_options (&argc, &argv))
-        exit (2);
+    {
+        ret = 2;
+        goto out;
+    }
 
     if (options.args)
     {
@@ -972,11 +975,13 @@ main (int argc, char *argv [])
     }
 
     tty_options_deinit ();
-    chafa_term_flush (term);
+
+out:
+    if (term)
+        chafa_term_destroy (term);
 
     chicle_retire_passthrough_workarounds_tmux ();
 
-out:
     if (placement_counter)
         chicle_placement_counter_destroy (placement_counter);
 
