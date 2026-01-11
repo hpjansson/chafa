@@ -78,6 +78,39 @@ struct ChafaStreamWriter
 
 #ifdef G_OS_WIN32
 
+static DWORD saved_console_mode;
+
+static void
+win32_stream_writer_init (ChafaStreamWriter *stream_writer)
+{
+    GetConsoleMode (stream_writer->fd_win32, &saved_console_mode);
+
+    setmode (stream_writer->fd, O_BINARY);
+
+    if (SetConsoleMode (stream_writer->fd_win32,
+                        ENABLE_PROCESSED_OUTPUT
+                        | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                        | ENABLE_WRAP_AT_EOL_OUTPUT))
+    {
+        stream_writer->is_console = TRUE;
+    }
+    else
+    {
+        if (GetLastError () != ERROR_INVALID_HANDLE)
+        {
+            /* Legacy MS Windows */
+            stream_writer->is_console = TRUE;
+            SetConsoleMode (stream_writer->fd_win32, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+        }
+    }
+}
+
+static void
+win32_stream_writer_deinit (ChafaStreamWriter *stream_writer)
+{
+    SetConsoleMode (stream_writer->fd_win32, saved_console_mode);
+}
+
 static gboolean
 safe_WriteConsoleA (ChafaStreamWriter *stream_writer, const gchar *data, gsize len)
 {
@@ -322,24 +355,7 @@ chafa_stream_writer_init (ChafaStreamWriter *stream_writer, gint fd)
 
 #ifdef G_OS_WIN32
     stream_writer->fd_win32 = (HANDLE) _get_osfhandle (stream_writer->fd);
-    setmode (stream_writer->fd, O_BINARY);
-
-    if (SetConsoleMode (stream_writer->fd_win32,
-                        ENABLE_PROCESSED_OUTPUT
-                        | ENABLE_VIRTUAL_TERMINAL_PROCESSING
-                        | ENABLE_WRAP_AT_EOL_OUTPUT))
-    {
-        stream_writer->is_console = TRUE;
-    }
-    else
-    {
-        if (GetLastError () != ERROR_INVALID_HANDLE)
-        {
-            /* Legacy MS Windows */
-            stream_writer->is_console = TRUE;
-            SetConsoleMode (stream_writer->fd_win32, ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
-        }
-    }
+    win32_stream_writer_init (stream_writer);
 #else
     if (isatty (stream_writer->fd))
         stream_writer->is_console = TRUE;
@@ -364,6 +380,10 @@ chafa_stream_writer_destroy (ChafaStreamWriter *stream_writer)
 
     if (stream_writer->thread)
         g_thread_join (stream_writer->thread);
+
+#ifdef G_OS_WIN32
+    win32_stream_writer_deinit (stream_writer);
+#endif
 
     g_mutex_clear (&stream_writer->mutex);
     g_cond_clear (&stream_writer->cond);
