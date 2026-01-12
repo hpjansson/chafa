@@ -82,7 +82,8 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
     gint n_threads;
     gint n_units;
     gfloat units_per_batch;
-    gfloat ofs [2] = { .0f, .0f };
+    gfloat next_unit_ofs_f = .0f;
+    gint unit_ofs [2] = { 0, 0 };
     gint i;
 
     g_assert (n_batches >= 1);
@@ -96,6 +97,7 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
 
     n_units = (n_rows + batch_unit - 1) / batch_unit;
     units_per_batch = (gfloat) n_units / (gfloat) n_batches;
+    units_per_batch = MAX (units_per_batch, 1.0f);
 
     batches = g_new0 (ChafaBatchInfo, n_batches);
 
@@ -116,23 +118,18 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
         ChafaBatchInfo *batch;
         gint row_ofs [2];
 
-        row_ofs [0] = ofs [0];
-
         do
         {
-            ofs [1] += units_per_batch;
-            row_ofs [1] = ofs [1];
+            next_unit_ofs_f += units_per_batch;
+            unit_ofs [1] = next_unit_ofs_f;
         }
-        while (row_ofs [0] == row_ofs [1]);
+        while (unit_ofs [0] == unit_ofs [1]);
 
-        row_ofs [0] *= batch_unit;
-        row_ofs [1] *= batch_unit;
+        row_ofs [0] = unit_ofs [0] * batch_unit;
+        row_ofs [1] = unit_ofs [1] * batch_unit;
 
-        if (row_ofs [1] > n_rows || i == n_batches - 1)
-        {
-            ofs [1] = n_rows + 0.5;
+        if (i == n_batches - 1 || row_ofs [1] > n_rows)
             row_ofs [1] = n_rows;
-        }
 
         if (row_ofs [0] >= row_ofs [1])
         {
@@ -159,7 +156,7 @@ chafa_process_batches (gpointer ctx, GFunc batch_func, GFunc post_func, gint n_r
             batch_func (batch, ctx);
         }
 
-        ofs [0] = ofs [1];
+        unit_ofs [0] = unit_ofs [1];
     }
 
     if (n_threads >= 2)
