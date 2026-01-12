@@ -61,6 +61,7 @@ struct ChafaStreamReader
     GQueue *event_queue;
 #ifdef G_OS_WIN32
     HANDLE fd_win32;
+    DWORD saved_console_mode;
 #endif
 
     gint64 token_restart_pos;
@@ -86,12 +87,10 @@ struct ChafaStreamReader
 
 #ifdef G_OS_WIN32
 
-static DWORD saved_console_mode;
-
 static void
 win32_stream_reader_init (ChafaStreamReader *stream_reader)
 {
-    GetConsoleMode (stream_reader->fd_win32, &saved_console_mode);
+    GetConsoleMode (stream_reader->fd_win32, &stream_reader->saved_console_mode);
 
     setmode (stream_reader->fd, O_BINARY);
 
@@ -114,7 +113,7 @@ win32_stream_reader_init (ChafaStreamReader *stream_reader)
 static void
 win32_stream_reader_deinit (ChafaStreamReader *stream_reader)
 {
-    SetConsoleMode (stream_reader->fd_win32, saved_console_mode);
+    SetConsoleMode (stream_reader->fd_win32, stream_reader->saved_console_mode);
 }
 
 #endif

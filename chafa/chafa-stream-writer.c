@@ -62,6 +62,7 @@ struct ChafaStreamWriter
     GQueue *event_queue;
 #ifdef G_OS_WIN32
     HANDLE fd_win32;
+    DWORD saved_console_mode;
 #endif
     gint fd;
     gint buf_max;
@@ -78,12 +79,10 @@ struct ChafaStreamWriter
 
 #ifdef G_OS_WIN32
 
-static DWORD saved_console_mode;
-
 static void
 win32_stream_writer_init (ChafaStreamWriter *stream_writer)
 {
-    GetConsoleMode (stream_writer->fd_win32, &saved_console_mode);
+    GetConsoleMode (stream_writer->fd_win32, &stream_writer->saved_console_mode);
 
     setmode (stream_writer->fd, O_BINARY);
 
@@ -108,7 +107,7 @@ win32_stream_writer_init (ChafaStreamWriter *stream_writer)
 static void
 win32_stream_writer_deinit (ChafaStreamWriter *stream_writer)
 {
-    SetConsoleMode (stream_writer->fd_win32, saved_console_mode);
+    SetConsoleMode (stream_writer->fd_win32, stream_writer->saved_console_mode);
 }
 
 static gboolean
