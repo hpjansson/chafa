@@ -45,6 +45,21 @@ typedef struct
 }
 DrawCtx;
 
+static guint
+chafa_kitty_next_image_id (void)
+{
+    static volatile gint next_image_id = 1;
+    gint id = g_atomic_int_add (&next_image_id, 1);
+
+    if (id <= 0)
+    {
+        g_atomic_int_set (&next_image_id, 1);
+        id = g_atomic_int_add (&next_image_id, 1);
+    }
+
+    return (guint) id;
+}
+
 /* Kitty's cell-based placeholders use Unicode diacritics to encode each
  * cell's row/col offsets. The below table maps integers to code points
  * using this scheme. */
@@ -300,6 +315,7 @@ build_immediate (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, G
 {
     ChafaPassthroughEncoder ptenc;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    guint image_id = chafa_kitty_next_image_id ();
 
     chafa_passthrough_encoder_begin (&ptenc, CHAFA_PASSTHROUGH_NONE, term_info, out_str);
 
@@ -308,7 +324,8 @@ build_immediate (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, G
                                                           kitty_renderer->width,
                                                           kitty_renderer->height,
                                                           width_cells,
-                                                          height_cells) = '\0';
+                                                          height_cells,
+                                                          image_id) = '\0';
     chafa_passthrough_encoder_append (&ptenc, seq);
     chafa_passthrough_encoder_flush (&ptenc);
 
