@@ -213,17 +213,6 @@ chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaP
 }
 
 static void
-encode_chunk (GString *gs, const guint8 *start, const guint8 *end)
-{
-    ChafaBase64 base64;
-
-    chafa_base64_init (&base64);
-    chafa_base64_encode (&base64, gs, start, end - start);
-    chafa_base64_encode_end (&base64, gs);
-    chafa_base64_deinit (&base64);
-}
-
-static void
 end_passthrough (ChafaPassthroughEncoder *ptenc)
 {
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
@@ -256,6 +245,9 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
 {
     const guint8 *p, *last;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
+    ChafaBase64 base64;
+
+    chafa_base64_init (&base64);
 
     last = ((guint8 *) kitty_renderer->rgba_image)
         + kitty_renderer->width * kitty_renderer->height * sizeof (guint32);
@@ -271,7 +263,7 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
         *chafa_term_info_emit_begin_kitty_image_chunk (ptenc->term_info, seq) = '\0';
         chafa_passthrough_encoder_append (ptenc, seq);
 
-        encode_chunk (ptenc->out, p, end);
+        chafa_base64_encode (&base64, ptenc->out, p, end - p);
 
         *chafa_term_info_emit_end_kitty_image_chunk (ptenc->term_info, seq) = '\0';
         chafa_passthrough_encoder_append (ptenc, seq);
@@ -280,6 +272,21 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
 
         p = end;
     }
+
+    if (base64.buf_len > 0)
+    {
+        *chafa_term_info_emit_begin_kitty_image_chunk (ptenc->term_info, seq) = '\0';
+        chafa_passthrough_encoder_append (ptenc, seq);
+
+        chafa_base64_encode_end (&base64, ptenc->out);
+
+        *chafa_term_info_emit_end_kitty_image_chunk (ptenc->term_info, seq) = '\0';
+        chafa_passthrough_encoder_append (ptenc, seq);
+        chafa_passthrough_encoder_reset (ptenc);
+        end_passthrough (ptenc);
+    }
+
+    chafa_base64_deinit (&base64);
 
     *chafa_term_info_emit_end_kitty_image (ptenc->term_info, seq) = '\0';
     chafa_passthrough_encoder_append (ptenc, seq);
