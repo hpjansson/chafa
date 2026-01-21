@@ -86,6 +86,7 @@
  * @CHAFA_TERM_SEQ_END_SIXELS: End sixel image data.
  * @CHAFA_TERM_SEQ_REPEAT_CHAR: Repeat previous character N times.
  * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1: Begin upload of Kitty image for immediate display at cursor.
+ * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V2: Begin upload of Kitty image for immediate display at cursor, with image ID.
  * @CHAFA_TERM_SEQ_END_KITTY_IMAGE: End of Kitty image upload.
  * @CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK: Begin Kitty image data chunk.
  * @CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK: End Kitty image data chunk.
@@ -1022,7 +1023,8 @@ chafa_term_info_is_pixel_mode_supported (ChafaTermInfo *term_info,
         case CHAFA_PIXEL_MODE_KITTY:
             result =
                 chafa_term_info_get_passthrough_type (term_info) == CHAFA_PASSTHROUGH_NONE
-                ? chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1)
+                ? (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V2)
+                   || chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
                 : chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1);
             break;
         case CHAFA_PIXEL_MODE_SIXELS:

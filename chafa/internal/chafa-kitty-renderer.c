@@ -45,6 +45,7 @@ typedef struct
 }
 DrawCtx;
 
+/* Generate unique image IDs using atomic operations */
 static guint
 chafa_kitty_next_image_id (void)
 {
@@ -228,6 +229,17 @@ chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaP
 }
 
 static void
+encode_chunk (GString *gs, const guint8 *start, const guint8 *end)
+{
+    ChafaBase64 base64;
+
+    chafa_base64_init (&base64);
+    chafa_base64_encode (&base64, gs, start, end - start);
+    chafa_base64_encode_end (&base64, gs);
+    chafa_base64_deinit (&base64);
+}
+
+static void
 end_passthrough (ChafaPassthroughEncoder *ptenc)
 {
     gchar buf [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
@@ -260,9 +272,6 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
 {
     const guint8 *p, *last;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
-    ChafaBase64 base64;
-
-    chafa_base64_init (&base64);
 
     last = ((guint8 *) kitty_renderer->rgba_image)
         + kitty_renderer->width * kitty_renderer->height * sizeof (guint32);
@@ -270,15 +279,18 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
     for (p = kitty_renderer->rgba_image; p < last; )
     {
         const guint8 *end;
+        gint chunk_size;
 
-        end = p + (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN ? 64 : 512);
+        /* iTerm2 and Screen both need smaller chunks (63 bytes), only tmux can handle larger chunks (510 bytes) */
+        chunk_size = (ptenc->mode == CHAFA_PASSTHROUGH_TMUX) ? 510 : 63;
+        end = p + chunk_size;
         if (end > last)
             end = last;
 
         *chafa_term_info_emit_begin_kitty_image_chunk (ptenc->term_info, seq) = '\0';
         chafa_passthrough_encoder_append (ptenc, seq);
 
-        chafa_base64_encode (&base64, ptenc->out, p, end - p);
+        encode_chunk (ptenc->out, p, end);
 
         *chafa_term_info_emit_end_kitty_image_chunk (ptenc->term_info, seq) = '\0';
         chafa_passthrough_encoder_append (ptenc, seq);
@@ -288,21 +300,6 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
         p = end;
     }
 
-    if (base64.buf_len > 0)
-    {
-        *chafa_term_info_emit_begin_kitty_image_chunk (ptenc->term_info, seq) = '\0';
-        chafa_passthrough_encoder_append (ptenc, seq);
-
-        chafa_base64_encode_end (&base64, ptenc->out);
-
-        *chafa_term_info_emit_end_kitty_image_chunk (ptenc->term_info, seq) = '\0';
-        chafa_passthrough_encoder_append (ptenc, seq);
-        chafa_passthrough_encoder_reset (ptenc);
-        end_passthrough (ptenc);
-    }
-
-    chafa_base64_deinit (&base64);
-
     *chafa_term_info_emit_end_kitty_image (ptenc->term_info, seq) = '\0';
     chafa_passthrough_encoder_append (ptenc, seq);
     chafa_passthrough_encoder_reset (ptenc);
@@ -311,21 +308,37 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
 
 static void
 build_immediate (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, GString *out_str,
-                 gint width_cells, gint height_cells)
+                 gint width_cells, gint height_cells, gint placement_id)
 {
     ChafaPassthroughEncoder ptenc;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
-    guint image_id = chafa_kitty_next_image_id ();
 
     chafa_passthrough_encoder_begin (&ptenc, CHAFA_PASSTHROUGH_NONE, term_info, out_str);
 
-    *chafa_term_info_emit_begin_kitty_immediate_image_v1 (term_info, seq,
-                                                          32,
-                                                          kitty_renderer->width,
-                                                          kitty_renderer->height,
-                                                          width_cells,
-                                                          height_cells,
-                                                          image_id) = '\0';
+    /* Prefer V2 (with image ID) for better compatibility with iTerm2,
+     * fall back to V1 if V2 is not available */
+    if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V2))
+    {
+        guint image_id = chafa_kitty_next_image_id();
+        *chafa_term_info_emit_begin_kitty_immediate_image_v2 (term_info, seq,
+                                                               32,
+                                                               kitty_renderer->width,
+                                                               kitty_renderer->height,
+                                                               width_cells,
+                                                               height_cells,
+                                                               image_id) = '\0';
+    }
+    else
+    {
+        /* Fallback to V1 for terminals that don't support image IDs */
+        *chafa_term_info_emit_begin_kitty_immediate_image_v1 (term_info, seq,
+                                                               32,
+                                                               kitty_renderer->width,
+                                                               kitty_renderer->height,
+                                                               width_cells,
+                                                               height_cells) = '\0';
+    }
+
     chafa_passthrough_encoder_append (&ptenc, seq);
     chafa_passthrough_encoder_flush (&ptenc);
 
@@ -476,20 +489,20 @@ chafa_kitty_renderer_build_ansi (ChafaKittyRenderer *kitty_renderer,
                                gint placement_id,
                                ChafaPassthrough passthrough)
 {
+    /* Make IDs in the first <256 range predictable, but as the range
+     * cycles we add one to skip over every ID==0 */
+    if (placement_id < 1)
+        placement_id = 1;
+    else if (placement_id > 255)
+        placement_id = 1 + (placement_id % 255);
+
     if (passthrough == CHAFA_PASSTHROUGH_NONE)
     {
         build_immediate (kitty_renderer, term_info, out_str,
-                         width_cells, height_cells);
+                         width_cells, height_cells, placement_id);
     }
     else
     {
-        /* Make IDs in the first <256 range predictable, but as the range
-         * cycles we add one to skip over every ID==0 */
-        if (placement_id < 1)
-            placement_id = 1;
-        else if (placement_id > 255)
-            placement_id = 1 + (placement_id % 255);
-
         build_unicode_virtual (kitty_renderer, term_info, out_str,
                                width_cells, height_cells,
                                placement_id, passthrough);
