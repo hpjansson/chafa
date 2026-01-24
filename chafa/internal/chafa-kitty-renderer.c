@@ -45,22 +45,6 @@ typedef struct
 }
 DrawCtx;
 
-/* Generate unique image IDs using atomic operations */
-static guint
-chafa_kitty_next_image_id (void)
-{
-    static volatile gint next_image_id = 1;
-    gint id = g_atomic_int_add (&next_image_id, 1);
-
-    if (id <= 0)
-    {
-        g_atomic_int_set (&next_image_id, 1);
-        id = g_atomic_int_add (&next_image_id, 1);
-    }
-
-    return (guint) id;
-}
-
 /* Kitty's cell-based placeholders use Unicode diacritics to encode each
  * cell's row/col offsets. The below table maps integers to code points
  * using this scheme. */
@@ -281,8 +265,8 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
         const guint8 *end;
         gint chunk_size;
 
-        /* iTerm2 and Screen both need smaller chunks (63 bytes), only tmux can handle larger chunks (510 bytes) */
-        chunk_size = (ptenc->mode == CHAFA_PASSTHROUGH_TMUX) ? 510 : 63;
+        /* Screen needs smaller chunks, other modes can handle larger ones. */
+        chunk_size = (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN) ? 63 : 510;
         end = p + chunk_size;
         if (end > last)
             end = last;
@@ -308,7 +292,7 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
 
 static void
 build_immediate (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, GString *out_str,
-                 gint width_cells, gint height_cells, gint placement_id)
+                 gint width_cells, gint height_cells, gint image_id)
 {
     ChafaPassthroughEncoder ptenc;
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
@@ -319,14 +303,13 @@ build_immediate (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, G
      * fall back to V1 if V2 is not available */
     if (chafa_term_info_have_seq (term_info, CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V2))
     {
-        guint image_id = chafa_kitty_next_image_id();
         *chafa_term_info_emit_begin_kitty_immediate_image_v2 (term_info, seq,
                                                                32,
                                                                kitty_renderer->width,
                                                                kitty_renderer->height,
                                                                width_cells,
                                                                height_cells,
-                                                               image_id) = '\0';
+                                                               (guint) image_id) = '\0';
     }
     else
     {
@@ -487,6 +470,7 @@ chafa_kitty_renderer_build_ansi (ChafaKittyRenderer *kitty_renderer,
                                ChafaTermInfo *term_info, GString *out_str,
                                gint width_cells, gint height_cells,
                                gint placement_id,
+                               gint image_id,
                                ChafaPassthrough passthrough)
 {
     /* Make IDs in the first <256 range predictable, but as the range
@@ -496,10 +480,13 @@ chafa_kitty_renderer_build_ansi (ChafaKittyRenderer *kitty_renderer,
     else if (placement_id > 255)
         placement_id = 1 + (placement_id % 255);
 
+    if (image_id < 1)
+        image_id = placement_id;
+
     if (passthrough == CHAFA_PASSTHROUGH_NONE)
     {
         build_immediate (kitty_renderer, term_info, out_str,
-                         width_cells, height_cells, placement_id);
+                         width_cells, height_cells, image_id);
     }
     else
     {

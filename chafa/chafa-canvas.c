@@ -898,6 +898,7 @@ chafa_canvas_print (ChafaCanvas *canvas, ChafaTermInfo *term_info)
         chafa_kitty_renderer_build_ansi (canvas->pixel_renderer, term_info, str,
                                          canvas->config.width, canvas->config.height,
                                          canvas->placement ? canvas->placement->id : -1,
+                                         canvas->placement ? canvas->placement->image->id : -1,
                                          canvas->config.passthrough);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_ITERM2
