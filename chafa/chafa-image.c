@@ -21,6 +21,23 @@
 #include "chafa.h"
 #include "internal/chafa-private.h"
 
+static gint
+chafa_image_next_id (void)
+{
+    static volatile gint next_id = 1;
+    gint id = g_atomic_int_add (&next_id, 1);
+
+    /* Avoid returning 0 or negative values (0 has special meaning in the
+     * Kitty graphics protocol). */
+    if (id <= 0)
+    {
+        g_atomic_int_set (&next_id, 1);
+        id = g_atomic_int_add (&next_id, 1);
+    }
+
+    return id;
+}
+
 /**
  * SECTION:chafa-image
  * @title: ChafaImage
@@ -48,6 +65,7 @@ chafa_image_new (void)
 
     image = g_new0 (ChafaImage, 1);
     image->refs = 1;
+    image->id = chafa_image_next_id ();
 
     return image;
 }

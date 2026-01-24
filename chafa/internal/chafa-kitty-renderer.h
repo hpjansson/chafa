@@ -44,6 +44,7 @@ void chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer,
 void chafa_kitty_renderer_build_ansi (ChafaKittyRenderer *kitty_renderer, ChafaTermInfo *term_info, GString *out_str,
                                       gint width_cells, gint height_cells,
                                       gint placement_id,
+                                      gint image_id,
                                       ChafaPassthrough passthrough);
 
 G_END_DECLS

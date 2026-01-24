@@ -137,6 +137,7 @@ struct ChafaFrame
 struct ChafaImage
 {
     gint refs;
+    gint id;
     ChafaFrame *frame;
 };
 
