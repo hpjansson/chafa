@@ -83,6 +83,45 @@ struct ChafaStreamReader
     guint shutdown_done : 1;
 };
 
+/* ------------------ *
+ * MS Windows helpers *
+ * ------------------ */
+
+#ifdef G_OS_WIN32
+
+static DWORD saved_console_mode;
+
+static void
+win32_stream_reader_init (ChafaStreamReader *stream_reader)
+{
+    GetConsoleMode (stream_reader->fd_win32, &saved_console_mode);
+
+    setmode (stream_reader->fd, O_BINARY);
+
+    if (SetConsoleMode (stream_reader->fd_win32,
+                        ENABLE_PROCESSED_INPUT
+                        | ENABLE_VIRTUAL_TERMINAL_INPUT))
+    {
+        stream_reader->is_console = TRUE;
+    }
+    else
+    {
+        if (GetLastError () != ERROR_INVALID_HANDLE)
+        {
+            /* Legacy MS Windows */
+            stream_reader->is_console = TRUE;
+        }
+    }
+}
+
+static void
+win32_stream_reader_deinit (ChafaStreamReader *stream_reader)
+{
+    SetConsoleMode (stream_reader->fd_win32, saved_console_mode);
+}
+
+#endif
+
 /* -------------------------------- *
  * Low-level I/O and tty whispering *
  * -------------------------------- */
@@ -290,22 +329,7 @@ chafa_stream_reader_init (ChafaStreamReader *stream_reader, gint fd,
 
 #ifdef G_OS_WIN32
     stream_reader->fd_win32 = (HANDLE) _get_osfhandle (stream_reader->fd);
-    setmode (stream_reader->fd, O_BINARY);
-
-    if (SetConsoleMode (stream_reader->fd_win32,
-                        ENABLE_PROCESSED_INPUT
-                        | ENABLE_VIRTUAL_TERMINAL_INPUT))
-    {
-        stream_reader->is_console = TRUE;
-    }
-    else
-    {
-        if (GetLastError () != ERROR_INVALID_HANDLE)
-        {
-            /* Legacy MS Windows */
-            stream_reader->is_console = TRUE;
-        }
-    }
+    win32_stream_reader_init (stream_reader);
 #else
     if (isatty (stream_reader->fd))
         stream_reader->is_console = TRUE;
@@ -336,6 +360,10 @@ chafa_stream_reader_destroy (ChafaStreamReader *stream_reader)
 
     if (stream_reader->thread)
         g_thread_join (stream_reader->thread);
+
+#ifdef G_OS_WIN32
+    win32_stream_reader_deinit (stream_reader);
+#endif
 
     g_mutex_clear (&stream_reader->mutex);
     g_cond_clear (&stream_reader->cond);
