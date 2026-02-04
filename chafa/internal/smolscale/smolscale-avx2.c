@@ -829,7 +829,7 @@ pack_8x_1234_p8_to_xxxx_p8_64bpp (const uint64_t * SMOL_RESTRICT *in,
     __m256i * SMOL_RESTRICT my_out = (__m256i * SMOL_RESTRICT) *out;
     __m256i m0, m1;
 
-    SMOL_ASSUME_ALIGNED (my_in, __m256i * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (my_in, const __m256i * SMOL_RESTRICT);
 
     while ((ptrdiff_t) (my_out + 1) <= (ptrdiff_t) out_max)
     {
@@ -1033,7 +1033,7 @@ pack_8x_123a_p16_to_xxxx_u_128bpp (const uint64_t * SMOL_RESTRICT *in,
     __m256i * SMOL_RESTRICT my_out = (__m256i * SMOL_RESTRICT) *out;
     __m256i m0, m1, m2, m3, m4, m5, m6, m7, m8;
 
-    SMOL_ASSUME_ALIGNED (my_in, __m256i * SMOL_RESTRICT);
+    SMOL_ASSUME_ALIGNED (my_in, const __m256i * SMOL_RESTRICT);
 
     while ((ptrdiff_t) (my_out + 1) <= (ptrdiff_t) out_max)
     {
