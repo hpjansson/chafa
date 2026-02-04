@@ -87,7 +87,12 @@ typedef unsigned int SmolBool;
 
 #define SMOL_ALIGNMENT 64
 
-#define SMOL_ASSIGN_ALIGNED_TO(x, t, n) (t) __builtin_assume_aligned ((x), (n))
+#ifdef SMOL_DISABLE_ASSUME_ALIGNED
+# define SMOL_ASSIGN_ALIGNED_TO(x, t, n) (t) (x)
+#else
+# define SMOL_ASSIGN_ALIGNED_TO(x, t, n) (t) __builtin_assume_aligned ((x), (n))
+#endif
+
 #define SMOL_ASSIGN_ALIGNED(x, t) SMOL_ASSIGN_ALIGNED_TO ((x), t, SMOL_ALIGNMENT)
 
 #define SMOL_ASSUME_ALIGNED_TO(x, t, n) (x) = SMOL_ASSIGN_ALIGNED_TO ((x), t, (n))
