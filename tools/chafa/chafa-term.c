@@ -740,6 +740,7 @@ chafa_term_destroy (ChafaTerm *term)
     win32_term_deinit (term);
 #endif
 
+    chafa_parser_destroy (term->parser);
     g_free (term);
 }
 
