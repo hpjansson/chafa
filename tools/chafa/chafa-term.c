@@ -721,6 +721,8 @@ chafa_term_destroy (ChafaTerm *term)
 {
     g_return_if_fail (term != NULL);
 
+    chafa_term_flush (term);
+
     if (term->reader)
         chafa_stream_reader_unref (term->reader);
     if (term->writer)
