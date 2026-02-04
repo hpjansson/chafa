@@ -277,7 +277,7 @@ SmolRepackMeta;
      uint32_t n_pixels)                                                 \
     {                                                                   \
         uint##dest_limb_bits##_t *dest_row_max = dest_row + n_pixels * (dest_storage / dest_limb_bits); \
-        SMOL_ASSUME_ALIGNED_TO (src_row, uint##src_limb_bits##_t *, src_limb_bits / 8); \
+        SMOL_ASSUME_ALIGNED_TO (src_row, const uint##src_limb_bits##_t *, src_limb_bits / 8); \
         SMOL_ASSUME_ALIGNED_TO (dest_row, uint##dest_limb_bits##_t *, dest_limb_bits / 8);
 
 #define SMOL_REPACK_ROW_DEF_END }
