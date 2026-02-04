@@ -387,6 +387,22 @@ AS_IF([test "$ax_cv_gcc_check_x86_cpu_init" = "yes" && test "$ax_cv_gcc_check_x8
         AC_DEFINE([HAVE_GCC_X86_FEATURE_BUILTINS], [1], [Define if gcc x86 feature builtins work.])
 ])
 
+dnl
+dnl Check for other builtins
+dnl
+
+dnl __builtin_assume_aligned is not available in older GCC releases. This is
+dnl used by Smolscale.
+AC_CACHE_CHECK([for gcc __builtin_assume_aligned function],
+        [ax_cv_gcc_check_builtin_assume_aligned],
+        [AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <stdlib.h>],
+                        [int *x; x = __builtin_assume_aligned (x, 4);])],
+                 [ax_cv_gcc_check_builtin_assume_aligned=yes],
+                 [ax_cv_gcc_check_builtin_assume_aligned=no])])
+
+AM_CONDITIONAL([HAVE_BUILTIN_ASSUME_ALIGNED], [test "$ax_cv_gcc_check_builtin_assume_aligned" = "yes"])
+
 dnl Check for working MMX intrinsics
 AC_MSG_CHECKING(for working MMX intrinsics)
 SAVED_CFLAGS="${CFLAGS}"
