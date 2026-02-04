@@ -903,8 +903,9 @@ static void
 proc_init (void)
 {
 #ifdef HAVE_SIGACTION
-    struct sigaction sa = { 0 };
+    struct sigaction sa;
 
+    memset (&sa, 0, sizeof (sa));
     sa.sa_handler = sigint_handler;
     sa.sa_flags = SA_RESETHAND;
 
