@@ -64,6 +64,10 @@ long="no"
 tool="${top_builddir}/tools/chafa/chafa"
 timeout_cmd="$(which timeout)"
 [ "x${timeout_cmd}" = "x" ] && timeout_cmd="$(which gtimeout)"
+[ "x${timeout_cmd}" = "x" ] && timeout_cmd="timeout"
+
+# Foreground mode: allow access to tty. Not necessary currently.
+# timeout_cmd="${timeout_cmd} -f"
 
 if [ "x$long" = "xyes" ]; then
     formats="symbol sixel kitty iterm"

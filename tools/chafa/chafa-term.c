@@ -200,7 +200,12 @@ ensure_raw_mode_enabled (ChafaTerm *term, struct termios *saved_termios,
     if (t.c_lflag != saved_termios->c_lflag)
     {
         *termios_changed = TRUE;
+
+        /* Note tcsetattr() can block on tty fds when we're in the background. */
         tcsetattr (chafa_stream_reader_get_fd (term->reader), TCSANOW, &t);
+
+        /* FIXME: Should probably call tcgetattr() here to ensure things went
+         * according to plan. */
     }
     else
     {
@@ -772,6 +777,17 @@ ChafaTermInfo *
 chafa_term_get_term_info (ChafaTerm *term)
 {
     return term->term_info;
+}
+
+void
+chafa_term_set_term_info (ChafaTerm *term, ChafaTermInfo *term_info)
+{
+    if (term_info)
+        chafa_term_info_ref (term_info);
+    if (term->term_info)
+        chafa_term_info_unref (term->term_info);
+
+    term->term_info = term_info;
 }
 
 ChafaEvent *

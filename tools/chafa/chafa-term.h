@@ -36,6 +36,8 @@ gint chafa_term_get_buffer_max (ChafaTerm *term);
 void chafa_term_set_buffer_max (ChafaTerm *term, gint max);
 
 ChafaTermInfo *chafa_term_get_term_info (ChafaTerm *term);
+CHAFA_AVAILABLE_IN_1_20
+void chafa_term_set_term_info (ChafaTerm *term, ChafaTermInfo *term_info);
 
 ChafaEvent *chafa_term_read_event (ChafaTerm *term, guint timeout_ms);
 

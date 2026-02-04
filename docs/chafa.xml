@@ -94,6 +94,16 @@ in seconds. Defaults to 5.0.
 </varlistentry>
 
 <varlistentry>
+<term><option>--probe-mode <replaceable>mode</replaceable></option></term>
+<listitem><para>
+How to probe the terminal [any, ctty, stdio]. "Any" is the default and will
+probe by any means available. "Ctty" will probe the controlling tty, usually
+/dev/tty, which is useful when chafa is part of a pipeline. This may block
+if done in the background. "Stdio" will only consider standard input/output.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--version</option></term>
 <listitem><para>
 Show version, feature and copyright information.

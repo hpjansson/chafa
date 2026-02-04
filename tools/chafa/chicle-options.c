@@ -218,6 +218,7 @@ print_summary (void)
     "                     on, off]. A positive real number denotes the maximum time\n"
     "                     to wait for a response, in seconds. Defaults to "
                           G_STRINGIFY (CHICLE_PROBE_DURATION_DEFAULT) ".\n"
+    "      --probe-mode=ARG  How to probe the terminal [any, ctty, stdio].\n"
     "      --version      Show version.\n"
     "  -v, --verbose      Be verbose.\n"
 
@@ -427,6 +428,27 @@ out:
     if (!result)
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Probe duration must be a positive real number or one of [on, off, auto].");
+
+    return result;
+}
+
+static gboolean
+parse_probe_mode_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
+{
+    gboolean result = TRUE;
+
+    if (!g_ascii_strcasecmp (value, "any"))
+        options.probe_mode = CHICLE_PROBE_MODE_ANY;
+    else if (!g_ascii_strcasecmp (value, "ctty"))
+        options.probe_mode = CHICLE_PROBE_MODE_CTTY;
+    else if (!g_ascii_strcasecmp (value, "stdio"))
+        options.probe_mode = CHICLE_PROBE_MODE_STDIO;
+    else
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Probe mode must be one of [any, ctty, stdio].");
+        result = FALSE;
+    }
 
     return result;
 }
@@ -1756,6 +1778,59 @@ chicle_retire_passthrough_workarounds_tmux (void)
     return result;
 }
 
+static ChafaTerm *
+new_ctty_term (void)
+{
+    ChafaTerm *ctty_term = NULL;
+
+#if defined(L_ctermid) && !defined(G_OS_WIN32)
+    gchar dev_name [L_ctermid];
+    gint in_fd = -1, out_fd = -1;
+    pid_t proc_group;
+
+    ctermid (dev_name);
+
+    in_fd = open (dev_name, O_RDONLY);
+    out_fd = open (dev_name, O_WRONLY);
+
+    if (in_fd < 0 || out_fd < 0)
+        goto out;
+
+    /* Don't probe tty if we're definitely in the background. This mitigates
+     * issues with running under timeout(1) in CI and such, but does not
+     * guarantee that we won't be moved to background between now and
+     * ChafaTerm's call to tcsetattr(), causing it to block. Those cases are
+     * outside the scope of our handling.
+     *
+     * If the user explicitly requests ctty probing, we skip this check. */
+
+    if (options.probe_mode != CHICLE_PROBE_MODE_CTTY)
+    {
+        proc_group = getpgrp ();
+
+        if (tcgetpgrp (in_fd) != proc_group
+            || tcgetpgrp (out_fd) != proc_group)
+            goto out;
+    }
+
+    ctty_term = chafa_term_new (NULL,
+                                in_fd,
+                                out_fd,
+                                out_fd);
+#endif
+
+out:
+    if (!ctty_term)
+    {
+        if (in_fd >= 0)
+            close (in_fd);
+        if (out_fd >= 0)
+            close (out_fd);
+    }
+
+    return ctty_term;
+}
+
 gboolean
 chicle_parse_options (int *argc, char **argv [])
 {
@@ -1807,6 +1882,7 @@ chicle_parse_options (int *argc, char **argv [])
         { "polite",      '\0', 0, G_OPTION_ARG_CALLBACK, parse_polite_arg,      "Polite", NULL },
         { "preprocess",  'p',  0, G_OPTION_ARG_CALLBACK, parse_preprocess_arg,  "Preprocessing", NULL },
         { "probe",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_probe_arg,       "Terminal probing", NULL },
+        { "probe-mode",  '\0', 0, G_OPTION_ARG_CALLBACK, parse_probe_mode_arg,  "Probe mode", NULL },
         { "relative",    '\0', 0, G_OPTION_ARG_CALLBACK, parse_relative_arg,    "Relative", NULL },
         { "scale",       '\0', 0, G_OPTION_ARG_CALLBACK, parse_scale_arg,       "Scale", NULL },
         { "size",        's',  0, G_OPTION_ARG_CALLBACK, parse_size_arg,        "Output size", NULL },
@@ -1946,41 +2022,60 @@ chicle_parse_options (int *argc, char **argv [])
 
     /* Synchronous probe for sixels, default colors, etc. */
 
-    if ((options.probe == CHICLE_TRISTATE_TRUE
-         || options.probe == CHICLE_TRISTATE_AUTO)
-        && options.probe_duration >= 0.0)
     {
-        chafa_term_sync_probe (term, options.probe_duration * 1000);
+        ChafaTerm *ctty_term = NULL;
+        ChafaTerm *probe_term = NULL;
 
-        if (!options.pixel_mode_set)
+        if (options.probe_mode == CHICLE_PROBE_MODE_CTTY
+            || (options.probe_mode == CHICLE_PROBE_MODE_ANY &&
+                (!isatty (STDIN_FILENO) || !isatty (STDOUT_FILENO))))
+            probe_term = ctty_term = new_ctty_term ();
+
+        if (!probe_term)
+            probe_term = term;
+
+        if ((options.probe == CHICLE_TRISTATE_TRUE
+             || options.probe == CHICLE_TRISTATE_AUTO)
+            && options.probe_duration >= 0.0)
         {
-            options.pixel_mode = chafa_term_info_get_best_pixel_mode (
-                chafa_term_get_term_info (term));
+            chafa_term_sync_probe (probe_term, options.probe_duration * 1000);
+
+            if (!options.pixel_mode_set)
+            {
+                options.pixel_mode = chafa_term_info_get_best_pixel_mode (
+                    chafa_term_get_term_info (probe_term));
+            }
+
+            if (!options.fg_color_set)
+            {
+                gint32 color = chafa_term_get_default_fg_color (probe_term);
+                if (color >= 0)
+                    options.fg_color = color;
+            }
+
+            if (!options.bg_color_set)
+            {
+                gint32 color = chafa_term_get_default_bg_color (probe_term);
+                if (color >= 0)
+                    options.bg_color = color;
+            }
         }
 
-        if (!options.fg_color_set)
-        {
-            gint32 color = chafa_term_get_default_fg_color (term);
-            if (color >= 0)
-                options.fg_color = color;
-        }
+        /* Detect terminal geometry */
 
-        if (!options.bg_color_set)
-        {
-            gint32 color = chafa_term_get_default_bg_color (term);
-            if (color >= 0)
-                options.bg_color = color;
-        }
+        chafa_term_get_size_px (probe_term,
+                                &detected_term_size.width_pixels,
+                                &detected_term_size.height_pixels);
+        chafa_term_get_size_cells (probe_term,
+                                   &detected_term_size.width_cells,
+                                   &detected_term_size.height_cells);
+
+        chafa_term_set_term_info (term,
+                                  chafa_term_get_term_info (probe_term));
+
+        if (ctty_term)
+            chafa_term_destroy (ctty_term);
     }
-
-    /* Detect terminal geometry */
-
-    chafa_term_get_size_px (term,
-                            &detected_term_size.width_pixels,
-                            &detected_term_size.height_pixels);
-    chafa_term_get_size_cells (term,
-                               &detected_term_size.width_cells,
-                               &detected_term_size.height_cells);
 
     /* Fall back on COLUMNS. It's the best we can do in some environments (e.g. CI). */
 

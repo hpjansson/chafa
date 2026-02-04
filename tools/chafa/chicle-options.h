@@ -71,6 +71,14 @@ typedef enum
 }
 ChicleTristate;
 
+typedef enum
+{
+    CHICLE_PROBE_MODE_ANY = 0,
+    CHICLE_PROBE_MODE_CTTY,
+    CHICLE_PROBE_MODE_STDIO
+}
+ChicleProbeMode;
+
 /* Dimensions are set to GRID_AUTO with --grid auto. This means the user
  * wants us to pick appropriate grid parameters based on the view size */
 #define CHICLE_GRID_AUTO -2
@@ -123,6 +131,7 @@ typedef struct
     gint grid_width, grid_height;
     gint margin_bottom, margin_right;
     ChicleTristate probe;
+    ChicleProbeMode probe_mode;
     gdouble probe_duration;
     gdouble scale;
     gdouble font_ratio;
