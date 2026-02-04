@@ -40,7 +40,6 @@ BASE_CFLAGS="-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_58 \
 -Wall -Wextra \
 -Wcast-qual \
 -Wdisabled-optimization \
--Wdouble-promotion \
 -Wmissing-prototypes \
 -Wpointer-arith \
 -Wshadow \
@@ -87,6 +86,7 @@ AX_CHECK_COMPILE_FLAG([-Wlogical-op],[BASE_CFLAGS="$BASE_CFLAGS -Wlogical-op"],,
 AX_CHECK_COMPILE_FLAG([-Wlogical-op-parentheses],[BASE_CFLAGS="$BASE_CFLAGS -Wlogical-op-parentheses"],,[-Werror])
 AX_CHECK_COMPILE_FLAG([-Wstack-usage=131072],[BASE_CFLAGS="$BASE_CFLAGS -Wstack-usage=131072"],,[-Werror])
 AX_CHECK_COMPILE_FLAG([-Wtrampolines],[BASE_CFLAGS="$BASE_CFLAGS -Wtrampolines"],,[-Werror])
+AX_CHECK_COMPILE_FLAG([-Wdouble-promotion],[BASE_CFLAGS="$BASE_CFLAGS -Wdouble-promotion"],,[-Werror])
 
 dnl --- Required standards ---
 
