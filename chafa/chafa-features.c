@@ -41,6 +41,13 @@
  * @CHAFA_FEATURE_AVX2: Flag indicating AVX2 support.
  **/
 
+/* The detected CPU count can approach 200 in realistic environments (64 on
+ * UltraSparc T2, 192 on Ryzen Threadripper Pro), and mapped memory may be
+ * limited to as little as 1.5GB (default RLIMIT_DATA on OpenBSD 7.8/sparc64 -
+ * malloc's MAXDSIZ is set to 8GB). Keep a sensible thread limit to avoid
+ * running out of memory. */
+#define AUTO_THREAD_COUNT_MAX 24
+
 static gboolean chafa_initialized;
 
 static gboolean have_mmx;
@@ -261,8 +268,13 @@ chafa_get_n_actual_threads (void)
     gint n_actual_threads;
 
     n_actual_threads = chafa_get_n_threads ();
+
     if (n_actual_threads < 0)
+    {
         n_actual_threads = g_get_num_processors ();
+        n_actual_threads = MIN (n_actual_threads, AUTO_THREAD_COUNT_MAX);
+    }
+
     if (n_actual_threads <= 0)
         n_actual_threads = 1;
 
