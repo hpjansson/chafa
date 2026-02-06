@@ -184,11 +184,11 @@ safe_write (gint fd, gconstpointer buf, gsize len)
        {
            if (saved_errno == EAGAIN)
            {
-# ifdef __gnu_hurd__
-               /* On GNU/Hurd we get EAGAIN if the remote end closed the pipe,
-                * and if the pipe is made blocking it simply stalls. This makes
-                * our >&- redirection test fail. Therefore we bail out here
-                * as the least bad option. */
+# if defined(__gnu_hurd__) || defined(__OpenBSD__)
+               /* On GNU/Hurd and OpenBSD we get EAGAIN if the remote end
+                * closed the pipe, and if the pipe is made blocking it
+                * simply stalls. This makes our >&- redirection test fail.
+                * Therefore we bail out here as the least bad option. */
                goto out;
 # else
                /* It's a nonblocking pipe; wait for it to become ready,
