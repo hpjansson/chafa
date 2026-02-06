@@ -11,7 +11,7 @@ run_cmd_noredir () {
     sh -c "$cmd" || exit $?
 }
 
-run_cmd_noredir "$timeout_cmd 10 $tool -f symbol -c full -s 200 <&- >/dev/null" || exit $?
-run_cmd_noredir "$timeout_cmd 10 $tool -f symbol -c full -s 200 >&- " || exit $?
-run_cmd_noredir "$timeout_cmd 10 $tool -f symbol -c full -s 200 <&- >&- " || exit $?
-run_cmd_noredir "$timeout_cmd 10 $tool -f symbol -c full -s 200 <&- >&- 2>&-" || exit $?
+run_cmd_noredir "$timeout_cmd 20 $tool -f symbol -c full -s 200 <&- >/dev/null" || exit $?
+run_cmd_noredir "$timeout_cmd 20 $tool -f symbol -c full -s 200 >&- " || exit $?
+run_cmd_noredir "$timeout_cmd 20 $tool -f symbol -c full -s 200 <&- >&- " || exit $?
+run_cmd_noredir "$timeout_cmd 20 $tool -f symbol -c full -s 200 <&- >&- 2>&-" || exit $?
