@@ -320,8 +320,8 @@ AS_IF([ test "$enable_man" != no ], [
 
 dnl --- Specific checks ---
 
-AC_CHECK_FUNCS(ctermid getrandom mmap sigaction)
-AC_CHECK_HEADERS(sys/ioctl.h termios.h windows.h)
+AC_CHECK_FUNCS(ctermid getrandom mmap sigaction setitimer)
+AC_CHECK_HEADERS(sys/time.h sys/ioctl.h termios.h windows.h)
 
 dnl
 dnl Define IS_WIN32_BUILD if we're building for Microsoft Windows. In order to

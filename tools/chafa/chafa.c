@@ -35,6 +35,9 @@
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
+#if defined(HAVE_SYS_TIME_H) && defined(HAVE_SETITIMER)
+# include <sys/time.h>  /* setitimer */
+#endif
 
 #include <chafa.h>
 #include "chafa-term.h"
@@ -58,6 +61,10 @@
 /* Maximum size of stack-allocated read/write buffer */
 #define BUFFER_MAX 4096
 
+/* If the user issues a SIGINT and we can't exit immediately, wait
+ * this long for processing to finish before forcing an exit. */
+#define EXIT_GRACE_USEC (500 * 1000)
+
 #ifdef G_OS_WIN32
 /* Enable command line globbing on Windows.
  *
@@ -75,11 +82,97 @@ static struct termios saved_termios;
 #endif
 
 #ifdef HAVE_SIGACTION
+
+static gchar fast_exit_seq [CHAFA_TERM_SEQ_LENGTH_MAX + 4];
+
+static void
+prepare_fast_exit (ChafaTermInfo *term_info)
+{
+    gchar *p0;
+
+    /* CAN, ST */
+    strcpy (fast_exit_seq, "\x18\x1b\x5c");
+
+    p0 = chafa_term_info_emit_enable_cursor (term_info, fast_exit_seq + strlen (fast_exit_seq));
+    *p0 = '\0';
+}
+
+static void
+fast_exit (void)
+{
+    /* Fast exit */
+
+    if (!options.polite)
+    {
+#ifdef HAVE_TERMIOS_H
+        if (options.is_interactive)
+        {
+            tcsetattr (STDIN_FILENO, TCSANOW, &saved_termios);
+        }
+#endif
+
+        write (STDOUT_FILENO, fast_exit_seq, strlen (fast_exit_seq));
+    }
+
+    exit (0);
+}
+
+static void
+sigalarm_handler (G_GNUC_UNUSED int sig)
+{
+    fast_exit ();
+}
+
+static void
+install_fast_exit_alarm (void)
+{
+#ifdef HAVE_SETITIMER
+    struct sigaction sa;
+    struct itimerval itv;
+
+    memset (&sa, 0, sizeof (sa));
+    memset (&itv, 0, sizeof (itv));
+
+    sa.sa_handler = sigalarm_handler;
+    sa.sa_flags = SA_RESETHAND;
+    sigaction (SIGALRM, &sa, NULL);
+
+    itv.it_value.tv_usec = EXIT_GRACE_USEC;
+
+    setitimer (ITIMER_REAL, &itv, NULL);
+#endif
+}
+
+static void install_interrupt_handler (void);
+
 static void
 sigint_handler (G_GNUC_UNUSED int sig)
 {
+    if (interrupted_by_user)
+    {
+        fast_exit ();
+    }
+    else
+    {
+        install_interrupt_handler ();
+        install_fast_exit_alarm ();
+    }
+
     interrupted_by_user = TRUE;
 }
+
+static void
+install_interrupt_handler (void)
+{
+    struct sigaction sa;
+
+    memset (&sa, 0, sizeof (sa));
+    sa.sa_handler = sigint_handler;
+    sa.sa_flags = 0;
+
+    sigaction (SIGINT, &sa, NULL);
+}
+
 #endif
 
 static void
@@ -904,13 +997,7 @@ static void
 proc_init (void)
 {
 #ifdef HAVE_SIGACTION
-    struct sigaction sa;
-
-    memset (&sa, 0, sizeof (sa));
-    sa.sa_handler = sigint_handler;
-    sa.sa_flags = SA_RESETHAND;
-
-    sigaction (SIGINT, &sa, NULL);
+    install_interrupt_handler ();
 #endif
 
 #ifdef G_OS_WIN32
@@ -954,6 +1041,7 @@ main (int argc, char *argv [])
         || chicle_path_queue_get_length (global_path_queue) == 0)
         goto out;
 
+    prepare_fast_exit (options.term_info);
     tty_options_init ();
 
     if (options.grid_width > 0 || options.grid_height > 0)
