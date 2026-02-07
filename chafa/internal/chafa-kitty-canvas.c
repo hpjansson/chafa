@@ -264,7 +264,7 @@ build_image_chunks (ChafaKittyCanvas *kitty_canvas, ChafaPassthroughEncoder *pte
     {
         const guint8 *end;
 
-        end = p + (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN ? 64 : 512);
+        end = p + (ptenc->mode == CHAFA_PASSTHROUGH_SCREEN ? 63 : 510);
         if (end > last)
             end = last;
 
