@@ -104,6 +104,8 @@ fast_exit (void)
 
     if (!options.polite)
     {
+        G_GNUC_UNUSED volatile int result;
+
 #ifdef HAVE_TERMIOS_H
         if (options.is_interactive)
         {
@@ -113,7 +115,7 @@ fast_exit (void)
 
         /* There's nothing we can do if this fails. Work around
          * -Werror=unused-result. */
-        (void) write (STDOUT_FILENO, fast_exit_seq, strlen (fast_exit_seq));
+        result = write (STDOUT_FILENO, fast_exit_seq, strlen (fast_exit_seq));
     }
 
     exit (0);
