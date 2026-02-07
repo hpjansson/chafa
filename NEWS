@@ -1,6 +1,33 @@
 Chafa releases
 ==============
 
+1.18.1 (2026-02-08)
+-------------------
+
+This is a bugfix and quality-of-life release.
+
+* New option: --probe-mode=[any|ctty|stdio]. This specifies whether to probe
+  the terminal through stdio or ctty (usually /dev/tty). Defaults to "any",
+  which will probe stdio if it looks like a tty, otherwise the ctty. This
+  allows the terminal to be probed when I/O is redirected (github#325, reported
+  by @algometric).
+
+* We now try harder to restore the terminal to a usable state after SIGINT is
+  received, even if we couldn't do a clean exit in a reasonable time frame
+  (github#309, reported by Hayaki Saito).
+
+* Bash completions were added and zsh completions updated (github#315,
+  @desertstsung).
+
+* Improved compatibility for the Kitty protocol, specifically with iTerm2
+  (@zouyonghe).
+
+* Bug fixes:
+  github#184  Test failure on sparc64 (reported by Mo Zhou).
+  github#292  Test failure on i386 (reported by Mo Zhou).
+  github#321  Bad console modes on win32 after exit (reported by Julian Noble).
+  [unfiled]   Stalling on closed output pipe on OpenBSD.
+
 1.18.0 (2025-11-09)
 -------------------
 
