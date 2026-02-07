@@ -110,7 +110,9 @@ fast_exit (void)
         }
 #endif
 
-        write (STDOUT_FILENO, fast_exit_seq, strlen (fast_exit_seq));
+        /* There's nothing we can do if this fails. Work around
+         * -Werror=unused-result. */
+        (void) write (STDOUT_FILENO, fast_exit_seq, strlen (fast_exit_seq));
     }
 
     exit (0);
