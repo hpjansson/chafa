@@ -48,7 +48,7 @@ noinst_LTLIBRARIES =
 noinst_HEADERS =
 
 libchafa_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(CHAFA_VISIBILITY_FLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
-libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -no-undefined -version-info 11:0:11
+libchafa_la_LDFLAGS = $(LIBCHAFA_LDFLAGS) -no-undefined -version-info 11:1:11
 libchafa_la_LIBADD = $(GLIB_LIBS) internal/libchafa-internal.la -lm
 
 libchafa_test_la_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS) -DCHAFA_COMPILATION
