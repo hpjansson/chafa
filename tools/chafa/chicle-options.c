@@ -1782,10 +1782,10 @@ static ChafaTerm *
 new_ctty_term (void)
 {
     ChafaTerm *ctty_term = NULL;
+    gint in_fd = -1, out_fd = -1;
 
 #if defined(L_ctermid) && !defined(G_OS_WIN32)
     gchar dev_name [L_ctermid];
-    gint in_fd = -1, out_fd = -1;
     pid_t proc_group;
 
     ctermid (dev_name);
@@ -1817,9 +1817,10 @@ new_ctty_term (void)
                                 in_fd,
                                 out_fd,
                                 out_fd);
-#endif
 
 out:
+#endif
+
     if (!ctty_term)
     {
         if (in_fd >= 0)

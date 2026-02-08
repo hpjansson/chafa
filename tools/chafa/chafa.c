@@ -80,8 +80,6 @@ static ChiclePlacementCounter *placement_counter;
 static struct termios saved_termios;
 #endif
 
-#ifdef HAVE_SIGACTION
-
 static gchar fast_exit_seq [CHAFA_TERM_SEQ_LENGTH_MAX + 4];
 
 static void
@@ -95,6 +93,8 @@ prepare_fast_exit (ChafaTermInfo *term_info)
     p0 = chafa_term_info_emit_enable_cursor (term_info, fast_exit_seq + strlen (fast_exit_seq));
     *p0 = '\0';
 }
+
+#ifdef HAVE_SIGACTION
 
 static void
 fast_exit (void)
