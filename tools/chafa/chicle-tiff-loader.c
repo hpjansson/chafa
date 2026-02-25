@@ -151,6 +151,22 @@ my_tiff_warning_handler (G_GNUC_UNUSED const char *module, G_GNUC_UNUSED const c
 
 /* --- Loader --- */
 
+#define STDTIFF_HEADER_VERSION 42
+#define BIGTIFF_HEADER_VERSION 43
+
+static gboolean
+have_tiff_magic (ChicleFileMapping *mapping, gchar tiff_version)
+{
+    gchar magic_le [4] = { 'I', 'I', 0, 0 };
+    gchar magic_be [4] = { 'M', 'M', 0, 0 };
+
+    magic_le [2] = tiff_version;
+    magic_be [3] = tiff_version;
+
+    return chicle_file_mapping_has_magic (mapping, 0, magic_le, 4)
+        || chicle_file_mapping_has_magic (mapping, 0, magic_be, 4);
+}
+
 static ChicleTiffLoader *
 chicle_tiff_loader_new (void)
 {
@@ -169,10 +185,8 @@ chicle_tiff_loader_new_from_mapping (ChicleFileMapping *mapping)
 
     g_return_val_if_fail (mapping != NULL, NULL);
 
-    if (!((chicle_file_mapping_has_magic (mapping, 0, "II", 2)
-           && chicle_file_mapping_has_magic (mapping, 2, "\x2a\x00", 2))
-          || (chicle_file_mapping_has_magic (mapping, 0, "MM", 2)
-              && chicle_file_mapping_has_magic (mapping, 2, "\x00\x2a", 2))))
+    if (!(have_tiff_magic (mapping, STDTIFF_HEADER_VERSION)
+          || have_tiff_magic (mapping, BIGTIFF_HEADER_VERSION)))
         goto out;
 
     loader = chicle_tiff_loader_new ();
