@@ -56,7 +56,7 @@ void chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type);
 void chafa_palette_deinit (ChafaPalette *palette);
 
 void chafa_palette_copy (const ChafaPalette *src, ChafaPalette *dest);
-void chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
+void chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gsize n_pixels,
                              ChafaColorSpace color_space, gfloat quality);
 
 ChafaPaletteType chafa_palette_get_type (const ChafaPalette *palette);

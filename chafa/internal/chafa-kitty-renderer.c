@@ -137,7 +137,7 @@ static void
 draw_pixels_worker (ChafaBatchInfo *batch, const DrawCtx *ctx)
 {
     smol_scale_batch_full (ctx->scale_ctx,
-                           ((guint32 *) ctx->kitty_renderer->rgba_image) + (ctx->kitty_renderer->width * batch->first_row),
+                           ((guint32 *) ctx->kitty_renderer->rgba_image) + ((gsize) ctx->kitty_renderer->width * batch->first_row),
                            batch->first_row,
                            batch->n_rows);
 }
@@ -258,7 +258,7 @@ build_image_chunks (ChafaKittyRenderer *kitty_renderer, ChafaPassthroughEncoder 
     gchar seq [CHAFA_TERM_SEQ_LENGTH_MAX + 1];
 
     last = ((guint8 *) kitty_renderer->rgba_image)
-        + kitty_renderer->width * kitty_renderer->height * sizeof (guint32);
+        + (gsize) kitty_renderer->width * (gsize) kitty_renderer->height * sizeof (guint32);
 
     for (p = kitty_renderer->rgba_image; p < last; )
     {

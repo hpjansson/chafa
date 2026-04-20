@@ -215,7 +215,7 @@ emit_attributes_truecolor (PrintCtx *ctx, gchar *out,
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_truecolor (PrintCtx *ctx, gchar *out, gsize i, gsize i_max)
 {
     for ( ; i < i_max; i++)
     {
@@ -343,7 +343,7 @@ emit_attributes_256 (PrintCtx *ctx, gchar *out,
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_256 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_256 (PrintCtx *ctx, gchar *out, gsize i, gsize i_max)
 {
     for ( ; i < i_max; i++)
     {
@@ -436,7 +436,7 @@ emit_attributes_16 (PrintCtx *ctx, gchar *out,
 
 /* Uses aixterm control codes for bright colors */
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_16 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_16 (PrintCtx *ctx, gchar *out, gsize i, gsize i_max)
 {
     for ( ; i < i_max; i++)
     {
@@ -532,7 +532,7 @@ emit_attributes_16_8 (PrintCtx *ctx, gchar *out,
 
 /* Uses bold for bright FG colors. */
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_16_8 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_16_8 (PrintCtx *ctx, gchar *out, gsize i, gsize i_max)
 {
     for ( ; i < i_max; i++)
     {
@@ -567,7 +567,7 @@ emit_ansi_16_8 (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gsize i, gsize i_max)
 {
     gunichar blank_symbol = 0;
 
@@ -635,7 +635,7 @@ emit_ansi_fgbg_bgfg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 }
 
 G_GNUC_WARN_UNUSED_RESULT static gchar *
-emit_ansi_fgbg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
+emit_ansi_fgbg (PrintCtx *ctx, gchar *out, gsize i, gsize i_max)
 {
     for ( ; i < i_max; i++)
     {
@@ -654,15 +654,15 @@ emit_ansi_fgbg (PrintCtx *ctx, gchar *out, gint i, gint i_max)
 static void
 prealloc_string (GString *gs, gint n_cells)
 {
-    guint needed_len;
+    gsize needed_len;
 
     /* Each cell produces at most three control sequences and six bytes
      * for the UTF-8 character. Each row may add one seq and one newline. */
-    needed_len = (n_cells + 1) * (CHAFA_TERM_SEQ_LENGTH_MAX * 3 + 6) + 1;
+    needed_len = ((gsize) n_cells + 1) * (CHAFA_TERM_SEQ_LENGTH_MAX * 3 + 6) + 1;
 
     if (gs->allocated_len - gs->len < needed_len)
     {
-        guint current_len = gs->len;
+        gsize current_len = gs->len;
         g_string_set_size (gs, gs->len + needed_len * 2);
         gs->len = current_len;
     }
@@ -672,11 +672,11 @@ G_GNUC_WARN_UNUSED_RESULT static gchar *
 build_ansi_row (PrintCtx *ctx, gint row, gchar *out)
 {
     ChafaCanvas *canvas;
-    gint i, i_max;
+    gsize i, i_max;
 
     canvas = ctx->canvas;
-    i = row * canvas->config.width;
-    i_max = (row + 1) * canvas->config.width;
+    i = (gsize) row * (gsize) canvas->config.width;
+    i_max = (gsize) (row + 1) * (gsize) canvas->config.width;
 
     if (row == 0
         && canvas->config.canvas_mode != CHAFA_CANVAS_MODE_FGBG)

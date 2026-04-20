@@ -202,12 +202,13 @@ update_display_colors (ChafaCanvas *canvas)
 static void
 maybe_clear (ChafaCanvas *canvas)
 {
-    gint i;
+    gsize i, n;
 
     if (!canvas->needs_clear)
         return;
 
-    for (i = 0; i < canvas->config.width * canvas->config.height; i++)
+    n = (gsize) canvas->config.width * (gsize) canvas->config.height;
+    for (i = 0; i < n; i++)
     {
         ChafaCanvasCell *cell = &canvas->cells [i];
 
@@ -549,7 +550,7 @@ chafa_canvas_new (const ChafaCanvasConfig *config)
     }
 
     canvas->pixels = NULL;
-    canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
+    canvas->cells = g_new (ChafaCanvasCell, (gsize) canvas->config.width * (gsize) canvas->config.height);
     canvas->work_factor_int = canvas->config.work_factor * 10 + 0.5f;
     canvas->needs_clear = TRUE;
     canvas->have_alpha = FALSE;
@@ -650,7 +651,7 @@ chafa_canvas_new_similar (ChafaCanvas *orig)
 
     canvas->pixels = NULL;
     canvas->pixel_renderer = NULL;
-    canvas->cells = g_new (ChafaCanvasCell, canvas->config.width * canvas->config.height);
+    canvas->cells = g_new (ChafaCanvasCell, (gsize) canvas->config.width * (gsize) canvas->config.height);
     canvas->needs_clear = TRUE;
 
     chafa_dither_copy (&orig->dither, &canvas->dither);
@@ -1050,7 +1051,7 @@ chafa_canvas_get_char_at (ChafaCanvas *canvas, gint x, gint y)
     g_return_val_if_fail (x >= 0 && x < canvas->config.width, 0);
     g_return_val_if_fail (y >= 0 && y < canvas->config.height, 0);
 
-    return canvas->cells [y * canvas->config.width + x].c;
+    return canvas->cells [(gsize) y * (gsize) canvas->config.width + x].c;
 }
 
 /**
@@ -1091,7 +1092,7 @@ chafa_canvas_set_char_at (ChafaCanvas *canvas, gint x, gint y, gunichar c)
     if (x + cwidth > canvas->config.width)
         return 0;
 
-    cell = &canvas->cells [y * canvas->config.width + x];
+    cell = &canvas->cells [(gsize) y * (gsize) canvas->config.width + x];
     cell [0].c = c;
 
     if (cwidth == 2)
@@ -1145,7 +1146,7 @@ chafa_canvas_get_colors_at (ChafaCanvas *canvas, gint x, gint y,
     g_return_if_fail (x >= 0 && x < canvas->config.width);
     g_return_if_fail (y >= 0 && y < canvas->config.height);
 
-    cell = &canvas->cells [y * canvas->config.width + x];
+    cell = &canvas->cells [(gsize) y * (gsize) canvas->config.width + x];
 
     switch (canvas->config.canvas_mode)
     {
@@ -1214,7 +1215,7 @@ chafa_canvas_set_colors_at (ChafaCanvas *canvas, gint x, gint y,
     g_return_if_fail (x >= 0 && x < canvas->config.width);
     g_return_if_fail (y >= 0 && y < canvas->config.height);
 
-    cell = &canvas->cells [y * canvas->config.width + x];
+    cell = &canvas->cells [(gsize) y * (gsize) canvas->config.width + x];
 
     switch (canvas->config.canvas_mode)
     {
@@ -1289,7 +1290,7 @@ chafa_canvas_get_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
     g_return_if_fail (x >= 0 && x < canvas->config.width);
     g_return_if_fail (y >= 0 && y < canvas->config.height);
 
-    cell = &canvas->cells [y * canvas->config.width + x];
+    cell = &canvas->cells [(gsize) y * (gsize) canvas->config.width + x];
 
     switch (canvas->config.canvas_mode)
     {
@@ -1355,7 +1356,7 @@ chafa_canvas_set_raw_colors_at (ChafaCanvas *canvas, gint x, gint y,
     g_return_if_fail (x >= 0 && x < canvas->config.width);
     g_return_if_fail (y >= 0 && y < canvas->config.height);
 
-    cell = &canvas->cells [y * canvas->config.width + x];
+    cell = &canvas->cells [(gsize) y * (gsize) canvas->config.width + x];
 
     switch (canvas->config.canvas_mode)
     {

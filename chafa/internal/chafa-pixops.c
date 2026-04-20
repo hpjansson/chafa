@@ -336,15 +336,15 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
     dest_y >>= dither->grain_height_shift;
     n_rows >>= dither->grain_height_shift;
 
-    error_rows = g_malloc (width_grains * 2 * sizeof (ChafaColorAccum));
+    error_rows = g_malloc ((gsize) width_grains * 2 * sizeof (ChafaColorAccum));
     error_row [0] = error_rows;
     error_row [1] = error_rows + width_grains;
 
-    memset (error_row [0], 0, width_grains * sizeof (ChafaColorAccum));
+    memset (error_row [0], 0, (gsize) width_grains * sizeof (ChafaColorAccum));
 
     for (y = dest_y; y < dest_y + n_rows; y++)
     {
-        memset (error_row [1], 0, width_grains * sizeof (ChafaColorAccum));
+        memset (error_row [1], 0, (gsize) width_grains * sizeof (ChafaColorAccum));
 
         if (!(y & 1))
         {
@@ -533,12 +533,12 @@ prepare_pixels_1_worker_smooth (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
     ret = g_new0 (PreparePixelsBatch1Ret, 1);
     batch->ret_p = ret;
 
-    scaled_data = g_malloc (prep_ctx->dest_width * batch->n_rows * sizeof (guint32));
+    scaled_data = g_malloc ((gsize) prep_ctx->dest_width * batch->n_rows * sizeof (guint32));
     smol_scale_batch_full (prep_ctx->scale_ctx, scaled_data, batch->first_row, batch->n_rows);
 
     data_p = scaled_data;
-    pixel = prep_ctx->dest_pixels + batch->first_row * prep_ctx->dest_width;
-    pixel_max = pixel + batch->n_rows * prep_ctx->dest_width;
+    pixel = prep_ctx->dest_pixels + (gsize) batch->first_row * prep_ctx->dest_width;
+    pixel_max = pixel + batch->n_rows * (gsize) prep_ctx->dest_width;
 
     while (pixel < pixel_max)
     {
@@ -615,8 +615,8 @@ composite_alpha_on_bg (ChafaColor bg_color,
 {
     ChafaPixel *p0, *p1;
 
-    p0 = pixels + first_row * width;
-    p1 = p0 + n_rows * width;
+    p0 = pixels + (gsize) first_row * width;
+    p1 = p0 + (gsize) n_rows * width;
 
     /* FIXME: This is slow and bad. We should fix it with a new Smolscale
      * compositing mode. */

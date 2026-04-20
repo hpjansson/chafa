@@ -801,7 +801,7 @@ update_cells_row (ChafaCanvas *canvas, gint row)
     gint cell_errors [N_BUF_CELLS];
     gint cx, cy;
 
-    cells = &canvas->cells [row * canvas->config.width];
+    cells = &canvas->cells [(gsize) row * (gsize) canvas->config.width];
     cy = row;
 
     for (cx = 0; cx < canvas->config.width; cx++)

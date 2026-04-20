@@ -73,9 +73,10 @@ chafa_frame_new (gconstpointer data,
                  gint width, gint height, gint rowstride)
 {
     gpointer owned_data;
+    gsize data_size = (gsize) height * rowstride;
 
-    owned_data = g_malloc (height * rowstride);
-    memcpy (owned_data, data, height * rowstride);
+    owned_data = g_malloc (data_size);
+    memcpy (owned_data, data, data_size);
     return new_frame (owned_data, pixel_type, width, height, rowstride, TRUE);
 }
 

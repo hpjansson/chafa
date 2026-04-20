@@ -511,7 +511,7 @@ color_from_vec3f32_trunc (ChafaColor *col, const ChafaVec3f32 *v)
 }
 
 static gint
-sample_to_bins (PnnBin *bins, gconstpointer pixels, size_t n_pixels, gint step,
+sample_to_bins (PnnBin *bins, gconstpointer pixels, size_t n_pixels, size_t step,
                 gint bits_per_ch, gint alpha_threshold)
 {
     const ChafaColor *p = (const ChafaColor *) pixels;
@@ -537,8 +537,8 @@ sample_to_bins (PnnBin *bins, gconstpointer pixels, size_t n_pixels, gint step,
 
 static gint
 pnn_palette (ChafaPalette *pal, gconstpointer pixels,
-             gint n_pixels, gint n_cols,
-             gint bits_per_ch, gint sample_step,
+             gsize n_pixels, gint n_cols,
+             gint bits_per_ch, gsize sample_step,
              gint alpha_threshold)
 {
     ChafaVec3f32 rgb_weights =
@@ -910,11 +910,11 @@ chafa_palette_copy (const ChafaPalette *src, ChafaPalette *dest)
 /* pixels must point to RGBA8888 data to sample */
 /* FIXME: Rowstride etc? */
 void
-chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gint n_pixels,
+chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gsize n_pixels,
                         ChafaColorSpace color_space, gfloat quality)
 {
     const QualityParams *params;
-    gint step;
+    gsize step;
 
     if (palette_out->type != CHAFA_PALETTE_TYPE_DYNAMIC_256)
         return;
