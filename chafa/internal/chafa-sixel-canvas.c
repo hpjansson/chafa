@@ -381,10 +381,10 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     gint i;
 
     n_sixel_rows = (batch->n_rows + SIXEL_CELL_HEIGHT - 1) / SIXEL_CELL_HEIGHT;
-    srow.data = g_malloc (sizeof (SixelData) * ctx->sixel_canvas->width);
+    srow.data = g_malloc (sizeof (SixelData) * (gsize) ctx->sixel_canvas->width);
     chafa_bitfield_init (&srow.filter_bits, ((ctx->sixel_canvas->width + FILTER_BANK_WIDTH - 1) / FILTER_BANK_WIDTH) * 256);
 
-    sixel_ansi = p = g_malloc (256 * (ctx->sixel_canvas->width + 5) * n_sixel_rows + 1);
+    sixel_ansi = p = g_malloc (256 * ((gsize) ctx->sixel_canvas->width + 5) * n_sixel_rows + 1);
 
     for (i = 0; i < n_sixel_rows; i++)
     {
@@ -393,7 +393,7 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
 
         fetch_sixel_row (&srow,
                          ctx->sixel_canvas->image->pixels
-                         + ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
+                         + (gsize) ctx->sixel_canvas->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
                          ctx->sixel_canvas->image->width);
         p = build_sixel_row_ansi (ctx->sixel_canvas, &srow, p,
                                   (is_global_first_row) || (is_global_last_row)

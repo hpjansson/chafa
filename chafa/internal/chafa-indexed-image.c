@@ -81,7 +81,7 @@ static void
 draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     smol_scale_batch_full (ctx->scale_ctx,
-                           ctx->scaled_data + (ctx->dest_width * batch->first_row),
+                           ctx->scaled_data + ((gsize) ctx->dest_width * batch->first_row),
                            batch->first_row,
                            batch->n_rows);
 }
@@ -158,9 +158,9 @@ draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
     const guint32 *src_p;
     guint8 *dest_p, *dest_end_p;
 
-    src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
-    dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
-    dest_end_p = dest_p + (ctx->dest_width * batch->n_rows);
+    src_p = ctx->scaled_data + ((gsize) ctx->dest_width * batch->first_row);
+    dest_p = ctx->indexed_image->pixels + ((gsize) ctx->dest_width * batch->first_row);
+    dest_end_p = dest_p + ((gsize) ctx->dest_width * batch->n_rows);
 
     for ( ; dest_p < dest_end_p; src_p++, dest_p++)
     {
@@ -181,9 +181,9 @@ draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
     guint8 *dest_p, *dest_end_p;
     gint x, y;
 
-    src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
-    dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
-    dest_end_p = dest_p + (ctx->dest_width * batch->n_rows);
+    src_p = ctx->scaled_data + ((gsize) ctx->dest_width * batch->first_row);
+    dest_p = ctx->indexed_image->pixels + ((gsize) ctx->dest_width * batch->first_row);
+    dest_end_p = dest_p + ((gsize) ctx->dest_width * batch->n_rows);
 
     x = 0;
     y = batch->first_row;
@@ -311,22 +311,22 @@ draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
     guint8 *dest_end_p, *dest_p;
     gint y;
 
-    error_row [0] = g_malloc (ctx->dest_width * sizeof (ChafaColorAccum));
-    error_row [1] = g_malloc (ctx->dest_width * sizeof (ChafaColorAccum));
+    error_row [0] = g_malloc ((gsize) ctx->dest_width * sizeof (ChafaColorAccum));
+    error_row [1] = g_malloc ((gsize) ctx->dest_width * sizeof (ChafaColorAccum));
 
-    src_p = ctx->scaled_data + (ctx->dest_width * batch->first_row);
-    dest_p = ctx->indexed_image->pixels + (ctx->dest_width * batch->first_row);
-    dest_end_p = dest_p + (ctx->dest_width * batch->n_rows);
+    src_p = ctx->scaled_data + ((gsize) ctx->dest_width * batch->first_row);
+    dest_p = ctx->indexed_image->pixels + ((gsize) ctx->dest_width * batch->first_row);
+    dest_end_p = dest_p + ((gsize) ctx->dest_width * batch->n_rows);
 
     y = batch->first_row;
 
-    memset (error_row [0], 0, ctx->dest_width * sizeof (ChafaColorAccum));
+    memset (error_row [0], 0, (gsize) ctx->dest_width * sizeof (ChafaColorAccum));
 
     for ( ; dest_p < dest_end_p; src_p += ctx->dest_width, dest_p += ctx->dest_width, y++)
     {
         ChafaColorAccum *error_row_temp;
 
-        memset (error_row [1], 0, ctx->dest_width * sizeof (ChafaColorAccum));
+        memset (error_row [1], 0, (gsize) ctx->dest_width * sizeof (ChafaColorAccum));
 
         fs_dither_row (ctx, chash, src_p, dest_p, error_row [0], error_row [1],
                        ctx->dest_width, y);
@@ -381,7 +381,7 @@ draw_pixels (DrawPixelsCtx *ctx)
                            1);
 
     chafa_palette_generate (&ctx->indexed_image->palette,
-                            ctx->scaled_data, ctx->dest_width * ctx->dest_height,
+                            ctx->scaled_data, (gsize) ctx->dest_width * ctx->dest_height,
                             ctx->color_space, ctx->quality);
 
     /* Single thread only for diffusion; it's a fully serial operation */
@@ -536,9 +536,9 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
 
     draw_pixels (&ctx);
 
-    memset (indexed_image->pixels + indexed_image->width * dest_height,
+    memset (indexed_image->pixels + (gsize) indexed_image->width * dest_height,
             chafa_palette_get_transparent_index (&indexed_image->palette),
-            indexed_image->width * (indexed_image->height - dest_height));
+            (gsize) indexed_image->width * (indexed_image->height - dest_height));
 
     smol_scale_destroy (ctx.scale_ctx);
     g_free (ctx.scaled_data);

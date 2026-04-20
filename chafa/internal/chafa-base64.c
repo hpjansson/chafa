@@ -53,7 +53,7 @@ encode_3_bytes (GString *gs_out, guint32 bytes)
 }
 
 void
-chafa_base64_encode (ChafaBase64 *base64, GString *gs_out, gconstpointer in, gint in_len)
+chafa_base64_encode (ChafaBase64 *base64, GString *gs_out, gconstpointer in, gsize in_len)
 {
     const guint8 *in_u8 = in;
     const guint8 *end_u8 = in_u8 + in_len;

@@ -37,7 +37,7 @@ ChafaBase64;
 void chafa_base64_init (ChafaBase64 *base64);
 void chafa_base64_deinit (ChafaBase64 *base64);
 
-void chafa_base64_encode (ChafaBase64 *base64, GString *gs_out, gconstpointer in, gint in_len);
+void chafa_base64_encode (ChafaBase64 *base64, GString *gs_out, gconstpointer in, gsize in_len);
 void chafa_base64_encode_end (ChafaBase64 *base64, GString *gs_out);
 
 G_END_DECLS
