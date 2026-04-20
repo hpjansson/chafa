@@ -11,6 +11,7 @@
 
 #undef SMOL_ENABLE_ASSERTS
 
+#include <stddef.h>
 #include <stdint.h>
 #include "smolscale.h"
 
@@ -338,8 +339,8 @@ struct SmolScaleCtx
     const char *src_pixels;
     char *dest_pixels;
 
-    uint32_t src_rowstride;
-    uint32_t dest_rowstride;
+    size_t src_rowstride;
+    size_t dest_rowstride;
 
     SmolPixelType src_pixel_type, dest_pixel_type;
     SmolStorageType storage_type;
