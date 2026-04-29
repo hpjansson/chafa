@@ -173,16 +173,72 @@ chicle_rotate_image (gpointer *src, guint *width, guint *height, guint *rowstrid
     *rowstride = dest_rowstride;
 }
 
+/* Replaces control characters (C0: U+0000..U+001F, U+007F; C1:
+ * U+0080..U+009F) with '?' so attacker-controlled input cannot inject
+ * terminal escape sequences when this string is later printed to a
+ * terminal. Handles three cases:
+ *
+ * - ASCII control bytes (single-byte): Replace the byte.
+ * - Valid UTF-8 representations of C1 controls (e.g. U+009B encoded
+ *   as 0xC2 0x9B): Replace every byte of the encoded sequence.
+ * - Invalid UTF-8 bytes (stray continuation bytes, truncated
+ *   sequences, overlong encodings): Replace each invalid byte and
+ *   advance one byte at a time. */
 void
 chicle_flatten_cntrl_inplace (gchar *str)
 {
-    gchar *p;
+    gchar *p, *t;
+    gssize len;
 
-    for (p = str; *p; p = g_utf8_next_char (p))
+    len = strlen (str);
+
+    for (p = str; *p; )
     {
-        gunichar c = g_utf8_get_char (p);
+        gunichar c;
+
+        if ((guchar) *p < 0x80)
+        {
+            /* Single-byte: ASCII or ASCII control */
+            if ((guchar) *p < 0x20 || *p == 0x7f)
+                *p = '?';
+            p++;
+            len--;
+            continue;
+        }
+
+        /* Multi-byte or invalid lead. Validate. */
+        c = g_utf8_get_char_validated (p, len);
+
+        if (c == (gunichar) -1 || c == (gunichar) -2)
+        {
+            /* Invalid UTF-8 sequence at this byte. Replace just this byte
+             * and advance by one to resync. */
+            *(p++) = '?';
+            len--;
+            continue;
+        }
+
         if (g_unichar_iscntrl (c))
-            *p = '?';
+        {
+            gchar *next = g_utf8_next_char (p);
+
+            /* Valid UTF-8 control codepoint (typically C1). Replace all
+             * bytes of the encoded sequence to neutralize trailing
+             * continuation bytes that themselves match terminal control
+             * codes (e.g. 0x9B). */
+            while (p < next)
+            {
+                *(p++) = '?';
+                len--;
+            }
+
+            continue;
+        }
+
+        /* Valid, non-control codepoint: leave it alone. */
+        t = g_utf8_next_char (p);
+        len -= t - p;
+        p = t;
     }
 }
 
