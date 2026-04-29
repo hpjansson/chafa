@@ -432,14 +432,15 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                                             0,
                                                             canvas->config.width,
                                                             canvas->config.height);
-        chafa_symbol_renderer_draw_all_pixels (canvas->pixel_renderer,
-                                               src_pixel_type,
-                                               src_pixels,
-                                               src_width, src_height,
-                                               src_rowstride,
-                                               halign, valign,
-                                               tuck,
-                                               canvas->config.work_factor);
+        if (canvas->pixel_renderer)
+            chafa_symbol_renderer_draw_all_pixels (canvas->pixel_renderer,
+                                                   src_pixel_type,
+                                                   src_pixels,
+                                                   src_width, src_height,
+                                                   src_rowstride,
+                                                   halign, valign,
+                                                   tuck,
+                                                   canvas->config.work_factor);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
     {
@@ -451,14 +452,15 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                                            canvas->config.color_space,
                                                            &canvas->fg_palette,
                                                            &canvas->dither);
-        chafa_sixel_renderer_draw_all_pixels (canvas->pixel_renderer,
-                                              src_pixel_type,
-                                              src_pixels,
-                                              src_width, src_height,
-                                              src_rowstride,
-                                              halign, valign,
-                                              tuck,
-                                              canvas->config.work_factor);
+        if (canvas->pixel_renderer)
+            chafa_sixel_renderer_draw_all_pixels (canvas->pixel_renderer,
+                                                  src_pixel_type,
+                                                  src_pixels,
+                                                  src_width, src_height,
+                                                  src_rowstride,
+                                                  halign, valign,
+                                                  tuck,
+                                                  canvas->config.work_factor);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
