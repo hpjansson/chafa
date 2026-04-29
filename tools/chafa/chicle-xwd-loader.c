@@ -242,7 +242,7 @@ load_header (ChicleXwdLoader *loader)
     ASSERT_HEADER (h->bits_per_pixel != 32 || h->bytes_per_line % 4 == 0);
 
     /* Make sure the total allocation/map is not too big. */
-    ASSERT_HEADER (h->bytes_per_line * h->pixmap_height < (1UL << 31) - 65536 - 256 * 32);
+    ASSERT_HEADER ((gsize) h->bytes_per_line * h->pixmap_height < (1UL << 31) - 65536 - 256 * 32);
 
     ASSERT_HEADER (compute_pixel_type (loader) < CHAFA_PIXEL_MAX);
 
