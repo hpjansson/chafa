@@ -172,6 +172,9 @@ gif_initialise_frame_extensions(gif_animation *gif, const int frame)
                         if (gif->frames[frame].disposal_method == GIF_FRAME_QUIRKS_RESTORE) {
                                 gif->frames[frame].disposal_method = GIF_FRAME_RESTORE;
                         }
+                        if ((intmax_t)(2 + gif_data[1]) > gif_bytes) {
+                                return GIF_INSUFFICIENT_FRAME_DATA;
+                        }
                         gif_data += (2 + gif_data[1]);
                         break;
 
@@ -194,6 +197,9 @@ gif_initialise_frame_extensions(gif_animation *gif, const int frame)
                             (gif_data[14] == 0x01)) {
                                 gif->loop_count = gif_data[15] | (gif_data[16] << 8);
                         }
+                        if ((intmax_t)(2 + gif_data[1]) > gif_bytes) {
+                                return GIF_INSUFFICIENT_FRAME_DATA;
+                        }
                         gif_data += (2 + gif_data[1]);
                         break;
 
@@ -212,6 +218,9 @@ gif_initialise_frame_extensions(gif_animation *gif, const int frame)
                         if (gif_bytes < 2) {
                                 return GIF_INSUFFICIENT_FRAME_DATA;
                         }
+                        if ((intmax_t)(2 + gif_data[1]) > gif_bytes) {
+                                return GIF_INSUFFICIENT_FRAME_DATA;
+                        }
                         gif_data += (2 + gif_data[1]);
                 }
 
@@ -226,6 +235,9 @@ gif_initialise_frame_extensions(gif_animation *gif, const int frame)
                                 return GIF_INSUFFICIENT_FRAME_DATA;
                         }
                         gif_data += block_size;
+                }
+                if (gif_data >= gif_end) {
+                        return GIF_INSUFFICIENT_FRAME_DATA;
                 }
                 ++gif_data;
         }
@@ -411,10 +423,11 @@ static gif_result gif_initialise_frame(gif_animation *gif)
 
         /* Skip the local colour table */
         if (flags & GIF_COLOUR_TABLE_MASK) {
-                gif_data += 3 * colour_table_size;
-                if ((gif_bytes = (gif_end - gif_data)) < 0) {
+                if ((intmax_t)(3 * colour_table_size) > gif_bytes) {
                         return GIF_INSUFFICIENT_FRAME_DATA;
                 }
+                gif_data += 3 * colour_table_size;
+                gif_bytes = (gif_end - gif_data);
         }
 
         /* Ensure we have a correct code size */
@@ -518,6 +531,9 @@ static gif_result gif_skip_frame_extensions(gif_animation *gif)
                         if (gif_data + 1 >= gif_end) {
                                 return GIF_INSUFFICIENT_FRAME_DATA;
                         }
+                        if ((intmax_t)(2 + gif_data[1]) > (gif_end - gif_data)) {
+                                return GIF_INSUFFICIENT_FRAME_DATA;
+                        }
                         gif_data += (2 + gif_data[1]);
                 }
 
@@ -532,6 +548,9 @@ static gif_result gif_skip_frame_extensions(gif_animation *gif)
                                 return GIF_INSUFFICIENT_FRAME_DATA;
                         }
                         gif_data += block_size;
+                }
+                if (gif_data >= gif_end) {
+                        return GIF_INSUFFICIENT_FRAME_DATA;
                 }
                 ++gif_data;
         }
