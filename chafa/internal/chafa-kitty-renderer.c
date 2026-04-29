@@ -372,7 +372,7 @@ build_unicode_placement (ChafaTermInfo *term_info,
     width_cells = MIN (width_cells, ENCODING_DIACRITIC_MAX - 1);
     height_cells = MIN (height_cells, ENCODING_DIACRITIC_MAX - 1);
 
-    row = g_malloc (width_cells * (6 * 3) + 1);
+    row = g_malloc ((gsize) width_cells * (6 * 3) + 1);
 
     for (i = 0; i < height_cells; i++)
     {
