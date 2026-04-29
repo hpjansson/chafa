@@ -199,12 +199,66 @@ symbols_fgbg_test (void)
                                  100, 100, "[ a]", ' ', 'a', 0.2f);
 }
 
+/* Colors must round-trip to specified FG/BG colors in FG/BG modes */
+static void
+colors_fgbg_test (void)
+{
+    const guint32 fg_rgb = 0xff0000;  /* Red  */
+    const guint32 bg_rgb = 0x0000ff;  /* Blue */
+    const guint8 src_pixels [4] = { 0x80, 0x80, 0x80, 0xff };  /* Gray */
+    ChafaCanvasMode modes [] =
+    {
+        CHAFA_CANVAS_MODE_FGBG,
+        CHAFA_CANVAS_MODE_FGBG_BGFG
+    };
+    guint i;
+
+    for (i = 0; i < G_N_ELEMENTS (modes); i++)
+    {
+        ChafaCanvasConfig *config = chafa_canvas_config_new ();
+        ChafaCanvas *canvas;
+        gint x, y;
+
+        chafa_canvas_config_set_canvas_mode (config, modes [i]);
+        chafa_canvas_config_set_geometry (config, 4, 4);
+        chafa_canvas_config_set_fg_color (config, fg_rgb);
+        chafa_canvas_config_set_bg_color (config, bg_rgb);
+
+        canvas = chafa_canvas_new (config);
+        chafa_canvas_draw_all_pixels (canvas,
+                                      CHAFA_PIXEL_RGBA8_UNASSOCIATED,
+                                      src_pixels,
+                                      1, 1, 4);
+
+        for (y = 0; y < 4; y++)
+        {
+            for (x = 0; x < 4; x++)
+            {
+                gint fg = -2, bg = -2;
+
+                chafa_canvas_get_colors_at (canvas, x, y, &fg, &bg);
+
+                g_assert_true (fg == -1
+                               || fg == (gint) fg_rgb
+                               || fg == (gint) bg_rgb);
+                g_assert_true (bg == -1
+                               || bg == (gint) fg_rgb
+                               || bg == (gint) bg_rgb);
+            }
+        }
+
+        chafa_canvas_unref (canvas);
+        chafa_canvas_config_unref (config);
+    }
+}
+
 int
 main (int argc, char *argv [])
 {
     g_test_init (&argc, &argv, NULL);
 
     g_test_add_func ("/canvas/symbols/fgbg", symbols_fgbg_test);
+    g_test_add_func ("/canvas/colors/fgbg", colors_fgbg_test);
 
     return g_test_run ();
 }

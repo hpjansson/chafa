@@ -797,7 +797,8 @@ update_cell_colors (ChafaCanvas *canvas, ChafaCanvasCell *cell_out,
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_240
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_16
         || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_INDEXED_8
-        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG)
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG_BGFG
+        || canvas->config.canvas_mode == CHAFA_CANVAS_MODE_FGBG)
     {
         cell_out->fg_color =
             chafa_palette_lookup_nearest (&canvas->fg_palette, canvas->config.color_space,
