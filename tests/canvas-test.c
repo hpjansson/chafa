@@ -232,7 +232,7 @@ colors_fgbg_test (void)
         CHAFA_CANVAS_MODE_FGBG,
         CHAFA_CANVAS_MODE_FGBG_BGFG
     };
-    gint i;
+    guint i;
 
     for (i = 0; i < G_N_ELEMENTS (modes); i++)
     {
