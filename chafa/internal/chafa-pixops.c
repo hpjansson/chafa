@@ -327,6 +327,7 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
     gint grain_width = 1 << dither->grain_width_shift;
     gint grain_height = 1 << dither->grain_height_shift;
     gint width_grains = width >> dither->grain_width_shift;
+    gsize alloc_grains = ((gsize) width_grains + 2) * 2;
     gint x, y;
 
     g_assert (width % grain_width == 0);
@@ -336,72 +337,102 @@ fs_dither (const ChafaDither *dither, const ChafaPalette *palette,
     dest_y >>= dither->grain_height_shift;
     n_rows >>= dither->grain_height_shift;
 
-    error_rows = g_malloc ((gsize) width_grains * 2 * sizeof (ChafaColorAccum));
-    error_row [0] = error_rows;
-    error_row [1] = error_rows + width_grains;
+    /* Allocate one extra ChafaColorAccum on each side of each row so the
+     * boundary writes have somewhere harmless to land, and the reads
+     * that immediately follow a freshly-zeroed row still see a defined
+     * value.
+     *
+     * Layout (X = padding):
+     *   [ X | error_row [0] .. [width_grains] | X
+     *     X | error_row [1] .. [width_grains] | X ]
+     *
+     * The trailing padding of row 0 and the leading padding of row 1 are
+     * distinct. */
 
-    memset (error_row [0], 0, (gsize) width_grains * sizeof (ChafaColorAccum));
+    error_rows = g_malloc (alloc_grains * sizeof (ChafaColorAccum));
+    error_row [0] = error_rows + 1;
+    error_row [1] = error_rows + (width_grains + 2) + 1;
+    memset (error_rows, 0, alloc_grains * sizeof (ChafaColorAccum));
 
     for (y = dest_y; y < dest_y + n_rows; y++)
     {
-        memset (error_row [1], 0, (gsize) width_grains * sizeof (ChafaColorAccum));
+        memset (error_row [1] - 1, 0,
+                (gsize) (width_grains + 2) * sizeof (ChafaColorAccum));
 
         if (!(y & 1))
         {
-            /* Forwards pass */
+            /* --- Forwards pass --- */
+
             pixel = pixels + (y << dither->grain_height_shift) * width;
 
+            /* Leftmost */
             fs_dither_grain (dither, palette, color_space, pixel, width,
                              error_row [0],
                              error_row [0] + 1,
                              error_row [1] + 1,
                              error_row [1],
                              error_row [1] + 1);
-            pixel += grain_width;
 
-            for (x = 1; ((x + 1) << dither->grain_width_shift) < width; x++)
+            if (width_grains >= 2)
             {
+                pixel += grain_width;
+
+                for (x = 1; ((x + 1) << dither->grain_width_shift) < width; x++)
+                {
+                    fs_dither_grain (dither, palette, color_space, pixel, width,
+                                     error_row [0] + x,
+                                     error_row [0] + x + 1,
+                                     error_row [1] + x + 1,
+                                     error_row [1] + x,
+                                     error_row [1] + x - 1);
+                    pixel += grain_width;
+                }
+
+                /* Rightmost */
                 fs_dither_grain (dither, palette, color_space, pixel, width,
                                  error_row [0] + x,
-                                 error_row [0] + x + 1,
-                                 error_row [1] + x + 1,
                                  error_row [1] + x,
+                                 error_row [1] + x,
+                                 error_row [1] + x - 1,
                                  error_row [1] + x - 1);
-                pixel += grain_width;
             }
-
-            fs_dither_grain (dither, palette, color_space, pixel, width,
-                             error_row [0] + x,
-                             error_row [1] + x,
-                             error_row [1] + x,
-                             error_row [1] + x - 1,
-                             error_row [1] + x - 1);
         }
         else
         {
-            /* Backwards pass */
-            pixel = pixels + (y << dither->grain_height_shift) * width + width - grain_width;
+            /* --- Backwards pass --- */
 
-            fs_dither_grain (dither, palette, color_space, pixel, width,
-                             error_row [0] + width_grains - 1,
-                             error_row [0] + width_grains - 2,
-                             error_row [1] + width_grains - 2,
-                             error_row [1] + width_grains - 1,
-                             error_row [1] + width_grains - 2);
-
-            pixel -= grain_width;
-
-            for (x = width_grains - 2; x > 0; x--)
+            if (width_grains >= 2)
             {
+                pixel = pixels + (y << dither->grain_height_shift) * width
+                                                          + width - grain_width;
+
+                /* Rightmost */
                 fs_dither_grain (dither, palette, color_space, pixel, width,
-                                 error_row [0] + x,
-                                 error_row [0] + x - 1,
-                                 error_row [1] + x - 1,
-                                 error_row [1] + x,
-                                 error_row [1] + x + 1);
+                                 error_row [0] + width_grains - 1,
+                                 error_row [0] + width_grains - 2,
+                                 error_row [1] + width_grains - 2,
+                                 error_row [1] + width_grains - 1,
+                                 error_row [1] + width_grains - 2);
+
                 pixel -= grain_width;
+
+                for (x = width_grains - 2; x > 0; x--)
+                {
+                    fs_dither_grain (dither, palette, color_space, pixel, width,
+                                     error_row [0] + x,
+                                     error_row [0] + x - 1,
+                                     error_row [1] + x - 1,
+                                     error_row [1] + x,
+                                     error_row [1] + x + 1);
+                    pixel -= grain_width;
+                }
+            }
+            else
+            {
+                pixel = pixels + (y << dither->grain_height_shift) * width;
             }
 
+            /* Leftmost */
             fs_dither_grain (dither, palette, color_space, pixel, width,
                              error_row [0],
                              error_row [1],
