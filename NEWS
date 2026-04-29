@@ -1,6 +1,29 @@
 Chafa releases
 ==============
 
+1.18.2 (2026-04-30)
+-------------------
+
+This is a bugfix release focused on security, hardening and correctness. One of
+the listed bugs is related to "unreasonable" CLI parameters like output sizes
+hundreds of thousands of cells wide; while OOB access is always a bug, users
+are reminded that we don't recommend forwarding CLI parameters from untrusted
+sources without prior sanitization.
+
+Thanks to everyone who contributed patches and analysis.
+
+* Support BigTIFF images (github#328, reported by Govinda Kamath).
+
+* Bug fixes:
+  [unfiled]  Integer overflow and OOB write with big output size
+             (@Captainjack-kor).
+  [unfiled]  OOB write in symbol-mode Floyd-Steinberg dithering.
+  [unfiled]  CLI: Incomplete sanitization of filenames printed to terminal.
+  [unfiled]  CLI: Integer overflow in XWD header validation.
+  [unfiled]  CLI: Pointer arithmetic past end of GIF file allocation.
+  [unfiled]  OOB reading canvas cell colors in FGBG mode.
+  [unfiled]  Compiler warnings from headers with C99 and -Wpedantic.
+
 1.18.1 (2026-02-08)
 -------------------
 
