@@ -246,7 +246,7 @@ SeqMeta;
 
 static const SeqMeta seq_meta [CHAFA_TERM_SEQ_MAX] =
 {
-#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, args)  \
     [CHAFA_TERM_SEQ_##NAME] = { SEQ_TYPE_FIXARGS, n_args, sizeof (arg_type) },
 #define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type)  \
     [CHAFA_TERM_SEQ_##NAME] = { SEQ_TYPE_VARARGS, CHAFA_TERM_SEQ_ARGS_MAX - 1, sizeof (arg_type) },
@@ -1773,7 +1773,7 @@ gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *d
 gchar *chafa_term_info_emit_##func_name(const ChafaTermInfo *term_info, gchar *dest, guint *args, gint n_args) \
 { return emit_seq_varargs_uint (term_info, dest, CHAFA_TERM_SEQ_##seq_name, args, n_args); }
 
-#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, ...)  \
+#define CHAFA_TERM_SEQ_DEF(name, NAME, n_args, arg_proc, arg_type, args)  \
     DEFINE_EMIT_SEQ_##n_args##_##arg_proc##_##arg_type(name, NAME)
 #define CHAFA_TERM_SEQ_DEF_VARARGS(name, NAME, arg_type) \
     DEFINE_EMIT_SEQ_VARARGS_##arg_type(name, NAME)

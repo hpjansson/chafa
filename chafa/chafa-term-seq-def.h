@@ -49,9 +49,13 @@
  * of the more appropriate "void", since we need to be able to use it with
  * sizeof() and -Wpointer-arith. */
 
-/* __VA_OPT__ from C++2a would be nice, but it's too recent to rely on in
- * public headers just yet. So we have this exciting trick instead. */
-#define CHAFA_TERM_SEQ_ARGS ,
+/* The sixth argument to CHAFA_TERM_SEQ_DEF() is the full prototype argument
+ * list of chafa_term_info_emit_<name>(), parenthesised. It always begins
+ * with the (term_info, dest) prefix common to every emitter; we factor that
+ * prefix out as CHAFA_TERM_SEQ_PFX so individual defs only spell out the
+ * per-sequence tail. Carrying the full list as a single parenthesised token
+ * lets us stay strictly C99-conformant (i.e. no variadic macros). */
+#define CHAFA_TERM_SEQ_PFX const ChafaTermInfo *term_info, gchar *dest
 
 /* --- Available in 1.6+ --- */
 
@@ -72,7 +76,7 @@
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_terminal_hard:
@@ -89,7 +93,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_soft, RESET_TERMINAL_SOFT, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_attributes:
@@ -106,7 +110,7 @@ CHAFA_TERM_SEQ_DEF(reset_terminal_hard, RESET_TERMINAL_HARD, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_clear:
@@ -123,7 +127,7 @@ CHAFA_TERM_SEQ_DEF(reset_attributes, RESET_ATTRIBUTES, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, char)
+CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_invert_colors:
@@ -140,7 +144,7 @@ CHAFA_TERM_SEQ_DEF(clear, CLEAR, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, char)
+CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /* Cursor movement. Cursor stops at margins. */
 
@@ -159,7 +163,7 @@ CHAFA_TERM_SEQ_DEF(invert_colors, INVERT_COLORS, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_to_bottom_left:
@@ -176,7 +180,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_top_left, CURSOR_TO_TOP_LEFT, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_to_pos:
@@ -195,7 +199,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_bottom_left, CURSOR_TO_BOTTOM_LEFT, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_ARGS guint x, guint y)
+CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, (CHAFA_TERM_SEQ_PFX, guint x, guint y))
 
 /**
  * chafa_term_info_emit_cursor_up_1:
@@ -212,7 +216,7 @@ CHAFA_TERM_SEQ_DEF(cursor_to_pos, CURSOR_TO_POS, 2, pos, guint, CHAFA_TERM_SEQ_A
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_up:
@@ -230,7 +234,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_1, CURSOR_UP_1, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /**
  * chafa_term_info_emit_cursor_down_1:
@@ -247,7 +251,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up, CURSOR_UP, 1, none, guint, CHAFA_TERM_SEQ_ARGS gui
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_down:
@@ -265,7 +269,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_1, CURSOR_DOWN_1, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /**
  * chafa_term_info_emit_cursor_left_1:
@@ -282,7 +286,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down, CURSOR_DOWN, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_left:
@@ -300,7 +304,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left_1, CURSOR_LEFT_1, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /**
  * chafa_term_info_emit_cursor_right_1:
@@ -317,7 +321,7 @@ CHAFA_TERM_SEQ_DEF(cursor_left, CURSOR_LEFT, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_right:
@@ -335,7 +339,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right_1, CURSOR_RIGHT_1, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /* Cursor movement. Cursor crossing margin causes scrolling region to
  * scroll. */
@@ -355,7 +359,7 @@ CHAFA_TERM_SEQ_DEF(cursor_right, CURSOR_RIGHT, 1, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cursor_down_scroll:
@@ -372,7 +376,7 @@ CHAFA_TERM_SEQ_DEF(cursor_up_scroll, CURSOR_UP_SCROLL, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, char)
+CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /* Cells will shift on insert. Cells shifted off the edge will be lost. */
 
@@ -392,7 +396,7 @@ CHAFA_TERM_SEQ_DEF(cursor_down_scroll, CURSOR_DOWN_SCROLL, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /**
  * chafa_term_info_emit_delete_cells:
@@ -410,7 +414,7 @@ CHAFA_TERM_SEQ_DEF(insert_cells, INSERT_CELLS, 1, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /* Cursor must be inside scrolling region. Rows are shifted inside the
  * scrolling region. Rows shifted off the edge will be lost. The cursor
@@ -432,7 +436,7 @@ CHAFA_TERM_SEQ_DEF(delete_cells, DELETE_CELLS, 1, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /**
  * chafa_term_info_emit_delete_rows:
@@ -450,7 +454,7 @@ CHAFA_TERM_SEQ_DEF(insert_rows, INSERT_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /* Defines the scrolling region. */
 
@@ -471,7 +475,7 @@ CHAFA_TERM_SEQ_DEF(delete_rows, DELETE_ROWS, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_TERM_SEQ_ARGS guint top, guint bottom)
+CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, (CHAFA_TERM_SEQ_PFX, guint top, guint bottom))
 
 /* Indicates whether characters printed in the middle of a row should
  * cause subsequent cells to shift forwards. Cells shifted off the edge
@@ -493,7 +497,7 @@ CHAFA_TERM_SEQ_DEF(set_scrolling_rows, SET_SCROLLING_ROWS, 2, pos, guint, CHAFA_
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_disable_insert:
@@ -510,7 +514,7 @@ CHAFA_TERM_SEQ_DEF(enable_insert, ENABLE_INSERT, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, char)
+CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_enable_cursor:
@@ -527,7 +531,7 @@ CHAFA_TERM_SEQ_DEF(disable_insert, DISABLE_INSERT, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_disable_cursor:
@@ -544,7 +548,7 @@ CHAFA_TERM_SEQ_DEF(enable_cursor, ENABLE_CURSOR, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, char)
+CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_enable_echo:
@@ -561,7 +565,7 @@ CHAFA_TERM_SEQ_DEF(disable_cursor, DISABLE_CURSOR, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_disable_echo:
@@ -578,7 +582,7 @@ CHAFA_TERM_SEQ_DEF(enable_echo, ENABLE_ECHO, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, char)
+CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /* When printing a character in the last column, indicates whether the
  * cursor should move to the next row and potentially cause scrolling. If
@@ -599,7 +603,7 @@ CHAFA_TERM_SEQ_DEF(disable_echo, DISABLE_ECHO, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_disable_wrap:
@@ -616,7 +620,7 @@ CHAFA_TERM_SEQ_DEF(enable_wrap, ENABLE_WRAP, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, char)
+CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_set_color_fg_direct:
@@ -636,7 +640,7 @@ CHAFA_TERM_SEQ_DEF(disable_wrap, DISABLE_WRAP, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
+CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, (CHAFA_TERM_SEQ_PFX, guint8 r, guint8 g, guint8 b))
 
 /**
  * chafa_term_info_emit_set_color_bg_direct:
@@ -656,7 +660,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_direct, SET_COLOR_FG_DIRECT, 3, none, guint8, CH
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 r, guint8 g, guint8 b)
+CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, (CHAFA_TERM_SEQ_PFX, guint8 r, guint8 g, guint8 b))
 
 /**
  * chafa_term_info_emit_set_color_fgbg_direct:
@@ -679,7 +683,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_direct, SET_COLOR_BG_DIRECT, 3, none, guint8, CH
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_r, guint8 fg_g, guint8 fg_b, guint8 bg_r, guint8 bg_g, guint8 bg_b)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8, (CHAFA_TERM_SEQ_PFX, guint8 fg_r, guint8 fg_g, guint8 fg_b, guint8 bg_r, guint8 bg_g, guint8 bg_b))
 
 /**
  * chafa_term_info_emit_set_color_fg_256:
@@ -697,7 +701,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_direct, SET_COLOR_FGBG_DIRECT, 6, none, guint8
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, (CHAFA_TERM_SEQ_PFX, guint8 pen))
 
 /**
  * chafa_term_info_emit_set_color_bg_256:
@@ -715,7 +719,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_256, SET_COLOR_FG_256, 1, none, guint8, CHAFA_TE
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, (CHAFA_TERM_SEQ_PFX, guint8 pen))
 
 /**
  * chafa_term_info_emit_set_color_fgbg_256:
@@ -734,7 +738,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_256, SET_COLOR_BG_256, 1, none, guint8, CHAFA_TE
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, (CHAFA_TERM_SEQ_PFX, guint8 fg_pen, guint8 bg_pen))
 
 /**
  * chafa_term_info_emit_set_color_fg_16:
@@ -752,7 +756,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_256, SET_COLOR_FGBG_256, 2, none, guint8, CHAF
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, (CHAFA_TERM_SEQ_PFX, guint8 pen))
 
 /**
  * chafa_term_info_emit_set_color_bg_16:
@@ -770,7 +774,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_16, SET_COLOR_FG_16, 1, aix16fg, guint8, CHAFA_T
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, (CHAFA_TERM_SEQ_PFX, guint8 pen))
 
 /**
  * chafa_term_info_emit_set_color_fgbg_16:
@@ -789,7 +793,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_16, SET_COLOR_BG_16, 1, aix16bg, guint8, CHAFA_T
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, (CHAFA_TERM_SEQ_PFX, guint8 fg_pen, guint8 bg_pen))
 
 /**
  * chafa_term_info_emit_begin_sixels:
@@ -811,7 +815,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_16, SET_COLOR_FGBG_16, 2, aix16fgbg, guint8, C
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_ARGS guint p1, guint p2, guint p3)
+CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, (CHAFA_TERM_SEQ_PFX, guint p1, guint p2, guint p3))
 
 /**
  * chafa_term_info_emit_end_sixels:
@@ -828,7 +832,7 @@ CHAFA_TERM_SEQ_DEF(begin_sixels, BEGIN_SIXELS, 3, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_repeat_char:
@@ -846,7 +850,7 @@ CHAFA_TERM_SEQ_DEF(end_sixels, END_SIXELS, 0, none, char)
  *
  * Since: 1.6
  **/
-CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, CHAFA_TERM_SEQ_ARGS guint n)
+CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint n))
 
 /* --- Available in 1.8+ --- */
 
@@ -883,7 +887,7 @@ CHAFA_TERM_SEQ_DEF(repeat_char, REPEAT_CHAR, 1, none, guint, CHAFA_TERM_SEQ_ARGS
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_image_v1, BEGIN_KITTY_IMMEDIATE_IMAGE_V1, 5, none, guint, CHAFA_TERM_SEQ_ARGS guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells)
+CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_image_v1, BEGIN_KITTY_IMMEDIATE_IMAGE_V1, 5, none, guint, (CHAFA_TERM_SEQ_PFX, guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells))
 
 /**
  * chafa_term_info_emit_end_kitty_image:
@@ -900,7 +904,7 @@ CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_image_v1, BEGIN_KITTY_IMMEDIATE_IMAGE_V
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(end_kitty_image, END_KITTY_IMAGE, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_kitty_image, END_KITTY_IMAGE, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_begin_kitty_image_chunk:
@@ -917,7 +921,7 @@ CHAFA_TERM_SEQ_DEF(end_kitty_image, END_KITTY_IMAGE, 0, none, char)
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, char)
+CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_kitty_image_chunk:
@@ -934,7 +938,7 @@ CHAFA_TERM_SEQ_DEF(begin_kitty_image_chunk, BEGIN_KITTY_IMAGE_CHUNK, 0, none, ch
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(end_kitty_image_chunk, END_KITTY_IMAGE_CHUNK, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_kitty_image_chunk, END_KITTY_IMAGE_CHUNK, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_begin_iterm2_image:
@@ -958,7 +962,7 @@ CHAFA_TERM_SEQ_DEF(end_kitty_image_chunk, END_KITTY_IMAGE_CHUNK, 0, none, char)
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint width, guint height)
+CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, (CHAFA_TERM_SEQ_PFX, guint width, guint height))
 
 /**
  * chafa_term_info_emit_end_iterm2_image:
@@ -975,7 +979,7 @@ CHAFA_TERM_SEQ_DEF(begin_iterm2_image, BEGIN_ITERM2_IMAGE, 2, none, guint, CHAFA
  *
  * Since: 1.8
  **/
-CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /* --- Available in 1.10+ --- */
 
@@ -997,7 +1001,7 @@ CHAFA_TERM_SEQ_DEF(end_iterm2_image, END_ITERM2_IMAGE, 0, none, char)
  *
  * Since: 1.10
  **/
-CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_disable_sixel_scrolling:
@@ -1014,7 +1018,7 @@ CHAFA_TERM_SEQ_DEF(enable_sixel_scrolling, ENABLE_SIXEL_SCROLLING, 0, none, char
  *
  * Since: 1.10
  **/
-CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, char)
+CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /* --- Available in 1.12+ --- */
 
@@ -1036,7 +1040,7 @@ CHAFA_TERM_SEQ_DEF(disable_sixel_scrolling, DISABLE_SIXEL_SCROLLING, 0, none, ch
  *
  * Since: 1.12
  **/
-CHAFA_TERM_SEQ_DEF(enable_bold, ENABLE_BOLD, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_bold, ENABLE_BOLD, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_set_color_fg_8:
@@ -1054,7 +1058,7 @@ CHAFA_TERM_SEQ_DEF(enable_bold, ENABLE_BOLD, 0, none, char)
  *
  * Since: 1.12
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fg_8, SET_COLOR_FG_8, 1, 8fg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_fg_8, SET_COLOR_FG_8, 1, 8fg, guint8, (CHAFA_TERM_SEQ_PFX, guint8 pen))
 
 /**
  * chafa_term_info_emit_set_color_bg_8:
@@ -1072,7 +1076,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fg_8, SET_COLOR_FG_8, 1, 8fg, guint8, CHAFA_TERM_SE
  *
  * Since: 1.12
  **/
-CHAFA_TERM_SEQ_DEF(set_color_bg_8, SET_COLOR_BG_8, 1, 8bg, guint8, CHAFA_TERM_SEQ_ARGS guint8 pen)
+CHAFA_TERM_SEQ_DEF(set_color_bg_8, SET_COLOR_BG_8, 1, 8bg, guint8, (CHAFA_TERM_SEQ_PFX, guint8 pen))
 
 /**
  * chafa_term_info_emit_set_color_fgbg_8:
@@ -1091,7 +1095,7 @@ CHAFA_TERM_SEQ_DEF(set_color_bg_8, SET_COLOR_BG_8, 1, 8bg, guint8, CHAFA_TERM_SE
  *
  * Since: 1.12
  **/
-CHAFA_TERM_SEQ_DEF(set_color_fgbg_8, SET_COLOR_FGBG_8, 2, 8fgbg, guint8, CHAFA_TERM_SEQ_ARGS guint8 fg_pen, guint8 bg_pen)
+CHAFA_TERM_SEQ_DEF(set_color_fgbg_8, SET_COLOR_FGBG_8, 2, 8fgbg, guint8, (CHAFA_TERM_SEQ_PFX, guint8 fg_pen, guint8 bg_pen))
 
 /* --- Available in 1.14+ --- */
 
@@ -1113,7 +1117,7 @@ CHAFA_TERM_SEQ_DEF(set_color_fgbg_8, SET_COLOR_FGBG_8, 2, 8fgbg, guint8, CHAFA_T
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(reset_default_fg, RESET_DEFAULT_FG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_default_fg, RESET_DEFAULT_FG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_set_default_fg:
@@ -1133,7 +1137,7 @@ CHAFA_TERM_SEQ_DEF(reset_default_fg, RESET_DEFAULT_FG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(set_default_fg, SET_DEFAULT_FG, 3, u16hex, guint16, CHAFA_TERM_SEQ_ARGS guint16 r, guint16 g, guint16 b)
+CHAFA_TERM_SEQ_DEF(set_default_fg, SET_DEFAULT_FG, 3, u16hex, guint16, (CHAFA_TERM_SEQ_PFX, guint16 r, guint16 g, guint16 b))
 
 /**
  * chafa_term_info_emit_query_default_fg:
@@ -1150,7 +1154,7 @@ CHAFA_TERM_SEQ_DEF(set_default_fg, SET_DEFAULT_FG, 3, u16hex, guint16, CHAFA_TER
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(query_default_fg, QUERY_DEFAULT_FG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(query_default_fg, QUERY_DEFAULT_FG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_default_bg:
@@ -1167,7 +1171,7 @@ CHAFA_TERM_SEQ_DEF(query_default_fg, QUERY_DEFAULT_FG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(reset_default_bg, RESET_DEFAULT_BG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_default_bg, RESET_DEFAULT_BG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_set_default_bg:
@@ -1187,7 +1191,7 @@ CHAFA_TERM_SEQ_DEF(reset_default_bg, RESET_DEFAULT_BG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(set_default_bg, SET_DEFAULT_BG, 3, u16hex, guint16, CHAFA_TERM_SEQ_ARGS guint16 r, guint16 g, guint16 b)
+CHAFA_TERM_SEQ_DEF(set_default_bg, SET_DEFAULT_BG, 3, u16hex, guint16, (CHAFA_TERM_SEQ_PFX, guint16 r, guint16 g, guint16 b))
 
 /**
  * chafa_term_info_emit_query_default_bg:
@@ -1204,7 +1208,7 @@ CHAFA_TERM_SEQ_DEF(set_default_bg, SET_DEFAULT_BG, 3, u16hex, guint16, CHAFA_TER
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(query_default_bg, QUERY_DEFAULT_BG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(query_default_bg, QUERY_DEFAULT_BG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_return_key:
@@ -1221,7 +1225,7 @@ CHAFA_TERM_SEQ_DEF(query_default_bg, QUERY_DEFAULT_BG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(return_key, RETURN_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(return_key, RETURN_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_backspace_key:
@@ -1238,7 +1242,7 @@ CHAFA_TERM_SEQ_DEF(return_key, RETURN_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(backspace_key, BACKSPACE_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(backspace_key, BACKSPACE_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_tab_key:
@@ -1255,7 +1259,7 @@ CHAFA_TERM_SEQ_DEF(backspace_key, BACKSPACE_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(tab_key, TAB_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(tab_key, TAB_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_tab_shift_key:
@@ -1272,7 +1276,7 @@ CHAFA_TERM_SEQ_DEF(tab_key, TAB_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(tab_shift_key, TAB_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(tab_shift_key, TAB_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_up_key:
@@ -1289,7 +1293,7 @@ CHAFA_TERM_SEQ_DEF(tab_shift_key, TAB_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(up_key, UP_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(up_key, UP_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_up_ctrl_key:
@@ -1306,7 +1310,7 @@ CHAFA_TERM_SEQ_DEF(up_key, UP_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(up_ctrl_key, UP_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(up_ctrl_key, UP_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_up_shift_key:
@@ -1323,7 +1327,7 @@ CHAFA_TERM_SEQ_DEF(up_ctrl_key, UP_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(up_shift_key, UP_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(up_shift_key, UP_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_down_key:
@@ -1340,7 +1344,7 @@ CHAFA_TERM_SEQ_DEF(up_shift_key, UP_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(down_key, DOWN_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(down_key, DOWN_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_down_ctrl_key:
@@ -1357,7 +1361,7 @@ CHAFA_TERM_SEQ_DEF(down_key, DOWN_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(down_ctrl_key, DOWN_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(down_ctrl_key, DOWN_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_down_shift_key:
@@ -1374,7 +1378,7 @@ CHAFA_TERM_SEQ_DEF(down_ctrl_key, DOWN_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(down_shift_key, DOWN_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(down_shift_key, DOWN_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_left_key:
@@ -1391,7 +1395,7 @@ CHAFA_TERM_SEQ_DEF(down_shift_key, DOWN_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(left_key, LEFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(left_key, LEFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_left_ctrl_key:
@@ -1408,7 +1412,7 @@ CHAFA_TERM_SEQ_DEF(left_key, LEFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(left_ctrl_key, LEFT_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(left_ctrl_key, LEFT_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_left_shift_key:
@@ -1425,7 +1429,7 @@ CHAFA_TERM_SEQ_DEF(left_ctrl_key, LEFT_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(left_shift_key, LEFT_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(left_shift_key, LEFT_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_right_key:
@@ -1442,7 +1446,7 @@ CHAFA_TERM_SEQ_DEF(left_shift_key, LEFT_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(right_key, RIGHT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(right_key, RIGHT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_right_ctrl_key:
@@ -1459,7 +1463,7 @@ CHAFA_TERM_SEQ_DEF(right_key, RIGHT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(right_ctrl_key, RIGHT_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(right_ctrl_key, RIGHT_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_right_shift_key:
@@ -1476,7 +1480,7 @@ CHAFA_TERM_SEQ_DEF(right_ctrl_key, RIGHT_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(right_shift_key, RIGHT_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(right_shift_key, RIGHT_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_page_up_key:
@@ -1493,7 +1497,7 @@ CHAFA_TERM_SEQ_DEF(right_shift_key, RIGHT_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(page_up_key, PAGE_UP_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(page_up_key, PAGE_UP_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_page_up_ctrl_key:
@@ -1510,7 +1514,7 @@ CHAFA_TERM_SEQ_DEF(page_up_key, PAGE_UP_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(page_up_ctrl_key, PAGE_UP_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(page_up_ctrl_key, PAGE_UP_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_page_up_shift_key:
@@ -1527,7 +1531,7 @@ CHAFA_TERM_SEQ_DEF(page_up_ctrl_key, PAGE_UP_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(page_up_shift_key, PAGE_UP_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(page_up_shift_key, PAGE_UP_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_page_down_key:
@@ -1544,7 +1548,7 @@ CHAFA_TERM_SEQ_DEF(page_up_shift_key, PAGE_UP_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(page_down_key, PAGE_DOWN_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(page_down_key, PAGE_DOWN_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_page_down_ctrl_key:
@@ -1561,7 +1565,7 @@ CHAFA_TERM_SEQ_DEF(page_down_key, PAGE_DOWN_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(page_down_ctrl_key, PAGE_DOWN_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(page_down_ctrl_key, PAGE_DOWN_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_page_down_shift_key:
@@ -1578,7 +1582,7 @@ CHAFA_TERM_SEQ_DEF(page_down_ctrl_key, PAGE_DOWN_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(page_down_shift_key, PAGE_DOWN_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(page_down_shift_key, PAGE_DOWN_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_home_key:
@@ -1595,7 +1599,7 @@ CHAFA_TERM_SEQ_DEF(page_down_shift_key, PAGE_DOWN_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(home_key, HOME_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(home_key, HOME_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_home_ctrl_key:
@@ -1612,7 +1616,7 @@ CHAFA_TERM_SEQ_DEF(home_key, HOME_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(home_ctrl_key, HOME_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(home_ctrl_key, HOME_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_home_shift_key:
@@ -1629,7 +1633,7 @@ CHAFA_TERM_SEQ_DEF(home_ctrl_key, HOME_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(home_shift_key, HOME_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(home_shift_key, HOME_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_key:
@@ -1646,7 +1650,7 @@ CHAFA_TERM_SEQ_DEF(home_shift_key, HOME_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(end_key, END_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_key, END_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_ctrl_key:
@@ -1663,7 +1667,7 @@ CHAFA_TERM_SEQ_DEF(end_key, END_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(end_ctrl_key, END_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_ctrl_key, END_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_shift_key:
@@ -1680,7 +1684,7 @@ CHAFA_TERM_SEQ_DEF(end_ctrl_key, END_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(end_shift_key, END_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_shift_key, END_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_insert_key:
@@ -1697,7 +1701,7 @@ CHAFA_TERM_SEQ_DEF(end_shift_key, END_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(insert_key, INSERT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(insert_key, INSERT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_insert_ctrl_key:
@@ -1714,7 +1718,7 @@ CHAFA_TERM_SEQ_DEF(insert_key, INSERT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(insert_ctrl_key, INSERT_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(insert_ctrl_key, INSERT_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_insert_shift_key:
@@ -1731,7 +1735,7 @@ CHAFA_TERM_SEQ_DEF(insert_ctrl_key, INSERT_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(insert_shift_key, INSERT_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(insert_shift_key, INSERT_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_delete_key:
@@ -1748,7 +1752,7 @@ CHAFA_TERM_SEQ_DEF(insert_shift_key, INSERT_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(delete_key, DELETE_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(delete_key, DELETE_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_delete_ctrl_key:
@@ -1765,7 +1769,7 @@ CHAFA_TERM_SEQ_DEF(delete_key, DELETE_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(delete_ctrl_key, DELETE_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(delete_ctrl_key, DELETE_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_delete_shift_key:
@@ -1782,7 +1786,7 @@ CHAFA_TERM_SEQ_DEF(delete_ctrl_key, DELETE_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(delete_shift_key, DELETE_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(delete_shift_key, DELETE_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f1_key:
@@ -1799,7 +1803,7 @@ CHAFA_TERM_SEQ_DEF(delete_shift_key, DELETE_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f1_key, F1_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f1_key, F1_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f1_ctrl_key:
@@ -1816,7 +1820,7 @@ CHAFA_TERM_SEQ_DEF(f1_key, F1_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f1_ctrl_key, F1_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f1_ctrl_key, F1_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f1_shift_key:
@@ -1833,7 +1837,7 @@ CHAFA_TERM_SEQ_DEF(f1_ctrl_key, F1_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f1_shift_key, F1_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f1_shift_key, F1_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f2_key:
@@ -1850,7 +1854,7 @@ CHAFA_TERM_SEQ_DEF(f1_shift_key, F1_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f2_key, F2_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f2_key, F2_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f2_ctrl_key:
@@ -1867,7 +1871,7 @@ CHAFA_TERM_SEQ_DEF(f2_key, F2_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f2_ctrl_key, F2_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f2_ctrl_key, F2_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f2_shift_key:
@@ -1884,7 +1888,7 @@ CHAFA_TERM_SEQ_DEF(f2_ctrl_key, F2_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f2_shift_key, F2_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f2_shift_key, F2_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 
 /**
@@ -1902,7 +1906,7 @@ CHAFA_TERM_SEQ_DEF(f2_shift_key, F2_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f3_key, F3_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f3_key, F3_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f3_ctrl_key:
@@ -1919,7 +1923,7 @@ CHAFA_TERM_SEQ_DEF(f3_key, F3_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f3_ctrl_key, F3_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f3_ctrl_key, F3_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f3_shift_key:
@@ -1936,7 +1940,7 @@ CHAFA_TERM_SEQ_DEF(f3_ctrl_key, F3_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f3_shift_key, F3_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f3_shift_key, F3_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f4_key:
@@ -1953,7 +1957,7 @@ CHAFA_TERM_SEQ_DEF(f3_shift_key, F3_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f4_key, F4_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f4_key, F4_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f4_ctrl_key:
@@ -1970,7 +1974,7 @@ CHAFA_TERM_SEQ_DEF(f4_key, F4_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f4_ctrl_key, F4_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f4_ctrl_key, F4_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f4_shift_key:
@@ -1987,7 +1991,7 @@ CHAFA_TERM_SEQ_DEF(f4_ctrl_key, F4_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f4_shift_key, F4_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f4_shift_key, F4_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f5_key:
@@ -2004,7 +2008,7 @@ CHAFA_TERM_SEQ_DEF(f4_shift_key, F4_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f5_key, F5_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f5_key, F5_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f5_ctrl_key:
@@ -2021,7 +2025,7 @@ CHAFA_TERM_SEQ_DEF(f5_key, F5_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f5_ctrl_key, F5_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f5_ctrl_key, F5_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f5_shift_key:
@@ -2038,7 +2042,7 @@ CHAFA_TERM_SEQ_DEF(f5_ctrl_key, F5_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f5_shift_key, F5_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f5_shift_key, F5_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f6_key:
@@ -2055,7 +2059,7 @@ CHAFA_TERM_SEQ_DEF(f5_shift_key, F5_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f6_key, F6_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f6_key, F6_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f6_ctrl_key:
@@ -2072,7 +2076,7 @@ CHAFA_TERM_SEQ_DEF(f6_key, F6_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f6_ctrl_key, F6_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f6_ctrl_key, F6_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f6_shift_key:
@@ -2089,7 +2093,7 @@ CHAFA_TERM_SEQ_DEF(f6_ctrl_key, F6_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f6_shift_key, F6_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f6_shift_key, F6_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f7_key:
@@ -2106,7 +2110,7 @@ CHAFA_TERM_SEQ_DEF(f6_shift_key, F6_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f7_key, F7_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f7_key, F7_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f7_ctrl_key:
@@ -2123,7 +2127,7 @@ CHAFA_TERM_SEQ_DEF(f7_key, F7_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f7_ctrl_key, F7_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f7_ctrl_key, F7_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f7_shift_key:
@@ -2140,7 +2144,7 @@ CHAFA_TERM_SEQ_DEF(f7_ctrl_key, F7_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f7_shift_key, F7_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f7_shift_key, F7_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f8_key:
@@ -2157,7 +2161,7 @@ CHAFA_TERM_SEQ_DEF(f7_shift_key, F7_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f8_key, F8_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f8_key, F8_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f8_ctrl_key:
@@ -2174,7 +2178,7 @@ CHAFA_TERM_SEQ_DEF(f8_key, F8_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f8_ctrl_key, F8_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f8_ctrl_key, F8_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f8_shift_key:
@@ -2191,7 +2195,7 @@ CHAFA_TERM_SEQ_DEF(f8_ctrl_key, F8_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f8_shift_key, F8_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f8_shift_key, F8_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f9_key:
@@ -2208,7 +2212,7 @@ CHAFA_TERM_SEQ_DEF(f8_shift_key, F8_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f9_key, F9_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f9_key, F9_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f9_ctrl_key:
@@ -2225,7 +2229,7 @@ CHAFA_TERM_SEQ_DEF(f9_key, F9_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f9_ctrl_key, F9_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f9_ctrl_key, F9_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f9_shift_key:
@@ -2242,7 +2246,7 @@ CHAFA_TERM_SEQ_DEF(f9_ctrl_key, F9_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f9_shift_key, F9_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f9_shift_key, F9_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f10_key:
@@ -2259,7 +2263,7 @@ CHAFA_TERM_SEQ_DEF(f9_shift_key, F9_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f10_key, F10_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f10_key, F10_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f10_ctrl_key:
@@ -2276,7 +2280,7 @@ CHAFA_TERM_SEQ_DEF(f10_key, F10_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f10_ctrl_key, F10_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f10_ctrl_key, F10_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f10_shift_key:
@@ -2293,7 +2297,7 @@ CHAFA_TERM_SEQ_DEF(f10_ctrl_key, F10_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f10_shift_key, F10_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f10_shift_key, F10_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f11_key:
@@ -2310,7 +2314,7 @@ CHAFA_TERM_SEQ_DEF(f10_shift_key, F10_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f11_key, F11_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f11_key, F11_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f11_ctrl_key:
@@ -2327,7 +2331,7 @@ CHAFA_TERM_SEQ_DEF(f11_key, F11_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f11_ctrl_key, F11_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f11_ctrl_key, F11_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f11_shift_key:
@@ -2344,7 +2348,7 @@ CHAFA_TERM_SEQ_DEF(f11_ctrl_key, F11_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f11_shift_key, F11_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f11_shift_key, F11_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f12_key:
@@ -2361,7 +2365,7 @@ CHAFA_TERM_SEQ_DEF(f11_shift_key, F11_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f12_key, F12_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f12_key, F12_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f12_ctrl_key:
@@ -2378,7 +2382,7 @@ CHAFA_TERM_SEQ_DEF(f12_key, F12_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f12_ctrl_key, F12_CTRL_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f12_ctrl_key, F12_CTRL_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_f12_shift_key:
@@ -2395,7 +2399,7 @@ CHAFA_TERM_SEQ_DEF(f12_ctrl_key, F12_CTRL_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(f12_shift_key, F12_SHIFT_KEY, 0, none, char)
+CHAFA_TERM_SEQ_DEF(f12_shift_key, F12_SHIFT_KEY, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_color_fg:
@@ -2412,7 +2416,7 @@ CHAFA_TERM_SEQ_DEF(f12_shift_key, F12_SHIFT_KEY, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(reset_color_fg, RESET_COLOR_FG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_color_fg, RESET_COLOR_FG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_color_bg:
@@ -2429,7 +2433,7 @@ CHAFA_TERM_SEQ_DEF(reset_color_fg, RESET_COLOR_FG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(reset_color_bg, RESET_COLOR_BG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_color_bg, RESET_COLOR_BG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_color_fgbg:
@@ -2446,7 +2450,7 @@ CHAFA_TERM_SEQ_DEF(reset_color_bg, RESET_COLOR_BG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(reset_color_fgbg, RESET_COLOR_FGBG, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_color_fgbg, RESET_COLOR_FGBG, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_reset_scrolling_rows:
@@ -2463,7 +2467,7 @@ CHAFA_TERM_SEQ_DEF(reset_color_fgbg, RESET_COLOR_FGBG, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(reset_scrolling_rows, RESET_SCROLLING_ROWS, 0, none, char)
+CHAFA_TERM_SEQ_DEF(reset_scrolling_rows, RESET_SCROLLING_ROWS, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_save_cursor_pos:
@@ -2480,7 +2484,7 @@ CHAFA_TERM_SEQ_DEF(reset_scrolling_rows, RESET_SCROLLING_ROWS, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(save_cursor_pos, SAVE_CURSOR_POS, 0, none, char)
+CHAFA_TERM_SEQ_DEF(save_cursor_pos, SAVE_CURSOR_POS, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_restore_cursor_pos:
@@ -2497,7 +2501,7 @@ CHAFA_TERM_SEQ_DEF(save_cursor_pos, SAVE_CURSOR_POS, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(restore_cursor_pos, RESTORE_CURSOR_POS, 0, none, char)
+CHAFA_TERM_SEQ_DEF(restore_cursor_pos, RESTORE_CURSOR_POS, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_set_sixel_advance_down:
@@ -2514,7 +2518,7 @@ CHAFA_TERM_SEQ_DEF(restore_cursor_pos, RESTORE_CURSOR_POS, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(set_sixel_advance_down, SET_SIXEL_ADVANCE_DOWN, 0, none, char)
+CHAFA_TERM_SEQ_DEF(set_sixel_advance_down, SET_SIXEL_ADVANCE_DOWN, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_set_sixel_advance_right:
@@ -2531,7 +2535,7 @@ CHAFA_TERM_SEQ_DEF(set_sixel_advance_down, SET_SIXEL_ADVANCE_DOWN, 0, none, char
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(set_sixel_advance_right, SET_SIXEL_ADVANCE_RIGHT, 0, none, char)
+CHAFA_TERM_SEQ_DEF(set_sixel_advance_right, SET_SIXEL_ADVANCE_RIGHT, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_enable_alt_screen:
@@ -2548,7 +2552,7 @@ CHAFA_TERM_SEQ_DEF(set_sixel_advance_right, SET_SIXEL_ADVANCE_RIGHT, 0, none, ch
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(enable_alt_screen, ENABLE_ALT_SCREEN, 0, none, char)
+CHAFA_TERM_SEQ_DEF(enable_alt_screen, ENABLE_ALT_SCREEN, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_disable_alt_screen:
@@ -2565,7 +2569,7 @@ CHAFA_TERM_SEQ_DEF(enable_alt_screen, ENABLE_ALT_SCREEN, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(disable_alt_screen, DISABLE_ALT_SCREEN, 0, none, char)
+CHAFA_TERM_SEQ_DEF(disable_alt_screen, DISABLE_ALT_SCREEN, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_begin_screen_passthrough:
@@ -2585,7 +2589,7 @@ CHAFA_TERM_SEQ_DEF(disable_alt_screen, DISABLE_ALT_SCREEN, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(begin_screen_passthrough, BEGIN_SCREEN_PASSTHROUGH, 0, none, char)
+CHAFA_TERM_SEQ_DEF(begin_screen_passthrough, BEGIN_SCREEN_PASSTHROUGH, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_screen_passthrough:
@@ -2605,7 +2609,7 @@ CHAFA_TERM_SEQ_DEF(begin_screen_passthrough, BEGIN_SCREEN_PASSTHROUGH, 0, none, 
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(end_screen_passthrough, END_SCREEN_PASSTHROUGH, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_screen_passthrough, END_SCREEN_PASSTHROUGH, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_begin_tmux_passthrough:
@@ -2625,7 +2629,7 @@ CHAFA_TERM_SEQ_DEF(end_screen_passthrough, END_SCREEN_PASSTHROUGH, 0, none, char
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(begin_tmux_passthrough, BEGIN_TMUX_PASSTHROUGH, 0, none, char)
+CHAFA_TERM_SEQ_DEF(begin_tmux_passthrough, BEGIN_TMUX_PASSTHROUGH, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_tmux_passthrough:
@@ -2645,7 +2649,7 @@ CHAFA_TERM_SEQ_DEF(begin_tmux_passthrough, BEGIN_TMUX_PASSTHROUGH, 0, none, char
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(end_tmux_passthrough, END_TMUX_PASSTHROUGH, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_tmux_passthrough, END_TMUX_PASSTHROUGH, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_begin_kitty_immediate_virt_image_v1:
@@ -2678,7 +2682,7 @@ CHAFA_TERM_SEQ_DEF(end_tmux_passthrough, END_TMUX_PASSTHROUGH, 0, none, char)
  *
  * Since: 1.14
  **/
-CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_virt_image_v1, BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, 6, none, guint, CHAFA_TERM_SEQ_ARGS guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells, guint id)
+CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_virt_image_v1, BEGIN_KITTY_IMMEDIATE_VIRT_IMAGE_V1, 6, none, guint, (CHAFA_TERM_SEQ_PFX, guint bpp, guint width_pixels, guint height_pixels, guint width_cells, guint height_cells, guint id))
 
 /* --- Available in 1.16+ --- */
 
@@ -2700,7 +2704,7 @@ CHAFA_TERM_SEQ_DEF(begin_kitty_immediate_virt_image_v1, BEGIN_KITTY_IMMEDIATE_VI
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(query_primary_device_attributes, QUERY_PRIMARY_DEVICE_ATTRIBUTES, 0, none, char)
+CHAFA_TERM_SEQ_DEF(query_primary_device_attributes, QUERY_PRIMARY_DEVICE_ATTRIBUTES, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_primary_device_attributes:
@@ -2736,7 +2740,7 @@ CHAFA_TERM_SEQ_DEF_VARARGS(primary_device_attributes, PRIMARY_DEVICE_ATTRIBUTES,
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(query_text_area_size_cells, QUERY_TEXT_AREA_SIZE_CELLS, 0, none, char)
+CHAFA_TERM_SEQ_DEF(query_text_area_size_cells, QUERY_TEXT_AREA_SIZE_CELLS, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_text_area_size_cells:
@@ -2755,7 +2759,7 @@ CHAFA_TERM_SEQ_DEF(query_text_area_size_cells, QUERY_TEXT_AREA_SIZE_CELLS, 0, no
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(text_area_size_cells, TEXT_AREA_SIZE_CELLS, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_cells, guint width_cells)
+CHAFA_TERM_SEQ_DEF(text_area_size_cells, TEXT_AREA_SIZE_CELLS, 2, none, guint, (CHAFA_TERM_SEQ_PFX, guint height_cells, guint width_cells))
 
 /**
  * chafa_term_info_emit_query_text_area_size_px:
@@ -2772,7 +2776,7 @@ CHAFA_TERM_SEQ_DEF(text_area_size_cells, TEXT_AREA_SIZE_CELLS, 2, none, guint, C
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(query_text_area_size_px, QUERY_TEXT_AREA_SIZE_PX, 0, none, char)
+CHAFA_TERM_SEQ_DEF(query_text_area_size_px, QUERY_TEXT_AREA_SIZE_PX, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_text_area_size_px:
@@ -2791,7 +2795,7 @@ CHAFA_TERM_SEQ_DEF(query_text_area_size_px, QUERY_TEXT_AREA_SIZE_PX, 0, none, ch
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(text_area_size_px, TEXT_AREA_SIZE_PX, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_px, guint width_px)
+CHAFA_TERM_SEQ_DEF(text_area_size_px, TEXT_AREA_SIZE_PX, 2, none, guint, (CHAFA_TERM_SEQ_PFX, guint height_px, guint width_px))
 
 /**
  * chafa_term_info_emit_query_cell_size_px:
@@ -2808,7 +2812,7 @@ CHAFA_TERM_SEQ_DEF(text_area_size_px, TEXT_AREA_SIZE_PX, 2, none, guint, CHAFA_T
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(query_cell_size_px, QUERY_CELL_SIZE_PX, 0, none, char)
+CHAFA_TERM_SEQ_DEF(query_cell_size_px, QUERY_CELL_SIZE_PX, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_cell_size_px:
@@ -2827,7 +2831,7 @@ CHAFA_TERM_SEQ_DEF(query_cell_size_px, QUERY_CELL_SIZE_PX, 0, none, char)
  *
  * Since: 1.16
  **/
-CHAFA_TERM_SEQ_DEF(cell_size_px, CELL_SIZE_PX, 2, none, guint, CHAFA_TERM_SEQ_ARGS guint height_px, guint width_px)
+CHAFA_TERM_SEQ_DEF(cell_size_px, CELL_SIZE_PX, 2, none, guint, (CHAFA_TERM_SEQ_PFX, guint height_px, guint width_px))
 
 /* --- Available in 1.18+ --- */
 
@@ -2849,7 +2853,7 @@ CHAFA_TERM_SEQ_DEF(cell_size_px, CELL_SIZE_PX, 2, none, guint, CHAFA_TERM_SEQ_AR
  *
  * Since: 1.18
  **/
-CHAFA_TERM_SEQ_DEF(begin_hyperlink, BEGIN_HYPERLINK, 0, none, char)
+CHAFA_TERM_SEQ_DEF(begin_hyperlink, BEGIN_HYPERLINK, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_begin_hyperlink_anchor:
@@ -2866,7 +2870,7 @@ CHAFA_TERM_SEQ_DEF(begin_hyperlink, BEGIN_HYPERLINK, 0, none, char)
  *
  * Since: 1.18
  **/
-CHAFA_TERM_SEQ_DEF(begin_hyperlink_anchor, BEGIN_HYPERLINK_ANCHOR, 0, none, char)
+CHAFA_TERM_SEQ_DEF(begin_hyperlink_anchor, BEGIN_HYPERLINK_ANCHOR, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 /**
  * chafa_term_info_emit_end_hyperlink:
@@ -2883,8 +2887,7 @@ CHAFA_TERM_SEQ_DEF(begin_hyperlink_anchor, BEGIN_HYPERLINK_ANCHOR, 0, none, char
  *
  * Since: 1.18
  **/
-CHAFA_TERM_SEQ_DEF(end_hyperlink, END_HYPERLINK, 0, none, char)
+CHAFA_TERM_SEQ_DEF(end_hyperlink, END_HYPERLINK, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
 #undef CHAFA_TERM_SEQ_AVAILABILITY
-
-#undef CHAFA_TERM_SEQ_ARGS
+#undef CHAFA_TERM_SEQ_PFX
