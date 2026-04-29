@@ -1352,14 +1352,15 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                                        canvas->config.color_space,
                                                        &canvas->fg_palette,
                                                        &canvas->dither);
-        chafa_sixel_canvas_draw_all_pixels (canvas->pixel_canvas,
-                                            src_pixel_type,
-                                            src_pixels,
-                                            src_width, src_height,
-                                            src_rowstride,
-                                            halign, valign,
-                                            tuck,
-                                            canvas->config.work_factor);
+        if (canvas->pixel_canvas)
+            chafa_sixel_canvas_draw_all_pixels (canvas->pixel_canvas,
+                                                src_pixel_type,
+                                                src_pixels,
+                                                src_width, src_height,
+                                                src_rowstride,
+                                                halign, valign,
+                                                tuck,
+                                                canvas->config.work_factor);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_KITTY)
     {
