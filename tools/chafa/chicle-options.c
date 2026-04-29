@@ -1969,7 +1969,10 @@ chicle_parse_options (int *argc, char **argv [])
 
     if (!g_option_context_parse (context, argc, argv, &error))
     {
-        g_printerr ("%s: %s\n", options.executable_name, error->message);
+        gchar *safe_message = g_strdup (error->message);
+        chicle_flatten_cntrl_inplace (safe_message);
+        g_printerr ("%s: %s\n", options.executable_name, safe_message);
+        g_free (safe_message);
         goto out;
     }
 

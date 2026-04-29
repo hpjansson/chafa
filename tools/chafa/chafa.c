@@ -930,10 +930,17 @@ run_vertical (ChiclePathQueue *path_queue)
         {
             if (error)
             {
+                gchar *safe_path = path ? g_strdup (path) : NULL;
+
+                if (safe_path)
+                    chicle_flatten_cntrl_inplace (safe_path);
+
                 g_printerr ("%s: Failed to open '%s': %s\n",
                             options.executable_name,
-                            path ? path : "?",
+                            safe_path ? safe_path : "?",
                             error->message);
+
+                g_free (safe_path);
                 g_error_free (error);
             }
 
