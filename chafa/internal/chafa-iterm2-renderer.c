@@ -205,7 +205,7 @@ chafa_iterm2_renderer_draw_all_pixels (ChafaIterm2Renderer *iterm2_renderer, Cha
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          /* Destination */
                                          NULL,
-                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul? */
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          iterm2_renderer->width,
                                          iterm2_renderer->height,
                                          iterm2_renderer->width * sizeof (guint32),

@@ -188,7 +188,7 @@ chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaP
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          /* Destination */
                                          NULL,
-                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Opaque? */
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          kitty_renderer->width,
                                          kitty_renderer->height,
                                          kitty_renderer->width * sizeof (guint32),
