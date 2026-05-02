@@ -205,7 +205,7 @@ chafa_iterm2_canvas_draw_all_pixels (ChafaIterm2Canvas *iterm2_canvas, ChafaPixe
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          /* Destination */
                                          NULL,
-                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul? */
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          iterm2_canvas->width,
                                          iterm2_canvas->height,
                                          iterm2_canvas->width * sizeof (guint32),

@@ -307,7 +307,7 @@ glyph_to_bitmap (gint width, gint height,
 
     smol_scale_simple (pixels, (SmolPixelType) pixel_format, width, height, rowstride,
                        (gpointer) scaled_pixels,
-                       SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
+                       SMOL_PIXEL_RGBA8_PREMULTIPLIED,
                        CHAFA_SYMBOL_WIDTH_PIXELS, CHAFA_SYMBOL_HEIGHT_PIXELS,
                        CHAFA_SYMBOL_WIDTH_PIXELS * 4,
                        SMOL_NO_FLAGS);
@@ -337,7 +337,7 @@ glyph_to_bitmap_wide (gint width, gint height,
 
     smol_scale_simple (pixels, (SmolPixelType) pixel_format, width, height, rowstride,
                        (gpointer) scaled_pixels,
-                       SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
+                       SMOL_PIXEL_RGBA8_PREMULTIPLIED,
                        CHAFA_SYMBOL_WIDTH_PIXELS * 2, CHAFA_SYMBOL_HEIGHT_PIXELS,
                        CHAFA_SYMBOL_WIDTH_PIXELS * 4 * 2,
                        SMOL_NO_FLAGS);
@@ -1914,7 +1914,7 @@ chafa_symbol_map_get_glyph (ChafaSymbolMap *symbol_map,
         gpointer temp_pixels = g_malloc (width * CHAFA_SYMBOL_HEIGHT_PIXELS * 4);
 
         /* Convert to desired pixel format */
-        smol_scale_simple (*pixels_out, SMOL_PIXEL_ARGB8_UNASSOCIATED,  /* FIXME: Premul */
+        smol_scale_simple (*pixels_out, SMOL_PIXEL_ARGB8_PREMULTIPLIED,
                            width, height, rowstride,
                            temp_pixels, (SmolPixelType) pixel_format,
                            width, height, rowstride,

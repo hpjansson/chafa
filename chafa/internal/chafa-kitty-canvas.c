@@ -188,7 +188,7 @@ chafa_kitty_canvas_draw_all_pixels (ChafaKittyCanvas *kitty_canvas, ChafaPixelTy
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          /* Destination */
                                          NULL,
-                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Opaque? */
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          kitty_canvas->width,
                                          kitty_canvas->height,
                                          kitty_canvas->width * sizeof (guint32),
