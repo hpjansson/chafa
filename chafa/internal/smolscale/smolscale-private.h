@@ -101,7 +101,8 @@ typedef unsigned int SmolBool;
 
 /* Pointer to beginning of storage is stored in *r. This must be passed to smol_free() later. */
 #define smol_alloc_aligned_to(s, a, r) \
-  ({ void *p; *(r) = _SMOL_ALLOC ((s) + (a)); p = (void *) (((uintptr_t) (*(r)) + (a)) & ~((a) - 1)); (p); })
+  ({ void *p; *(r) = _SMOL_ALLOC ((s) + (a) - 1); \
+     p = (void *) (((uintptr_t) (*(r)) + (a) - 1) & ~(uintptr_t) ((a) - 1)); (p); })
 #define smol_alloc_aligned(s, r) smol_alloc_aligned_to ((s), SMOL_ALIGNMENT, (r))
 #define smol_free(p) _SMOL_FREE(p)
 
