@@ -725,6 +725,19 @@ run_generic (const gchar *filename, ChicleMediaLoader *media_loader,
             if (!pixels)
                 break;
 
+            /* Extra check for loader-supplied dimensions that would push the
+             * scale/render pipeline into pathological allocations. A 256 Mpx
+             * source covers 16384*16384. */
+            if (src_width > 0 && src_height > 0
+                && ((guint64) src_width * (guint64) src_height
+                    > (guint64) 256 * 1024 * 1024))
+            {
+                g_printerr ("%s: Source image dimensions %dx%d exceed maximum (256Mpx)\n",
+                            options.executable_name, src_width, src_height);
+                result = FILE_FAILED;
+                break;
+            }
+
             delay_ms = chicle_media_loader_get_frame_delay (media_loader);
 
             /* Hack to work around the fact that chafa_calc_canvas_geometry() doesn't
