@@ -1800,15 +1800,11 @@ scale_horizontal (const SmolScaleCtx *scale_ctx,
 
     src_row_unpacked = local_ctx->parts_row [3];
 
-    /* 32-bit unpackers need 32-bit alignment */
     if ((((uintptr_t) src_row) & 3)
         && scale_ctx->src_pixel_type != SMOL_PIXEL_RGB8
         && scale_ctx->src_pixel_type != SMOL_PIXEL_BGR8)
     {
-        if (!local_ctx->src_aligned)
-            local_ctx->src_aligned =
-                smol_alloc_aligned (scale_ctx->hdim.src_size_px * sizeof (uint32_t),
-                                    &local_ctx->src_aligned_storage);
+        /* 32-bit unpackers need 32-bit alignment */
         memcpy (local_ctx->src_aligned, src_row, scale_ctx->hdim.src_size_px * sizeof (uint32_t));
         src_row = (const char *) local_ctx->src_aligned;
     }

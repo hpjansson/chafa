@@ -67,19 +67,21 @@ typedef struct SmolScaleCtx SmolScaleCtx;
 
 /* Simple API: Scales an entire image in one shot. You must provide pointers to
  * the source memory and an existing allocation to receive the output data.
- * This interface can only be used from a single thread. */
+ * This interface can only be used from a single thread.
+ *
+ * Returns 1 on success, 0 on memory allocation failure. */
 
-void smol_scale_simple (const void *src_pixels,
-                        SmolPixelType src_pixel_type,
-                        uint32_t src_width,
-                        uint32_t src_height,
-                        uint32_t src_rowstride,
-                        void *dest_pixels,
-                        SmolPixelType dest_pixel_type,
-                        uint32_t dest_width,
-                        uint32_t dest_height,
-                        uint32_t dest_rowstride,
-                        SmolFlags flags);
+int smol_scale_simple (const void *src_pixels,
+                       SmolPixelType src_pixel_type,
+                       uint32_t src_width,
+                       uint32_t src_height,
+                       uint32_t src_rowstride,
+                       void *dest_pixels,
+                       SmolPixelType dest_pixel_type,
+                       uint32_t dest_width,
+                       uint32_t dest_height,
+                       uint32_t dest_rowstride,
+                       SmolFlags flags);
 
 /* Batch API: Allows scaling a few rows at a time. Suitable for multithreading. */
 
@@ -120,17 +122,21 @@ void smol_scale_destroy (SmolScaleCtx *scale_ctx);
 
 /* It's ok to call smol_scale_batch() without locking from multiple concurrent
  * threads, as long as the outrows do not overlap. Make sure all workers are
- * finished before you call smol_scale_destroy(). */
+ * finished before you call smol_scale_destroy().
+ *
+ * Returns 1 on success (including no-op), or 0 on memory allocation failure. */
 
-void smol_scale_batch (const SmolScaleCtx *scale_ctx, int32_t first_outrow, int32_t n_outrows);
+int smol_scale_batch (const SmolScaleCtx *scale_ctx, int32_t first_outrow, int32_t n_outrows);
 
 /* Like smol_scale_batch(), but will write the output rows to outrows_dest
  * instead of relative to pixels_out address handed to smol_scale_new(). The
- * other parameters from init (size, rowstride, etc) will still be used. */
+ * other parameters from init (size, rowstride, etc) will still be used.
+ *
+ * Returns 1 on success (including no-op), or 0 on memory allocation failure. */
 
-void smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
-                            void *outrows_dest,
-                            int32_t first_outrow, int32_t n_outrows);
+int smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
+                           void *outrows_dest,
+                           int32_t first_outrow, int32_t n_outrows);
 
 #ifdef __cplusplus
 }

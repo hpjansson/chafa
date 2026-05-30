@@ -570,7 +570,7 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
         scale_ctx->post_row_func (row_out, scale_ctx->hdim.dest_size_px, scale_ctx->user_data);
 }
 
-static void
+static int
 do_rows (const SmolScaleCtx *scale_ctx,
          void *dest,
          uint32_t row_dest_index,
@@ -580,6 +580,7 @@ do_rows (const SmolScaleCtx *scale_ctx,
     uint32_t n_parts_per_pixel = 1;
     uint32_t n_stored_rows = 4;
     uint32_t i;
+    int result = 0;
 
     if (scale_ctx->storage_type == SMOL_STORAGE_128BPP)
         n_parts_per_pixel = 2;
@@ -606,10 +607,27 @@ do_rows (const SmolScaleCtx *scale_ctx,
             smol_alloc_aligned (MAX (scale_ctx->hdim.src_size_px + 1, scale_ctx->hdim.placement_size_px)
                                 * n_parts_per_pixel * sizeof (uint64_t),
                                 &local_ctx.row_storage [i]);
+        if (!local_ctx.row_storage [i])
+        {
+            /* Allocation failed */
+            goto out;
+        }
 
         local_ctx.parts_row [i] [scale_ctx->hdim.src_size_px * n_parts_per_pixel] = 0;
         if (n_parts_per_pixel == 2)
             local_ctx.parts_row [i] [scale_ctx->hdim.src_size_px * n_parts_per_pixel + 1] = 0;
+    }
+
+    if (scale_ctx->src_pixel_type != SMOL_PIXEL_RGB8
+        && scale_ctx->src_pixel_type != SMOL_PIXEL_BGR8
+        && (((uintptr_t) scale_ctx->src_pixels & 3) || (scale_ctx->src_rowstride & 3)))
+    {
+        /* 32-bit unpackers need 32-bit alignment. Used in scale_horizontal(). */
+        local_ctx.src_aligned =
+            smol_alloc_aligned (scale_ctx->hdim.src_size_px * sizeof (uint32_t),
+                                &local_ctx.src_aligned_storage);
+        if (!local_ctx.src_aligned_storage)
+            goto out;
     }
 
     for (i = row_dest_index; i < row_dest_index + n_rows; i++)
@@ -618,14 +636,16 @@ do_rows (const SmolScaleCtx *scale_ctx,
         dest = (char *) dest + scale_ctx->dest_rowstride;
     }
 
-    for (i = 0; i < n_stored_rows; i++)
-    {
-        smol_free (local_ctx.row_storage [i]);
-    }
+    result = 1;
 
-    /* Used to align row data if needed. May be allocated in scale_horizontal(). */
+out:
+    for (i = 0; i < n_stored_rows; i++)
+        smol_free (local_ctx.row_storage [i]);
+
     if (local_ctx.src_aligned)
         smol_free (local_ctx.src_aligned_storage);
+
+    return result;
 }
 
 /* -------------------- *
@@ -1160,7 +1180,7 @@ init_dim (SmolDim *dim,
     }
 }
 
-static void
+static int
 smol_scale_init (SmolScaleCtx *scale_ctx,
                  const void *src_pixels,
                  SmolPixelType src_pixel_type,
@@ -1220,13 +1240,18 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
 
     scale_ctx->storage_type = MAX (storage_type [0], storage_type [1]);
 
+    /* FIXME: This will break if _SMOL_ALLOC() is set to use alloca() */
     scale_ctx->hdim.precalc = smol_alloc_aligned (((scale_ctx->hdim.placement_size_prehalving_px + 1) * 2
-                                                + (scale_ctx->vdim.placement_size_prehalving_px + 1) * 2)
-                                               * sizeof (uint16_t),
-                                               &scale_ctx->precalc_storage);
+                                                   + (scale_ctx->vdim.placement_size_prehalving_px + 1) * 2)
+                                                  * sizeof (uint16_t),
+                                                  &scale_ctx->precalc_storage);
+    if (!scale_ctx->precalc_storage)
+        return 0;
+
     scale_ctx->vdim.precalc = ((uint16_t *) scale_ctx->hdim.precalc) + (scale_ctx->hdim.placement_size_prehalving_px + 1) * 2;
 
     get_implementations (scale_ctx, color_pixel, color_pixel_type);
+    return 1;
 }
 
 static void
@@ -1255,31 +1280,39 @@ smol_scale_new_simple (const void *src_pixels,
     SmolScaleCtx *scale_ctx;
 
     scale_ctx = calloc (1,sizeof (SmolScaleCtx));
-    smol_scale_init (scale_ctx,
-                     src_pixels,
-                     src_pixel_type,
-                     SMOL_PX_TO_SPX (src_width),
-                     SMOL_PX_TO_SPX (src_height),
-                     src_rowstride,
-                     NULL,
-                     0,
-                     dest_pixels,
-                     dest_pixel_type,
-                     SMOL_PX_TO_SPX (dest_width),
-                     SMOL_PX_TO_SPX (dest_height),
-                     dest_rowstride,
-                     0,
-                     0,
-                     SMOL_PX_TO_SPX (dest_width),
-                     SMOL_PX_TO_SPX (dest_height),
-                     SMOL_COMPOSITE_SRC,
-                     flags,
-                     NULL,
-                     NULL);
+    if (!scale_ctx)
+        return NULL;
+
+    if (!smol_scale_init (scale_ctx,
+                          src_pixels,
+                          src_pixel_type,
+                          SMOL_PX_TO_SPX (src_width),
+                          SMOL_PX_TO_SPX (src_height),
+                          src_rowstride,
+                          NULL,
+                          0,
+                          dest_pixels,
+                          dest_pixel_type,
+                          SMOL_PX_TO_SPX (dest_width),
+                          SMOL_PX_TO_SPX (dest_height),
+                          dest_rowstride,
+                          0,
+                          0,
+                          SMOL_PX_TO_SPX (dest_width),
+                          SMOL_PX_TO_SPX (dest_height),
+                          SMOL_COMPOSITE_SRC,
+                          flags,
+                          NULL,
+                          NULL))
+    {
+        free (scale_ctx);
+        return NULL;
+    }
+
     return scale_ctx;
 }
 
-void
+int
 smol_scale_simple (const void *src_pixels,
                    SmolPixelType src_pixel_type,
                    uint32_t src_width,
@@ -1294,40 +1327,49 @@ smol_scale_simple (const void *src_pixels,
 {
     SmolScaleCtx scale_ctx = { 0 };
     int first_row, n_rows;
+    int result = 0;
 
-    smol_scale_init (&scale_ctx,
-                     src_pixels,
-                     src_pixel_type,
-                     SMOL_PX_TO_SPX (src_width),
-                     SMOL_PX_TO_SPX (src_height),
-                     src_rowstride,
-                     NULL,
-                     0,
-                     dest_pixels,
-                     dest_pixel_type,
-                     SMOL_PX_TO_SPX (dest_width),
-                     SMOL_PX_TO_SPX (dest_height),
-                     dest_rowstride,
-                     0,
-                     0,
-                     SMOL_PX_TO_SPX (dest_width),
-                     SMOL_PX_TO_SPX (dest_height),
-                     SMOL_COMPOSITE_SRC,
-                     flags,
-                     NULL, NULL);
+    if (!smol_scale_init (&scale_ctx,
+                          src_pixels,
+                          src_pixel_type,
+                          SMOL_PX_TO_SPX (src_width),
+                          SMOL_PX_TO_SPX (src_height),
+                          src_rowstride,
+                          NULL,
+                          0,
+                          dest_pixels,
+                          dest_pixel_type,
+                          SMOL_PX_TO_SPX (dest_width),
+                          SMOL_PX_TO_SPX (dest_height),
+                          dest_rowstride,
+                          0,
+                          0,
+                          SMOL_PX_TO_SPX (dest_width),
+                          SMOL_PX_TO_SPX (dest_height),
+                          SMOL_COMPOSITE_SRC,
+                          flags,
+                          NULL, NULL))
+    {
+        return 0;
+    }
 
     first_row = 0;
     n_rows = scale_ctx.vdim.dest_size_px;
 
     if (check_row_range (&scale_ctx, &first_row, &n_rows))
     {
-        do_rows (&scale_ctx,
-                 dest_row_ofs_to_pointer (&scale_ctx, 0),
-                 first_row,
-                 n_rows);
+        result = do_rows (&scale_ctx,
+                          dest_row_ofs_to_pointer (&scale_ctx, 0),
+                          first_row,
+                          n_rows);
+    }
+    else
+    {
+        result = 1;
     }
 
     smol_scale_finalize (&scale_ctx);
+    return result;
 }
 
 SmolScaleCtx *
@@ -1355,27 +1397,35 @@ smol_scale_new_full (const void *src_pixels,
     SmolScaleCtx *scale_ctx;
 
     scale_ctx = calloc (1, sizeof (SmolScaleCtx));
-    smol_scale_init (scale_ctx,
-                     src_pixels,
-                     src_pixel_type,
-                     SMOL_PX_TO_SPX (src_width),
-                     SMOL_PX_TO_SPX (src_height),
-                     src_rowstride,
-                     color_pixel,
-                     color_pixel_type,
-                     dest_pixels,
-                     dest_pixel_type,
-                     SMOL_PX_TO_SPX (dest_width),
-                     SMOL_PX_TO_SPX (dest_height),
-                     dest_rowstride,
-                     placement_x,
-                     placement_y,
-                     placement_width,
-                     placement_height,
-                     composite_op,
-                     flags,
-                     post_row_func,
-                     user_data);
+    if (!scale_ctx)
+        return NULL;
+
+    if (!smol_scale_init (scale_ctx,
+                          src_pixels,
+                          src_pixel_type,
+                          SMOL_PX_TO_SPX (src_width),
+                          SMOL_PX_TO_SPX (src_height),
+                          src_rowstride,
+                          color_pixel,
+                          color_pixel_type,
+                          dest_pixels,
+                          dest_pixel_type,
+                          SMOL_PX_TO_SPX (dest_width),
+                          SMOL_PX_TO_SPX (dest_height),
+                          dest_rowstride,
+                          placement_x,
+                          placement_y,
+                          placement_width,
+                          placement_height,
+                          composite_op,
+                          flags,
+                          post_row_func,
+                          user_data))
+    {
+        free (scale_ctx);
+        return NULL;
+    }
+
     return scale_ctx;
 }
 
@@ -1386,31 +1436,31 @@ smol_scale_destroy (SmolScaleCtx *scale_ctx)
     free (scale_ctx);
 }
 
-void
+int
 smol_scale_batch (const SmolScaleCtx *scale_ctx,
                   int32_t first_dest_row,
                   int32_t n_dest_rows)
 {
     if (!check_row_range (scale_ctx, &first_dest_row, &n_dest_rows))
-        return;
+        return 1;
 
-    do_rows (scale_ctx,
-             dest_row_ofs_to_pointer (scale_ctx, first_dest_row),
-             first_dest_row,
-             n_dest_rows);
+    return do_rows (scale_ctx,
+                    dest_row_ofs_to_pointer (scale_ctx, first_dest_row),
+                    first_dest_row,
+                    n_dest_rows);
 }
 
-void
+int
 smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
                        void *dest,
                        int32_t first_dest_row,
                        int32_t n_dest_rows)
 {
     if (!check_row_range (scale_ctx, &first_dest_row, &n_dest_rows))
-        return;
+        return 1;
 
-    do_rows (scale_ctx,
-             dest,
-             first_dest_row,
-             n_dest_rows);
+    return do_rows (scale_ctx,
+                    dest,
+                    first_dest_row,
+                    n_dest_rows);
 }
