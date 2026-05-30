@@ -372,6 +372,23 @@ static gif_result gif_initialise_frame(gif_animation *gif)
         width = gif_data[5] | (gif_data[6] << 8);
         height = gif_data[7] | (gif_data[8] << 8);
 
+        /* Clip the extents to the LSD when we can. Reject when the
+         * descriptor's origin is outside the screen, since clipping cannot
+         * recover that. Without a guard, gif_initialise_sprite() below
+         * is willing to grow the bitmap to (offset+extent) on each axis,
+         * letting a 10-byte descriptor demand up to 16 GiB.
+         */
+        if (offset_x + width > gif->width) {
+                if (offset_x >= gif->width)
+                        return GIF_FRAME_DATA_ERROR;
+                width = gif->width - offset_x;
+        }
+        if (offset_y + height > gif->height) {
+                if (offset_y >= gif->height)
+                        return GIF_FRAME_DATA_ERROR;
+                height = gif->height - offset_y;
+        }
+
         /* Set up the redraw characteristics. We have to check for extending
          * the area due to multi-image frames.
          */
@@ -694,13 +711,22 @@ gif_internal_decode_frame(gif_animation *gif,
         width = gif_data[5] | (gif_data[6] << 8);
         height = gif_data[7] | (gif_data[8] << 8);
 
-        /* Boundary checking - shouldn't ever happen except unless the data has
-         * been modified since initialisation.
+        /* Clip extents to the logical screen — matches the bounds handling
+         * in gif_initialise_frame().
          */
-        if ((offset_x + width > gif->width) ||
-            (offset_y + height > gif->height)) {
-                return_value = GIF_DATA_ERROR;
-                goto gif_decode_frame_exit;
+        if (offset_x + width > gif->width) {
+                if (offset_x >= gif->width) {
+                        return_value = GIF_DATA_ERROR;
+                        goto gif_decode_frame_exit;
+                }
+                width = gif->width - offset_x;
+        }
+        if (offset_y + height > gif->height) {
+                if (offset_y >= gif->height) {
+                        return_value = GIF_DATA_ERROR;
+                        goto gif_decode_frame_exit;
+                }
+                height = gif->height - offset_y;
         }
 
         /* Decode the flags */
