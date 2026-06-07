@@ -293,14 +293,48 @@ work_cell_get_dominant_channels_for_symbol (ChafaWorkCell *wcell, const ChafaSym
 void
 chafa_work_cell_get_contrasting_color_pair (ChafaWorkCell *wcell, ChafaColorPair *color_pair_out)
 {
-    const guint8 *sorted_pixels;
+    gint min_index [4] = { 0, 0, 0, 0 };
+    gint max_index [4] = { 0, 0, 0, 0 };
+    gint best_range;
+    gint best_ch = 0;
+    gint i, ch;
 
-    sorted_pixels = work_cell_get_sorted_pixels (wcell, work_cell_get_dominant_channel (wcell));
+    /* Find channel extrema directly; only the range and endpoint colors are needed. */
+
+    for (i = 1; i < CHAFA_SYMBOL_N_PIXELS; i++)
+    {
+        for (ch = 0; ch < 4; ch++)
+        {
+            guint8 v = wcell->pixels [i].col.ch [ch];
+
+            if (v < wcell->pixels [min_index [ch]].col.ch [ch])
+                min_index [ch] = i;
+            if (v >= wcell->pixels [max_index [ch]].col.ch [ch])
+                max_index [ch] = i;
+        }
+    }
+
+    best_range = wcell->pixels [max_index [0]].col.ch [0]
+        - wcell->pixels [min_index [0]].col.ch [0];
+
+    for (ch = 1; ch < 4; ch++)
+    {
+        gint range = wcell->pixels [max_index [ch]].col.ch [ch]
+            - wcell->pixels [min_index [ch]].col.ch [ch];
+
+        if (range > best_range)
+        {
+            best_range = range;
+            best_ch = ch;
+        }
+    }
+
+    wcell->dominant_channel = best_ch;
 
     /* Choose two colors by median cut */
 
-    color_pair_out->colors [CHAFA_COLOR_PAIR_BG] = wcell->pixels [sorted_pixels [0]].col;
-    color_pair_out->colors [CHAFA_COLOR_PAIR_FG] = wcell->pixels [sorted_pixels [CHAFA_SYMBOL_N_PIXELS - 1]].col;
+    color_pair_out->colors [CHAFA_COLOR_PAIR_BG] = wcell->pixels [min_index [best_ch]].col;
+    color_pair_out->colors [CHAFA_COLOR_PAIR_FG] = wcell->pixels [max_index [best_ch]].col;
 }
 
 static const ChafaPixel *
