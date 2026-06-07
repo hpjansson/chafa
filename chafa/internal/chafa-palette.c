@@ -103,7 +103,7 @@ init_candidates (ChafaColorCandidates *candidates)
     candidates->error [0] = candidates->error [1] = G_MAXINT;
 }
 
-static gboolean
+static inline gboolean
 update_candidates (ChafaColorCandidates *candidates, gint index, gint error)
 {
     if (error < candidates->error [0])
@@ -237,7 +237,7 @@ chafa_init_palette (void)
     palette_initialized = TRUE;
 }
 
-static gint
+static inline gint
 update_candidates_with_color_index_diff (ChafaColorCandidates *candidates, ChafaColorSpace color_space, const ChafaColor *color, gint index)
 {
     const ChafaColor *palette_color;
