@@ -1180,6 +1180,34 @@ init_dim (SmolDim *dim,
     }
 }
 
+/* Validates the user-facing parameters shared by all entry points. Returns
+ * 1 if they're usable, 0 otherwise (whereafter the caller fails gracefully).
+ *
+ * dest_pixels is intentionally not checked here; the batch APIs allow it to
+ * be NULL at init time and supplied later via smol_scale_batch_full(). */
+static int
+check_scale_params (const void *src_pixels,
+                    SmolPixelType src_pixel_type,
+                    uint32_t src_width, uint32_t src_height,
+                    SmolPixelType dest_pixel_type,
+                    uint32_t dest_width, uint32_t dest_height)
+{
+    if (!src_pixels)
+        return 0;
+
+    if ((unsigned int) src_pixel_type >= SMOL_PIXEL_MAX
+        || (unsigned int) dest_pixel_type >= SMOL_PIXEL_MAX)
+        return 0;
+
+    if (src_width < 1 || src_width > SMOL_DIM_MAX
+        || src_height < 1 || src_height > SMOL_DIM_MAX
+        || dest_width < 1 || dest_width > SMOL_DIM_MAX
+        || dest_height < 1 || dest_height > SMOL_DIM_MAX)
+        return 0;
+
+    return 1;
+}
+
 static int
 smol_scale_init (SmolScaleCtx *scale_ctx,
                  const void *src_pixels,
@@ -1279,6 +1307,10 @@ smol_scale_new_simple (const void *src_pixels,
 {
     SmolScaleCtx *scale_ctx;
 
+    if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
+                             dest_pixel_type, dest_width, dest_height))
+        return NULL;
+
     scale_ctx = calloc (1,sizeof (SmolScaleCtx));
     if (!scale_ctx)
         return NULL;
@@ -1328,6 +1360,10 @@ smol_scale_simple (const void *src_pixels,
     SmolScaleCtx scale_ctx = { 0 };
     int first_row, n_rows;
     int result = 0;
+
+    if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
+                             dest_pixel_type, dest_width, dest_height))
+        return 0;
 
     if (!smol_scale_init (&scale_ctx,
                           src_pixels,
@@ -1395,6 +1431,10 @@ smol_scale_new_full (const void *src_pixels,
                      void *user_data)
 {
     SmolScaleCtx *scale_ctx;
+
+    if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
+                             dest_pixel_type, dest_width, dest_height))
+        return NULL;
 
     scale_ctx = calloc (1, sizeof (SmolScaleCtx));
     if (!scale_ctx)

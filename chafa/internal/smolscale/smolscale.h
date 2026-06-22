@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+/* Largest source or destination dimension (in pixels) we accept. */
+#define SMOL_DIM_MAX 65535
+
 #define SMOL_SUBPIXEL_SHIFT 8
 #define SMOL_SUBPIXEL_MUL (1 << (SMOL_SUBPIXEL_SHIFT))
 
@@ -65,11 +68,16 @@ typedef void (SmolPostRowFunc) (void *row_inout,
 
 typedef struct SmolScaleCtx SmolScaleCtx;
 
+/* For all entry points below, src_pixels must be non-NULL, the pixel types
+ * must be valid SmolPixelType values, and each source and destination
+ * dimension must be in the range [1, 65535]. Calls that violate this fail
+ * the same way as an allocation failure (returning 0 or NULL). */
+
 /* Simple API: Scales an entire image in one shot. You must provide pointers to
  * the source memory and an existing allocation to receive the output data.
  * This interface can only be used from a single thread.
  *
- * Returns 1 on success, 0 on memory allocation failure. */
+ * Returns 1 on success, 0 on invalid arguments or memory allocation failure. */
 
 int smol_scale_simple (const void *src_pixels,
                        SmolPixelType src_pixel_type,
