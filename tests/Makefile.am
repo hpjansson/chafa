@@ -15,10 +15,14 @@ LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
 
 noinst_PROGRAMS = \
 	canvas-test \
+	loader-arithmetic-test \
 	term-info-test
 
 canvas_test_SOURCES = \
 	canvas-test.c
+
+loader_arithmetic_test_SOURCES = \
+	loader-arithmetic-test.c
 
 term_info_test_SOURCES = \
 	term-info-test.c
@@ -42,6 +46,7 @@ endif
 
 TESTS = \
 	canvas-test \
+	loader-arithmetic-test \
 	term-info-test \
 	$(TOOL_CHECKS)
 
@@ -56,10 +61,12 @@ AM_TESTS_ENVIRONMENT = \
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/chafa \
-	-I$(top_builddir)/chafa
+	-I$(top_builddir)/chafa \
+	-I$(top_srcdir)/tools/chafa
 
 EXTRA_DIST = \
 	$(TOOL_CHECKS) \
+	loader-arithmetic-test.c \
 	chafa-tool-gallery.sh \
 	chafa-tool-test-common.sh \
 	test-driver.sh

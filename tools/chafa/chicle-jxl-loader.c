@@ -25,6 +25,7 @@
 #include <jxl/resizable_parallel_runner.h>
 #include <stdio.h>
 
+#include "chicle-image-size.h"
 #include "chicle-jxl-loader.h"
 
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
@@ -82,6 +83,7 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, ChicleFileMapping *m
     JxlFrameHeader frame_header;
     gboolean success = FALSE;
     guint64 total_alloced = 0;
+    gsize frame_size = 0;
 
     gsize bytes_read = 0;
     const uint8_t* data = chicle_file_mapping_get_data(mapping, &bytes_read);
@@ -106,17 +108,20 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, ChicleFileMapping *m
                 format.num_channels = 3;
             }
 
-            total_alloced += info.xsize * info.ysize * format.num_channels;
+            if (!chicle_checked_image_buffer_size (info.xsize, info.ysize, format.num_channels,
+                                                   IMAGE_BUFFER_SIZE_MAX, &frame_size))
+                break;
+
+            total_alloced += frame_size;
             if (total_alloced > IMAGE_BUFFER_SIZE_MAX)
                 break;
-            image_buffer = g_malloc (info.xsize * info.ysize * format.num_channels);
+            image_buffer = g_malloc (frame_size);
         }
         else if (JXL_DEC_NEED_IMAGE_OUT_BUFFER == decode_status)
         {
             if (JXL_DEC_SUCCESS
                 != JxlDecoderSetImageOutBuffer (dec, &format, image_buffer,
-                                                info.xsize * info.ysize
-                                                * format.num_channels))
+                                                frame_size))
             {
                 break;
             }
@@ -134,6 +139,7 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, ChicleFileMapping *m
                 = info.animation.tps_numerator == 0 ? 1 : info.animation.tps_numerator;
             JxlFrame *frame = g_new (JxlFrame, 1);
             frame->buffer = image_buffer;
+            image_buffer = NULL;
             frame->width = info.xsize;
             frame->height = info.ysize;
             frame->have_alpha = format.num_channels == 4;
@@ -142,10 +148,10 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, ChicleFileMapping *m
                 = frame_header.duration * 1000 * info.animation.tps_denominator / num;
             frame_list = g_list_prepend (frame_list, frame);
 
-            total_alloced += info.xsize * info.ysize * format.num_channels;
+            total_alloced += frame_size;
             if (total_alloced > IMAGE_BUFFER_SIZE_MAX)
                 break;
-            image_buffer = g_malloc (info.xsize * info.ysize * format.num_channels);
+            image_buffer = g_malloc (frame_size);
         }
         else if (JXL_DEC_SUCCESS == decode_status)
         {

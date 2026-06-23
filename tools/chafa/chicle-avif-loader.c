@@ -31,6 +31,7 @@
 #include <chafa.h>
 #include <avif/avif.h>
 #include "chicle-avif-loader.h"
+#include "chicle-image-size.h"
 #include "chicle-util.h"
 
 #define N_CHANNELS 4
@@ -79,6 +80,7 @@ maybe_decode_frame (ChicleAvifLoader *loader)
     avifResult avif_result;
     avifImage *image;
     avifRGBImage rgb;
+    gsize frame_size;
     guint axis;
 
     if (loader->frame_is_decoded)
@@ -94,10 +96,14 @@ maybe_decode_frame (ChicleAvifLoader *loader)
     image = loader->decoder->image;
     avifRGBImageSetDefaults (&rgb, image);
 
+    if (!chicle_checked_image_buffer_size (image->width, image->height, BYTES_PER_PIXEL,
+                                           IMAGE_BUFFER_SIZE_MAX, &frame_size))
+        goto out;
+
     rgb.depth = 8;
     rgb.format = AVIF_RGB_FORMAT_RGBA;
     rgb.rowBytes = image->width * BYTES_PER_PIXEL;
-    rgb.pixels = g_malloc (image->height * rgb.rowBytes);
+    rgb.pixels = g_malloc (frame_size);
 
     avif_result = avifImageYUVToRGB(image, &rgb);
     if (avif_result != AVIF_RESULT_OK)
@@ -187,7 +193,8 @@ chicle_avif_loader_new_from_mapping (ChicleFileMapping *mapping)
     loader->height = image->height;
     loader->rowstride = loader->width * BYTES_PER_PIXEL;
 
-    if (loader->height * loader->rowstride > IMAGE_BUFFER_SIZE_MAX)
+    if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                           IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     /* Ensure we can decode a frame. If not, we'll try other loaders */
