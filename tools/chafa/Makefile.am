@@ -13,6 +13,7 @@ chafa_SOURCES = \
 	chicle-gif-loader.h \
 	chicle-grid-layout.c \
 	chicle-grid-layout.h \
+	chicle-image-size.h \
 	chicle-media-loader.c \
 	chicle-media-loader.h \
 	chicle-media-pipeline.c \
