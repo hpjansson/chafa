@@ -32,6 +32,7 @@
 
 #include <chafa.h>
 #include "chicle-webp-loader.h"
+#include "chicle-image-size.h"
 
 #define DEFAULT_FRAME_DURATION_MS 50
 #define BYTES_PER_PIXEL 4
@@ -60,13 +61,16 @@ static gboolean
 maybe_decode_frame (ChicleWebpLoader *loader)
 {
     uint8_t *buf;
+    gsize frame_size;
 
     if (loader->this_frame_data)
         return TRUE;
 
     if (decode_next_frame (loader, &buf, &loader->this_timestamp))
     {
-        loader->this_frame_data = g_memdup (buf, loader->width * BYTES_PER_PIXEL * loader->height);
+        if (chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                             IMAGE_BUFFER_SIZE_MAX, &frame_size))
+            loader->this_frame_data = g_memdup (buf, frame_size);
     }
 
     return loader->this_frame_data ? TRUE : FALSE;
@@ -219,6 +223,7 @@ gint
 chicle_webp_loader_get_frame_delay (ChicleWebpLoader *loader)
 {
     uint8_t *buf;
+    gsize frame_size;
 
     g_return_val_if_fail (loader != NULL, 0);
 
@@ -231,7 +236,9 @@ chicle_webp_loader_get_frame_delay (ChicleWebpLoader *loader)
     {
         if (decode_next_frame (loader, &buf, &loader->next_timestamp))
         {
-            loader->next_frame_data = g_memdup (buf, loader->width * BYTES_PER_PIXEL * loader->height);
+            if (chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                                 IMAGE_BUFFER_SIZE_MAX, &frame_size))
+                loader->next_frame_data = g_memdup (buf, frame_size);
         }
     }
 
