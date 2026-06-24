@@ -51,6 +51,14 @@ typedef struct JxlFrame
     int frame_duration;
 } JxlFrame;
 
+static gboolean
+get_jxl_frame_size (const JxlBasicInfo *info, const JxlPixelFormat *format,
+                    gsize *frame_size_out)
+{
+    return chicle_checked_image_buffer_size (info->xsize, info->ysize, format->num_channels,
+                                            IMAGE_BUFFER_SIZE_MAX, frame_size_out);
+}
+
 static ChicleJxlLoader *
 chicle_jxl_loader_new (void)
 {
@@ -108,13 +116,11 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, ChicleFileMapping *m
                 format.num_channels = 3;
             }
 
-            if (!chicle_checked_image_buffer_size (info.xsize, info.ysize, format.num_channels,
-                                                   IMAGE_BUFFER_SIZE_MAX, &frame_size))
+            if (!get_jxl_frame_size (&info, &format, &frame_size))
                 break;
-
+            if (total_alloced > IMAGE_BUFFER_SIZE_MAX - frame_size)
+                break;
             total_alloced += frame_size;
-            if (total_alloced > IMAGE_BUFFER_SIZE_MAX)
-                break;
             image_buffer = g_malloc (frame_size);
         }
         else if (JXL_DEC_NEED_IMAGE_OUT_BUFFER == decode_status)
@@ -148,9 +154,11 @@ jxl_get_frames (JxlDecoder *dec, JxlParallelRunner *runner, ChicleFileMapping *m
                 = frame_header.duration * 1000 * info.animation.tps_denominator / num;
             frame_list = g_list_prepend (frame_list, frame);
 
-            total_alloced += frame_size;
-            if (total_alloced > IMAGE_BUFFER_SIZE_MAX)
+            if (!get_jxl_frame_size (&info, &format, &frame_size))
                 break;
+            if (total_alloced > IMAGE_BUFFER_SIZE_MAX - frame_size)
+                break;
+            total_alloced += frame_size;
             image_buffer = g_malloc (frame_size);
         }
         else if (JXL_DEC_SUCCESS == decode_status)

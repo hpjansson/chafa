@@ -22,7 +22,14 @@ canvas_test_SOURCES = \
 	canvas-test.c
 
 loader_arithmetic_test_SOURCES = \
-	loader-arithmetic-test.c
+	loader-arithmetic-test.c \
+	$(top_srcdir)/tools/chafa/chicle-util.c \
+	$(top_srcdir)/tools/chafa/chafa-byte-fifo.c \
+	$(top_srcdir)/tools/chafa/chafa-parser.c \
+	$(top_srcdir)/tools/chafa/chafa-stream-reader.c \
+	$(top_srcdir)/tools/chafa/chafa-stream-writer.c \
+	$(top_srcdir)/tools/chafa/chafa-term.c \
+	$(top_srcdir)/tools/chafa/chafa-wakeup.c
 
 term_info_test_SOURCES = \
 	term-info-test.c
