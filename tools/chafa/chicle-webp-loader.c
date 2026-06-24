@@ -68,9 +68,11 @@ maybe_decode_frame (ChicleWebpLoader *loader)
 
     if (decode_next_frame (loader, &buf, &loader->this_timestamp))
     {
-        if (chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
-                                             IMAGE_BUFFER_SIZE_MAX, &frame_size))
-            loader->this_frame_data = g_memdup (buf, frame_size);
+        if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                              IMAGE_BUFFER_SIZE_MAX, &frame_size))
+            return FALSE;
+
+        loader->this_frame_data = g_memdup (buf, frame_size);
     }
 
     return loader->this_frame_data ? TRUE : FALSE;
@@ -236,9 +238,11 @@ chicle_webp_loader_get_frame_delay (ChicleWebpLoader *loader)
     {
         if (decode_next_frame (loader, &buf, &loader->next_timestamp))
         {
-            if (chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
-                                                 IMAGE_BUFFER_SIZE_MAX, &frame_size))
-                loader->next_frame_data = g_memdup (buf, frame_size);
+            if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                                  IMAGE_BUFFER_SIZE_MAX, &frame_size))
+                return DEFAULT_FRAME_DURATION_MS;
+
+            loader->next_frame_data = g_memdup (buf, frame_size);
         }
     }
 
