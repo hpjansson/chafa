@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = data
 
 AM_CFLAGS = $(CHAFA_CFLAGS) $(GLIB_CFLAGS)

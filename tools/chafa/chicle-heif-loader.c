@@ -31,7 +31,7 @@
 #include <chafa.h>
 #include <libheif/heif.h>
 #include "chicle-heif-loader.h"
-#include "chicle-image-size.h"
+#include "chicle-util.h"
 
 #define BYTES_PER_PIXEL 4
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)

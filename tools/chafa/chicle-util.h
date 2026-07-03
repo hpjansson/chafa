@@ -45,6 +45,8 @@ ChicleRotationType;
 ChicleRotationType chicle_invert_rotation (ChicleRotationType rot);
 void chicle_rotate_image (gpointer *src, guint *width, guint *height, guint *rowstride,
                           guint n_channels, ChicleRotationType rot);
+gboolean chicle_checked_image_buffer_size (guint64 width, guint64 height, guint64 n_channels,
+                                           guint64 max_size, gsize *size_out);
 
 void chicle_flatten_cntrl_inplace (gchar *str);
 gchar *chicle_ellipsize_string (const gchar *str, gint len_max,

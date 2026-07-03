@@ -173,6 +173,31 @@ chicle_rotate_image (gpointer *src, guint *width, guint *height, guint *rowstrid
     *rowstride = dest_rowstride;
 }
 
+gboolean
+chicle_checked_image_buffer_size (guint64 width, guint64 height, guint64 n_channels,
+                                  guint64 max_size, gsize *size_out)
+{
+    guint64 size;
+
+    if (width < 1 || height < 1 || n_channels < 1)
+        return FALSE;
+    if (width > G_MAXSIZE / height)
+        return FALSE;
+
+    size = width * height;
+    if (size > G_MAXSIZE / n_channels)
+        return FALSE;
+
+    size *= n_channels;
+    if (size > max_size)
+        return FALSE;
+
+    if (size_out)
+        *size_out = (gsize) size;
+
+    return TRUE;
+}
+
 /* Replaces control characters (C0: U+0000..U+001F, U+007F; C1:
  * U+0080..U+009F) with '?' so attacker-controlled input cannot inject
  * terminal escape sequences when this string is later printed to a

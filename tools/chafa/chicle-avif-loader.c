@@ -31,7 +31,6 @@
 #include <chafa.h>
 #include <avif/avif.h>
 #include "chicle-avif-loader.h"
-#include "chicle-image-size.h"
 #include "chicle-util.h"
 
 #define N_CHANNELS 4
