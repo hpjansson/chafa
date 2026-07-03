@@ -1,7 +1,7 @@
 #include "config.h"
 
 #include <chafa.h>
-#include "chicle-image-size.h"
+#include "chicle-util.h"
 
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 

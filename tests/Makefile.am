@@ -1,3 +1,5 @@
+AUTOMAKE_OPTIONS = subdir-objects
+
 SUBDIRS = data
 
 AM_CFLAGS = $(LIBCHAFA_CFLAGS) $(GLIB_CFLAGS)
@@ -26,7 +28,8 @@ canvas_test_SOURCES = \
 	canvas-test.c
 
 loader_arithmetic_test_SOURCES = \
-	loader-arithmetic-test.c
+	loader-arithmetic-test.c \
+	$(top_srcdir)/tools/chafa/chicle-util.c
 
 term_info_test_SOURCES = \
 	term-info-test.c
