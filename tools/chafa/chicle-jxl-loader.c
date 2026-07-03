@@ -25,8 +25,8 @@
 #include <jxl/resizable_parallel_runner.h>
 #include <stdio.h>
 
-#include "chicle-image-size.h"
 #include "chicle-jxl-loader.h"
+#include "chicle-util.h"
 
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 

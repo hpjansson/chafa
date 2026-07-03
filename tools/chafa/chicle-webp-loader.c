@@ -32,7 +32,7 @@
 
 #include <chafa.h>
 #include "chicle-webp-loader.h"
-#include "chicle-image-size.h"
+#include "chicle-util.h"
 
 #define DEFAULT_FRAME_DURATION_MS 50
 #define BYTES_PER_PIXEL 4
