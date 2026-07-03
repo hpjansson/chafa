@@ -1,0 +1,58 @@
+name: Build Static Chafa Binary
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-static:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Static Binary in Alpine Container
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace alpine:latest sh -c "
+            apk update && \
+            apk add --no-cache \
+              build-base \
+              autoconf \
+              automake \
+              libtool \
+              pkgconfig \
+              glib-dev \
+              glib-static \
+              freetype-dev \
+              freetype-static \
+              zlib-dev \
+              zlib-static \
+              libpng-dev \
+              libpng-static \
+              libjpeg-turbo-dev \
+              libjpeg-turbo-static \
+              libwebp-dev \
+              libwebp-static \
+              libtiff-dev \
+              libtiff-static && \
+            ./autogen.sh && \
+            ./configure \
+              --enable-static \
+              --disable-shared \
+              --without-avif \
+              --without-heif \
+              --without-jxl \
+              --without-svg \
+              LDFLAGS='-static' && \
+            make -j\$(nproc) && \
+            strip tools/chafa/chafa
+          "
+
+      - name: Upload Binary Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chafa-static-x86_64
+          path: tools/chafa/chafa
