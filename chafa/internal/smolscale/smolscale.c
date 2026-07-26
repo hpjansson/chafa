@@ -556,6 +556,38 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
         {
             copy_row (scale_ctx, dest_row_index, row_out);
         }
+        else if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST)
+        {
+            int scaled_row_index;
+            void *dest_ptr;
+
+            /* Source-over onto the existing destination content:
+             *
+             * - Unpack and scale the source row.
+             * - Unpack the destination pixels (placement rect).
+             * - Composite src OVER dest in parts space.
+             * - Pack the blended result back to dest. */
+
+            scaled_row_index = scale_ctx->vfilter_func (scale_ctx,
+                                                        local_ctx,
+                                                        dest_row_index - scale_ctx->vdim.clear_before_px);
+
+            dest_ptr = dest_hofs_to_pointer (scale_ctx, row_out,
+                                             scale_ctx->hdim.placement_ofs_px);
+
+            scale_ctx->dest_unpack_row_func (dest_ptr,
+                                             local_ctx->dest_parts_row,
+                                             scale_ctx->hdim.placement_size_px);
+
+            scale_ctx->composite_over_dest_func (local_ctx->parts_row [scaled_row_index],
+                                                 local_ctx->dest_parts_row,
+                                                 scale_ctx->hdim.placement_size_px,
+                                                 scale_ctx->composite_opacity);
+
+            scale_ctx->pack_row_func (local_ctx->dest_parts_row,
+                                      dest_ptr,
+                                      scale_ctx->hdim.placement_size_px);
+        }
         else
         {
             int scaled_row_index;
@@ -654,6 +686,16 @@ do_rows (const SmolScaleCtx *scale_ctx,
             goto out;
     }
 
+    /* The SMOL_COMPOSITE_SRC_OVER_DEST path needs a scratch row to hold the
+     * unpacked destination pixels under the placement rectangle. */
+    if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST)
+    {
+        local_ctx.dest_parts_row =
+            smol_alloc_aligned (MAX (scale_ctx->hdim.placement_size_px, 1)
+                                * n_parts_per_pixel * sizeof (uint64_t),
+                                &local_ctx.dest_parts_storage);
+    }
+
     for (i = row_dest_index; i < row_dest_index + n_rows; i++)
     {
         scale_dest_row (scale_ctx, &local_ctx, i, dest);
@@ -665,6 +707,9 @@ do_rows (const SmolScaleCtx *scale_ctx,
 out:
     for (i = 0; i < n_stored_rows; i++)
         smol_free (local_ctx.row_storage [i]);
+
+    if (local_ctx.dest_parts_storage)
+        smol_free (local_ctx.dest_parts_storage);
 
     if (local_ctx.src_aligned)
         smol_free (local_ctx.src_aligned_storage);
@@ -1099,7 +1144,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
             implementations [i]->composite_over_color_funcs
                 [scale_ctx->storage_type] [scale_ctx->gamma_type] [internal_alpha];
         SmolCompositeOverDestFunc *composite_over_dest_func =
-            implementations [i]->composite_over_dest_funcs [scale_ctx->storage_type];
+            implementations [i]->composite_over_dest_funcs
+                [scale_ctx->storage_type] [scale_ctx->gamma_type] [internal_alpha];
         SmolClearFunc *clear_dest_func =
             implementations [i]->clear_funcs [dest_pmeta->storage];
 
@@ -1274,6 +1320,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     scale_ctx->dest_rowstride = dest_rowstride;
 
     scale_ctx->composite_op = composite_op;
+    scale_ctx->composite_opacity = SMOL_SUBPIXEL_MUL;  /* Fully opaque by default */
     scale_ctx->flags = flags;
     scale_ctx->gamma_type = (flags & SMOL_DISABLE_SRGB_LINEARIZATION)
         ? SMOL_GAMMA_SRGB_COMPRESSED : SMOL_GAMMA_SRGB_LINEAR;
@@ -1527,4 +1574,22 @@ smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
                     dest,
                     first_dest_row,
                     n_dest_rows);
+}
+
+void
+smol_scale_set_composite_opacity (SmolScaleCtx *scale_ctx,
+                                  double opacity)
+{
+    int o;
+
+    if (opacity < 0.0)
+        opacity = 0.0;
+    else if (opacity > 1.0)
+        opacity = 1.0;
+
+    o = (int) (opacity * SMOL_SUBPIXEL_MUL + 0.5);
+    if (o > SMOL_SUBPIXEL_MUL)
+        o = SMOL_SUBPIXEL_MUL;
+
+    scale_ctx->composite_opacity = (uint16_t) o;
 }

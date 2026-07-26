@@ -208,6 +208,12 @@ typedef struct
     uint64_t *row_storage [4];
     uint32_t *src_aligned;
     uint32_t *src_aligned_storage;
+
+    /* Scratch row holding the unpacked destination pixels under the
+     * placement rectangle, used only by the SMOL_COMPOSITE_SRC_OVER_DEST
+     * path. NULL otherwise. */
+    uint64_t *dest_parts_row;
+    uint64_t *dest_parts_storage;
 }
 SmolLocalCtx;
 
@@ -224,9 +230,13 @@ typedef int (SmolVFilterFunc) (const SmolScaleCtx *scale_ctx,
 typedef void (SmolCompositeOverColorFunc) (uint64_t *srcdest_row,
                                            const uint64_t *color_pixel,
                                            uint32_t n_pixels);
+/* Composites a scaled source parts row over a destination parts row in
+ * place (dest_row receives src OVER dest). @opacity is a layer opacity in
+ * [0, SMOL_SUBPIXEL_MUL] applied to the source's coverage. */
 typedef void (SmolCompositeOverDestFunc) (const uint64_t *src_row,
                                           uint64_t *dest_row,
-                                          uint32_t n_pixels);
+                                          uint32_t n_pixels,
+                                          uint16_t opacity);
 typedef void (SmolClearFunc) (const void *src_pixel_batch,
                               void *dest_row,
                               uint32_t n_pixels);
@@ -296,7 +306,7 @@ typedef struct
     SmolHFilterFunc *hfilter_funcs [SMOL_STORAGE_MAX] [SMOL_FILTER_MAX];
     SmolVFilterFunc *vfilter_funcs [SMOL_STORAGE_MAX] [SMOL_FILTER_MAX];
     SmolCompositeOverColorFunc *composite_over_color_funcs [SMOL_STORAGE_MAX] [SMOL_GAMMA_MAX] [SMOL_ALPHA_MAX];
-    SmolCompositeOverDestFunc *composite_over_dest_funcs [SMOL_STORAGE_MAX];
+    SmolCompositeOverDestFunc *composite_over_dest_funcs [SMOL_STORAGE_MAX] [SMOL_GAMMA_MAX] [SMOL_ALPHA_MAX];
     SmolClearFunc *clear_funcs [SMOL_STORAGE_MAX];
     const SmolRepackMeta *repack_meta;
 }
@@ -347,6 +357,11 @@ struct SmolScaleCtx
     SmolStorageType storage_type;
     SmolGammaType gamma_type;
     SmolCompositeOp composite_op;
+
+    /* Layer opacity applied to the source with SMOL_COMPOSITE_SRC_OVER_DEST,
+     * in [0, SMOL_SUBPIXEL_MUL]. Defaults to SMOL_SUBPIXEL_MUL (fully opaque).
+     * Set by smol_scale_set_composite_opacity(). */
+    uint16_t composite_opacity;
 
     /* Raw flags passed in by user */
     SmolFlags flags;

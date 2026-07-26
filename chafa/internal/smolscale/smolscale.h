@@ -146,6 +146,13 @@ int smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
                            void *outrows_dest,
                            int32_t first_outrow, int32_t n_outrows);
 
+/* Sets the layer opacity applied to the source under SMOL_COMPOSITE_SRC_OVER_DEST.
+ * @opacity is clamped to [0.0, 1.0]. 1.0 (the default) uses the source's own
+ * coverage, 0.0 leaves the destination untouched. No effect for other
+ * composite ops. Call before any smol_scale_batch() workers run. */
+
+void smol_scale_set_composite_opacity (SmolScaleCtx *scale_ctx, double opacity);
+
 #ifdef __cplusplus
 }
 #endif
