@@ -3361,6 +3361,70 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
     return 0;
 }
 
+/* ----------- *
+ * Compositing *
+ * ----------- */
+
+static void
+composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
+                                uint64_t * SMOL_RESTRICT dest_row,
+                                uint32_t n_pixels,
+                                uint16_t opacity)
+{
+    const __m256i mask24 = _mm256_set1_epi32 (0x00ffffff);
+    const __m256i ff = _mm256_set1_epi32 (0xff);
+    const __m256i opv = _mm256_set1_epi32 (opacity);
+    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
+    uint32_t i;
+
+    /* Two pixels (4 x uint64_t = 8 x 32-bit lanes) per iteration. */
+
+    for (i = 0; i < n2; i += 2)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + (size_t) i * 2));
+        __m256i d = _mm256_loadu_si256 ((const __m256i *) (dest_row + (size_t) i * 2));
+        __m256i a, w;
+
+        if (scale_opacity)
+            s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
+                                                     SMOL_SUBPIXEL_SHIFT),
+                                  mask24);
+
+        /* Broadcast each pixel's source alpha across its four lanes, then: w = 0xff - a. */
+        a = _mm256_shuffle_epi32 (_mm256_srli_epi32 (s, 8), SMOL_4X2BIT (2, 2, 2, 2));
+        a = _mm256_and_si256 (a, ff);
+        w = _mm256_sub_epi32 (ff, a);
+
+        /* dest = src + dest * (0xff - a) >> 8. */
+        d = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (d, w), 8), mask24);
+        d = _mm256_add_epi32 (s, d);
+
+        _mm256_storeu_si256 ((__m256i *) (dest_row + (size_t) i * 2), d);
+    }
+
+    /* Scalar epilogue for a final odd pixel */
+
+    for (i = n2; i < n_pixels; i++)
+    {
+        uint64_t s0 = src_row [(size_t) i * 2];
+        uint64_t s1 = src_row [(size_t) i * 2 + 1];
+        uint64_t a;
+
+        if (scale_opacity)
+        {
+            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        dest_row [(size_t) i * 2] = s0 + (((dest_row [(size_t) i * 2] * (0xff - a)) >> 8)
+                                          & 0x00ffffff00ffffffULL);
+        dest_row [(size_t) i * 2 + 1] = s1 + (((dest_row [(size_t) i * 2 + 1] * (0xff - a)) >> 8)
+                                              & 0x00ffffff00ffffffULL);
+    }
+}
+
 /* --------------- *
  * Function tables *
  * --------------- */
@@ -3524,10 +3588,17 @@ static const SmolImplementation implementation =
     },
     {
         /* Composite over dest */
-        NULL,
-        NULL,
-        NULL,
-        NULL
+
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp - unused */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp - unused */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 64bpp - generic */
+
+        /* 128bpp: p16 in both gammas (alpha lane is gamma-independent and the
+         * source-over arithmetic is space-agnostic); p8/p8l fall back. */
+        {
+            { NULL, NULL, composite_over_dest_p16_128bpp },  /* compressed */
+            { NULL, NULL, composite_over_dest_p16_128bpp }   /* linear */
+        }
     },
     {
         /* Clear dest */
