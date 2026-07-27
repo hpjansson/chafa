@@ -3442,6 +3442,471 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     }
 }
 
+/* ---------------------- *
+ * sRGB/linear conversion *
+ * ---------------------- */
+
+/* We unpack by computing the gamma-2 curve. Our inverse gathers from the same
+ * table as the generic code. */
+
+static SMOL_INLINE __m256i
+from_srgb_8x (__m256i c)
+{
+    __m256i m = _mm256_srli_epi32 (_mm256_add_epi32 (
+        _mm256_mullo_epi32 (c, c), _mm256_set1_epi32 (16)), 5);
+
+    m = _mm256_add_epi32 (m, _mm256_srli_epi32 (m, 7));
+    return _mm256_max_epi32 (m, c);
+}
+
+static SMOL_INLINE __m256i
+to_srgb_8x (__m256i l)
+{
+    return _mm256_and_si256 (_mm256_i32gather_epi32 (
+        (const int *) (const void *) _smol_to_srgb_lut, l, 1),
+        _mm256_set1_epi32 (0xff));
+}
+
+/* Four pixel-major ymm, two u64 words per pixel:
+ * (hi0 << 32 | lo0), (hi1 << 32 | lo1)), stored to dest. */
+static SMOL_INLINE void
+store_8px_128bpp (uint64_t *dest, __m256i lo0, __m256i hi0, __m256i lo1, __m256i hi1)
+{
+    __m256i w0a = _mm256_unpacklo_epi32 (lo0, hi0);  /* px 0,1 | 4,5 */
+    __m256i w0b = _mm256_unpackhi_epi32 (lo0, hi0);  /* px 2,3 | 6,7 */
+    __m256i w1a = _mm256_unpacklo_epi32 (lo1, hi1);
+    __m256i w1b = _mm256_unpackhi_epi32 (lo1, hi1);
+    __m256i o0 = _mm256_unpacklo_epi64 (w0a, w1a);  /* px0 | px4 */
+    __m256i o1 = _mm256_unpackhi_epi64 (w0a, w1a);  /* px1 | px5 */
+    __m256i o2 = _mm256_unpacklo_epi64 (w0b, w1b);  /* px2 | px6 */
+    __m256i o3 = _mm256_unpackhi_epi64 (w0b, w1b);  /* px3 | px7 */
+
+    _mm256_storeu_si256 ((__m256i *) dest, _mm256_permute2x128_si256 (o0, o1, 0x20));
+    _mm256_storeu_si256 ((__m256i *) dest + 1, _mm256_permute2x128_si256 (o2, o3, 0x20));
+    _mm256_storeu_si256 ((__m256i *) dest + 2, _mm256_permute2x128_si256 (o0, o1, 0x31));
+    _mm256_storeu_si256 ((__m256i *) dest + 3, _mm256_permute2x128_si256 (o2, o3, 0x31));
+}
+
+/* Load 8 pixel-major 128bpp pixels and return the four word vectors:
+ * w0[ab] hold word 0 of px {0,1|4,5} / {2,3|6,7}, w1[ab] word 1. */
+static SMOL_INLINE void
+load_8px_128bpp (const uint64_t *src, __m256i *w0a, __m256i *w1a,
+                 __m256i *w0b, __m256i *w1b)
+{
+    __m256i in01 = _mm256_loadu_si256 ((const __m256i *) src);
+    __m256i in23 = _mm256_loadu_si256 ((const __m256i *) src + 1);
+    __m256i in45 = _mm256_loadu_si256 ((const __m256i *) src + 2);
+    __m256i in67 = _mm256_loadu_si256 ((const __m256i *) src + 3);
+    __m256i q0 = _mm256_permute2x128_si256 (in01, in45, 0x20);
+    __m256i q1 = _mm256_permute2x128_si256 (in01, in45, 0x31);
+    __m256i q2 = _mm256_permute2x128_si256 (in23, in67, 0x20);
+    __m256i q3 = _mm256_permute2x128_si256 (in23, in67, 0x31);
+
+    *w0a = _mm256_unpacklo_epi64 (q0, q1);
+    *w1a = _mm256_unpackhi_epi64 (q0, q1);
+    *w0b = _mm256_unpacklo_epi64 (q2, q3);
+    *w1b = _mm256_unpackhi_epi64 (q2, q3);
+}
+
+/* Whole-u64-word multiply by a per-pixel 32-bit factor, replicating the
+ * generic (word * lut) semantics including the low-lane product's carry
+ * into the high lane, then (>> shift) & mask per 32-bit lane. */
+static SMOL_INLINE __m256i
+unpremul_word_8x (__m256i w, __m256i lut64, int shift, uint32_t mask)
+{
+    __m256i lo = _mm256_and_si256 (w, _mm256_set1_epi64x (0xffffffff));
+    __m256i hi = _mm256_srli_epi64 (w, 32);
+    __m256i plo = _mm256_mul_epu32 (lo, lut64);
+    __m256i rhi = _mm256_add_epi64 (_mm256_mul_epu32 (hi, lut64),
+                                    _mm256_srli_epi64 (plo, 32));
+    __m256i olo = _mm256_and_si256 (_mm256_srli_epi64 (plo, shift),
+                                    _mm256_set1_epi64x (mask));
+    __m256i ohi = _mm256_and_si256 (_mm256_srli_epi64 (rhi, shift),
+                                    _mm256_set1_epi64x (mask));
+
+    return _mm256_or_si256 (olo, _mm256_slli_epi64 (ohi, 32));
+}
+
+/* Pack byte orders for the 32bpp output rows (chN = value channels in
+ * mid order, A = alpha): 0 = (1,2,3,4), 1 = (3,2,1,4), 2 = (4,1,2,3),
+ * 3 = (4,3,2,1). The order argument is a compile-time constant in every
+ * caller, so the selects fold away. */
+static SMOL_INLINE __m256i
+pack_order_8x (__m256i c1, __m256i c2, __m256i c3, __m256i alpha, int order)
+{
+    __m256i b3, b2, b1, b0;
+
+    switch (order)
+    {
+        case 0:
+            b3 = c1; b2 = c2; b1 = c3; b0 = alpha;
+            break;
+        case 1:
+            b3 = c3; b2 = c2; b1 = c1; b0 = alpha;
+            break;
+        case 2:
+            b3 = alpha; b2 = c1; b1 = c2; b0 = c3;
+            break;
+        default:
+            b3 = alpha; b2 = c3; b1 = c2; b0 = c1;
+            break;
+    }
+
+    return _mm256_or_si256 (_mm256_or_si256 (_mm256_slli_epi32 (b3, 24),
+                                             _mm256_slli_epi32 (b2, 16)),
+                            _mm256_or_si256 (_mm256_slli_epi32 (b1, 8), b0));
+}
+
+static SMOL_INLINE uint32_t
+pack_order_1x (uint32_t c1, uint32_t c2, uint32_t c3, uint32_t alpha, int order)
+{
+    switch (order)
+    {
+        case 0:
+            return (c1 << 24) | (c2 << 16) | (c3 << 8) | alpha;
+        case 1:
+            return (c3 << 24) | (c2 << 16) | (c1 << 8) | alpha;
+        case 2:
+            return (alpha << 24) | (c1 << 16) | (c2 << 8) | c3;
+        default:
+            return (alpha << 24) | (c3 << 16) | (c2 << 8) | c1;
+    }
+}
+
+/* Unpack 32bpp -> PREMUL16 LINEAR. The byte lanes b_hi0/b_lo0/b_hi1 give
+ * the source bytes landing in the mid-order channel slots; a_shift the
+ * alpha byte's position. Layouts follow the generic unpack helpers. */
+static SMOL_INLINE void
+unpack_u32_to_p16l_avx2 (const uint32_t * SMOL_RESTRICT src_row,
+                         uint64_t * SMOL_RESTRICT dest_row,
+                         uint32_t n, int alpha_high)
+{
+    const __m256i m8 = _mm256_set1_epi32 (0xff);
+    const __m256i one = _mm256_set1_epi32 (1);
+    uint32_t i = 0;
+
+    for (; i + 8 <= n; i += 8)
+    {
+        __m256i p = _mm256_loadu_si256 ((const __m256i *) (src_row + i));
+        __m256i b0 = _mm256_and_si256 (p, m8);
+        __m256i b1 = _mm256_and_si256 (_mm256_srli_epi32 (p, 8), m8);
+        __m256i b2 = _mm256_and_si256 (_mm256_srli_epi32 (p, 16), m8);
+        __m256i b3 = _mm256_srli_epi32 (p, 24);
+        __m256i al = alpha_high ? b3 : b0;
+        __m256i ch_hi0 = alpha_high ? b2 : b3;
+        __m256i ch_lo0 = alpha_high ? b1 : b2;
+        __m256i ch_hi1 = alpha_high ? b0 : b1;
+        __m256i ap1 = _mm256_add_epi32 (al, one);
+        __m256i hi0 = _mm256_mullo_epi32 (from_srgb_8x (ch_hi0), ap1);
+        __m256i lo0 = _mm256_mullo_epi32 (from_srgb_8x (ch_lo0), ap1);
+        __m256i hi1 = _mm256_mullo_epi32 (from_srgb_8x (ch_hi1), ap1);
+        __m256i lo1 = _mm256_or_si256 (_mm256_slli_epi32 (al, 8), m8);
+
+        store_8px_128bpp (dest_row + (size_t) i * 2, lo0, hi0, lo1, hi1);
+    }
+
+    for ( ; i < n; i++)
+    {
+        uint32_t p = src_row [i];
+        uint32_t alpha = alpha_high ? (p >> 24) : (p & 0xff);
+        uint64_t h0 = _smol_from_srgb_lut [(p >> (alpha_high ? 16 : 24)) & 0xff] * (alpha + 1);
+        uint64_t l0 = _smol_from_srgb_lut [(p >> (alpha_high ? 8 : 16)) & 0xff] * (alpha + 1);
+        uint64_t h1 = _smol_from_srgb_lut [(p >> (alpha_high ? 0 : 8)) & 0xff] * (alpha + 1);
+
+        dest_row [(size_t) i * 2] = (h0 << 32) | l0;
+        dest_row [(size_t) i * 2 + 1] = (h1 << 32) | ((uint64_t) alpha << 8) | 0xff;
+    }
+}
+
+SMOL_REPACK_ROW_DEF (1234,  32, 32, UNASSOCIATED, COMPRESSED,
+                     1234, 128, 64, PREMUL16,     LINEAR) {
+    unpack_u32_to_p16l_avx2 (src_row, dest_row,
+                             (uint32_t) ((dest_row_max - dest_row) / 2), FALSE);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234,  32, 32, UNASSOCIATED, COMPRESSED,
+                     2341, 128, 64, PREMUL16,     LINEAR) {
+    unpack_u32_to_p16l_avx2 (src_row, dest_row,
+                             (uint32_t) ((dest_row_max - dest_row) / 2), TRUE);
+} SMOL_REPACK_ROW_DEF_END
+
+/* Unpack 32bpp PREMUL8 COMPRESSED -> PREMUL8 LINEAR: unpremultiply
+ * (compressed), linearize, re-premultiply (linear). */
+static SMOL_INLINE void
+unpack_p32_to_p8l_avx2 (const uint32_t * SMOL_RESTRICT src_row,
+                        uint64_t * SMOL_RESTRICT dest_row,
+                        uint32_t n, int alpha_high)
+{
+    const __m256i m8 = _mm256_set1_epi32 (0xff);
+    const __m256i m11 = _mm256_set1_epi32 (0x7ff);
+    const __m256i one = _mm256_set1_epi32 (1);
+    uint32_t i = 0;
+
+    for (; i + 8 <= n; i += 8)
+    {
+        __m256i p = _mm256_loadu_si256 ((const __m256i *) (src_row + i));
+        __m256i b0 = _mm256_and_si256 (p, m8);
+        __m256i b1 = _mm256_and_si256 (_mm256_srli_epi32 (p, 8), m8);
+        __m256i b2 = _mm256_and_si256 (_mm256_srli_epi32 (p, 16), m8);
+        __m256i b3 = _mm256_srli_epi32 (p, 24);
+        __m256i al = alpha_high ? b3 : b0;
+        __m256i ch_hi0 = alpha_high ? b2 : b3;
+        __m256i ch_lo0 = alpha_high ? b1 : b2;
+        __m256i ch_hi1 = alpha_high ? b0 : b1;
+        __m256i ap1 = _mm256_add_epi32 (al, one);
+        __m256i lut = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p8_lut, al, 4);
+        __m256i u_hi0, u_lo0, u_hi1, hi0, lo0, hi1, lo1;
+
+        u_hi0 = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_mullo_epi32 (ch_hi0, lut), INVERTED_DIV_SHIFT_P8), m8);
+        u_lo0 = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_mullo_epi32 (ch_lo0, lut), INVERTED_DIV_SHIFT_P8), m8);
+        u_hi1 = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_mullo_epi32 (ch_hi1, lut), INVERTED_DIV_SHIFT_P8), m8);
+
+        hi0 = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_mullo_epi32 (from_srgb_8x (u_hi0), ap1), 8), m11);
+        lo0 = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_mullo_epi32 (from_srgb_8x (u_lo0), ap1), 8), m11);
+        hi1 = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_mullo_epi32 (from_srgb_8x (u_hi1), ap1), 8), m11);
+        lo1 = _mm256_or_si256 (_mm256_slli_epi32 (al, 8), m8);
+
+        store_8px_128bpp (dest_row + (size_t) i * 2, lo0, hi0, lo1, hi1);
+    }
+
+    for ( ; i < n; i++)
+    {
+        uint32_t p = src_row [i];
+        uint32_t alpha = alpha_high ? (p >> 24) : (p & 0xff);
+        uint32_t lut = _smol_inv_div_p8_lut [alpha];
+        uint64_t h0 = ((p >> (alpha_high ? 16 : 24)) & 0xff);
+        uint64_t l0 = ((p >> (alpha_high ? 8 : 16)) & 0xff);
+        uint64_t h1 = ((p >> (alpha_high ? 0 : 8)) & 0xff);
+
+        h0 = ((h0 * lut) >> INVERTED_DIV_SHIFT_P8) & 0xff;
+        l0 = ((l0 * lut) >> INVERTED_DIV_SHIFT_P8) & 0xff;
+        h1 = ((h1 * lut) >> INVERTED_DIV_SHIFT_P8) & 0xff;
+        h0 = ((_smol_from_srgb_lut [h0] * (alpha + 1)) >> 8) & 0x7ff;
+        l0 = ((_smol_from_srgb_lut [l0] * (alpha + 1)) >> 8) & 0x7ff;
+        h1 = ((_smol_from_srgb_lut [h1] * (alpha + 1)) >> 8) & 0x7ff;
+
+        dest_row [(size_t) i * 2] = (h0 << 32) | l0;
+        dest_row [(size_t) i * 2 + 1] = (h1 << 32) | ((uint64_t) alpha << 8) | 0xff;
+    }
+}
+
+SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
+                     1234, 128, 64, PREMUL8, LINEAR) {
+    unpack_p32_to_p8l_avx2 (src_row, dest_row,
+                            (uint32_t) ((dest_row_max - dest_row) / 2), FALSE);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
+                     2341, 128, 64, PREMUL8, LINEAR) {
+    unpack_p32_to_p8l_avx2 (src_row, dest_row,
+                            (uint32_t) ((dest_row_max - dest_row) / 2), TRUE);
+} SMOL_REPACK_ROW_DEF_END
+
+/* PREMUL16 LINEAR -> 32bpp UNASSOCIATED COMPRESSED. */
+static SMOL_INLINE void
+repack_p16l_to_u32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
+                         uint32_t * SMOL_RESTRICT dest_row,
+                         uint32_t n, int order)
+{
+    const __m256i m8 = _mm256_set1_epi32 (0xff);
+    uint32_t i = 0;
+
+    for (; i + 8 <= n; i += 8)
+    {
+        __m256i w0a, w1a, w0b, w1b, la, lb, alpha_a, alpha_b;
+        __m256i lut_a, lut_b, t0a, t1a, t0b, t1b, s0a, s1a, s0b, s1b;
+        __m256i outa, outb;
+
+        load_8px_128bpp (src_row + (size_t) i * 2, &w0a, &w1a, &w0b, &w1b);
+
+        la = _mm256_shuffle_epi32 (w1a, 0x88);
+        lb = _mm256_shuffle_epi32 (w1b, 0x88);
+        alpha_a = _mm256_and_si256 (_mm256_srli_epi32 (la, 8), m8);
+        alpha_b = _mm256_and_si256 (_mm256_srli_epi32 (lb, 8), m8);
+
+        lut_a = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p16l_lut, alpha_a, 4);
+        lut_b = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p16l_lut, alpha_b, 4);
+
+        {
+            __m256i lut64_a = _mm256_unpacklo_epi32 (lut_a, _mm256_setzero_si256 ());
+            __m256i lut64_b = _mm256_unpacklo_epi32 (lut_b, _mm256_setzero_si256 ());
+
+            t0a = unpremul_word_8x (w0a, lut64_a, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+            t1a = unpremul_word_8x (w1a, lut64_a, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+            t0b = unpremul_word_8x (w0b, lut64_b, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+            t1b = unpremul_word_8x (w1b, lut64_b, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+        }
+
+        /* Both lanes of each word are <= 0x7ff dwords; convert both at
+         * once (word 1's low lane result is discarded). */
+        s0a = to_srgb_8x (t0a);
+        s1a = to_srgb_8x (t1a);
+        s0b = to_srgb_8x (t0b);
+        s1b = to_srgb_8x (t1b);
+
+        outa = pack_order_8x (_mm256_shuffle_epi32 (s0a, 0xDD),
+                              _mm256_shuffle_epi32 (s0a, 0x88),
+                              _mm256_shuffle_epi32 (s1a, 0xDD),
+                              alpha_a, order);
+        outb = pack_order_8x (_mm256_shuffle_epi32 (s0b, 0xDD),
+                              _mm256_shuffle_epi32 (s0b, 0x88),
+                              _mm256_shuffle_epi32 (s1b, 0xDD),
+                              alpha_b, order);
+
+        _mm256_storeu_si256 ((__m256i *) (dest_row + i),
+                             _mm256_unpacklo_epi64 (outa, outb));
+    }
+
+    for (; i < n; i++)
+    {
+        const uint64_t *s = src_row + (size_t) i * 2;
+        uint32_t alpha = (uint8_t) (s [1] >> 8);
+        uint32_t lut = _smol_inv_div_p16l_lut [alpha];
+        uint64_t t0 = ((s [0] * lut) >> INVERTED_DIV_SHIFT_P16L) & 0x000007ff000007ffULL;
+        uint64_t t1 = ((s [1] * lut) >> INVERTED_DIV_SHIFT_P16L) & 0x000007ff000007ffULL;
+        uint32_t c1 = _smol_to_srgb_lut [t0 >> 32];
+        uint32_t c2 = _smol_to_srgb_lut [t0 & 0xffff];
+        uint32_t c3 = _smol_to_srgb_lut [t1 >> 32];
+
+        dest_row [i] = pack_order_1x (c1, c2, c3, alpha, order);
+    }
+}
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,     LINEAR,
+                     1234,  32, 32, UNASSOCIATED, COMPRESSED) {
+    repack_p16l_to_u32_avx2 (src_row, dest_row,
+                             (uint32_t) (dest_row_max - dest_row), 0);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,     LINEAR,
+                     3214,  32, 32, UNASSOCIATED, COMPRESSED) {
+    repack_p16l_to_u32_avx2 (src_row, dest_row,
+                             (uint32_t) (dest_row_max - dest_row), 1);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,     LINEAR,
+                     4123,  32, 32, UNASSOCIATED, COMPRESSED) {
+    repack_p16l_to_u32_avx2 (src_row, dest_row,
+                             (uint32_t) (dest_row_max - dest_row), 2);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,     LINEAR,
+                     4321,  32, 32, UNASSOCIATED, COMPRESSED) {
+    repack_p16l_to_u32_avx2 (src_row, dest_row,
+                             (uint32_t) (dest_row_max - dest_row), 3);
+} SMOL_REPACK_ROW_DEF_END
+
+/* PREMUL8 LINEAR -> 32bpp PREMUL8 COMPRESSED. */
+static SMOL_INLINE void
+repack_p8l_to_p32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
+                        uint32_t * SMOL_RESTRICT dest_row,
+                        uint32_t n, int order)
+{
+    const __m256i m8 = _mm256_set1_epi32 (0xff);
+    const __m256i one = _mm256_set1_epi32 (1);
+    uint32_t i = 0;
+
+    for (; i + 8 <= n; i += 8)
+    {
+        __m256i w0a, w1a, w0b, w1b, la, lb, alpha_a, alpha_b;
+        __m256i lut_a, lut_b, t0a, t1a, t0b, t1b;
+        __m256i ap1_a, ap1_b, outa, outb;
+        __m256i lut64_a, lut64_b;
+
+        load_8px_128bpp (src_row + (size_t) i * 2, &w0a, &w1a, &w0b, &w1b);
+
+        la = _mm256_shuffle_epi32 (w1a, 0x88);
+        lb = _mm256_shuffle_epi32 (w1b, 0x88);
+        alpha_a = _mm256_and_si256 (_mm256_srli_epi32 (la, 8), m8);
+        alpha_b = _mm256_and_si256 (_mm256_srli_epi32 (lb, 8), m8);
+
+        lut_a = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p8l_lut, alpha_a, 4);
+        lut_b = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p8l_lut, alpha_b, 4);
+
+        _mm256_unpacklo_epi32 (lut_a, _mm256_setzero_si256 ());
+        _mm256_unpacklo_epi32 (lut_b, _mm256_setzero_si256 ());
+
+        t0a = unpremul_word_8x (w0a, lut64_a, INVERTED_DIV_SHIFT_P8L, 0x7ff);
+        t1a = unpremul_word_8x (w1a, lut64_a, INVERTED_DIV_SHIFT_P8L, 0x7ff);
+        t0b = unpremul_word_8x (w0b, lut64_b, INVERTED_DIV_SHIFT_P8L, 0x7ff);
+        t1b = unpremul_word_8x (w1b, lut64_b, INVERTED_DIV_SHIFT_P8L, 0x7ff);
+
+        t0a = to_srgb_8x (t0a);
+        t1a = to_srgb_8x (t1a);
+        t0b = to_srgb_8x (t0b);
+        t1b = to_srgb_8x (t1b);
+
+        /* Re-premultiply (compressed): ((c + 1) * (alpha + 1) - 1) >> 8.
+         * ap1 must sit in every dword lane of the word vectors. */
+        ap1_a = _mm256_add_epi32 (_mm256_shuffle_epi32 (alpha_a, 0x50), one);
+        ap1_b = _mm256_add_epi32 (_mm256_shuffle_epi32 (alpha_b, 0x50), one);
+
+        t0a = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
+            _mm256_mullo_epi32 (_mm256_add_epi32 (t0a, one), ap1_a), one), 8), m8);
+        t1a = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
+            _mm256_mullo_epi32 (_mm256_add_epi32 (t1a, one), ap1_a), one), 8), m8);
+        t0b = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
+            _mm256_mullo_epi32 (_mm256_add_epi32 (t0b, one), ap1_b), one), 8), m8);
+        t1b = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
+            _mm256_mullo_epi32 (_mm256_add_epi32 (t1b, one), ap1_b), one), 8), m8);
+
+        outa = pack_order_8x (_mm256_shuffle_epi32 (t0a, 0xDD),
+                              _mm256_shuffle_epi32 (t0a, 0x88),
+                              _mm256_shuffle_epi32 (t1a, 0xDD),
+                              alpha_a, order);
+        outb = pack_order_8x (_mm256_shuffle_epi32 (t0b, 0xDD),
+                              _mm256_shuffle_epi32 (t0b, 0x88),
+                              _mm256_shuffle_epi32 (t1b, 0xDD),
+                              alpha_b, order);
+
+        _mm256_storeu_si256 ((__m256i *) (dest_row + i),
+                             _mm256_unpacklo_epi64 (outa, outb));
+    }
+
+    for ( ; i < n; i++)
+    {
+        const uint64_t *s = src_row + (size_t) i * 2;
+        uint32_t alpha = (uint8_t) (s [1] >> 8);
+        uint32_t lut = _smol_inv_div_p8l_lut [alpha];
+        uint64_t t0 = ((s [0] * lut) >> INVERTED_DIV_SHIFT_P8L) & 0x000007ff000007ffULL;
+        uint64_t t1 = ((s [1] * lut) >> INVERTED_DIV_SHIFT_P8L) & 0x000007ff000007ffULL;
+        uint32_t c1 = (((_smol_to_srgb_lut [t0 >> 32] + 1) * (alpha + 1) - 1) >> 8) & 0xff;
+        uint32_t c2 = (((_smol_to_srgb_lut [t0 & 0xffff] + 1) * (alpha + 1) - 1) >> 8) & 0xff;
+        uint32_t c3 = (((_smol_to_srgb_lut [t1 >> 32] + 1) * (alpha + 1) - 1) >> 8) & 0xff;
+
+        dest_row [i] = pack_order_1x (c1, c2, c3, alpha, order);
+    }
+}
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8, LINEAR,
+                     1234,  32, 32, PREMUL8, COMPRESSED) {
+    repack_p8l_to_p32_avx2 (src_row, dest_row,
+                            (uint32_t) (dest_row_max - dest_row), 0);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8, LINEAR,
+                     4123,  32, 32, PREMUL8, COMPRESSED) {
+    repack_p8l_to_p32_avx2 (src_row, dest_row,
+                            (uint32_t) (dest_row_max - dest_row), 2);
+} SMOL_REPACK_ROW_DEF_END
+
+SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8, LINEAR,
+                     4321,  32, 32, PREMUL8, COMPRESSED) {
+    repack_p8l_to_p32_avx2 (src_row, dest_row,
+                            (uint32_t) (dest_row_max - dest_row), 3);
+} SMOL_REPACK_ROW_DEF_END
+
 /* --------------- *
  * Function tables *
  * --------------- */
@@ -3507,6 +3972,19 @@ static const SmolRepackMeta repack_meta [] =
     R (1234, 128, PREMUL16,     COMPRESSED, 3214,  32, UNASSOCIATED,  COMPRESSED),
     R (1234, 128, PREMUL16,     COMPRESSED, 4123,  32, UNASSOCIATED,  COMPRESSED),
     R (1234, 128, PREMUL16,     COMPRESSED, 4321,  32, UNASSOCIATED,  COMPRESSED),
+
+    R (1234,  32, UNASSOCIATED, COMPRESSED, 1234, 128, PREMUL16,      LINEAR),
+    R (1234,  32, UNASSOCIATED, COMPRESSED, 2341, 128, PREMUL16,      LINEAR),
+    R (1234,  32, PREMUL8,      COMPRESSED, 1234, 128, PREMUL8,       LINEAR),
+    R (1234,  32, PREMUL8,      COMPRESSED, 2341, 128, PREMUL8,       LINEAR),
+
+    R (1234, 128, PREMUL16,     LINEAR,     1234,  32, UNASSOCIATED,  COMPRESSED),
+    R (1234, 128, PREMUL16,     LINEAR,     3214,  32, UNASSOCIATED,  COMPRESSED),
+    R (1234, 128, PREMUL16,     LINEAR,     4123,  32, UNASSOCIATED,  COMPRESSED),
+    R (1234, 128, PREMUL16,     LINEAR,     4321,  32, UNASSOCIATED,  COMPRESSED),
+    R (1234, 128, PREMUL8,      LINEAR,     1234,  32, PREMUL8,       COMPRESSED),
+    R (1234, 128, PREMUL8,      LINEAR,     4123,  32, PREMUL8,       COMPRESSED),
+    R (1234, 128, PREMUL8,      LINEAR,     4321,  32, PREMUL8,       COMPRESSED),
 
     SMOL_REPACK_META_LAST
 };
