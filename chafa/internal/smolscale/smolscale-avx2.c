@@ -3450,13 +3450,13 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
  * table as the generic code. */
 
 static SMOL_INLINE __m256i
-from_srgb_8x (__m256i c)
+from_srgb_16x (__m256i c)
 {
-    __m256i m = _mm256_srli_epi32 (_mm256_add_epi32 (
-        _mm256_mullo_epi32 (c, c), _mm256_set1_epi32 (16)), 5);
+    __m256i m = _mm256_srli_epi16 (_mm256_add_epi16 (
+        _mm256_mullo_epi16 (c, c), _mm256_set1_epi16 (16)), 5);
 
-    m = _mm256_add_epi32 (m, _mm256_srli_epi32 (m, 7));
-    return _mm256_max_epi32 (m, c);
+    m = _mm256_add_epi16 (m, _mm256_srli_epi16 (m, 7));
+    return _mm256_max_epu16 (m, c);
 }
 
 static SMOL_INLINE __m256i
@@ -3582,24 +3582,29 @@ unpack_u32_to_p16l_avx2 (const uint32_t * SMOL_RESTRICT src_row,
                          uint32_t n, int alpha_high)
 {
     const __m256i m8 = _mm256_set1_epi32 (0xff);
+    const __m256i m16 = _mm256_set1_epi32 (0xffff);
+    const __m256i mbytes = _mm256_set1_epi32 (0x00ff00ff);
     const __m256i one = _mm256_set1_epi32 (1);
     uint32_t i = 0;
 
     for (; i + 8 <= n; i += 8)
     {
         __m256i p = _mm256_loadu_si256 ((const __m256i *) (src_row + i));
-        __m256i b0 = _mm256_and_si256 (p, m8);
-        __m256i b1 = _mm256_and_si256 (_mm256_srli_epi32 (p, 8), m8);
-        __m256i b2 = _mm256_and_si256 (_mm256_srli_epi32 (p, 16), m8);
-        __m256i b3 = _mm256_srli_epi32 (p, 24);
-        __m256i al = alpha_high ? b3 : b0;
-        __m256i ch_hi0 = alpha_high ? b2 : b3;
-        __m256i ch_lo0 = alpha_high ? b1 : b2;
-        __m256i ch_hi1 = alpha_high ? b0 : b1;
+        __m256i fe = from_srgb_16x (_mm256_and_si256 (p, mbytes));
+        __m256i fo = from_srgb_16x (_mm256_and_si256 (
+            _mm256_srli_epi32 (p, 8), mbytes));
+        __m256i al = alpha_high ? _mm256_srli_epi32 (p, 24)
+                                : _mm256_and_si256 (p, m8);
+        __m256i f_hi0 = alpha_high ? _mm256_srli_epi32 (fe, 16)   /* F(b2) */
+                                   : _mm256_srli_epi32 (fo, 16);  /* F(b3) */
+        __m256i f_lo0 = alpha_high ? _mm256_and_si256 (fo, m16)   /* F(b1) */
+                                   : _mm256_srli_epi32 (fe, 16);  /* F(b2) */
+        __m256i f_hi1 = alpha_high ? _mm256_and_si256 (fe, m16)   /* F(b0) */
+                                   : _mm256_and_si256 (fo, m16);  /* F(b1) */
         __m256i ap1 = _mm256_add_epi32 (al, one);
-        __m256i hi0 = _mm256_mullo_epi32 (from_srgb_8x (ch_hi0), ap1);
-        __m256i lo0 = _mm256_mullo_epi32 (from_srgb_8x (ch_lo0), ap1);
-        __m256i hi1 = _mm256_mullo_epi32 (from_srgb_8x (ch_hi1), ap1);
+        __m256i hi0 = _mm256_mullo_epi32 (f_hi0, ap1);
+        __m256i lo0 = _mm256_mullo_epi32 (f_lo0, ap1);
+        __m256i hi1 = _mm256_mullo_epi32 (f_hi1, ap1);
         __m256i lo1 = _mm256_or_si256 (_mm256_slli_epi32 (al, 8), m8);
 
         store_8px_128bpp (dest_row + (size_t) i * 2, lo0, hi0, lo1, hi1);
@@ -3666,11 +3671,11 @@ unpack_p32_to_p8l_avx2 (const uint32_t * SMOL_RESTRICT src_row,
             _mm256_mullo_epi32 (ch_hi1, lut), INVERTED_DIV_SHIFT_P8), m8);
 
         hi0 = _mm256_and_si256 (_mm256_srli_epi32 (
-            _mm256_mullo_epi32 (from_srgb_8x (u_hi0), ap1), 8), m11);
+            _mm256_mullo_epi32 (from_srgb_16x (u_hi0), ap1), 8), m11);
         lo0 = _mm256_and_si256 (_mm256_srli_epi32 (
-            _mm256_mullo_epi32 (from_srgb_8x (u_lo0), ap1), 8), m11);
+            _mm256_mullo_epi32 (from_srgb_16x (u_lo0), ap1), 8), m11);
         hi1 = _mm256_and_si256 (_mm256_srli_epi32 (
-            _mm256_mullo_epi32 (from_srgb_8x (u_hi1), ap1), 8), m11);
+            _mm256_mullo_epi32 (from_srgb_16x (u_hi1), ap1), 8), m11);
         lo1 = _mm256_or_si256 (_mm256_slli_epi32 (al, 8), m8);
 
         store_8px_128bpp (dest_row + (size_t) i * 2, lo0, hi0, lo1, hi1);
@@ -3720,47 +3725,40 @@ repack_p16l_to_u32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
 
     for (; i + 8 <= n; i += 8)
     {
-        __m256i w0a, w1a, w0b, w1b, la, lb, alpha_a, alpha_b;
-        __m256i lut_a, lut_b, t0a, t1a, t0b, t1b, s0a, s1a, s0b, s1b;
+        __m256i w0a, w1a, w0b, w1b, la, lb, alpha;
+        __m256i lut, lut64_a, lut64_b, t0a, t1a, t0b, t1b, s0a, s1, s0b;
         __m256i outa, outb;
 
         load_8px_128bpp (src_row + (size_t) i * 2, &w0a, &w1a, &w0b, &w1b);
 
         la = _mm256_shuffle_epi32 (w1a, 0x88);
         lb = _mm256_shuffle_epi32 (w1b, 0x88);
-        alpha_a = _mm256_and_si256 (_mm256_srli_epi32 (la, 8), m8);
-        alpha_b = _mm256_and_si256 (_mm256_srli_epi32 (lb, 8), m8);
+        alpha = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_blend_epi32 (la, lb, 0xCC), 8), m8);
 
-        lut_a = _mm256_i32gather_epi32 (
-            (const int *) (const void *) _smol_inv_div_p16l_lut, alpha_a, 4);
-        lut_b = _mm256_i32gather_epi32 (
-            (const int *) (const void *) _smol_inv_div_p16l_lut, alpha_b, 4);
+        lut = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p16l_lut, alpha, 4);
+        lut64_a = _mm256_unpacklo_epi32 (lut, _mm256_setzero_si256 ());
+        lut64_b = _mm256_unpackhi_epi32 (lut, _mm256_setzero_si256 ());
 
-        {
-            __m256i lut64_a = _mm256_unpacklo_epi32 (lut_a, _mm256_setzero_si256 ());
-            __m256i lut64_b = _mm256_unpacklo_epi32 (lut_b, _mm256_setzero_si256 ());
+        t0a = unpremul_word_8x (w0a, lut64_a, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+        t1a = unpremul_word_8x (w1a, lut64_a, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+        t0b = unpremul_word_8x (w0b, lut64_b, INVERTED_DIV_SHIFT_P16L, 0x7ff);
+        t1b = unpremul_word_8x (w1b, lut64_b, INVERTED_DIV_SHIFT_P16L, 0x7ff);
 
-            t0a = unpremul_word_8x (w0a, lut64_a, INVERTED_DIV_SHIFT_P16L, 0x7ff);
-            t1a = unpremul_word_8x (w1a, lut64_a, INVERTED_DIV_SHIFT_P16L, 0x7ff);
-            t0b = unpremul_word_8x (w0b, lut64_b, INVERTED_DIV_SHIFT_P16L, 0x7ff);
-            t1b = unpremul_word_8x (w1b, lut64_b, INVERTED_DIV_SHIFT_P16L, 0x7ff);
-        }
-
-        /* Both lanes of each word are <= 0x7ff dwords; convert both at
-         * once (word 1's low lane result is discarded). */
         s0a = to_srgb_8x (t0a);
-        s1a = to_srgb_8x (t1a);
         s0b = to_srgb_8x (t0b);
-        s1b = to_srgb_8x (t1b);
+        s1 = to_srgb_8x (_mm256_blend_epi32 (
+            _mm256_shuffle_epi32 (t1a, 0xDD),
+            _mm256_shuffle_epi32 (t1b, 0xDD), 0xCC));
 
         outa = pack_order_8x (_mm256_shuffle_epi32 (s0a, 0xDD),
                               _mm256_shuffle_epi32 (s0a, 0x88),
-                              _mm256_shuffle_epi32 (s1a, 0xDD),
-                              alpha_a, order);
+                              s1, alpha, order);
         outb = pack_order_8x (_mm256_shuffle_epi32 (s0b, 0xDD),
                               _mm256_shuffle_epi32 (s0b, 0x88),
-                              _mm256_shuffle_epi32 (s1b, 0xDD),
-                              alpha_b, order);
+                              _mm256_shuffle_epi32 (s1, 0xEE),
+                              _mm256_shuffle_epi32 (alpha, 0xEE), order);
 
         _mm256_storeu_si256 ((__m256i *) (dest_row + i),
                              _mm256_unpacklo_epi64 (outa, outb));
@@ -3812,30 +3810,26 @@ repack_p8l_to_p32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
                         uint32_t n, int order)
 {
     const __m256i m8 = _mm256_set1_epi32 (0xff);
-    const __m256i one = _mm256_set1_epi32 (1);
+    const __m256i one16 = _mm256_set1_epi16 (1);
     uint32_t i = 0;
 
     for (; i + 8 <= n; i += 8)
     {
-        __m256i w0a, w1a, w0b, w1b, la, lb, alpha_a, alpha_b;
-        __m256i lut_a, lut_b, t0a, t1a, t0b, t1b;
+        __m256i w0a, w1a, w0b, w1b, la, lb, alpha;
+        __m256i lut, lut64_a, lut64_b, t0a, t1a, t0b, t1b, t1;
         __m256i ap1_a, ap1_b, outa, outb;
-        __m256i lut64_a, lut64_b;
 
         load_8px_128bpp (src_row + (size_t) i * 2, &w0a, &w1a, &w0b, &w1b);
 
         la = _mm256_shuffle_epi32 (w1a, 0x88);
         lb = _mm256_shuffle_epi32 (w1b, 0x88);
-        alpha_a = _mm256_and_si256 (_mm256_srli_epi32 (la, 8), m8);
-        alpha_b = _mm256_and_si256 (_mm256_srli_epi32 (lb, 8), m8);
+        alpha = _mm256_and_si256 (_mm256_srli_epi32 (
+            _mm256_blend_epi32 (la, lb, 0xCC), 8), m8);
 
-        lut_a = _mm256_i32gather_epi32 (
-            (const int *) (const void *) _smol_inv_div_p8l_lut, alpha_a, 4);
-        lut_b = _mm256_i32gather_epi32 (
-            (const int *) (const void *) _smol_inv_div_p8l_lut, alpha_b, 4);
-
-        _mm256_unpacklo_epi32 (lut_a, _mm256_setzero_si256 ());
-        _mm256_unpacklo_epi32 (lut_b, _mm256_setzero_si256 ());
+        lut = _mm256_i32gather_epi32 (
+            (const int *) (const void *) _smol_inv_div_p8l_lut, alpha, 4);
+        lut64_a = _mm256_unpacklo_epi32 (lut, _mm256_setzero_si256 ());
+        lut64_b = _mm256_unpackhi_epi32 (lut, _mm256_setzero_si256 ());
 
         t0a = unpremul_word_8x (w0a, lut64_a, INVERTED_DIV_SHIFT_P8L, 0x7ff);
         t1a = unpremul_word_8x (w1a, lut64_a, INVERTED_DIV_SHIFT_P8L, 0x7ff);
@@ -3843,32 +3837,34 @@ repack_p8l_to_p32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
         t1b = unpremul_word_8x (w1b, lut64_b, INVERTED_DIV_SHIFT_P8L, 0x7ff);
 
         t0a = to_srgb_8x (t0a);
-        t1a = to_srgb_8x (t1a);
         t0b = to_srgb_8x (t0b);
-        t1b = to_srgb_8x (t1b);
+        t1 = to_srgb_8x (_mm256_blend_epi32 (
+            _mm256_shuffle_epi32 (t1a, 0xDD),
+            _mm256_shuffle_epi32 (t1b, 0xDD), 0xCC));
 
-        /* Re-premultiply (compressed): ((c + 1) * (alpha + 1) - 1) >> 8.
-         * ap1 must sit in every dword lane of the word vectors. */
-        ap1_a = _mm256_add_epi32 (_mm256_shuffle_epi32 (alpha_a, 0x50), one);
-        ap1_b = _mm256_add_epi32 (_mm256_shuffle_epi32 (alpha_b, 0x50), one);
+        /* Re-premultiply (compressed): ((c + 1) * (alpha + 1) - 1) >> 8,
+         * in 16-bit lanes: the one overflowing product, 256 * 256, wraps
+         * to 0 and borrows to 0xffff, which is what we want. The u32
+         * lanes' high halves come out zero, so no masking is needed. */
 
-        t0a = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
-            _mm256_mullo_epi32 (_mm256_add_epi32 (t0a, one), ap1_a), one), 8), m8);
-        t1a = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
-            _mm256_mullo_epi32 (_mm256_add_epi32 (t1a, one), ap1_a), one), 8), m8);
-        t0b = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
-            _mm256_mullo_epi32 (_mm256_add_epi32 (t0b, one), ap1_b), one), 8), m8);
-        t1b = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_sub_epi32 (
-            _mm256_mullo_epi32 (_mm256_add_epi32 (t1b, one), ap1_b), one), 8), m8);
+        ap1_a = _mm256_add_epi16 (_mm256_shuffle_epi32 (alpha, 0x50), one16);
+        ap1_b = _mm256_add_epi16 (_mm256_shuffle_epi32 (alpha, 0xFA), one16);
+
+        t0a = _mm256_srli_epi16 (_mm256_sub_epi16 (_mm256_mullo_epi16 (
+            _mm256_add_epi16 (t0a, one16), ap1_a), one16), 8);
+        t0b = _mm256_srli_epi16 (_mm256_sub_epi16 (_mm256_mullo_epi16 (
+            _mm256_add_epi16 (t0b, one16), ap1_b), one16), 8);
+        t1 = _mm256_srli_epi16 (_mm256_sub_epi16 (_mm256_mullo_epi16 (
+            _mm256_add_epi16 (t1, one16),
+            _mm256_add_epi16 (alpha, one16)), one16), 8);
 
         outa = pack_order_8x (_mm256_shuffle_epi32 (t0a, 0xDD),
                               _mm256_shuffle_epi32 (t0a, 0x88),
-                              _mm256_shuffle_epi32 (t1a, 0xDD),
-                              alpha_a, order);
+                              t1, alpha, order);
         outb = pack_order_8x (_mm256_shuffle_epi32 (t0b, 0xDD),
                               _mm256_shuffle_epi32 (t0b, 0x88),
-                              _mm256_shuffle_epi32 (t1b, 0xDD),
-                              alpha_b, order);
+                              _mm256_shuffle_epi32 (t1, 0xEE),
+                              _mm256_shuffle_epi32 (alpha, 0xEE), order);
 
         _mm256_storeu_si256 ((__m256i *) (dest_row + i),
                              _mm256_unpacklo_epi64 (outa, outb));
