@@ -219,17 +219,20 @@ precalc_boxes_array (uint32_t *array,
     stride = frac_stepF / (uint64_t) SMOL_BIG_MUL;
     f = (frac_stepF / SMOL_SMALL_MUL) % SMOL_SMALL_MUL;
 
-    /* We divide by (b + 1) instead of just (b) to avoid overflows in
-     * scale_128bpp_half(), which would affect horizontal box scaling. The
-     * fudge factor counters limited precision in the inverted division
-     * operation. It causes 16-bit values to undershoot by less than 127/65535
-     * (<.2%). Since the final output is 8-bit, and rounding neutralizes the
-     * error, this doesn't matter. */
+    /* Floor division by (b + 1) guarantees the normalization always
+     * undershoots: 255 * span_step <= 256 * (b + 1) - 1, so accum *
+     * span_mul stays below vmax * SMOL_BOXES_MULTIPLIER and the
+     * + SMOL_BOXES_MULTIPLIER / 2 rounding in scale_64bpp() /
+     * scale_128bpp_half() can never push a lane past its canonical
+     * maximum. Rounding this division to nearest instead can overshoot
+     * for spans beyond ~570 px, spilling the premul16 alpha lane past
+     * 0xffff, which the compositor would read back as alpha 0. The
+     * undershoot costs under 1 LSB (16-bit) at ratios below 256x. */
 
     a = (SMOL_BOXES_MULTIPLIER * 255);
     b = ((stride * 255) + ((f * 255) / 256));
     *span_step = frac_stepF / SMOL_SMALL_MUL;
-    *span_mul = (a + (b / 2)) / (b + 1);
+    *span_mul = a / (b + 1);
 
     /* Left fringe */
     i = 0;
@@ -3373,6 +3376,8 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
 {
     const __m256i mask24 = _mm256_set1_epi32 (0x00ffffff);
     const __m256i ff = _mm256_set1_epi32 (0xff);
+    const __m256i x100 = _mm256_set1_epi32 (0x100);
+    const __m256i r128 = _mm256_set1_epi32 (128);
     const __m256i opv = _mm256_set1_epi32 (opacity);
     const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
     uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
@@ -3384,21 +3389,28 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     {
         __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + (size_t) i * 2));
         __m256i d = _mm256_loadu_si256 ((const __m256i *) (dest_row + (size_t) i * 2));
-        __m256i a, w;
+        __m256i a, nz, w;
 
         if (scale_opacity)
             s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
                                                      SMOL_SUBPIXEL_SHIFT),
                                   mask24);
 
-        /* Broadcast each pixel's source alpha across its four lanes, then: w = 0xff - a. */
+        /* Broadcast each pixel's source alpha across its four lanes. */
         a = _mm256_shuffle_epi32 (_mm256_srli_epi32 (s, 8), SMOL_4X2BIT (2, 2, 2, 2));
         a = _mm256_and_si256 (a, ff);
-        w = _mm256_sub_epi32 (ff, a);
 
-        /* dest = src + dest * (0xff - a) >> 8. */
-        d = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (d, w), 8), mask24);
-        d = _mm256_add_epi32 (s, d);
+        /* nz = (a + 0xff) >> 8: 0 if a == 0, else 1. w = 0x100 - a - nz:
+         * 256 when a == 0 so dest passes through bit-exactly, else 255 - a.
+         * Must stay in lockstep with the generic implementation. */
+        nz = _mm256_srli_epi32 (_mm256_add_epi32 (a, ff), 8);
+        w = _mm256_sub_epi32 (x100, _mm256_add_epi32 (a, nz));
+
+        /* dest = src * nz + (dest * w + 128) >> 8. */
+        d = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_add_epi32 (
+                                  _mm256_mullo_epi32 (d, w), r128), 8),
+                              mask24);
+        d = _mm256_add_epi32 (_mm256_mullo_epi32 (s, nz), d);
 
         _mm256_storeu_si256 ((__m256i *) (dest_row + (size_t) i * 2), d);
     }
@@ -3409,7 +3421,7 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     {
         uint64_t s0 = src_row [(size_t) i * 2];
         uint64_t s1 = src_row [(size_t) i * 2 + 1];
-        uint64_t a;
+        uint64_t a, nz, w;
 
         if (scale_opacity)
         {
@@ -3418,10 +3430,15 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
         }
 
         a = (s1 >> 8) & 0xff;
-        dest_row [(size_t) i * 2] = s0 + (((dest_row [(size_t) i * 2] * (0xff - a)) >> 8)
-                                          & 0x00ffffff00ffffffULL);
-        dest_row [(size_t) i * 2 + 1] = s1 + (((dest_row [(size_t) i * 2 + 1] * (0xff - a)) >> 8)
-                                              & 0x00ffffff00ffffffULL);
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;         /* 256 when a == 0, else 255 - a */
+
+        dest_row [(size_t) i * 2] = s0 * nz
+            + (((dest_row [(size_t) i * 2] * w + 0x0000008000000080ULL) >> 8)
+               & 0x00ffffff00ffffffULL);
+        dest_row [(size_t) i * 2 + 1] = s1 * nz
+            + (((dest_row [(size_t) i * 2 + 1] * w + 0x0000008000000080ULL) >> 8)
+               & 0x00ffffff00ffffffULL);
     }
 }
 

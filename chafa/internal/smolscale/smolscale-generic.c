@@ -174,17 +174,20 @@ precalc_boxes_array (uint32_t *array,
     stride = frac_stepF / (uint64_t) SMOL_BIG_MUL;
     f = (frac_stepF / SMOL_SMALL_MUL) % SMOL_SMALL_MUL;
 
-    /* We divide by (b + 1) instead of just (b) to avoid overflows in
-     * scale_128bpp_half(), which would affect horizontal box scaling. The
-     * fudge factor counters limited precision in the inverted division
-     * operation. It causes 16-bit values to undershoot by less than 127/65535
-     * (<.2%). Since the final output is 8-bit, and rounding neutralizes the
-     * error, this doesn't matter. */
+    /* Floor division by (b + 1) guarantees the normalization always
+     * undershoots: 255 * span_step <= 256 * (b + 1) - 1, so accum *
+     * span_mul stays below vmax * SMOL_BOXES_MULTIPLIER and the
+     * + SMOL_BOXES_MULTIPLIER / 2 rounding in scale_64bpp() /
+     * scale_128bpp_half() can never push a lane past its canonical
+     * maximum. Rounding this division to nearest instead can overshoot
+     * for spans beyond ~570 px, spilling the premul16 alpha lane past
+     * 0xffff, which the compositor would read back as alpha 0. The
+     * undershoot costs under 1 LSB (16-bit) at ratios below 256x. */
 
     a = (SMOL_BOXES_MULTIPLIER * 255);
     b = ((stride * 255) + ((f * 255) / 256));
     *span_step = frac_stepF / SMOL_SMALL_MUL;
-    *span_mul = (a + (b / 2)) / (b + 1);
+    *span_mul = a / (b + 1);
 
     /* Left fringe */
     i = 0;
@@ -3278,16 +3281,30 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
     for (i = 0; i < n_pixels; i++)
     {
         uint64_t s = src_row [i];
-        uint64_t a;
+        uint64_t a, nz, t;
 
         if (opacity < SMOL_SUBPIXEL_MUL)
             s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
 
         a = s & 0xff;
-        dest_row [i] = s + (((dest_row [i] * (0xff - a)) >> 8) & 0x00ff00ff00ff00ffULL);
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+
+        /* The raw-alpha p8 encoding wants dest weighted by (255 - a) / 255
+         * exactly, or dest decays with repeated compositing:
+         * round(v / 255) == ((v + 128) + ((v + 128) >> 8)) >> 8 for
+         * v <= 65662; fields stay below 65536, so nothing carries. a == 0
+         * then leaves dest unchanged, with s * nz squelching source color
+         * in case of invalid (non-premultiplied) input. */
+        t = dest_row [i] * (0xff - a) + 0x0080008000800080ULL;
+        dest_row [i] = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
     }
 }
 
+/* Unreachable: linear gamma always forces 128bpp storage (see
+ * pick_filter_params()), so the 64bpp linear slot is never dispatched.
+ * Kept for function table symmetry; like the pre-existing masks, it
+ * assumes fields hold <= 8-bit values. */
 static void
 composite_over_dest_p8l_64bpp (const uint64_t * SMOL_RESTRICT src_row,
                                uint64_t * SMOL_RESTRICT dest_row,
@@ -3302,13 +3319,17 @@ composite_over_dest_p8l_64bpp (const uint64_t * SMOL_RESTRICT src_row,
     for (i = 0; i < n_pixels; i++)
     {
         uint64_t s = src_row [i];
-        uint64_t a;
+        uint64_t a, nz, t;
 
         if (opacity < SMOL_SUBPIXEL_MUL)
             s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
 
         a = (s >> 3) & 0xff;
-        dest_row [i] = s + (((dest_row [i] * (0xff - a)) >> 8) & 0x00ff00ff00ff00ffULL);
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+
+        t = dest_row [i] * (0xff - a) + 0x0080008000800080ULL;
+        dest_row [i] = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
     }
 }
 
@@ -3327,7 +3348,7 @@ composite_over_dest_p8_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     {
         uint64_t s0 = src_row [i];
         uint64_t s1 = src_row [i + 1];
-        uint64_t a;
+        uint64_t a, nz, w, t0, t1;
 
         if (opacity < SMOL_SUBPIXEL_MUL)
         {
@@ -3336,8 +3357,18 @@ composite_over_dest_p8_128bpp (const uint64_t * SMOL_RESTRICT src_row,
         }
 
         a = s1 & 0xff;
-        dest_row [i]     = s0 + (((dest_row [i]     * (0xff - a)) >> 8) & 0x00ffffff00ffffffULL);
-        dest_row [i + 1] = s1 + (((dest_row [i + 1] * (0xff - a)) >> 8) & 0x00ffffff00ffffffULL);
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        w = 0xff - a;
+
+        /* Same exact rounded /255 dest weighting as the 64bpp variant;
+         * per-lane t < 2^17, so the neighboring lane's spill lands at
+         * bit >= 24 and the mask clears it. */
+        t0 = dest_row [i]     * w + 0x0000008000000080ULL;
+        t1 = dest_row [i + 1] * w + 0x0000008000000080ULL;
+        dest_row [i]     = s0 * nz
+            + (((t0 + ((t0 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
+        dest_row [i + 1] = s1 * nz
+            + (((t1 + ((t1 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
     }
 }
 
@@ -3356,7 +3387,7 @@ composite_over_dest_p8l_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     {
         uint64_t s0 = src_row [i];
         uint64_t s1 = src_row [i + 1];
-        uint64_t a;
+        uint64_t a, nz, w, a_d, v, a_out, cmax, c0, c1, c2;
 
         if (opacity < SMOL_SUBPIXEL_MUL)
         {
@@ -3364,9 +3395,48 @@ composite_over_dest_p8l_128bpp (const uint64_t * SMOL_RESTRICT src_row,
             s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
         }
 
-        a = (s1 >> 3) & 0xff;
-        dest_row [i]     = s0 + (((dest_row [i]     * (0xff - a)) >> 8) & 0x00ffffff00ffffffULL);
-        dest_row [i + 1] = s1 + (((dest_row [i + 1] * (0xff - a)) >> 8) & 0x00ffffff00ffffffULL);
+        /* The alpha lane holds (8-bit alpha) << 3. Round the extraction:
+         * a box-scaled source lane can sit one unit under a canonical
+         * multiple of 8, and truncation would turn that sub-LSB deficit
+         * into a whole alpha step (e.g. opaque 2040 -> 2039 -> 254).
+         * Lanes never exceed 2040, so this cannot round past 255. */
+        a = ((s1 & 0xffffffffULL) + 4) >> 3;
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;         /* 256 when a == 0, else 255 - a */
+
+        /* The alpha lane is raw (alpha << 3) and needs the exact rounded
+         * /255 weight. Dest rows are unpacked, never filtered, so the
+         * lane is an exact multiple of 8 and can be handled at 8-bit
+         * scale; a == 0 is then an identity with no guard needed. */
+        a_d = (dest_row [i + 1] >> 3) & 0xff;
+        v = a_d * (0xff - a) + 0x80;
+        a_out = a + ((v + (v >> 8)) >> 8);
+
+        /* The color lanes carry the (alpha + 1) inflated linear encoding
+         * (see premul_ul_to_p8l_128bpp()), so they take the rounded /256
+         * weight: w == 256 makes a == 0 an exact no-op, and s * nz
+         * removes the source's un-zeroed color (up to c >> 8). The two
+         * weight schemes can disagree by up to one alpha count, so each
+         * color lane is clamped to the largest value that unpremultiplies
+         * within the 11-bit linear range for a_out; without the clamp,
+         * the repack's masked unpremul wraps saturated colors to
+         * near-black. The clamp cannot disturb the a == 0 no-op: the
+         * dest's canonical lanes never exceed it. */
+        cmax = (2047 * (a_out + 1)) >> 8;
+
+        c0 = (s0 & 0xffffffffULL) * nz
+            + ((((dest_row [i] & 0xffffffffULL) * w + 0x80) >> 8) & 0xffffff);
+        c1 = (s0 >> 32) * nz
+            + ((((dest_row [i] >> 32) * w + 0x80) >> 8) & 0xffffff);
+        c2 = (s1 >> 32) * nz
+            + ((((dest_row [i + 1] >> 32) * w + 0x80) >> 8) & 0xffffff);
+
+        c0 ^= (c0 ^ cmax) & (0 - (uint64_t) (c0 > cmax));
+        c1 ^= (c1 ^ cmax) & (0 - (uint64_t) (c1 > cmax));
+        c2 ^= (c2 ^ cmax) & (0 - (uint64_t) (c2 > cmax));
+
+        dest_row [i]     = (c1 << 32) | c0;
+        dest_row [i + 1] = (c2 << 32) | (a_out << 3);
     }
 }
 
@@ -3385,7 +3455,7 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     {
         uint64_t s0 = src_row [i];
         uint64_t s1 = src_row [i + 1];
-        uint64_t a;
+        uint64_t a, nz, w;
 
         if (opacity < SMOL_SUBPIXEL_MUL)
         {
@@ -3394,8 +3464,19 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
         }
 
         a = (s1 >> 8) & 0xff;
-        dest_row [i]     = s0 + (((dest_row [i]     * (0xff - a)) >> 8) & 0x00ffffff00ffffffULL);
-        dest_row [i + 1] = s1 + (((dest_row [i + 1] * (0xff - a)) >> 8) & 0x00ffffff00ffffffULL);
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;         /* 256 when a == 0, else 255 - a */
+
+        /* The (alpha + 1) premultiplied encoding wants dest weighted by
+         * (255 - a) / 256, rounded to nearest so repeated compositing
+         * doesn't drift. a == 0 must leave dest untouched: w == 256 passes
+         * dest through bit-exactly, and s * nz cancels the source's
+         * un-zeroed premul color. Lane products stay below 2^32, so
+         * nothing carries across lanes. */
+        dest_row [i]     = s0 * nz + (((dest_row [i]     * w + 0x0000008000000080ULL) >> 8)
+                                      & 0x00ffffff00ffffffULL);
+        dest_row [i + 1] = s1 * nz + (((dest_row [i + 1] * w + 0x0000008000000080ULL) >> 8)
+                                      & 0x00ffffff00ffffffULL);
     }
 }
 
