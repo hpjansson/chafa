@@ -1090,8 +1090,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         scale_ctx->storage_type = SMOL_STORAGE_128BPP;
     }
 
-    if (scale_ctx->hdim.src_size_px > scale_ctx->hdim.dest_size_px * 8191
-        || scale_ctx->vdim.src_size_px > scale_ctx->vdim.dest_size_px * 8191)
+    if (scale_ctx->hdim.src_size_px > scale_ctx->hdim.placement_size_px * 8191
+        || scale_ctx->vdim.src_size_px > scale_ctx->vdim.placement_size_px * 8191)
     {
         /* Even with 128bpp, there's only enough bits to store 11-bit linearized
          * times 13 bits of summed pixels plus 8 bits of scratch space for
