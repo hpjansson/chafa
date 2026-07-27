@@ -42,7 +42,11 @@ static const SmolReorderMeta reorder_meta [SMOL_REORDER_MAX] =
     { { 1, 2, 3, 4 }, { 4, 2, 3, 0 } },
 
     { { 1, 2, 3, 4 }, { 1, 4, 2, 3 } },
-    { { 1, 2, 3, 4 }, { 3, 2, 4, 1 } }
+    { { 1, 2, 3, 4 }, { 3, 2, 4, 1 } },
+
+    { { 1, 2, 3, 4 }, { 3, 1, 2, 4 } },
+    { { 1, 2, 3, 0 }, { 3, 2, 1, 4 } },
+    { { 1, 2, 3, 0 }, { 3, 1, 2, 4 } }
 };
 
 /* Metadata for each pixel type. Storage type, number of channels, alpha type,
@@ -964,6 +968,48 @@ out:
         *dest_repack = dest_meta;
 }
 
+/* Finds a repack whose reorder, applied to src_pmeta's channel order,
+ * produces exactly dest_order. Used to unpack destination rows into the
+ * same internal channel order as the scaled source parts, so
+ * SMOL_COMPOSITE_SRC_OVER_DEST blends matching channels. */
+static const SmolRepackMeta *
+find_repack_to_order (const SmolImplementation **implementations,
+                      SmolStorageType src_storage, SmolStorageType dest_storage,
+                      SmolAlphaType src_alpha, SmolAlphaType dest_alpha,
+                      SmolGammaType src_gamma, SmolGammaType dest_gamma,
+                      const SmolPixelTypeMeta *src_pmeta,
+                      const uint8_t *dest_order)
+{
+    uint16_t sig, sig_mask;
+    int impl;
+
+    sig_mask = SMOL_REPACK_SIGNATURE_ANY_ORDER_MASK (1, 1, 1, 1, 1, 1);
+    sig = SMOL_MAKE_REPACK_SIGNATURE_ANY_ORDER (src_storage, src_alpha, src_gamma,
+                                                dest_storage, dest_alpha, dest_gamma);
+
+    for (impl = 0; implementations [impl]; impl++)
+    {
+        const SmolRepackMeta *meta = &implementations [impl]->repack_meta [0];
+
+        for (;; meta++)
+        {
+            uint8_t order [4];
+
+            meta = find_repack_match (meta, sig, sig_mask);
+            if (!meta)
+                break;
+
+            do_reorder (src_pmeta->order, order,
+                        reorder_meta [SMOL_REPACK_SIGNATURE_GET_REORDER (meta->signature)].dest);
+
+            if (!memcmp (order, dest_order, sizeof (order)))
+                return meta;
+        }
+    }
+
+    return NULL;
+}
+
 static void
 populate_clear_batch (SmolScaleCtx *scale_ctx)
 {
@@ -1072,15 +1118,21 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST)
     {
         const SmolRepackMeta *dest_unpack_rmeta;
+        uint8_t mid_order [4];
 
-        /* Need to unpack destination rows and composite on them */
+        /* Need to unpack destination rows and composite on them. The rows
+         * must be unpacked into the same internal channel order as the
+         * scaled source parts, so the compositor blends matching channels
+         * and pack_row_func inverts the unpack exactly. */
 
-        find_repacks (implementations,
-                      dest_pmeta->storage, scale_ctx->storage_type, dest_pmeta->storage,
-                      dest_pmeta->alpha, internal_alpha, dest_pmeta->alpha,
-                      SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type, SMOL_GAMMA_SRGB_COMPRESSED,
-                      dest_pmeta, dest_pmeta,
-                      &dest_unpack_rmeta, NULL);
+        do_reorder (src_pmeta->order, mid_order,
+                    reorder_meta [SMOL_REPACK_SIGNATURE_GET_REORDER (src_rmeta->signature)].dest);
+
+        dest_unpack_rmeta = find_repack_to_order (implementations,
+                                                  dest_pmeta->storage, scale_ctx->storage_type,
+                                                  dest_pmeta->alpha, internal_alpha,
+                                                  SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type,
+                                                  dest_pmeta, mid_order);
 
         SMOL_ASSERT (dest_unpack_rmeta != NULL);
 
