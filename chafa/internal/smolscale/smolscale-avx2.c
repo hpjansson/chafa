@@ -3611,10 +3611,10 @@ static const SmolImplementation implementation =
         { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 64bpp - generic */
 
         /* 128bpp: p16 in both gammas (alpha lane is gamma-independent and the
-         * source-over arithmetic is space-agnostic); p8/p8l fall back. */
+         * source-over arithmetic is space-agnostic). */
         {
             { NULL, NULL, composite_over_dest_p16_128bpp },  /* compressed */
-            { NULL, NULL, composite_over_dest_p16_128bpp }   /* linear */
+            { NULL, composite_over_dest_p16_128bpp, composite_over_dest_p16_128bpp }  /* linear */
         }
     },
     {

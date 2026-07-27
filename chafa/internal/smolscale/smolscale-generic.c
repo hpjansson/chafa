@@ -268,7 +268,7 @@ from_srgb_pixel_xxxa_128bpp (uint64_t * SMOL_RESTRICT pixel_inout)
     part = pixel_inout [1];
     pixel_inout [1] =
         ((uint64_t) _smol_from_srgb_lut [part >> 32] << 32)
-        | ((part & 0xffffffff) << 3);
+        | (((part & 0xffffffff) << 8) | 0xff);
 }
 
 static void
@@ -281,15 +281,6 @@ to_srgb_pixel_xxxa_128bpp (const uint64_t *pixel_in, uint64_t *pixel_out)
     pixel_out [1] =
         (((uint64_t) _smol_to_srgb_lut [pixel_in [1] >> 32]) << 32)
         | (pixel_in [1] & 0xffffffff);  /* FIXME: No need to preserve alpha? */
-}
-
-/* Fetches alpha from linear pixel. Input alpha is in the range [0x000..0x7ff].
- * Returned alpha is in the range [0x00..0xff], rounded to nearest. */
-static SMOL_INLINE uint8_t
-get_alpha_from_linear_xxxa_128bpp (const uint64_t * SMOL_RESTRICT pixel_in)
-{
-    uint16_t alpha = (pixel_in [1] + 4) >> 3;
-    return (uint8_t) (alpha - (alpha >> 8)); /* Turn 0x100 into 0xff */
 }
 
 /* ----------------- *
@@ -356,7 +347,7 @@ premul_ul_to_p8l_128bpp (uint64_t * SMOL_RESTRICT inout,
 {
     inout [0] = ((inout [0] * (alpha + 1)) >> 8) & 0x000007ff000007ff;
     inout [1] = (((inout [1] * (alpha + 1)) >> 8) & 0x000007ff00000000)
-        | (inout [1] & 0x000007ff);
+        | (inout [1] & 0x0000ffff);
 }
 
 static SMOL_INLINE void
@@ -672,7 +663,8 @@ SMOL_REPACK_ROW_DEF (123,   24,  8, PREMUL8, COMPRESSED,
         dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | alpha;
         from_srgb_pixel_xxxa_128bpp (dest_row);
         premul_ul_to_p8l_128bpp (dest_row, alpha);
-        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | (alpha << 3);
+        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL)
+            | ((uint64_t) alpha << 8) | 0xff;
         src_row += 3;
         dest_row += 2;
     }
@@ -710,7 +702,8 @@ SMOL_REPACK_ROW_DEF (123,   24,  8, PREMUL8, COMPRESSED,
         dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | alpha;
         from_srgb_pixel_xxxa_128bpp (dest_row);
         premul_ul_to_p8l_128bpp (dest_row, alpha);
-        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | (alpha << 3);
+        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL)
+            | ((uint64_t) alpha << 8) | 0xff;
         src_row += 3;
         dest_row += 2;
     }
@@ -748,7 +741,8 @@ SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
         dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | alpha;
         from_srgb_pixel_xxxa_128bpp (dest_row);
         premul_ul_to_p8l_128bpp (dest_row, alpha);
-        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | (alpha << 3);
+        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL)
+            | ((uint64_t) alpha << 8) | 0xff;
         dest_row += 2;
     }
 } SMOL_REPACK_ROW_DEF_END
@@ -785,7 +779,8 @@ SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
         dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | alpha;
         from_srgb_pixel_xxxa_128bpp (dest_row);
         premul_ul_to_p8l_128bpp (dest_row, alpha);
-        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | (alpha << 3);
+        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL)
+            | ((uint64_t) alpha << 8) | 0xff;
         dest_row += 2;
     }
 } SMOL_REPACK_ROW_DEF_END
@@ -1006,7 +1001,8 @@ SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
         dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | alpha;
         from_srgb_pixel_xxxa_128bpp (dest_row);
         premul_ul_to_p8l_128bpp (dest_row, alpha);
-        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | (alpha << 3);
+        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL)
+            | ((uint64_t) alpha << 8) | 0xff;
         dest_row += 2;
     }
 } SMOL_REPACK_ROW_DEF_END
@@ -1136,7 +1132,8 @@ SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
         dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | alpha;
         from_srgb_pixel_xxxa_128bpp (dest_row);
         premul_ul_to_p8l_128bpp (dest_row, alpha);
-        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL) | (alpha << 3);
+        dest_row [1] = (dest_row [1] & 0xffffffff00000000ULL)
+            | ((uint64_t) alpha << 8) | 0xff;
         dest_row += 2;
     }
 } SMOL_REPACK_ROW_DEF_END
@@ -1407,7 +1404,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
     while (dest_row != dest_row_max)
     {
         uint64_t t [2];
-        uint8_t alpha = get_alpha_from_linear_xxxa_128bpp (src_row);
+        uint8_t alpha = src_row [1] >> 8;
 
         /* Unpremul, sRGB transform, re-premul */
 
@@ -1441,7 +1438,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
     while (dest_row != dest_row_max)
     {
         uint64_t t [2];
-        uint8_t alpha = get_alpha_from_linear_xxxa_128bpp (src_row);
+        uint8_t alpha = src_row [1] >> 8;
         unpremul_p8l_to_ul_128bpp (src_row, t, alpha);
         to_srgb_pixel_xxxa_128bpp (t, t);
         t [1] = (t [1] & 0xffffffff00000000ULL) | alpha;
@@ -1499,7 +1496,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
     while (dest_row != dest_row_max)
     {
         uint64_t t [2];
-        uint8_t alpha = get_alpha_from_linear_xxxa_128bpp (src_row);
+        uint8_t alpha = src_row [1] >> 8;
 
         /* Unpremul, sRGB transform, re-premul */
 
@@ -1533,7 +1530,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
     while (dest_row != dest_row_max)
     {
         uint64_t t [2];
-        uint8_t alpha = get_alpha_from_linear_xxxa_128bpp (src_row);
+        uint8_t alpha = src_row [1] >> 8;
         unpremul_p8l_to_ul_128bpp (src_row, t, alpha);
         to_srgb_pixel_xxxa_128bpp (t, t);
         t [1] = (t [1] & 0xffffffff00000000ULL) | alpha;
@@ -1589,7 +1586,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,      LINEAR,
         while (dest_row != dest_row_max) \
         { \
             uint64_t t [2]; \
-            uint8_t alpha = get_alpha_from_linear_xxxa_128bpp (src_row); \
+            uint8_t alpha = src_row [1] >> 8; \
             /* Unpremul, sRGB transform, re-premul */ \
             unpremul_p8l_to_ul_128bpp (src_row, t, alpha); \
             to_srgb_pixel_xxxa_128bpp (t, t); \
@@ -1616,7 +1613,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,      LINEAR,
         while (dest_row != dest_row_max) \
         { \
             uint64_t t [2]; \
-            uint8_t alpha = get_alpha_from_linear_xxxa_128bpp (src_row); \
+            uint8_t alpha = src_row [1] >> 8; \
             unpremul_p8l_to_ul_128bpp (src_row, t, alpha); \
             to_srgb_pixel_xxxa_128bpp (t, t); \
             t [1] = (t [1] & 0xffffffff00000000ULL) | alpha; \
@@ -3193,24 +3190,6 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 }
 
 static void
-composite_over_color_p8l_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
-                                const uint64_t * SMOL_RESTRICT color_pixel,
-                                uint32_t n_pixels)
-{
-    uint32_t i;
-
-    SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t));
-    SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
-
-    for (i = 0; i < n_pixels; i++)
-    {
-        uint64_t a = (srcdest_row [i] >> 3) & 0xff;
-
-        srcdest_row [i] += (((*color_pixel) * (0xff - a)) >> 8) & 0x00ff00ff00ff00ff;
-    }
-}
-
-static void
 composite_over_color_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                                 const uint64_t * SMOL_RESTRICT color_pixel,
                                 uint32_t n_pixels)
@@ -3223,25 +3202,6 @@ composite_over_color_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
     for (i = 0; i < n_pixels * 2; i += 2)
     {
         uint64_t a = srcdest_row [i + 1] & 0xff;
-
-        srcdest_row [i] += ((color_pixel [0] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
-        srcdest_row [i + 1] += ((color_pixel [1] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
-    }
-}
-
-static void
-composite_over_color_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
-                                 const uint64_t * SMOL_RESTRICT color_pixel,
-                                 uint32_t n_pixels)
-{
-    uint32_t i;
-
-    SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t) * 2);
-    SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
-
-    for (i = 0; i < n_pixels * 2; i += 2)
-    {
-        uint64_t a = (srcdest_row [i + 1] >> 3) & 0xff;
 
         srcdest_row [i] += ((color_pixel [0] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
         srcdest_row [i + 1] += ((color_pixel [1] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
@@ -3301,38 +3261,6 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
     }
 }
 
-/* Unreachable: linear gamma always forces 128bpp storage (see
- * pick_filter_params()), so the 64bpp linear slot is never dispatched.
- * Kept for function table symmetry; like the pre-existing masks, it
- * assumes fields hold <= 8-bit values. */
-static void
-composite_over_dest_p8l_64bpp (const uint64_t * SMOL_RESTRICT src_row,
-                               uint64_t * SMOL_RESTRICT dest_row,
-                               uint32_t n_pixels,
-                               uint16_t opacity)
-{
-    uint32_t i;
-
-    SMOL_ASSUME_ALIGNED_TO (src_row, const uint64_t *, sizeof (uint64_t));
-    SMOL_ASSUME_ALIGNED_TO (dest_row, uint64_t *, sizeof (uint64_t));
-
-    for (i = 0; i < n_pixels; i++)
-    {
-        uint64_t s = src_row [i];
-        uint64_t a, nz, t;
-
-        if (opacity < SMOL_SUBPIXEL_MUL)
-            s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
-
-        a = (s >> 3) & 0xff;
-        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
-
-        t = dest_row [i] * (0xff - a) + 0x0080008000800080ULL;
-        dest_row [i] = s * nz
-            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
-    }
-}
-
 static void
 composite_over_dest_p8_128bpp (const uint64_t * SMOL_RESTRICT src_row,
                                uint64_t * SMOL_RESTRICT dest_row,
@@ -3369,74 +3297,6 @@ composite_over_dest_p8_128bpp (const uint64_t * SMOL_RESTRICT src_row,
             + (((t0 + ((t0 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
         dest_row [i + 1] = s1 * nz
             + (((t1 + ((t1 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
-    }
-}
-
-static void
-composite_over_dest_p8l_128bpp (const uint64_t * SMOL_RESTRICT src_row,
-                                uint64_t * SMOL_RESTRICT dest_row,
-                                uint32_t n_pixels,
-                                uint16_t opacity)
-{
-    uint32_t i;
-
-    SMOL_ASSUME_ALIGNED_TO (src_row, const uint64_t *, sizeof (uint64_t) * 2);
-    SMOL_ASSUME_ALIGNED_TO (dest_row, uint64_t *, sizeof (uint64_t) * 2);
-
-    for (i = 0; i < n_pixels * 2; i += 2)
-    {
-        uint64_t s0 = src_row [i];
-        uint64_t s1 = src_row [i + 1];
-        uint64_t a, nz, w, a_d, v, a_out, cmax, c0, c1, c2;
-
-        if (opacity < SMOL_SUBPIXEL_MUL)
-        {
-            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
-            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
-        }
-
-        /* The alpha lane holds (8-bit alpha) << 3. Round the extraction:
-         * a box-scaled source lane can sit one unit under a canonical
-         * multiple of 8, and truncation would turn that sub-LSB deficit
-         * into a whole alpha step (e.g. opaque 2040 -> 2039 -> 254).
-         * Lanes never exceed 2040, so this cannot round past 255. */
-        a = ((s1 & 0xffffffffULL) + 4) >> 3;
-        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
-        w = 0x100 - a - nz;         /* 256 when a == 0, else 255 - a */
-
-        /* The alpha lane is raw (alpha << 3) and needs the exact rounded
-         * /255 weight. Dest rows are unpacked, never filtered, so the
-         * lane is an exact multiple of 8 and can be handled at 8-bit
-         * scale; a == 0 is then an identity with no guard needed. */
-        a_d = (dest_row [i + 1] >> 3) & 0xff;
-        v = a_d * (0xff - a) + 0x80;
-        a_out = a + ((v + (v >> 8)) >> 8);
-
-        /* The color lanes carry the (alpha + 1) inflated linear encoding
-         * (see premul_ul_to_p8l_128bpp()), so they take the rounded /256
-         * weight: w == 256 makes a == 0 an exact no-op, and s * nz
-         * removes the source's un-zeroed color (up to c >> 8). The two
-         * weight schemes can disagree by up to one alpha count, so each
-         * color lane is clamped to the largest value that unpremultiplies
-         * within the 11-bit linear range for a_out; without the clamp,
-         * the repack's masked unpremul wraps saturated colors to
-         * near-black. The clamp cannot disturb the a == 0 no-op: the
-         * dest's canonical lanes never exceed it. */
-        cmax = (2047 * (a_out + 1)) >> 8;
-
-        c0 = (s0 & 0xffffffffULL) * nz
-            + ((((dest_row [i] & 0xffffffffULL) * w + 0x80) >> 8) & 0xffffff);
-        c1 = (s0 >> 32) * nz
-            + ((((dest_row [i] >> 32) * w + 0x80) >> 8) & 0xffffff);
-        c2 = (s1 >> 32) * nz
-            + ((((dest_row [i + 1] >> 32) * w + 0x80) >> 8) & 0xffffff);
-
-        c0 ^= (c0 ^ cmax) & (0 - (uint64_t) (c0 > cmax));
-        c1 ^= (c1 ^ cmax) & (0 - (uint64_t) (c1 > cmax));
-        c2 ^= (c2 ^ cmax) & (0 - (uint64_t) (c2 > cmax));
-
-        dest_row [i]     = (c1 << 32) | c0;
-        dest_row [i + 1] = (c2 << 32) | (a_out << 3);
     }
 }
 
@@ -3739,12 +3599,8 @@ static const SmolImplementation implementation =
                 composite_over_color_p8_64bpp,
                 NULL   /* p16 - n/a */
             },
-            /* linear */
-            {
-                NULL,  /* unassociated - unused */
-                composite_over_color_p8l_64bpp,
-                NULL   /* p16 - n/a */
-            }
+            /* linear: unreachable, linear gamma forces 128bpp storage */
+            { NULL, NULL, NULL }
         },
 
         /* 128bpp */
@@ -3755,10 +3611,10 @@ static const SmolImplementation implementation =
                 composite_over_color_p8_128bpp,
                 composite_over_color_p16_128bpp
             },
-            /* linear */
+            /* linear (p8l shares the p16 alpha-lane encoding) */
             {
                 NULL,  /* unassociated - unused */
-                composite_over_color_p8l_128bpp,
+                composite_over_color_p16_128bpp,
                 composite_over_color_p16_128bpp
             }
         }
@@ -3777,12 +3633,8 @@ static const SmolImplementation implementation =
                 composite_over_dest_p8_64bpp,
                 NULL   /* p16 - n/a */
             },
-            /* linear (p8l unreachable, kept for symmetry) */
-            {
-                NULL,  /* unassociated - unused */
-                composite_over_dest_p8l_64bpp,
-                NULL   /* p16 - n/a */
-            }
+            /* linear: unreachable, linear gamma forces 128bpp storage */
+            { NULL, NULL, NULL }
         },
 
         /* 128bpp */
@@ -3793,10 +3645,10 @@ static const SmolImplementation implementation =
                 composite_over_dest_p8_128bpp,
                 composite_over_dest_p16_128bpp
             },
-            /* linear */
+            /* linear (p8l shares the p16 alpha-lane encoding) */
             {
                 NULL,  /* unassociated - unused */
-                composite_over_dest_p8l_128bpp,
+                composite_over_dest_p16_128bpp,
                 composite_over_dest_p16_128bpp
             }
         }
