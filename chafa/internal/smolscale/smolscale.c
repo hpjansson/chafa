@@ -841,7 +841,10 @@ pick_filter_params (uint32_t src_dim,
     else
     {
         uint32_t n_halvings = 0;
-        uint64_t d = dest_dim_spx;
+
+        /* Sampling depth is picked as if the output were at least one full
+         * pixel wide. Sample positions still use the true fractional geometry. */
+        uint64_t d = MAX (dest_dim_spx, SMOL_SUBPIXEL_MUL);
 
         for (;;)
         {
@@ -851,10 +854,9 @@ pick_filter_params (uint32_t src_dim,
             n_halvings++;
         }
 
-        /* SMOL_FILTER_BILINEAR_6H is the deepest filter we have. Sub-pixel
-         * placement sizes can demand more halvings than that (the px ratio
-         * caps at 8, but the spx ratio doesn't); settle for sparser
-         * sampling instead of running off the end of the filter tables. */
+        /* With the floor above, the box cutoffs bound the demand to at most
+         * a few halvings. This check simply ensures we don't run off the
+         * end of the filter table. */
         n_halvings = MIN (n_halvings, 6);
 
         *dest_dim_prehalving = dest_dim << n_halvings;
