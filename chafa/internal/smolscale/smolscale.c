@@ -8,6 +8,32 @@
 #include <limits.h>
 #include "smolscale-private.h"
 
+/* ---------------------- *
+ * Configurable constants *
+ * ---------------------- */
+
+/* The box algorithms are only sufficiently precise when
+ * src_dim > dest_dim * 5, and box_64bpp only starts outperforming
+ * bilinear+halving at src_dim > dest_dim * 8. We hand off bilinear
+ * at 6x, not 8x, for correctness; an exact area average
+ * over an R-pixel span at fractional subpixel phase needs R+1 taps,
+ * while the 2H kernel's support is R*3/4 + 2, so it falls short by
+ * R/4 - 1 pixels. The missing fraction shows up as phase-dependent
+ * shimmer under subpixel placement and motion, worst near the top of
+ * the band (approaching a full pixel at 8x, where a Nyquist grating
+ * can swing the output by 180/255). Box carries fractional span ends
+ * natively, making it both phase-exact and position-continuous, so it
+ * takes over where the tent kernel's tap budget runs out. The cost is
+ * ~30% throughput on the 6..8x band (unassoc/linearized) or closer
+ * to 100% in the premul-compressed pipeline.
+ *
+ * The cutoff cannot exceed 16, as we don't support bilinear filters
+ * with more than three halvings (8x2 taps). */
+
+#ifndef SMOL_BILIN_BOX_CUTOFF
+# define SMOL_BILIN_BOX_CUTOFF 6
+#endif
+
 /* ----------------------- *
  * Misc. conversion tables *
  * ----------------------- */
@@ -818,10 +844,6 @@ pick_filter_params (uint32_t src_dim,
         return;
     }
 
-    /* The box algorithms are only sufficiently precise when
-     * src_dim > dest_dim * 5. box_64bpp typically starts outperforming
-     * bilinear+halving at src_dim > dest_dim * 8. */
-
     if ((uint64_t) src_dim_spx > (uint64_t) MAX (dest_dim_spx, SMOL_SUBPIXEL_MUL) * 255)
     {
         /* The box span per output pixel is src_dim_spx / dest_dim_spx
@@ -832,15 +854,16 @@ pick_filter_params (uint32_t src_dim,
         *dest_storage = SMOL_STORAGE_128BPP;
         *dest_filter = SMOL_FILTER_BOX;
     }
-    else if ((uint64_t) src_dim_spx > (uint64_t) MAX (dest_dim_spx, SMOL_SUBPIXEL_MUL) * 8)
+    else if ((uint64_t) src_dim_spx
+             >= (uint64_t) MAX (dest_dim_spx, SMOL_SUBPIXEL_MUL) * SMOL_BILIN_BOX_CUTOFF)
     {
         /* Like all ratio decisions, measured in subpixels with a one-
-         * output-pixel floor, so fractional placement sizes
-         * hand off at the same true ratio as whole-pixel ones. The 8x
-         * boundary is where BILINEAR_2H's tap spacing reaches two source
-         * pixels - its taps tile the span edge to edge and the kernel
-         * degenerates to the flat span average that box computes, making
-         * the transition seamless. */
+         * output-pixel floor, so fractional placement sizes hand off at
+         * the same true ratio as whole-pixel ones. At 6x the 2H tap
+         * spacing is 1.5 source pixels: consecutive sample phases
+         * alternate, so the tent kernel cannot phase-lock on Nyquist
+         * content, and its output stays within ~18/255 of the box result
+         * at every subpixel phase. */
         *dest_filter = SMOL_FILTER_BOX;
     }
     else if (src_dim <= 1)
@@ -873,13 +896,9 @@ pick_filter_params (uint32_t src_dim,
             n_halvings++;
         }
 
-        /* We hand off to the box filter beyond 8x, so we should never get
-         * more than two halvings here (4x times two filter taps). At the
-         * boundary, the sampling area for bilinear and box is exactly the same,
-         * so the transition is seamless. No source pixel is ever skipped.
-         * The clamp is extra safety from running off the end of the filter
-         * table. */
-        n_halvings = MIN (n_halvings, 2);
+        /* We hand off to the box filter beyond SMOL_BILIN_BOX_CUTOFF. This
+         * clamp is extra safety from running off the end of the filter table. */
+        n_halvings = MIN (n_halvings, 3);
 
         *dest_dim_prehalving = dest_dim << n_halvings;
         *dest_dim_prehalving_spx = dest_dim_spx << n_halvings;
