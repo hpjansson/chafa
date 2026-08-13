@@ -832,8 +832,15 @@ pick_filter_params (uint32_t src_dim,
         *dest_storage = SMOL_STORAGE_128BPP;
         *dest_filter = SMOL_FILTER_BOX;
     }
-    else if (src_dim > dest_dim * 8)
+    else if ((uint64_t) src_dim_spx > (uint64_t) MAX (dest_dim_spx, SMOL_SUBPIXEL_MUL) * 8)
     {
+        /* Like all ratio decisions, measured in subpixels with a one-
+         * output-pixel floor, so fractional placement sizes
+         * hand off at the same true ratio as whole-pixel ones. The 8x
+         * boundary is where BILINEAR_2H's tap spacing reaches two source
+         * pixels - its taps tile the span edge to edge and the kernel
+         * degenerates to the flat span average that box computes, making
+         * the transition seamless. */
         *dest_filter = SMOL_FILTER_BOX;
     }
     else if (src_dim <= 1)
@@ -866,10 +873,13 @@ pick_filter_params (uint32_t src_dim,
             n_halvings++;
         }
 
-        /* With the floor above, the box cutoffs bound the demand to at most
-         * a few halvings. This check simply ensures we don't run off the
-         * end of the filter table. */
-        n_halvings = MIN (n_halvings, 6);
+        /* We hand off to the box filter beyond 8x, so we should never get
+         * more than two halvings here (4x times two filter taps). At the
+         * boundary, the sampling area for bilinear and box is exactly the same,
+         * so the transition is seamless. No source pixel is ever skipped.
+         * The clamp is extra safety from running off the end of the filter
+         * table. */
+        n_halvings = MIN (n_halvings, 2);
 
         *dest_dim_prehalving = dest_dim << n_halvings;
         *dest_dim_prehalving_spx = dest_dim_spx << n_halvings;
