@@ -326,6 +326,13 @@ typedef struct
 
     unsigned int n_halvings;
 
+    /* placement_size_px and placement_ofs_px describe only the visible part
+     * of the placement (its intersection with the destination); the _spx
+     * fields and the prehalving sizes keep the virtual (unclipped) geometry.
+     * Sampling parameters (filter choice, precision guards, precalc sample
+     * positions) derive from the virtual geometry so that rendered content
+     * doesn't depend on clipping; only the visible window is precalculated
+     * and scaled. */
     int32_t placement_ofs_px, placement_ofs_spx;
     uint32_t placement_size_px, placement_size_spx;
     uint32_t placement_size_prehalving_px, placement_size_prehalving_spx;
@@ -339,9 +346,12 @@ typedef struct
 
     /* Rows or cols to add consisting of unbroken pixel_color. This is done
      * after scaling but before conversion to output pixel format. */
-    uint16_t clear_before_px, clear_after_px;
+    int32_t clear_before_px, clear_after_px;
 
-    uint16_t clip_before_px, clip_after_px;
+    /* Rows or cols of the virtual placement falling outside the destination.
+     * clip_before_px can be large (placement offsets are in 32-bit subpixels,
+     * so up to ~2^23 px). It must not be stored narrower. */
+    int32_t clip_before_px, clip_after_px;
 }
 SmolDim;
 

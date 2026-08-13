@@ -71,7 +71,15 @@ typedef struct SmolScaleCtx SmolScaleCtx;
 /* For all entry points below, src_pixels must be non-NULL, the pixel types
  * must be valid SmolPixelType values, and each source and destination
  * dimension must be in the range [1, 65535]. Calls that violate this fail
- * the same way as an allocation failure (returning 0 or NULL). */
+ * the same way as an allocation failure (returning 0 or NULL).
+ *
+ * Placements (smol_scale_new_full()) are given in subpixels (1/256 px, see
+ * SMOL_PX_TO_SPX()) and may extend beyond the destination or lie entirely
+ * outside it. The visible part is rendered as a window into the virtual
+ * placement, and the rest is clipped away. A placement with zero visible
+ * extent draws nothing (SMOL_COMPOSITE_SRC_CLEAR_DEST still clears the
+ * destination). The full int32 ranges of the placement parameters are
+ * accepted. */
 
 /* Simple API: Scales an entire image in one shot. You must provide pointers to
  * the source memory and an existing allocation to receive the output data.

@@ -21,21 +21,23 @@
 /* Batched precalc array layout:
  *
  * 16 offsets followed by 16 factors, repeating until epilogue. The epilogue
- * has offsets and factors alternating one by one, and will always have fewer
- * than 16 o/f pairs:
+ * has offsets and factors alternating one by one:
  *
  * ooooooooooooooooffffffffffffffffooooooooooooooooffffffffffffffffofofofofof...
  *
  * 16 offsets layout: 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
  * 16 factors layout: 0 2 4 6 8 10 12 14 1 3 5 7 9 11 13 15
- */
+ *
+ * n_batch_samples is the number of samples the filter's bulk loop consumes
+ * batch-wise before switching to the epilogue; it must be a multiple of the
+ * batch size. Everything from there on is stored in epilogue layout. The
+ * bulk loops consume whole output pixels, so with halvings the epilogue can
+ * hold 16 or more o/f pairs. */
 
 static uint32_t
-array_offset_offset (uint32_t elem_i, int max_index, int do_batches)
+array_offset_offset (uint32_t elem_i, int n_batch_samples, int do_batches)
 {
-    if (do_batches
-        && (max_index - ((elem_i / BILIN_HORIZ_BATCH_PIXELS) * BILIN_HORIZ_BATCH_PIXELS)
-            >= BILIN_HORIZ_BATCH_PIXELS))
+    if (do_batches && (int) elem_i < n_batch_samples)
     {
         return (elem_i / (BILIN_HORIZ_BATCH_PIXELS)) * (BILIN_HORIZ_BATCH_PIXELS * 2)
             + (elem_i % BILIN_HORIZ_BATCH_PIXELS);
@@ -47,13 +49,11 @@ array_offset_offset (uint32_t elem_i, int max_index, int do_batches)
 }
 
 static uint32_t
-array_offset_factor (uint32_t elem_i, int max_index, int do_batches)
+array_offset_factor (uint32_t elem_i, int n_batch_samples, int do_batches)
 {
     const uint8_t o [BILIN_HORIZ_BATCH_PIXELS] = { 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15 };
 
-    if (do_batches
-        && (max_index - ((elem_i / BILIN_HORIZ_BATCH_PIXELS) * BILIN_HORIZ_BATCH_PIXELS)
-            >= BILIN_HORIZ_BATCH_PIXELS))
+    if (do_batches && (int) elem_i < n_batch_samples)
     {
         return (elem_i / (BILIN_HORIZ_BATCH_PIXELS)) * (BILIN_HORIZ_BATCH_PIXELS * 2)
             + BILIN_HORIZ_BATCH_PIXELS + o [elem_i % BILIN_HORIZ_BATCH_PIXELS];
@@ -66,43 +66,51 @@ array_offset_factor (uint32_t elem_i, int max_index, int do_batches)
 
 static void
 precalc_linear_range (uint16_t *array_out,
-                      int first_index,
-                      int last_index,
-                      int max_index,
+                      int64_t first_index,
+                      int64_t last_index,
+                      int n_batch_samples,
                       uint64_t first_sample_ofs,
                       uint64_t sample_step,
                       int sample_ofs_px_max,
-                      int32_t dest_clip_before_px,
+                      int64_t clip_first_index,
+                      int64_t clip_last_index,
                       int do_batches,
                       int *array_i_inout)
 {
     uint64_t sample_ofs;
-    int i;
+    int64_t i;
+
+    /* Precalc only the samples inside the clip window. Jumping straight to
+     * the window keeps setup cost proportional to the visible size even
+     * when most of a huge virtual placement is off-destination. */
+
+    if (first_index < clip_first_index)
+    {
+        first_sample_ofs += sample_step * (uint64_t) (clip_first_index - first_index);
+        first_index = clip_first_index;
+    }
+
+    if (last_index > clip_last_index)
+        last_index = clip_last_index;
 
     sample_ofs = first_sample_ofs;
 
     for (i = first_index; i < last_index; i++)
     {
-        uint16_t sample_ofs_px = sample_ofs / SMOL_BILIN_MULTIPLIER;
+        uint64_t sample_ofs_px = sample_ofs / SMOL_BILIN_MULTIPLIER;
 
-        if (sample_ofs_px >= sample_ofs_px_max - 1)
+        if (sample_ofs_px >= (uint64_t) sample_ofs_px_max - 1)
         {
-            if (i >= dest_clip_before_px)
-            {
-                array_out [array_offset_offset ((*array_i_inout), max_index, do_batches)] = sample_ofs_px_max - 2;
-                array_out [array_offset_factor ((*array_i_inout), max_index, do_batches)] = 0;
-                (*array_i_inout)++;
-            }
+            array_out [array_offset_offset ((*array_i_inout), n_batch_samples, do_batches)] = sample_ofs_px_max - 2;
+            array_out [array_offset_factor ((*array_i_inout), n_batch_samples, do_batches)] = 0;
+            (*array_i_inout)++;
             continue;
         }
 
-        if (i >= dest_clip_before_px)
-        {
-            array_out [array_offset_offset ((*array_i_inout), max_index, do_batches)] = sample_ofs_px;
-            array_out [array_offset_factor ((*array_i_inout), max_index, do_batches)] = SMOL_SMALL_MUL
-                - ((sample_ofs / (SMOL_BILIN_MULTIPLIER / SMOL_SMALL_MUL)) % SMOL_SMALL_MUL);
-            (*array_i_inout)++;
-        }
+        array_out [array_offset_offset ((*array_i_inout), n_batch_samples, do_batches)] = sample_ofs_px;
+        array_out [array_offset_factor ((*array_i_inout), n_batch_samples, do_batches)] = SMOL_SMALL_MUL
+            - ((sample_ofs / (SMOL_BILIN_MULTIPLIER / SMOL_SMALL_MUL)) % SMOL_SMALL_MUL);
+        (*array_i_inout)++;
 
         sample_ofs += sample_step;
     }
@@ -116,12 +124,18 @@ precalc_bilinear_array (uint16_t *array,
                         uint32_t dest_dim_prehalving_px,
                         unsigned int n_halvings,
                         int32_t dest_clip_before_px,
-                        int32_t dest_clip_after_px,
+                        int32_t dest_visible_px,
+                        int n_batch_samples,
                         unsigned int do_batches)
 {
     uint32_t src_dim_px = SMOL_SPX_TO_PX (src_dim_spx);
     uint64_t first_sample_ofs [3];
     uint64_t sample_step;
+    /* The consumers index samples relative to the visible window, in
+     * pre-halving (sample) units: visible output pixel p covers samples
+     * [p << n_halvings, (p + 1) << n_halvings). */
+    int64_t clip_first = (int64_t) dest_clip_before_px << n_halvings;
+    int64_t clip_last = clip_first + ((int64_t) dest_visible_px << n_halvings);
     int i = 0;
 
     assert (src_dim_px > 1);
@@ -153,11 +167,12 @@ precalc_bilinear_array (uint16_t *array,
     precalc_linear_range (array,
                           0,
                           1 << n_halvings,
-                          dest_dim_prehalving_px - dest_clip_after_px,
+                          n_batch_samples,
                           first_sample_ofs [0],
                           sample_step,
                           src_dim_px,
-                          dest_clip_before_px,
+                          clip_first,
+                          clip_last,
                           do_batches,
                           &i);
 
@@ -168,11 +183,12 @@ precalc_bilinear_array (uint16_t *array,
         precalc_linear_range (array,
                               1 << n_halvings,
                               dest_dim_prehalving_px - (1 << n_halvings),
-                              dest_dim_prehalving_px - dest_clip_after_px,
+                              n_batch_samples,
                               first_sample_ofs [1],
                               sample_step,
                               src_dim_px,
-                              dest_clip_before_px,
+                              clip_first,
+                              clip_last,
                               do_batches,
                               &i);
 
@@ -180,11 +196,12 @@ precalc_bilinear_array (uint16_t *array,
         precalc_linear_range (array,
                               dest_dim_prehalving_px - (1 << n_halvings),
                               dest_dim_prehalving_px,
-                              dest_dim_prehalving_px - dest_clip_after_px,
+                              n_batch_samples,
                               first_sample_ofs [2],
                               sample_step,
                               src_dim_px,
-                              dest_clip_before_px,
+                              clip_first,
+                              clip_last,
                               do_batches,
                               &i);
     }
@@ -195,16 +212,20 @@ precalc_boxes_array (uint32_t *array,
                      uint32_t *span_step,
                      uint32_t *span_mul,
                      uint32_t src_dim_spx,
-                     int32_t dest_dim,
+                     uint32_t dest_dim,
                      uint32_t dest_ofs_spx,
                      uint32_t dest_dim_spx,
-                     int32_t dest_clip_before_px)
+                     int32_t dest_clip_before_px,
+                     int32_t dest_visible_px)
 {
     uint64_t fracF, frac_stepF;
     uint64_t f;
     uint64_t stride;
     uint64_t a, b;
-    int i, dest_i;
+    uint64_t last_ofs;
+    int64_t clip_first, clip_last;
+    int64_t dest_i, main_first, main_last;
+    int i;
 
     dest_ofs_spx %= SMOL_SUBPIXEL_MUL;
 
@@ -234,25 +255,37 @@ precalc_boxes_array (uint32_t *array,
     *span_step = frac_stepF / SMOL_SMALL_MUL;
     *span_mul = a / (b + 1);
 
-    /* Left fringe */
-    i = 0;
-    dest_i = 0;
+    /* The last span starts here, ending flush with the source's edge. It
+     * doubles as a clamp for the main range: fractional placement sizes
+     * can otherwise produce spans extending past the source. */
+    last_ofs = ((uint64_t) src_dim_spx * SMOL_SMALL_MUL - frac_stepF) / SMOL_SMALL_MUL;
 
-    if (dest_i >= dest_clip_before_px)
+    /* Precalc only the entries inside the clip window; the consumers index
+     * them relative to the visible window's start. */
+    clip_first = dest_clip_before_px;
+    clip_last = clip_first + dest_visible_px;
+    i = 0;
+
+    /* Left fringe */
+    if (clip_first == 0 && clip_last > 0)
         array [i++] = 0;
 
     /* Main range */
-    fracF = ((frac_stepF * (SMOL_SUBPIXEL_MUL - dest_ofs_spx)) / SMOL_SUBPIXEL_MUL);
-    for (dest_i = 1; dest_i < dest_dim - 1; dest_i++)
+    main_first = MAX (clip_first, 1);
+    main_last = MIN (clip_last, (int64_t) dest_dim - 1);
+    fracF = ((frac_stepF * (SMOL_SUBPIXEL_MUL - dest_ofs_spx)) / SMOL_SUBPIXEL_MUL)
+        + (uint64_t) (main_first - 1) * frac_stepF;
+    for (dest_i = main_first; dest_i < main_last; dest_i++)
     {
-        if (dest_i >= dest_clip_before_px)
-            array [i++] = fracF / SMOL_SMALL_MUL;
+        array [i++] = MIN (fracF / SMOL_SMALL_MUL, last_ofs);
         fracF += frac_stepF;
     }
 
     /* Right fringe */
-    if (dest_dim > 1 && dest_i >= dest_clip_before_px)
-        array [i++] = (((uint64_t) src_dim_spx * SMOL_SMALL_MUL - frac_stepF) / SMOL_SMALL_MUL);
+    if (dest_dim > 1
+        && (int64_t) dest_dim - 1 >= clip_first
+        && (int64_t) dest_dim - 1 < clip_last)
+        array [i++] = last_ofs;
 }
 
 static void
@@ -263,17 +296,34 @@ init_dim (SmolDim *dim, int do_batches)
     }
     else if (dim->filter_type == SMOL_FILTER_BOX)
     {
+        /* Box has no halvings, so the prehalving size is the virtual
+         * (unclipped) placement size the span geometry needs */
         precalc_boxes_array (dim->precalc,
                              &dim->span_step,
                              &dim->span_mul,
                              dim->src_size_spx,
-                             dim->placement_size_px,
+                             dim->placement_size_prehalving_px,
                              dim->placement_ofs_spx,
                              dim->placement_size_spx,
-                             dim->clip_before_px);
+                             dim->clip_before_px,
+                             dim->placement_size_px);
     }
     else /* SMOL_FILTER_BILINEAR_?H */
     {
+        int n_batch_samples = 0;
+
+        if (do_batches)
+        {
+            /* The bulk loops of the batched filters consume whole output
+             * pixels per iteration, 16 >> n_halvings of them down to a
+             * minimum of 4, and leave the rest to the epilogue, which
+             * expects interleaved layout. Match that boundary exactly. */
+            int n_out_per_iter = MAX ((int) (16 >> dim->n_halvings), 4);
+
+            n_batch_samples = (dim->placement_size_px / n_out_per_iter)
+                * (n_out_per_iter << dim->n_halvings);
+        }
+
         precalc_bilinear_array (dim->precalc,
                                 dim->src_size_spx,
                                 dim->placement_ofs_spx,
@@ -281,7 +331,8 @@ init_dim (SmolDim *dim, int do_batches)
                                 dim->placement_size_prehalving_px,
                                 dim->n_halvings,
                                 dim->clip_before_px,
-                                dim->clip_after_px,
+                                dim->placement_size_px,
+                                n_batch_samples,
                                 do_batches);
     }
 }
@@ -2246,7 +2297,8 @@ interp_horizontal_copy_64bpp (const SmolScaleCtx *scale_ctx,
     SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
     SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
-    memcpy (row_parts_out, row_parts_in, scale_ctx->hdim.placement_size_px * sizeof (uint64_t));
+    memcpy (row_parts_out, row_parts_in + scale_ctx->hdim.clip_before_px,
+            scale_ctx->hdim.placement_size_px * sizeof (uint64_t));
 }
 
 static void
@@ -2257,7 +2309,8 @@ interp_horizontal_copy_128bpp (const SmolScaleCtx *scale_ctx,
     SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t *);
     SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t *);
 
-    memcpy (row_parts_out, row_parts_in, scale_ctx->hdim.placement_size_px * 2 * sizeof (uint64_t));
+    memcpy (row_parts_out, row_parts_in + scale_ctx->hdim.clip_before_px * 2,
+            scale_ctx->hdim.placement_size_px * 2 * sizeof (uint64_t));
 }
 
 static void
@@ -3358,7 +3411,8 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
 {
     scale_horizontal (scale_ctx,
                       local_ctx,
-                      src_row_ofs_to_pointer (scale_ctx, row_index),
+                      src_row_ofs_to_pointer (scale_ctx,
+                                              row_index + scale_ctx->vdim.clip_before_px),
                       local_ctx->parts_row [0]);
 
     return 0;

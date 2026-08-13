@@ -479,7 +479,8 @@ check_row_range (const SmolScaleCtx *scale_ctx,
         return 0;
     }
 
-    if (*n_dest_rows < 0 || *first_dest_row + *n_dest_rows > (int32_t) scale_ctx->vdim.dest_size_px)
+    if (*n_dest_rows < 0
+        || *n_dest_rows > (int32_t) scale_ctx->vdim.dest_size_px - *first_dest_row)
     {
         *n_dest_rows = scale_ctx->vdim.dest_size_px - *first_dest_row;
     }
@@ -534,8 +535,8 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
                 uint32_t dest_row_index,
                 void *row_out)
 {
-    if (dest_row_index < scale_ctx->vdim.clear_before_px
-        || dest_row_index >= scale_ctx->vdim.dest_size_px - scale_ctx->vdim.clear_after_px)
+    if (dest_row_index < (uint32_t) scale_ctx->vdim.clear_before_px
+        || dest_row_index >= scale_ctx->vdim.dest_size_px - (uint32_t) scale_ctx->vdim.clear_after_px)
     {
         /* Row doesn't intersect placement */
 
@@ -792,8 +793,10 @@ pick_filter_params (uint32_t src_dim,
     *dest_dim_prehalving = dest_dim;
     *dest_storage = (flags & SMOL_DISABLE_SRGB_LINEARIZATION) ? SMOL_STORAGE_64BPP : SMOL_STORAGE_128BPP;
 
-    *first_opacity = SMOL_SUBPIXEL_MOD (-dest_ofs_spx - 1) + 1;
-    *last_opacity = SMOL_SUBPIXEL_MOD (dest_ofs_spx + dest_dim_spx - 1) + 1;
+    /* 64-bit intermediates: dest_ofs_spx can be INT32_MIN and dest_dim_spx
+     * close to INT32_MAX, so the negation and the sum must not wrap. */
+    *first_opacity = SMOL_SUBPIXEL_MOD (-((int64_t) dest_ofs_spx) - 1) + 1;
+    *last_opacity = SMOL_SUBPIXEL_MOD ((int64_t) dest_ofs_spx + dest_dim_spx - 1) + 1;
 
     /* Special handling when the output is a single pixel */
 
@@ -807,8 +810,13 @@ pick_filter_params (uint32_t src_dim,
      * src_dim > dest_dim * 5. box_64bpp typically starts outperforming
      * bilinear+halving at src_dim > dest_dim * 8. */
 
-    if (src_dim > dest_dim * 255)
+    if ((uint64_t) src_dim_spx > (uint64_t) MAX (dest_dim_spx, SMOL_SUBPIXEL_MUL) * 255)
     {
+        /* The box span per output pixel is src_dim_spx / dest_dim_spx
+         * (with the precalc's one-pixel output floor), so the 16-bit
+         * lanes of 64bpp storage can overflow beyond 255x. Fractional
+         * and sub-pixel placement sizes push the true span above the
+         * whole-pixel ratio, so this must be measured in subpixels. */
         *dest_storage = SMOL_STORAGE_128BPP;
         *dest_filter = SMOL_FILTER_BOX;
     }
@@ -818,8 +826,11 @@ pick_filter_params (uint32_t src_dim,
     }
     else if (src_dim <= 1)
     {
+        /* last_opacity keeps the default computed above; re-deriving it
+         * here would double-attenuate single-pixel placements, whose
+         * entire coverage is already in first_opacity (dest_dim == 1
+         * case above). */
         *dest_filter = SMOL_FILTER_ONE;
-        *last_opacity = ((dest_ofs_spx + dest_dim_spx - 1) % SMOL_SUBPIXEL_MUL) + 1;
     }
     else if ((dest_ofs_spx & 0xff) == 0 && src_dim_spx == dest_dim_spx)
     {
@@ -830,7 +841,7 @@ pick_filter_params (uint32_t src_dim,
     else
     {
         uint32_t n_halvings = 0;
-        uint32_t d = dest_dim_spx;
+        uint64_t d = dest_dim_spx;
 
         for (;;)
         {
@@ -839,6 +850,12 @@ pick_filter_params (uint32_t src_dim,
                 break;
             n_halvings++;
         }
+
+        /* SMOL_FILTER_BILINEAR_6H is the deepest filter we have. Sub-pixel
+         * placement sizes can demand more halvings than that (the px ratio
+         * caps at 8, but the spx ratio doesn't); settle for sparser
+         * sampling instead of running off the end of the filter tables. */
+        n_halvings = MIN (n_halvings, 6);
 
         *dest_dim_prehalving = dest_dim << n_halvings;
         *dest_dim_prehalving_spx = dest_dim_spx << n_halvings;
@@ -1048,10 +1065,16 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     if (color_pixel)
         scale_ctx->have_composite_color = TRUE;
 
-    /* Check for noop (direct copy) */
+    /* Check for noop (direct copy). Only valid when the placement covers
+     * the destination exactly; a smaller, offset or clipped placement still
+     * needs the scaling path even at a 1:1 size ratio. */
 
     if (scale_ctx->hdim.src_size_spx == scale_ctx->hdim.dest_size_spx
         && scale_ctx->vdim.src_size_spx == scale_ctx->vdim.dest_size_spx
+        && scale_ctx->hdim.placement_size_spx == scale_ctx->hdim.dest_size_spx
+        && scale_ctx->vdim.placement_size_spx == scale_ctx->vdim.dest_size_spx
+        && scale_ctx->hdim.placement_ofs_spx == 0
+        && scale_ctx->vdim.placement_ofs_spx == 0
         && scale_ctx->src_pixel_type == scale_ctx->dest_pixel_type
         && scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST)
     {
@@ -1091,15 +1114,20 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         scale_ctx->storage_type = SMOL_STORAGE_128BPP;
     }
 
-    if (scale_ctx->hdim.src_size_px > scale_ctx->hdim.placement_size_px * 8191
-        || scale_ctx->vdim.src_size_px > scale_ctx->vdim.placement_size_px * 8191)
+    if ((uint64_t) scale_ctx->hdim.src_size_spx
+        > (uint64_t) MAX (scale_ctx->hdim.placement_size_spx, SMOL_SUBPIXEL_MUL) * 8191
+        || (uint64_t) scale_ctx->vdim.src_size_spx
+        > (uint64_t) MAX (scale_ctx->vdim.placement_size_spx, SMOL_SUBPIXEL_MUL) * 8191)
     {
         /* Even with 128bpp, there's only enough bits to store 11-bit linearized
          * times 13 bits of summed pixels plus 8 bits of scratch space for
          * multiplying with an 8-bit weight -> 32 bits total per channel.
          *
          * For now, just turn off sRGB linearization if the input is bigger
-         * than the output by a factor of 2^13 or more. */
+         * than the output by a factor of 2^13 or more. Measured against the
+         * virtual (unclipped) placement in subpixels: that's the true box
+         * span, which fractional and sub-pixel placement sizes push above
+         * the whole-pixel ratio. */
         scale_ctx->gamma_type = SMOL_GAMMA_SRGB_COMPRESSED;
     }
 
@@ -1237,22 +1265,30 @@ init_dim (SmolDim *dim,
           SmolFlags flags,
           SmolStorageType *storage_type_out)
 {
+    int64_t placement_ofs_px, placement_size_px;
+    int64_t visible_first_px, visible_end_px;
+
     dim->src_size_spx = src_size_spx;
     dim->src_size_px = SMOL_SPX_TO_PX (src_size_spx);
     dim->dest_size_spx = dest_size_spx;
     dim->dest_size_px = SMOL_SPX_TO_PX (dest_size_spx);
     dim->placement_ofs_spx = placement_ofs_spx;
-    if (placement_ofs_spx < 0)
-        dim->placement_ofs_px = (placement_ofs_spx - 255) / SMOL_SUBPIXEL_MUL;
-    else
-        dim->placement_ofs_px = placement_ofs_spx / SMOL_SUBPIXEL_MUL;
     dim->placement_size_spx = placement_size_spx;
-    dim->placement_size_px = SMOL_SPX_TO_PX (placement_size_spx + SMOL_SUBPIXEL_MOD (placement_ofs_spx));
+
+    /* Whole-pixel geometry of the virtual placement, in 64-bit arithmetic;
+     * offsets close to INT32_MIN and sizes close to INT32_MAX must not wrap. */
+
+    if (placement_ofs_spx < 0)
+        placement_ofs_px = ((int64_t) placement_ofs_spx - 255) / SMOL_SUBPIXEL_MUL;
+    else
+        placement_ofs_px = placement_ofs_spx / SMOL_SUBPIXEL_MUL;
+    placement_size_px = SMOL_SPX_TO_PX ((int64_t) placement_size_spx
+                                        + SMOL_SUBPIXEL_MOD (placement_ofs_spx));
 
     pick_filter_params (dim->src_size_px,
                         dim->src_size_spx,
                         dim->placement_ofs_spx,
-                        dim->placement_size_px,
+                        placement_size_px,
                         dim->placement_size_spx,
                         &dim->n_halvings,
                         &dim->placement_size_prehalving_px,
@@ -1263,44 +1299,38 @@ init_dim (SmolDim *dim,
                         &dim->last_opacity,
                         flags);
 
-    /* Calculate clip and clear intervals */
+    /* Clip the placement against the destination. An empty intersection
+     * yields placement_size_px == 0; smol_scale_init() detects that and
+     * neutralizes the placement in both dimensions. */
 
-    if (dim->placement_ofs_px > 0)
-    {
-        dim->clear_before_px = dim->placement_ofs_px;
-        dim->clip_before_px = 0;
-    }
-    else if (dim->placement_ofs_px < 0)
-    {
-        dim->clear_before_px = 0;
-        dim->clip_before_px = -dim->placement_ofs_px;
+    visible_first_px = MIN (MAX (placement_ofs_px, 0), (int64_t) dim->dest_size_px);
+    visible_end_px = MAX (MIN (placement_ofs_px + placement_size_px,
+                               (int64_t) dim->dest_size_px), visible_first_px);
+
+    dim->clear_before_px = visible_first_px;
+    dim->clear_after_px = dim->dest_size_px - visible_end_px;
+    dim->clip_before_px = visible_first_px - placement_ofs_px;
+    dim->clip_after_px = (placement_ofs_px + placement_size_px) - visible_end_px;
+
+    /* Subpixel edge opacity belongs to the virtual placement's fringes; a
+     * clipped edge is an interior cut and must stay fully opaque. */
+
+    if (dim->clip_before_px > 0)
         dim->first_opacity = 256;
-    }
-
-    if (dim->placement_ofs_px + dim->placement_size_px < dim->dest_size_px)
-    {
-        dim->clear_after_px = dim->dest_size_px - dim->placement_ofs_px - dim->placement_size_px;
-        dim->clip_after_px = 0;
-    }
-    else if (dim->placement_ofs_px + dim->placement_size_px > dim->dest_size_px)
-    {
-        dim->clear_after_px = 0;
-        dim->clip_after_px = dim->placement_ofs_px + dim->placement_size_px - dim->dest_size_px;
+    if (dim->clip_after_px > 0)
         dim->last_opacity = 256;
-    }
 
-    /* Clamp placement */
+    dim->placement_ofs_px = visible_first_px;
+    dim->placement_size_px = visible_end_px - visible_first_px;
+}
 
-    if (dim->placement_ofs_px < 0)
-    {
-        dim->placement_size_px += dim->placement_ofs_px;
-        dim->placement_ofs_px = 0;
-    }
-
-    if (dim->placement_ofs_px + dim->placement_size_px > dim->dest_size_px)
-    {
-        dim->placement_size_px = dim->dest_size_px - dim->placement_ofs_px;
-    }
+/* Number of precalc entries to reserve for a dimension, in units of two
+ * uint16s (box entries are one uint32 each, bilinear samples are an
+ * offset/factor uint16 pair). Only the visible window is precalculated. */
+static uint32_t
+precalc_entries_for_dim (const SmolDim *dim)
+{
+    return (dim->placement_size_px << dim->n_halvings) + 1;
 }
 
 /* Validates the user-facing parameters shared by all entry points. Returns
@@ -1390,17 +1420,33 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
               placement_y_spx, placement_height_spx,
               flags, &storage_type [1]);
 
+    /* A placement with no visible extent in either dimension draws nothing;
+     * neutralize it to zero size so the pipeline treats it as a no-op
+     * (SMOL_COMPOSITE_SRC_CLEAR_DEST still clears the destination). */
+    if (scale_ctx->hdim.placement_size_px == 0 || scale_ctx->vdim.placement_size_px == 0)
+    {
+        init_dim (&scale_ctx->hdim,
+                  src_width_spx, dest_width_spx,
+                  0, 0,
+                  flags, &storage_type [0]);
+        init_dim (&scale_ctx->vdim,
+                  src_height_spx, dest_height_spx,
+                  0, 0,
+                  flags, &storage_type [1]);
+    }
+
     scale_ctx->storage_type = MAX (storage_type [0], storage_type [1]);
 
     /* FIXME: This will break if _SMOL_ALLOC() is set to use alloca() */
-    scale_ctx->hdim.precalc = smol_alloc_aligned (((scale_ctx->hdim.placement_size_prehalving_px + 1) * 2
-                                                   + (scale_ctx->vdim.placement_size_prehalving_px + 1) * 2)
+    scale_ctx->hdim.precalc = smol_alloc_aligned ((precalc_entries_for_dim (&scale_ctx->hdim)
+                                                   + precalc_entries_for_dim (&scale_ctx->vdim)) * 2
                                                   * sizeof (uint16_t),
                                                   &scale_ctx->precalc_storage);
     if (!scale_ctx->precalc_storage)
         return 0;
 
-    scale_ctx->vdim.precalc = ((uint16_t *) scale_ctx->hdim.precalc) + (scale_ctx->hdim.placement_size_prehalving_px + 1) * 2;
+    scale_ctx->vdim.precalc = ((uint16_t *) scale_ctx->hdim.precalc)
+        + precalc_entries_for_dim (&scale_ctx->hdim) * 2;
 
     get_implementations (scale_ctx, color_pixel, color_pixel_type);
     return 1;
@@ -1579,8 +1625,9 @@ smol_scale_new_full (const void *src_pixels,
                           dest_rowstride,
                           placement_x,
                           placement_y,
-                          placement_width,
-                          placement_height,
+                          /* Clamp to signed range */
+                          MIN (placement_width, (uint32_t) INT32_MAX),
+                          MIN (placement_height, (uint32_t) INT32_MAX),
                           composite_op,
                           flags,
                           post_row_func,
