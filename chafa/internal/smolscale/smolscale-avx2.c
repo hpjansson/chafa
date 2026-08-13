@@ -156,7 +156,8 @@ precalc_bilinear_array (uint16_t *array,
         sample_step = ((src_dim_spx - SMOL_SUBPIXEL_MUL) * SMOL_BILIN_MULTIPLIER)
             / (dest_dim_spx > SMOL_SUBPIXEL_MUL ? (dest_dim_spx - SMOL_SUBPIXEL_MUL) : 1);
         first_sample_ofs [0] = 0;
-        first_sample_ofs [1] = (sample_step * (SMOL_SUBPIXEL_MUL - dest_ofs_spx)) / SMOL_SUBPIXEL_MUL;
+        first_sample_ofs [1] = (sample_step * (SMOL_SUBPIXEL_MUL - dest_ofs_spx)
+                                * (1 << n_halvings)) / SMOL_SUBPIXEL_MUL;
     }
 
     first_sample_ofs [2] = ((((uint64_t) src_dim_spx * SMOL_BILIN_MULTIPLIER * 2) / SMOL_SUBPIXEL_MUL)
