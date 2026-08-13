@@ -806,6 +806,18 @@ pick_filter_params (uint32_t src_dim,
         *last_opacity = 256;
     }
 
+    /* A zero-size placement (which can result from clipping) renders nothing.
+     * None of the scaling filters support a zero-size output, so pick the one
+     * with no precalc and bail out. */
+
+    if (dest_dim_spx == 0)
+    {
+        *dest_dim_prehalving_spx = 0;
+        *dest_halvings = 0;
+        *dest_filter = SMOL_FILTER_ONE;
+        return;
+    }
+
     /* The box algorithms are only sufficiently precise when
      * src_dim > dest_dim * 5. box_64bpp typically starts outperforming
      * bilinear+halving at src_dim > dest_dim * 8. */
