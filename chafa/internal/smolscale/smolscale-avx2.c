@@ -1769,22 +1769,6 @@ interp_horizontal_bilinear_batch_to_4x_64bpp (const uint64_t * SMOL_RESTRICT row
     hadd_pixels_8x_to_4x_64bpp (s0, s1, o0);
 }
 
-static void
-interp_horizontal_bilinear_4x_batch_to_4x_64bpp (const uint64_t * SMOL_RESTRICT row_parts_in,
-                                                 const uint16_t * SMOL_RESTRICT precalc_x,
-                                                 __m256i * SMOL_RESTRICT o0)
-{
-    __m256i t0, t1, t2, t3;
-
-    interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x, &t0);
-    interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x + 32, &t1);
-    interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x + 64, &t2);
-    interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x + 96, &t3);
-
-    hadd_pixels_16x_to_8x_64bpp (t0, t1, t2, t3, &t0, &t1);
-    hadd_pixels_8x_to_4x_64bpp (t0, t1, o0);
-}
-
 /* Note that precalc_x must point to offsets and factors interleaved one by one, i.e.
  * offset - factor - offset - factor, and not 16x as with the batch function. */
 static SMOL_INLINE void
@@ -1936,97 +1920,6 @@ interp_horizontal_bilinear_3h_64bpp (const SmolScaleCtx *scale_ctx,
 }
 
 static void
-interp_horizontal_bilinear_4h_64bpp (const SmolScaleCtx *scale_ctx,
-                                     const uint64_t * SMOL_RESTRICT row_parts_in,
-                                     uint64_t * SMOL_RESTRICT row_parts_out)
-{
-    const uint16_t * SMOL_RESTRICT precalc_x = scale_ctx->hdim.precalc;
-    uint64_t * SMOL_RESTRICT row_parts_out_max = row_parts_out + scale_ctx->hdim.placement_size_px;
-
-    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t * SMOL_RESTRICT);
-    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t * SMOL_RESTRICT);
-    SMOL_ASSUME_ALIGNED (precalc_x, const uint16_t * SMOL_RESTRICT);
-
-    while (row_parts_out + 4 <= row_parts_out_max)
-    {
-        __m256i t0;
-
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x, &t0);
-        t0 = _mm256_srli_epi16 (t0, 4);
-        _mm256_store_si256 ((__m256i *) row_parts_out, t0);
-
-        row_parts_out += 4;
-        precalc_x += 128;
-    }
-
-    interp_horizontal_bilinear_epilogue_64bpp (row_parts_in, row_parts_out, row_parts_out_max, precalc_x, 4);
-}
-
-static void
-interp_horizontal_bilinear_5h_64bpp (const SmolScaleCtx *scale_ctx,
-                                     const uint64_t * SMOL_RESTRICT row_parts_in,
-                                     uint64_t * SMOL_RESTRICT row_parts_out)
-{
-    const uint16_t * SMOL_RESTRICT precalc_x = scale_ctx->hdim.precalc;
-    uint64_t * SMOL_RESTRICT row_parts_out_max = row_parts_out + scale_ctx->hdim.placement_size_px;
-
-    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t * SMOL_RESTRICT);
-    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t * SMOL_RESTRICT);
-    SMOL_ASSUME_ALIGNED (precalc_x, const uint16_t * SMOL_RESTRICT);
-
-    while (row_parts_out + 4 <= row_parts_out_max)
-    {
-        __m256i t0, t1;
-
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x, &t0);
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x + 128, &t1);
-
-        hadd_pixels_8x_to_4x_64bpp (t0, t1, &t0);
-        t0 = _mm256_srli_epi16 (t0, 5);
-        _mm256_store_si256 ((__m256i *) row_parts_out, t0);
-
-        row_parts_out += 4;
-        precalc_x += 256;
-    }
-
-    interp_horizontal_bilinear_epilogue_64bpp (row_parts_in, row_parts_out, row_parts_out_max, precalc_x, 5);
-}
-
-static void
-interp_horizontal_bilinear_6h_64bpp (const SmolScaleCtx *scale_ctx,
-                                     const uint64_t * SMOL_RESTRICT row_parts_in,
-                                     uint64_t * SMOL_RESTRICT row_parts_out)
-{
-    const uint16_t * SMOL_RESTRICT precalc_x = scale_ctx->hdim.precalc;
-    uint64_t * SMOL_RESTRICT row_parts_out_max = row_parts_out + scale_ctx->hdim.placement_size_px;
-
-    SMOL_ASSUME_ALIGNED (row_parts_in, const uint64_t * SMOL_RESTRICT);
-    SMOL_ASSUME_ALIGNED (row_parts_out, uint64_t * SMOL_RESTRICT);
-    SMOL_ASSUME_ALIGNED (precalc_x, const uint16_t * SMOL_RESTRICT);
-
-    while (row_parts_out + 4 <= row_parts_out_max)
-    {
-        __m256i t0, t1, t2, t3;
-
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x, &t0);
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x + 128, &t1);
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x + 256, &t2);
-        interp_horizontal_bilinear_4x_batch_to_4x_64bpp (row_parts_in, precalc_x + 384, &t3);
-
-        hadd_pixels_16x_to_8x_64bpp (t0, t1, t2, t3, &t0, &t1);
-        hadd_pixels_8x_to_4x_64bpp (t0, t1, &t0);
-
-        t0 = _mm256_srli_epi16 (t0, 6);
-        _mm256_store_si256 ((__m256i *) row_parts_out, t0);
-
-        row_parts_out += 4;
-        precalc_x += 512;
-    }
-
-    interp_horizontal_bilinear_epilogue_64bpp (row_parts_in, row_parts_out, row_parts_out_max, precalc_x, 6);
-}
-
-static void
 interp_horizontal_bilinear_0h_128bpp (const SmolScaleCtx *scale_ctx,
                                       const uint64_t * SMOL_RESTRICT row_parts_in,
                                       uint64_t * SMOL_RESTRICT row_parts_out)
@@ -2153,9 +2046,6 @@ interp_horizontal_bilinear_##n_halvings##h_128bpp (const SmolScaleCtx *scale_ctx
 DEF_INTERP_HORIZONTAL_BILINEAR_128BPP(1)
 DEF_INTERP_HORIZONTAL_BILINEAR_128BPP(2)
 DEF_INTERP_HORIZONTAL_BILINEAR_128BPP(3)
-DEF_INTERP_HORIZONTAL_BILINEAR_128BPP(4)
-DEF_INTERP_HORIZONTAL_BILINEAR_128BPP(5)
-DEF_INTERP_HORIZONTAL_BILINEAR_128BPP(6)
 
 static SMOL_INLINE void
 unpack_box_precalc (const uint32_t precalc,
@@ -3068,12 +2958,6 @@ DEF_INTERP_VERTICAL_BILINEAR_FINAL(2)
 DEF_SCALE_DEST_ROW_BILINEAR(2)
 DEF_INTERP_VERTICAL_BILINEAR_FINAL(3)
 DEF_SCALE_DEST_ROW_BILINEAR(3)
-DEF_INTERP_VERTICAL_BILINEAR_FINAL(4)
-DEF_SCALE_DEST_ROW_BILINEAR(4)
-DEF_INTERP_VERTICAL_BILINEAR_FINAL(5)
-DEF_SCALE_DEST_ROW_BILINEAR(5)
-DEF_INTERP_VERTICAL_BILINEAR_FINAL(6)
-DEF_SCALE_DEST_ROW_BILINEAR(6)
 
 static void
 finalize_vertical_64bpp (const uint64_t * SMOL_RESTRICT accums,
@@ -4133,9 +4017,6 @@ static const SmolImplementation implementation =
             interp_horizontal_bilinear_1h_64bpp,
             interp_horizontal_bilinear_2h_64bpp,
             interp_horizontal_bilinear_3h_64bpp,
-            interp_horizontal_bilinear_4h_64bpp,
-            interp_horizontal_bilinear_5h_64bpp,
-            interp_horizontal_bilinear_6h_64bpp,
             interp_horizontal_boxes_64bpp
         },
         {
@@ -4146,9 +4027,6 @@ static const SmolImplementation implementation =
             interp_horizontal_bilinear_1h_128bpp,
             interp_horizontal_bilinear_2h_128bpp,
             interp_horizontal_bilinear_3h_128bpp,
-            interp_horizontal_bilinear_4h_128bpp,
-            interp_horizontal_bilinear_5h_128bpp,
-            interp_horizontal_bilinear_6h_128bpp,
             interp_horizontal_boxes_128bpp
         }
     },
@@ -4170,9 +4048,6 @@ static const SmolImplementation implementation =
             scale_dest_row_bilinear_1h_64bpp,
             scale_dest_row_bilinear_2h_64bpp,
             scale_dest_row_bilinear_3h_64bpp,
-            scale_dest_row_bilinear_4h_64bpp,
-            scale_dest_row_bilinear_5h_64bpp,
-            scale_dest_row_bilinear_6h_64bpp,
             scale_dest_row_box_64bpp
         },
         {
@@ -4183,9 +4058,6 @@ static const SmolImplementation implementation =
             scale_dest_row_bilinear_1h_128bpp,
             scale_dest_row_bilinear_2h_128bpp,
             scale_dest_row_bilinear_3h_128bpp,
-            scale_dest_row_bilinear_4h_128bpp,
-            scale_dest_row_bilinear_5h_128bpp,
-            scale_dest_row_bilinear_6h_128bpp,
             scale_dest_row_box_128bpp
         }
     },

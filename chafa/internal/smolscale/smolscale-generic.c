@@ -2088,9 +2088,6 @@ interp_horizontal_bilinear_0h_128bpp (const SmolScaleCtx *scale_ctx,
 DEF_INTERP_HORIZONTAL_BILINEAR(1)
 DEF_INTERP_HORIZONTAL_BILINEAR(2)
 DEF_INTERP_HORIZONTAL_BILINEAR(3)
-DEF_INTERP_HORIZONTAL_BILINEAR(4)
-DEF_INTERP_HORIZONTAL_BILINEAR(5)
-DEF_INTERP_HORIZONTAL_BILINEAR(6)
 
 static SMOL_INLINE void
 unpack_box_precalc (const uint32_t precalc,
@@ -2855,12 +2852,6 @@ DEF_INTERP_VERTICAL_BILINEAR_FINAL(2)
 DEF_SCALE_DEST_ROW_BILINEAR(2)
 DEF_INTERP_VERTICAL_BILINEAR_FINAL(3)
 DEF_SCALE_DEST_ROW_BILINEAR(3)
-DEF_INTERP_VERTICAL_BILINEAR_FINAL(4)
-DEF_SCALE_DEST_ROW_BILINEAR(4)
-DEF_INTERP_VERTICAL_BILINEAR_FINAL(5)
-DEF_SCALE_DEST_ROW_BILINEAR(5)
-DEF_INTERP_VERTICAL_BILINEAR_FINAL(6)
-DEF_SCALE_DEST_ROW_BILINEAR(6)
 
 static void
 finalize_vertical_64bpp (const uint64_t * SMOL_RESTRICT accums,
@@ -3568,9 +3559,6 @@ static const SmolImplementation implementation =
             interp_horizontal_bilinear_1h_64bpp,
             interp_horizontal_bilinear_2h_64bpp,
             interp_horizontal_bilinear_3h_64bpp,
-            interp_horizontal_bilinear_4h_64bpp,
-            interp_horizontal_bilinear_5h_64bpp,
-            interp_horizontal_bilinear_6h_64bpp,
             interp_horizontal_boxes_64bpp
         },
         {
@@ -3581,9 +3569,6 @@ static const SmolImplementation implementation =
             interp_horizontal_bilinear_1h_128bpp,
             interp_horizontal_bilinear_2h_128bpp,
             interp_horizontal_bilinear_3h_128bpp,
-            interp_horizontal_bilinear_4h_128bpp,
-            interp_horizontal_bilinear_5h_128bpp,
-            interp_horizontal_bilinear_6h_128bpp,
             interp_horizontal_boxes_128bpp
         }
     },
@@ -3605,9 +3590,6 @@ static const SmolImplementation implementation =
             scale_dest_row_bilinear_1h_64bpp,
             scale_dest_row_bilinear_2h_64bpp,
             scale_dest_row_bilinear_3h_64bpp,
-            scale_dest_row_bilinear_4h_64bpp,
-            scale_dest_row_bilinear_5h_64bpp,
-            scale_dest_row_bilinear_6h_64bpp,
             scale_dest_row_box_64bpp
         },
         {
@@ -3618,9 +3600,6 @@ static const SmolImplementation implementation =
             scale_dest_row_bilinear_1h_128bpp,
             scale_dest_row_bilinear_2h_128bpp,
             scale_dest_row_bilinear_3h_128bpp,
-            scale_dest_row_bilinear_4h_128bpp,
-            scale_dest_row_bilinear_5h_128bpp,
-            scale_dest_row_bilinear_6h_128bpp,
             scale_dest_row_box_128bpp
         }
     },
