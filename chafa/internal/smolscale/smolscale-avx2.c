@@ -34,13 +34,36 @@
  * bulk loops consume whole output pixels, so with halvings the epilogue can
  * hold 16 or more o/f pairs. */
 
+/* Sample layouts per halving depth, applied within a perm window of one
+ * batch (16 samples) or, for 3H, two batches (32). The batch
+ * interpolator emits stored slots 0..3, 4..7, 8..11, 12..15 as its four
+ * output registers, so interleaving the samples at precalc time makes
+ * each halving a plain vertical add with the sums emerging in output
+ * order. 0H stores results directly and needs the identity. 3H spreads
+ * each output pixel's eight samples across two consecutive batches, four
+ * per batch, so each batch folds to per-pixel partial sums and one
+ * cross-batch add finishes the job. */
+static const uint8_t batch_sample_perm_linear [BILIN_HORIZ_BATCH_PIXELS] =
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+static const uint8_t batch_sample_perm_1h [BILIN_HORIZ_BATCH_PIXELS] =
+    { 0, 4, 1, 5, 2, 6, 3, 7, 8, 12, 9, 13, 10, 14, 11, 15 };
+static const uint8_t batch_sample_perm_2h [BILIN_HORIZ_BATCH_PIXELS] =
+    { 0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 };
+static const uint8_t batch_sample_perm_3h [BILIN_HORIZ_BATCH_PIXELS * 2] =
+    { 0, 4, 8, 12, 16, 20, 24, 28, 1, 5, 9, 13, 17, 21, 25, 29,
+      2, 6, 10, 14, 18, 22, 26, 30, 3, 7, 11, 15, 19, 23, 27, 31 };
+
 static uint32_t
-array_offset_offset (uint32_t elem_i, int n_batch_samples, int do_batches)
+array_offset_offset (uint32_t elem_i, int n_batch_samples, int do_batches,
+                     const uint8_t *batch_perm, uint32_t perm_window)
 {
     if (do_batches && (int) elem_i < n_batch_samples)
     {
-        return (elem_i / (BILIN_HORIZ_BATCH_PIXELS)) * (BILIN_HORIZ_BATCH_PIXELS * 2)
-            + (elem_i % BILIN_HORIZ_BATCH_PIXELS);
+        uint32_t slot = batch_perm [elem_i % perm_window];
+
+        return (elem_i / perm_window) * (perm_window * 2)
+            + (slot / BILIN_HORIZ_BATCH_PIXELS) * (BILIN_HORIZ_BATCH_PIXELS * 2)
+            + (slot % BILIN_HORIZ_BATCH_PIXELS);
     }
     else
     {
@@ -49,14 +72,18 @@ array_offset_offset (uint32_t elem_i, int n_batch_samples, int do_batches)
 }
 
 static uint32_t
-array_offset_factor (uint32_t elem_i, int n_batch_samples, int do_batches)
+array_offset_factor (uint32_t elem_i, int n_batch_samples, int do_batches,
+                     const uint8_t *batch_perm, uint32_t perm_window)
 {
     const uint8_t o [BILIN_HORIZ_BATCH_PIXELS] = { 0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15 };
 
     if (do_batches && (int) elem_i < n_batch_samples)
     {
-        return (elem_i / (BILIN_HORIZ_BATCH_PIXELS)) * (BILIN_HORIZ_BATCH_PIXELS * 2)
-            + BILIN_HORIZ_BATCH_PIXELS + o [elem_i % BILIN_HORIZ_BATCH_PIXELS];
+        uint32_t slot = batch_perm [elem_i % perm_window];
+
+        return (elem_i / perm_window) * (perm_window * 2)
+            + (slot / BILIN_HORIZ_BATCH_PIXELS) * (BILIN_HORIZ_BATCH_PIXELS * 2)
+            + BILIN_HORIZ_BATCH_PIXELS + o [slot % BILIN_HORIZ_BATCH_PIXELS];
     }
     else
     {
@@ -75,6 +102,8 @@ precalc_linear_range (uint16_t *array_out,
                       int64_t clip_first_index,
                       int64_t clip_last_index,
                       int do_batches,
+                      const uint8_t *batch_perm,
+                      uint32_t perm_window,
                       int *array_i_inout)
 {
     uint64_t sample_ofs;
@@ -101,14 +130,14 @@ precalc_linear_range (uint16_t *array_out,
 
         if (sample_ofs_px >= (uint64_t) sample_ofs_px_max - 1)
         {
-            array_out [array_offset_offset ((*array_i_inout), n_batch_samples, do_batches)] = sample_ofs_px_max - 2;
-            array_out [array_offset_factor ((*array_i_inout), n_batch_samples, do_batches)] = 0;
+            array_out [array_offset_offset ((*array_i_inout), n_batch_samples, do_batches, batch_perm, perm_window)] = sample_ofs_px_max - 2;
+            array_out [array_offset_factor ((*array_i_inout), n_batch_samples, do_batches, batch_perm, perm_window)] = 0;
             (*array_i_inout)++;
             continue;
         }
 
-        array_out [array_offset_offset ((*array_i_inout), n_batch_samples, do_batches)] = sample_ofs_px;
-        array_out [array_offset_factor ((*array_i_inout), n_batch_samples, do_batches)] = SMOL_SMALL_MUL
+        array_out [array_offset_offset ((*array_i_inout), n_batch_samples, do_batches, batch_perm, perm_window)] = sample_ofs_px;
+        array_out [array_offset_factor ((*array_i_inout), n_batch_samples, do_batches, batch_perm, perm_window)] = SMOL_SMALL_MUL
             - ((sample_ofs / (SMOL_BILIN_MULTIPLIER / SMOL_SMALL_MUL)) % SMOL_SMALL_MUL);
         (*array_i_inout)++;
 
@@ -136,6 +165,12 @@ precalc_bilinear_array (uint16_t *array,
      * [p << n_halvings, (p + 1) << n_halvings). */
     int64_t clip_first = (int64_t) dest_clip_before_px << n_halvings;
     int64_t clip_last = clip_first + ((int64_t) dest_visible_px << n_halvings);
+    const uint8_t *batch_perm =
+        n_halvings == 1 ? batch_sample_perm_1h :
+        n_halvings == 2 ? batch_sample_perm_2h :
+        n_halvings == 3 ? batch_sample_perm_3h : batch_sample_perm_linear;
+    uint32_t perm_window = n_halvings == 3 ? BILIN_HORIZ_BATCH_PIXELS * 2
+                                           : BILIN_HORIZ_BATCH_PIXELS;
     int i = 0;
 
     assert (src_dim_px > 1);
@@ -175,6 +210,8 @@ precalc_bilinear_array (uint16_t *array,
                           clip_first,
                           clip_last,
                           do_batches,
+                          batch_perm,
+                          perm_window,
                           &i);
 
     /* Check to prevent overruns when the output size is exactly 1 */
@@ -191,6 +228,8 @@ precalc_bilinear_array (uint16_t *array,
                               clip_first,
                               clip_last,
                               do_batches,
+                              batch_perm,
+                              perm_window,
                               &i);
 
         /* Right fringe */
@@ -204,6 +243,8 @@ precalc_bilinear_array (uint16_t *array,
                               clip_first,
                               clip_last,
                               do_batches,
+                              batch_perm,
+                              perm_window,
                               &i);
     }
 }
@@ -1594,50 +1635,6 @@ apply_horiz_edge_opacity (const SmolScaleCtx *scale_ctx,
 #define CONTROL_8X1BIT_1_1_0_0_1_1_0_0 (SMOL_8X1BIT (1, 1, 0, 0, 1, 1, 0, 0))
 
 static SMOL_INLINE void
-hadd_pixels_16x_to_8x_64bpp (__m256i i0, __m256i i1, __m256i i2, __m256i i3,
-                             __m256i * SMOL_RESTRICT o0, __m256i * SMOL_RESTRICT o1)
-{
-    __m256i t0, t1, t2, t3;
-
-    t0 = _mm256_shuffle_epi32 (i0, CONTROL_4X2BIT_1_0_3_2);
-    t1 = _mm256_shuffle_epi32 (i1, CONTROL_4X2BIT_1_0_3_2);
-    t2 = _mm256_shuffle_epi32 (i2, CONTROL_4X2BIT_1_0_3_2);
-    t3 = _mm256_shuffle_epi32 (i3, CONTROL_4X2BIT_1_0_3_2);
-
-    t0 = _mm256_add_epi16 (t0, i0);
-    t1 = _mm256_add_epi16 (t1, i1);
-    t2 = _mm256_add_epi16 (t2, i2);
-    t3 = _mm256_add_epi16 (t3, i3);
-
-    t0 = _mm256_blend_epi32 (t0, t1, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
-    t1 = _mm256_blend_epi32 (t2, t3, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
-
-    t0 = _mm256_permute4x64_epi64 (t0, CONTROL_4X2BIT_3_1_2_0);
-    t1 = _mm256_permute4x64_epi64 (t1, CONTROL_4X2BIT_3_1_2_0);
-
-    *o0 = t0;
-    *o1 = t1;
-}
-
-static SMOL_INLINE void
-hadd_pixels_8x_to_4x_64bpp (__m256i i0, __m256i i1, __m256i * SMOL_RESTRICT o0)
-{
-    __m256i t0, t1;
-
-    t0 = _mm256_shuffle_epi32 (i0, CONTROL_4X2BIT_1_0_3_2);
-    t1 = _mm256_shuffle_epi32 (i1, CONTROL_4X2BIT_1_0_3_2);
-
-    t0 = _mm256_add_epi16 (t0, i0);
-    t1 = _mm256_add_epi16 (t1, i1);
-
-    t0 = _mm256_blend_epi32 (t0, t1, CONTROL_8X1BIT_1_1_0_0_1_1_0_0);
-
-    t0 = _mm256_permute4x64_epi64 (t0, CONTROL_4X2BIT_3_1_2_0);
-
-    *o0 = t0;
-}
-
-static SMOL_INLINE void
 interp_horizontal_bilinear_batch_64bpp (const uint64_t * SMOL_RESTRICT row_parts_in,
                                         const uint16_t * SMOL_RESTRICT precalc_x,
                                         __m256i * SMOL_RESTRICT o0,
@@ -1757,18 +1754,6 @@ interp_horizontal_bilinear_batch_64bpp (const uint64_t * SMOL_RESTRICT row_parts
     *o3 = _mm256_permute4x64_epi64 (m3, CONTROL_4X2BIT_3_1_2_0);
 }
 
-static void
-interp_horizontal_bilinear_batch_to_4x_64bpp (const uint64_t * SMOL_RESTRICT row_parts_in,
-                                              const uint16_t * SMOL_RESTRICT precalc_x,
-                                              __m256i * SMOL_RESTRICT o0)
-{
-    __m256i m0, m1, m2, m3, s0, s1;
-
-    interp_horizontal_bilinear_batch_64bpp (row_parts_in, precalc_x, &m0, &m1, &m2, &m3);
-    hadd_pixels_16x_to_8x_64bpp (m0, m1, m2, m3, &s0, &s1);
-    hadd_pixels_8x_to_4x_64bpp (s0, s1, o0);
-}
-
 /* Note that precalc_x must point to offsets and factors interleaved one by one, i.e.
  * offset - factor - offset - factor, and not 16x as with the batch function. */
 static SMOL_INLINE void
@@ -1846,11 +1831,13 @@ interp_horizontal_bilinear_1h_64bpp (const SmolScaleCtx *scale_ctx,
     {
         __m256i m0, m1, m2, m3, s0, s1;
 
+        /* batch_sample_perm_1h pairs each output pixel's two samples
+         * across (m0, m1) and (m2, m3) in matching lanes, so the halving
+         * is a plain vertical add with sums in output order. */
         interp_horizontal_bilinear_batch_64bpp (row_parts_in, precalc_x, &m0, &m1, &m2, &m3);
-        hadd_pixels_16x_to_8x_64bpp (m0, m1, m2, m3, &s0, &s1);
 
-        s0 = _mm256_srli_epi16 (s0, 1);
-        s1 = _mm256_srli_epi16 (s1, 1);
+        s0 = _mm256_srli_epi16 (_mm256_add_epi16 (m0, m1), 1);
+        s1 = _mm256_srli_epi16 (_mm256_add_epi16 (m2, m3), 1);
 
         _mm256_store_si256 ((__m256i *) row_parts_out, s0);
         _mm256_store_si256 ((__m256i *) row_parts_out + 1, s1);
@@ -1876,9 +1863,14 @@ interp_horizontal_bilinear_2h_64bpp (const SmolScaleCtx *scale_ctx,
 
     while (row_parts_out + 4 <= row_parts_out_max)
     {
-        __m256i t;
+        __m256i m0, m1, m2, m3, t;
 
-        interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x, &t);
+        /* batch_sample_perm_2h strides each output pixel's four samples
+         * across m0..m3 in matching lanes: two halvings collapse into
+         * three vertical adds with sums in output order. */
+        interp_horizontal_bilinear_batch_64bpp (row_parts_in, precalc_x, &m0, &m1, &m2, &m3);
+
+        t = _mm256_add_epi16 (_mm256_add_epi16 (m0, m1), _mm256_add_epi16 (m2, m3));
         t = _mm256_srli_epi16 (t, 2);
         _mm256_store_si256 ((__m256i *) row_parts_out, t);
 
@@ -1903,13 +1895,18 @@ interp_horizontal_bilinear_3h_64bpp (const SmolScaleCtx *scale_ctx,
 
     while (row_parts_out + 4 <= row_parts_out_max)
     {
-        __m256i s0, s1;
+        __m256i m0, m1, m2, m3, s0, s1;
 
-        interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x, &s0);
-        interp_horizontal_bilinear_batch_to_4x_64bpp (row_parts_in, precalc_x + 32, &s1);
+        /* batch_sample_perm_3h strides each output pixel's eight samples
+         * across two batches, four per batch in matching lanes: each
+         * batch folds to per-pixel partial sums with three vertical adds,
+         * and one cross-batch add completes them, in output order. */
+        interp_horizontal_bilinear_batch_64bpp (row_parts_in, precalc_x, &m0, &m1, &m2, &m3);
+        s0 = _mm256_add_epi16 (_mm256_add_epi16 (m0, m1), _mm256_add_epi16 (m2, m3));
+        interp_horizontal_bilinear_batch_64bpp (row_parts_in, precalc_x + 32, &m0, &m1, &m2, &m3);
+        s1 = _mm256_add_epi16 (_mm256_add_epi16 (m0, m1), _mm256_add_epi16 (m2, m3));
 
-        hadd_pixels_8x_to_4x_64bpp (s0, s1, &s0);
-        s0 = _mm256_srli_epi16 (s0, 3);
+        s0 = _mm256_srli_epi16 (_mm256_add_epi16 (s0, s1), 3);
         _mm256_store_si256 ((__m256i *) row_parts_out, s0);
 
         row_parts_out += 4;
