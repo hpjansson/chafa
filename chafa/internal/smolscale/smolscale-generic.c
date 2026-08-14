@@ -2908,12 +2908,18 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
                         &w2,
                         &n);
 
-    /* First input row */
+    /* First input row. With sequential dest rows this is the same source
+     * row that ended the previous span, and parts_row [0] will still hold
+     * its horizontal scaling (tracked by src_ofs). */
 
-    scale_horizontal (scale_ctx,
-                      local_ctx,
-                      src_row_ofs_to_pointer (scale_ctx, ofs_y),
-                      local_ctx->parts_row [0]);
+    if (ofs_y != local_ctx->src_ofs)
+    {
+        scale_horizontal (scale_ctx,
+                          local_ctx,
+                          src_row_ofs_to_pointer (scale_ctx, ofs_y),
+                          local_ctx->parts_row [0]);
+        local_ctx->src_ofs = ofs_y;
+    }
     copy_weighted_parts_64bpp (local_ctx->parts_row [0],
                                local_ctx->parts_row [1],
                                scale_ctx->hdim.placement_size_px,
@@ -2928,6 +2934,7 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
                           local_ctx,
                           src_row_ofs_to_pointer (scale_ctx, ofs_y),
                           local_ctx->parts_row [0]);
+        local_ctx->src_ofs = ofs_y;
         add_parts (local_ctx->parts_row [0],
                    local_ctx->parts_row [1],
                    scale_ctx->hdim.placement_size_px);
@@ -2935,27 +2942,30 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
         ofs_y++;
     }
 
-    /* Last input row */
+    /* Last input row. Skipped when its weight is zero (aligned integer
+     * ratios) or when the span runs flush with the source's edge. */
 
-    if (ofs_y < scale_ctx->vdim.src_size_px)
+    if (w2 > 0 && ofs_y < scale_ctx->vdim.src_size_px)
     {
         scale_horizontal (scale_ctx,
                           local_ctx,
                           src_row_ofs_to_pointer (scale_ctx, ofs_y),
                           local_ctx->parts_row [0]);
+        local_ctx->src_ofs = ofs_y;
         add_weighted_parts_64bpp (local_ctx->parts_row [0],
                                   local_ctx->parts_row [1],
                                   scale_ctx->hdim.placement_size_px,
                                   w2);
     }
 
-    /* Finalize */
+    /* Finalize. The output goes in parts_row [2] so parts_row [0] can
+     * carry the boundary row over to the next span. */
 
     if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
     {
         finalize_vertical_with_opacity_64bpp (local_ctx->parts_row [1],
                                               scale_ctx->vdim.span_mul,
-                                              local_ctx->parts_row [0],
+                                              local_ctx->parts_row [2],
                                               scale_ctx->hdim.placement_size_px,
                                               scale_ctx->vdim.first_opacity);
     }
@@ -2963,7 +2973,7 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
     {
         finalize_vertical_with_opacity_64bpp (local_ctx->parts_row [1],
                                               scale_ctx->vdim.span_mul,
-                                              local_ctx->parts_row [0],
+                                              local_ctx->parts_row [2],
                                               scale_ctx->hdim.placement_size_px,
                                               scale_ctx->vdim.last_opacity);
     }
@@ -2971,11 +2981,11 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
     {
         finalize_vertical_64bpp (local_ctx->parts_row [1],
                                  scale_ctx->vdim.span_mul,
-                                 local_ctx->parts_row [0],
+                                 local_ctx->parts_row [2],
                                  scale_ctx->hdim.placement_size_px);
     }
 
-    return 0;
+    return 2;
 }
 
 static void
@@ -3035,12 +3045,18 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
                         &w2,
                         &n);
 
-    /* First input row */
+    /* First input row. With sequential dest rows this is the same source
+     * row that ended the previous span, and parts_row [0] will still hold
+     * its horizontal scaling (tracked by src_ofs). */
 
-    scale_horizontal (scale_ctx,
-                      local_ctx,
-                      src_row_ofs_to_pointer (scale_ctx, ofs_y),
-                      local_ctx->parts_row [0]);
+    if (ofs_y != local_ctx->src_ofs)
+    {
+        scale_horizontal (scale_ctx,
+                          local_ctx,
+                          src_row_ofs_to_pointer (scale_ctx, ofs_y),
+                          local_ctx->parts_row [0]);
+        local_ctx->src_ofs = ofs_y;
+    }
     copy_weighted_parts_128bpp (local_ctx->parts_row [0],
                                 local_ctx->parts_row [1],
                                 scale_ctx->hdim.placement_size_px,
@@ -3055,6 +3071,7 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
                           local_ctx,
                           src_row_ofs_to_pointer (scale_ctx, ofs_y),
                           local_ctx->parts_row [0]);
+        local_ctx->src_ofs = ofs_y;
         add_parts (local_ctx->parts_row [0],
                    local_ctx->parts_row [1],
                    scale_ctx->hdim.placement_size_px * 2);
@@ -3062,25 +3079,30 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
         ofs_y++;
     }
 
-    /* Last input row */
+    /* Last input row. Skipped when its weight is zero (aligned integer
+     * ratios) or when the span runs flush with the source's edge. */
 
-    if (ofs_y < scale_ctx->vdim.src_size_px)
+    if (w2 > 0 && ofs_y < scale_ctx->vdim.src_size_px)
     {
         scale_horizontal (scale_ctx,
                           local_ctx,
                           src_row_ofs_to_pointer (scale_ctx, ofs_y),
                           local_ctx->parts_row [0]);
+        local_ctx->src_ofs = ofs_y;
         add_weighted_parts_128bpp (local_ctx->parts_row [0],
                                    local_ctx->parts_row [1],
                                    scale_ctx->hdim.placement_size_px,
                                    w2);
     }
 
+    /* Finalize. The output goes in parts_row [2] so parts_row [0] can
+     * carry the boundary row over to the next span. */
+
     if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
     {
         finalize_vertical_with_opacity_128bpp (local_ctx->parts_row [1],
                                                scale_ctx->vdim.span_mul,
-                                               local_ctx->parts_row [0],
+                                               local_ctx->parts_row [2],
                                                scale_ctx->hdim.placement_size_px,
                                                scale_ctx->vdim.first_opacity);
     }
@@ -3088,7 +3110,7 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
     {
         finalize_vertical_with_opacity_128bpp (local_ctx->parts_row [1],
                                                scale_ctx->vdim.span_mul,
-                                               local_ctx->parts_row [0],
+                                               local_ctx->parts_row [2],
                                                scale_ctx->hdim.placement_size_px,
                                                scale_ctx->vdim.last_opacity);
     }
@@ -3096,11 +3118,11 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
     {
         finalize_vertical_128bpp (local_ctx->parts_row [1],
                                   scale_ctx->vdim.span_mul,
-                                  local_ctx->parts_row [0],
+                                  local_ctx->parts_row [2],
                                   scale_ctx->hdim.placement_size_px);
     }
 
-    return 0;
+    return 2;
 }
 
 static int
