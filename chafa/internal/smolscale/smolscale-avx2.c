@@ -3424,6 +3424,71 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
  * ----------- */
 
 static void
+composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
+                              uint64_t * SMOL_RESTRICT dest_row,
+                              uint32_t n_pixels,
+                              uint16_t opacity)
+{
+    /* Broadcast each pixel's low 16-bit lane (alpha) to all four lanes */
+    const __m256i alpha_shuf = _mm256_set_epi8 (9, 8, 9, 8, 9, 8, 9, 8,
+                                                1, 0, 1, 0, 1, 0, 1, 0,
+                                                9, 8, 9, 8, 9, 8, 9, 8,
+                                                1, 0, 1, 0, 1, 0, 1, 0);
+    const __m256i ff = _mm256_set1_epi16 (0xff);
+    const __m256i r128 = _mm256_set1_epi16 (0x80);
+    const __m256i zero = _mm256_setzero_si256 ();
+    const __m256i opv = _mm256_set1_epi16 ((short) opacity);
+    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    uint32_t n4 = n_pixels & ~3U;
+    uint32_t i;
+
+    /* Four pixels (4 x uint64_t = 16 x 16-bit lanes) per iteration. The
+     * lanes hold at most 0xff and the weights at most 0xff, so every
+     * per-lane intermediate stays below 65536, exactly like the scalar
+     * version's u64 arithmetic (which cannot carry across lanes for the
+     * same reason). */
+
+    for (i = 0; i < n4; i += 4)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + i));
+        __m256i d = _mm256_loadu_si256 ((const __m256i *) (dest_row + i));
+        __m256i a, az, t, u;
+
+        if (scale_opacity)
+            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_SUBPIXEL_SHIFT);
+
+        a = _mm256_shuffle_epi8 (s, alpha_shuf);
+        az = _mm256_cmpeq_epi16 (a, zero);   /* pixel-wide: all lanes match */
+
+        /* t = dest * (0xff - a) + 128; dest' = src (squelched if a == 0)
+         * + (t + (t >> 8)) >> 8 */
+        t = _mm256_add_epi16 (_mm256_mullo_epi16 (d, _mm256_sub_epi16 (ff, a)), r128);
+        u = _mm256_srli_epi16 (_mm256_add_epi16 (t, _mm256_srli_epi16 (t, 8)), 8);
+
+        _mm256_storeu_si256 ((__m256i *) (dest_row + i),
+                             _mm256_add_epi16 (_mm256_andnot_si256 (az, s), u));
+    }
+
+    /* Scalar epilogue for the last few pixels */
+
+    for (i = n4; i < n_pixels; i++)
+    {
+        uint64_t s = src_row [i];
+        uint64_t a, nz, t;
+
+        if (scale_opacity)
+            s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
+
+        a = s & 0xff;
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+
+        t = dest_row [i] * (0xff - a) + 0x0080008000800080ULL;
+        dest_row [i] = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
+    }
+}
+
+static void
 composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
                                 uint64_t * SMOL_RESTRICT dest_row,
                                 uint32_t n_pixels,
@@ -4137,7 +4202,13 @@ static const SmolImplementation implementation =
 
         { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp - unused */
         { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp - unused */
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 64bpp - generic */
+
+        /* 64bpp: p8 compressed. The linear row is unreachable: linear
+         * gamma always selects 128bpp storage. */
+        {
+            { NULL, composite_over_dest_p8_64bpp, NULL },  /* compressed */
+            { NULL, NULL, NULL }                           /* linear - unused */
+        },
 
         /* 128bpp: p16 in both gammas (alpha lane is gamma-independent and the
          * source-over arithmetic is space-agnostic). */
