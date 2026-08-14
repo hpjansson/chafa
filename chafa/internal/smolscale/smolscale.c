@@ -14,8 +14,8 @@
 
 /* The box algorithms are only sufficiently precise when
  * src_dim > dest_dim * 5, and box_64bpp only starts outperforming
- * bilinear+halving at src_dim > dest_dim * 8. We hand off bilinear
- * at 6x, not 8x, for correctness; an exact area average
+ * bilinear+halving at much higher ratios (with SIMD). We hand off
+ * bilinear at a non-^2 factor for continuity; an exact area average
  * over an R-pixel span at fractional subpixel phase needs R+1 taps,
  * while the 2H kernel's support is R*3/4 + 2, so it falls short by
  * R/4 - 1 pixels. The missing fraction shows up as phase-dependent
@@ -23,15 +23,13 @@
  * the band (approaching a full pixel at 8x, where a Nyquist grating
  * can swing the output by 180/255). Box carries fractional span ends
  * natively, making it both phase-exact and position-continuous, so it
- * takes over where the tent kernel's tap budget runs out. The cost is
- * ~30% throughput on the 6..8x band (unassoc/linearized) or closer
- * to 100% in the premul-compressed pipeline.
+ * takes over where the tent kernel's tap budget runs out.
  *
  * The cutoff cannot exceed 16, as we don't support bilinear filters
  * with more than three halvings (8x2 taps). */
 
 #ifndef SMOL_BILIN_BOX_CUTOFF
-# define SMOL_BILIN_BOX_CUTOFF 6
+# define SMOL_BILIN_BOX_CUTOFF 14
 #endif
 
 /* ----------------------- *
@@ -859,11 +857,7 @@ pick_filter_params (uint32_t src_dim,
     {
         /* Like all ratio decisions, measured in subpixels with a one-
          * output-pixel floor, so fractional placement sizes hand off at
-         * the same true ratio as whole-pixel ones. At 6x the 2H tap
-         * spacing is 1.5 source pixels: consecutive sample phases
-         * alternate, so the tent kernel cannot phase-lock on Nyquist
-         * content, and its output stays within ~18/255 of the box result
-         * at every subpixel phase. */
+         * the same true ratio as whole-pixel ones. */
         *dest_filter = SMOL_FILTER_BOX;
     }
     else if (src_dim <= 1)
