@@ -1449,6 +1449,8 @@ static int
 check_scale_params (const void *src_pixels,
                     SmolPixelType src_pixel_type,
                     uint32_t src_width, uint32_t src_height,
+                    const void *color_pixel,
+                    SmolPixelType color_pixel_type,
                     SmolPixelType dest_pixel_type,
                     uint32_t dest_width, uint32_t dest_height,
                     SmolCompositeOp composite_op)
@@ -1458,6 +1460,10 @@ check_scale_params (const void *src_pixels,
 
     if ((unsigned int) src_pixel_type >= SMOL_PIXEL_MAX
         || (unsigned int) dest_pixel_type >= SMOL_PIXEL_MAX)
+        return 0;
+
+    /* color_pixel_type only matters when a color pixel is provided */
+    if (color_pixel && (unsigned int) color_pixel_type >= SMOL_PIXEL_MAX)
         return 0;
 
     if (composite_op != SMOL_COMPOSITE_SRC_OVER_COLOR
@@ -1605,6 +1611,7 @@ smol_scale_new_simple (const void *src_pixels,
     SmolScaleCtx *scale_ctx;
 
     if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
+                             NULL, 0,
                              dest_pixel_type, dest_width, dest_height,
                              SMOL_COMPOSITE_SRC_OVER_COLOR))
         return NULL;
@@ -1661,6 +1668,7 @@ smol_scale_simple (const void *src_pixels,
     int result = 0;
 
     if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
+                             NULL, 0,
                              dest_pixel_type, dest_width, dest_height,
                              SMOL_COMPOSITE_SRC_OVER_COLOR))
         return 0;
@@ -1735,6 +1743,7 @@ smol_scale_new_full (const void *src_pixels,
     SmolScaleCtx *scale_ctx;
 
     if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
+                             color_pixel, color_pixel_type,
                              dest_pixel_type, dest_width, dest_height,
                              composite_op))
         return NULL;
