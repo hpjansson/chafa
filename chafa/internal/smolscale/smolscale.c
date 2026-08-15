@@ -493,6 +493,16 @@ check_row_range (const SmolScaleCtx *scale_ctx,
                  int32_t *first_dest_row,
                  int32_t *n_dest_rows)
 {
+    /* A negative row count is a request for all rows. Resolve it before
+     * adjusting for a negative first row, so a range that ends up with a
+     * negative count after adjustment (i.e. one lying entirely above the
+     * image) stays empty. */
+    if (*n_dest_rows < 0
+        || *n_dest_rows > (int32_t) scale_ctx->vdim.dest_size_px)
+    {
+        *n_dest_rows = scale_ctx->vdim.dest_size_px;
+    }
+
     if (*first_dest_row < 0)
     {
         *n_dest_rows += *first_dest_row;
@@ -503,15 +513,11 @@ check_row_range (const SmolScaleCtx *scale_ctx,
         return 0;
     }
 
-    if (*n_dest_rows < 0
-        || *n_dest_rows > (int32_t) scale_ctx->vdim.dest_size_px - *first_dest_row)
-    {
+    if (*n_dest_rows > (int32_t) scale_ctx->vdim.dest_size_px - *first_dest_row)
         *n_dest_rows = scale_ctx->vdim.dest_size_px - *first_dest_row;
-    }
-    else if (*n_dest_rows == 0)
-    {
+
+    if (*n_dest_rows <= 0)
         return 0;
-    }
 
     return 1;
 }
