@@ -632,7 +632,8 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
             {
                 scale_ctx->composite_over_color_func (local_ctx->parts_row [scaled_row_index],
                                                       scale_ctx->color_pixel,
-                                                      scale_ctx->hdim.placement_size_px);
+                                                      scale_ctx->hdim.placement_size_px,
+                                                      scale_ctx->composite_opacity);
             }
 
             scale_ctx->pack_row_func (local_ctx->parts_row [scaled_row_index],

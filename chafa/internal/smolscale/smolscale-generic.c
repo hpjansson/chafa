@@ -3225,25 +3225,39 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
 static void
 composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                                const uint64_t * SMOL_RESTRICT color_pixel,
-                               uint32_t n_pixels)
+                               uint32_t n_pixels,
+                               uint16_t opacity)
 {
+    uint64_t c;
     uint32_t i;
 
     SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t));
     SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
 
+    c = *color_pixel;
+
     for (i = 0; i < n_pixels; i++)
     {
-        uint64_t a = srcdest_row [i] & 0xff;
+        uint64_t s = srcdest_row [i];
+        uint64_t a, nz, t;
 
-        srcdest_row [i] += (((*color_pixel) * (0xff - a)) >> 8) & 0x00ff00ff00ff00ff;
+        if (opacity < SMOL_SUBPIXEL_MUL)
+            s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
+
+        a = s & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+
+        t = c * (0xff - a) + 0x0080008000800080ULL;
+        srcdest_row [i] = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
     }
 }
 
 static void
 composite_over_color_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                                 const uint64_t * SMOL_RESTRICT color_pixel,
-                                uint32_t n_pixels)
+                                uint32_t n_pixels,
+                                uint16_t opacity)
 {
     uint32_t i;
 
@@ -3252,17 +3266,34 @@ composite_over_color_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n_pixels * 2; i += 2)
     {
-        uint64_t a = srcdest_row [i + 1] & 0xff;
+        uint64_t s0 = srcdest_row [i];
+        uint64_t s1 = srcdest_row [i + 1];
+        uint64_t a, nz, w, t0, t1;
 
-        srcdest_row [i] += ((color_pixel [0] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
-        srcdest_row [i + 1] += ((color_pixel [1] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
+        if (opacity < SMOL_SUBPIXEL_MUL)
+        {
+            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = s1 & 0xff;
+        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        w = 0xff - a;
+
+        t0 = color_pixel [0] * w + 0x0000008000000080ULL;
+        t1 = color_pixel [1] * w + 0x0000008000000080ULL;
+        srcdest_row [i]     = s0 * nz
+            + (((t0 + ((t0 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
+        srcdest_row [i + 1] = s1 * nz
+            + (((t1 + ((t1 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
     }
 }
 
 static void
 composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                                  const uint64_t * SMOL_RESTRICT color_pixel,
-                                 uint32_t n_pixels)
+                                 uint32_t n_pixels,
+                                 uint16_t opacity)
 {
     uint32_t i;
 
@@ -3271,10 +3302,24 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n_pixels * 2; i += 2)
     {
-        uint64_t a = (srcdest_row [i + 1] >> 8) & 0xff;
+        uint64_t s0 = srcdest_row [i];
+        uint64_t s1 = srcdest_row [i + 1];
+        uint64_t a, nz, w;
 
-        srcdest_row [i] += ((color_pixel [0] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
-        srcdest_row [i + 1] += ((color_pixel [1] * (0xff - a)) >> 8) & 0x00ffffff00ffffff;
+        if (opacity < SMOL_SUBPIXEL_MUL)
+        {
+            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
+
+        srcdest_row [i] = s0 * nz + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
+                                     & 0x00ffffff00ffffffULL);
+        srcdest_row [i + 1] = s1 * nz + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
+                                         & 0x00ffffff00ffffffULL);
     }
 }
 
