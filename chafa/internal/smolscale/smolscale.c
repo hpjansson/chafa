@@ -715,10 +715,7 @@ do_rows (const SmolScaleCtx *scale_ctx,
                                 * n_parts_per_pixel * sizeof (uint64_t),
                                 &local_ctx.row_storage [i]);
         if (!local_ctx.row_storage [i])
-        {
-            /* Allocation failed */
             goto out;
-        }
 
         local_ctx.parts_row [i] [scale_ctx->hdim.src_size_px * n_parts_per_pixel] = 0;
         if (n_parts_per_pixel == 2)
@@ -747,6 +744,8 @@ do_rows (const SmolScaleCtx *scale_ctx,
             smol_alloc_aligned (MAX (scale_ctx->hdim.placement_size_px, 1)
                                 * n_parts_per_pixel * sizeof (uint64_t),
                                 &local_ctx.dest_parts_storage);
+        if (!local_ctx.dest_parts_storage)
+            goto out;
     }
 
     for (i = row_dest_index; i < row_dest_index + n_rows; i++)
