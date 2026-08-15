@@ -1637,7 +1637,7 @@ smol_scale_new_simple (const void *src_pixels,
                           NULL,
                           NULL))
     {
-        free (scale_ctx);
+        free (scale_ctx->self_storage);
         return NULL;
     }
 
@@ -1768,7 +1768,7 @@ smol_scale_new_full (const void *src_pixels,
                           post_row_func,
                           user_data))
     {
-        free (scale_ctx);
+        free (scale_ctx->self_storage);
         return NULL;
     }
 
