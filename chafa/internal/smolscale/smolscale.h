@@ -171,8 +171,8 @@ void smol_scale_destroy (SmolScaleCtx *scale_ctx);
 int smol_scale_batch (const SmolScaleCtx *scale_ctx, int32_t first_outrow, int32_t n_outrows);
 
 /* Like smol_scale_batch(), but will write the output rows to outrows_dest
- * instead of relative to pixels_out address handed to smol_scale_new(). The
- * other parameters from init (size, rowstride, etc) will still be used.
+ * instead of relative to the dest_pixels address handed to smol_scale_new().
+ * The other parameters from init (size, rowstride, etc) will still be used.
  *
  * Returns 1 on success (including no-op), or 0 on memory allocation failure. */
 
