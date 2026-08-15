@@ -129,7 +129,7 @@ SmolScaleCtx *smol_scale_new_full (const void *src_pixels,
                                    uint32_t placement_width,
                                    uint32_t placement_height,
                                    SmolCompositeOp composite_op,
-                                   double composite_opacity,
+                                   uint16_t composite_opacity,
                                    SmolFlags flags,
                                    SmolPostRowFunc post_row_func,
                                    void *user_data);

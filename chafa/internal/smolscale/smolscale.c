@@ -1446,24 +1446,6 @@ check_scale_params (const void *src_pixels,
     return 1;
 }
 
-/* Quantizes a [0.0, 1.0] layer opacity to 1/256 steps */
-static uint16_t
-composite_opacity_to_u16 (double opacity)
-{
-    int o;
-
-    if (opacity < 0.0)
-        opacity = 0.0;
-    else if (opacity > 1.0)
-        opacity = 1.0;
-
-    o = (int) (opacity * SMOL_SUBPIXEL_MUL + 0.5);
-    if (o > SMOL_SUBPIXEL_MUL)
-        o = SMOL_SUBPIXEL_MUL;
-
-    return (uint16_t) o;
-}
-
 static int
 smol_scale_init (SmolScaleCtx *scale_ctx,
                  const void *src_pixels,
@@ -1483,7 +1465,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
                  int32_t placement_width_spx,
                  int32_t placement_height_spx,
                  SmolCompositeOp composite_op,
-                 double composite_opacity,
+                 uint16_t composite_opacity,
                  SmolFlags flags,
                  SmolPostRowFunc post_row_func,
                  void *user_data)
@@ -1507,7 +1489,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     scale_ctx->dest_rowstride = dest_rowstride;
 
     scale_ctx->composite_op = composite_op;
-    scale_ctx->composite_opacity = composite_opacity_to_u16 (composite_opacity);
+    scale_ctx->composite_opacity = MIN (composite_opacity, SMOL_SUBPIXEL_MUL);
     scale_ctx->flags = flags;
     scale_ctx->gamma_type = (flags & SMOL_DISABLE_SRGB_LINEARIZATION)
         ? SMOL_GAMMA_SRGB_COMPRESSED : SMOL_GAMMA_SRGB_LINEAR;
@@ -1621,7 +1603,7 @@ smol_scale_new_simple (const void *src_pixels,
                           SMOL_PX_TO_SPX (dest_width),
                           SMOL_PX_TO_SPX (dest_height),
                           SMOL_COMPOSITE_SRC_OVER_COLOR,
-                          1.0,
+                          SMOL_SUBPIXEL_MUL,
                           flags,
                           NULL,
                           NULL))
@@ -1672,7 +1654,7 @@ smol_scale_simple (const void *src_pixels,
                           SMOL_PX_TO_SPX (dest_width),
                           SMOL_PX_TO_SPX (dest_height),
                           SMOL_COMPOSITE_SRC_OVER_COLOR,
-                          1.0,
+                          SMOL_SUBPIXEL_MUL,
                           flags,
                           NULL, NULL))
     {
@@ -1716,7 +1698,7 @@ smol_scale_new_full (const void *src_pixels,
                      uint32_t placement_width,
                      uint32_t placement_height,
                      SmolCompositeOp composite_op,
-                     double composite_opacity,
+                     uint16_t composite_opacity,
                      SmolFlags flags,
                      SmolPostRowFunc post_row_func,
                      void *user_data)
