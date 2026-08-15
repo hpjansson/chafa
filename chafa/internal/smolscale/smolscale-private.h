@@ -88,6 +88,12 @@ typedef unsigned int SmolBool;
 
 #define SMOL_ALIGNMENT 64
 
+#ifdef _MSC_VER
+# define SMOL_ALIGN __declspec (align (SMOL_ALIGNMENT))
+#else
+# define SMOL_ALIGN __attribute__((aligned (SMOL_ALIGNMENT)))
+#endif
+
 #ifdef SMOL_DISABLE_ASSUME_ALIGNED
 # define SMOL_ASSIGN_ALIGNED_TO(x, t, n) (t) (x)
 #else
@@ -358,6 +364,9 @@ struct SmolScaleCtx
 {
     /* <private> */
 
+    /* Actual start of this SmolScaleCtx' allocation, so we can align within */
+    void *self_storage;
+
     const char *src_pixels;
     char *dest_pixels;
 
@@ -408,7 +417,7 @@ struct SmolScaleCtx
     /* A batch of color pixels in dest storage format. The batch size
      * is in bytes, and chosen as an even multiple of 3, allowing 32 bytes wide
      * operations (e.g. AVX2) to be used to clear packed RGB pixels. */
-    unsigned char color_pixels_clear_batch [SMOL_CLEAR_BATCH_SIZE];
+    SMOL_ALIGN unsigned char color_pixels_clear_batch [SMOL_CLEAR_BATCH_SIZE];
 };
 
 /* Number of pixels to convert per batch. For some conversions, we perform

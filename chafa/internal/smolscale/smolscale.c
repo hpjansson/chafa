@@ -1068,7 +1068,7 @@ find_repack_to_order (const SmolImplementation **implementations,
 static void
 populate_clear_batch (SmolScaleCtx *scale_ctx)
 {
-    uint8_t dest_color [16];
+    SMOL_ALIGN uint8_t dest_color [16];
     int pixel_stride;
     int i;
 
@@ -1495,6 +1495,22 @@ smol_scale_finalize (SmolScaleCtx *scale_ctx)
     free (scale_ctx->precalc_storage);
 }
 
+/* SmolScaleCtx must be aligned */
+static SmolScaleCtx *
+alloc_scale_ctx (void)
+{
+    SmolScaleCtx *scale_ctx;
+    void *storage;
+
+    scale_ctx = smol_alloc_aligned (sizeof (SmolScaleCtx), &storage);
+    if (!storage)
+        return NULL;
+
+    memset (scale_ctx, 0, sizeof (SmolScaleCtx));
+    scale_ctx->self_storage = storage;
+    return scale_ctx;
+}
+
 /* ---------- *
  * Public API *
  * ---------- */
@@ -1518,7 +1534,7 @@ smol_scale_new_simple (const void *src_pixels,
                              dest_pixel_type, dest_width, dest_height))
         return NULL;
 
-    scale_ctx = calloc (1,sizeof (SmolScaleCtx));
+    scale_ctx = alloc_scale_ctx ();
     if (!scale_ctx)
         return NULL;
 
@@ -1564,7 +1580,7 @@ smol_scale_simple (const void *src_pixels,
                    uint32_t dest_rowstride,
                    SmolFlags flags)
 {
-    SmolScaleCtx scale_ctx = { 0 };
+    SMOL_ALIGN SmolScaleCtx scale_ctx = { 0 };
     int first_row, n_rows;
     int result = 0;
 
@@ -1643,7 +1659,7 @@ smol_scale_new_full (const void *src_pixels,
                              dest_pixel_type, dest_width, dest_height))
         return NULL;
 
-    scale_ctx = calloc (1, sizeof (SmolScaleCtx));
+    scale_ctx = alloc_scale_ctx ();
     if (!scale_ctx)
         return NULL;
 
@@ -1681,7 +1697,7 @@ void
 smol_scale_destroy (SmolScaleCtx *scale_ctx)
 {
     smol_scale_finalize (scale_ctx);
-    free (scale_ctx);
+    free (scale_ctx->self_storage);
 }
 
 int
