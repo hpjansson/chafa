@@ -543,14 +543,23 @@ dest_hofs_to_pointer (const SmolScaleCtx *scale_ctx,
     return dest_row_ptr_u8 + dest_hofs * pixel_type_meta [scale_ctx->dest_pixel_type].pixel_stride;
 }
 
+/* The placement is a 1:1, whole-pixel-aligned window into a source of
+ * the destination's own pixel format, so each visible row is a direct
+ * byte copy. The clip offsets account for placements straddling the
+ * destination edges. */
 static void
 copy_row (const SmolScaleCtx *scale_ctx,
           uint32_t dest_row_index,
-          uint32_t *row_out)
+          void *row_out)
 {
-    memcpy (row_out,
-            src_row_ofs_to_pointer (scale_ctx, dest_row_index),
-            scale_ctx->hdim.dest_size_px * pixel_type_meta [scale_ctx->dest_pixel_type].pixel_stride);
+    uint32_t src_row = dest_row_index - scale_ctx->vdim.clear_before_px
+        + scale_ctx->vdim.clip_before_px;
+    int pixel_stride = pixel_type_meta [scale_ctx->dest_pixel_type].pixel_stride;
+
+    memcpy (dest_hofs_to_pointer (scale_ctx, row_out, scale_ctx->hdim.placement_ofs_px),
+            src_row_ofs_to_pointer (scale_ctx, src_row)
+            + (size_t) scale_ctx->hdim.clip_before_px * pixel_stride,
+            (size_t) scale_ctx->hdim.placement_size_px * pixel_stride);
 }
 
 static void
@@ -588,35 +597,47 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
         }
         else if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST)
         {
-            int scaled_row_index;
-            void *dest_ptr;
+            /* At zero opacity the destination is left untouched; skip
+             * the scale and the dest unpack/repack cycle entirely. */
 
-            /* Source-over onto the existing destination content:
-             *
-             * - Unpack and scale the source row.
-             * - Unpack the destination pixels (placement rect).
-             * - Composite src OVER dest in parts space.
-             * - Pack the blended result back to dest. */
+            if (scale_ctx->composite_opacity > 0)
+            {
+                int scaled_row_index;
+                void *dest_ptr;
 
-            scaled_row_index = scale_ctx->vfilter_func (scale_ctx,
-                                                        local_ctx,
-                                                        dest_row_index - scale_ctx->vdim.clear_before_px);
+                /* Source-over onto the existing destination content:
+                 *
+                 * - Unpack and scale the source row.
+                 * - Unpack the destination pixels (placement rect).
+                 * - Composite src OVER dest in parts space.
+                 * - Pack the blended result back to dest. */
 
-            dest_ptr = dest_hofs_to_pointer (scale_ctx, row_out,
-                                             scale_ctx->hdim.placement_ofs_px);
+                scaled_row_index = scale_ctx->vfilter_func (scale_ctx,
+                                                            local_ctx,
+                                                            dest_row_index - scale_ctx->vdim.clear_before_px);
+                dest_ptr = dest_hofs_to_pointer (scale_ctx, row_out,
+                                                 scale_ctx->hdim.placement_ofs_px);
 
-            scale_ctx->dest_unpack_row_func (dest_ptr,
-                                             local_ctx->dest_parts_row,
-                                             scale_ctx->hdim.placement_size_px);
-
-            scale_ctx->composite_over_dest_func (local_ctx->parts_row [scaled_row_index],
+                scale_ctx->dest_unpack_row_func (dest_ptr,
                                                  local_ctx->dest_parts_row,
-                                                 scale_ctx->hdim.placement_size_px,
-                                                 scale_ctx->composite_opacity);
-
-            scale_ctx->pack_row_func (local_ctx->dest_parts_row,
-                                      dest_ptr,
-                                      scale_ctx->hdim.placement_size_px);
+                                                 scale_ctx->hdim.placement_size_px);
+                scale_ctx->composite_over_dest_func (local_ctx->parts_row [scaled_row_index],
+                                                     local_ctx->dest_parts_row,
+                                                     scale_ctx->hdim.placement_size_px,
+                                                     scale_ctx->composite_opacity);
+                scale_ctx->pack_row_func (local_ctx->dest_parts_row,
+                                          dest_ptr,
+                                          scale_ctx->hdim.placement_size_px);
+            }
+        }
+        else if (scale_ctx->composite_opacity == 0)
+        {
+            /* Zero opacity over a color yields the pure color; fill it in
+             * directly from the clear batch. */
+            scale_ctx->clear_dest_func (scale_ctx->color_pixels_clear_batch,
+                                        dest_hofs_to_pointer (scale_ctx, row_out,
+                                                              scale_ctx->hdim.placement_ofs_px),
+                                        scale_ctx->hdim.placement_size_px);
         }
         else
         {
@@ -717,8 +738,10 @@ do_rows (const SmolScaleCtx *scale_ctx,
     }
 
     /* The SMOL_COMPOSITE_SRC_OVER_DEST path needs a scratch row to hold the
-     * unpacked destination pixels under the placement rectangle. */
-    if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST)
+     * unpacked destination pixels under the placement rectangle. Zero
+     * opacity leaves the destination untouched and needs nothing. */
+    if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST
+        && scale_ctx->composite_opacity > 0)
     {
         local_ctx.dest_parts_row =
             smol_alloc_aligned (MAX (scale_ctx->hdim.placement_size_px, 1)
@@ -1146,18 +1169,14 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
             scale_ctx->have_composite_color = TRUE;
     }
 
-    /* Check for noop (direct copy). Only valid when the placement covers
-     * the destination exactly; a smaller, offset or clipped placement still
-     * needs the scaling path even at a 1:1 size ratio. A composite color
-     * or a layer opacity below 1.0 also disqualifies - the source must be
-     * blended. */
+    /* Check for noop (direct copy). The placement must be a 1:1,
+     * whole-pixel-aligned window into a source of the destination's own
+     * pixel format: exactly the cases where both axes select the COPY
+     * filter. A composite color or a layer opacity below 1.0 disqualifies
+     * (the source must be blended). */
 
-    if (scale_ctx->hdim.src_size_spx == scale_ctx->hdim.dest_size_spx
-        && scale_ctx->vdim.src_size_spx == scale_ctx->vdim.dest_size_spx
-        && scale_ctx->hdim.placement_size_spx == scale_ctx->hdim.dest_size_spx
-        && scale_ctx->vdim.placement_size_spx == scale_ctx->vdim.dest_size_spx
-        && scale_ctx->hdim.placement_ofs_spx == 0
-        && scale_ctx->vdim.placement_ofs_spx == 0
+    if (scale_ctx->hdim.filter_type == SMOL_FILTER_COPY
+        && scale_ctx->vdim.filter_type == SMOL_FILTER_COPY
         && scale_ctx->src_pixel_type == scale_ctx->dest_pixel_type
         && scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST
         && !scale_ctx->have_composite_color
@@ -1289,7 +1308,11 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         memset (scale_ctx->color_pixel, 0, sizeof (scale_ctx->color_pixel));
     }
 
-    if (scale_ctx->flags & SMOL_CLEAR_DEST)
+    /* This batch is used to clear dest borders and placement fill for
+     * zero-opacity over-color. */
+    if ((scale_ctx->flags & SMOL_CLEAR_DEST)
+        || (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_COLOR
+            && scale_ctx->composite_opacity == 0))
         populate_clear_batch (scale_ctx);
 
     /* Install filters and compositors */
