@@ -525,7 +525,7 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                          placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
                                          SMOL_COMPOSITE_SRC_OVER_COLOR,
-                                         1.0,
+                                         SMOL_SUBPIXEL_MUL,
 #if 0
                                          SMOL_CLEAR_DEST,
                                          NULL,

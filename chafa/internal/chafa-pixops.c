@@ -877,7 +877,7 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                               placement_height * SMOL_SUBPIXEL_MUL,
                                               /* Extra args */
                                               SMOL_COMPOSITE_SRC_OVER_COLOR,
-                                              1.0,
+                                              SMOL_SUBPIXEL_MUL,
                                               SMOL_CLEAR_DEST,
                                               NULL,
                                               &prep_ctx);

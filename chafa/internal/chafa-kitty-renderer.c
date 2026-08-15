@@ -199,7 +199,7 @@ chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaP
                                          placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
                                          SMOL_COMPOSITE_SRC_OVER_COLOR,
-                                         1.0,
+                                         SMOL_SUBPIXEL_MUL,
                                          SMOL_CLEAR_DEST,
                                          NULL,
                                          &ctx);
