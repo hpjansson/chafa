@@ -1105,7 +1105,10 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
 
     /* Check for noop (direct copy). Only valid when the placement covers
      * the destination exactly; a smaller, offset or clipped placement still
-     * needs the scaling path even at a 1:1 size ratio. */
+     * needs the scaling path even at a 1:1 size ratio. A composite color
+     * also disqualifies - the source must be blended with it, and even an
+     * opaque source must blend if a layer opacity below 1.0 is set later
+     * (FIXME smol_scale_set_composite_opacity() arrives after this check). */
 
     if (scale_ctx->hdim.src_size_spx == scale_ctx->hdim.dest_size_spx
         && scale_ctx->vdim.src_size_spx == scale_ctx->vdim.dest_size_spx
@@ -1114,7 +1117,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         && scale_ctx->hdim.placement_ofs_spx == 0
         && scale_ctx->vdim.placement_ofs_spx == 0
         && scale_ctx->src_pixel_type == scale_ctx->dest_pixel_type
-        && scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST)
+        && scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST
+        && !scale_ctx->have_composite_color)
     {
         /* The scaling and packing is a no-op, but we may still need to
          * clear dest, so allow the rest of the function to run so we get
