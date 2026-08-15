@@ -27,7 +27,8 @@ typedef enum
 {
     SMOL_NO_FLAGS                   = 0,
     SMOL_DISABLE_ACCELERATION       = (1 << 0),
-    SMOL_DISABLE_SRGB_LINEARIZATION = (1 << 1)
+    SMOL_DISABLE_SRGB_LINEARIZATION = (1 << 1),
+    SMOL_CLEAR_DEST                 = (1 << 2)
 }
 SmolFlags;
 
@@ -56,8 +57,7 @@ SmolPixelType;
 
 typedef enum
 {
-    SMOL_COMPOSITE_SRC,
-    SMOL_COMPOSITE_SRC_CLEAR_DEST,
+    SMOL_COMPOSITE_SRC_OVER_COLOR,
     SMOL_COMPOSITE_SRC_OVER_DEST
 }
 SmolCompositeOp;
@@ -77,9 +77,8 @@ typedef struct SmolScaleCtx SmolScaleCtx;
  * SMOL_PX_TO_SPX()) and may extend beyond the destination or lie entirely
  * outside it. The visible part is rendered as a window into the virtual
  * placement, and the rest is clipped away. A placement with zero visible
- * extent draws nothing (SMOL_COMPOSITE_SRC_CLEAR_DEST still clears the
- * destination). The full int32 ranges of the placement parameters are
- * accepted. */
+ * extent draws nothing (SMOL_CLEAR_DEST still clears the destination).
+ * The full int32 ranges of the placement parameters are accepted. */
 
 /* Simple API: Scales an entire image in one shot. You must provide pointers to
  * the source memory and an existing allocation to receive the output data.
@@ -130,6 +129,7 @@ SmolScaleCtx *smol_scale_new_full (const void *src_pixels,
                                    uint32_t placement_width,
                                    uint32_t placement_height,
                                    SmolCompositeOp composite_op,
+                                   double composite_opacity,
                                    SmolFlags flags,
                                    SmolPostRowFunc post_row_func,
                                    void *user_data);
@@ -153,16 +153,6 @@ int smol_scale_batch (const SmolScaleCtx *scale_ctx, int32_t first_outrow, int32
 int smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
                            void *outrows_dest,
                            int32_t first_outrow, int32_t n_outrows);
-
-/* Sets the layer opacity applied to the source under SMOL_COMPOSITE_SRC_OVER_DEST,
- * and when compositing over a background color (SMOL_COMPOSITE_SRC or
- * SMOL_COMPOSITE_SRC_CLEAR_DEST with a non-NULL color_pixel). @opacity is
- * clamped to [0.0, 1.0]. 1.0 (the default) uses the source's own coverage;
- * 0.0 leaves the destination untouched (over-dest) or produces the pure
- * background color inside the placement (over-color). No effect otherwise.
- * Call before any smol_scale_batch() workers run. */
-
-void smol_scale_set_composite_opacity (SmolScaleCtx *scale_ctx, double opacity);
 
 #ifdef __cplusplus
 }

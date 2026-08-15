@@ -564,7 +564,7 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
     {
         /* Row doesn't intersect placement */
 
-        if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_CLEAR_DEST)
+        if (scale_ctx->flags & SMOL_CLEAR_DEST)
         {
             /* Clear entire row */
             scale_ctx->clear_dest_func (scale_ctx->color_pixels_clear_batch,
@@ -574,7 +574,7 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
     }
     else
     {
-        if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_CLEAR_DEST)
+        if (scale_ctx->flags & SMOL_CLEAR_DEST)
         {
             /* Clear left */
             scale_ctx->clear_dest_func (scale_ctx->color_pixels_clear_batch,
@@ -626,9 +626,8 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
                                                         local_ctx,
                                                         dest_row_index - scale_ctx->vdim.clear_before_px);
 
-            if ((scale_ctx->composite_op == SMOL_COMPOSITE_SRC
-                 || scale_ctx->composite_op == SMOL_COMPOSITE_SRC_CLEAR_DEST)
-                && scale_ctx->have_composite_color)
+            if (scale_ctx->have_composite_color
+                || scale_ctx->composite_opacity < SMOL_SUBPIXEL_MUL)
             {
                 scale_ctx->composite_over_color_func (local_ctx->parts_row [scaled_row_index],
                                                       scale_ctx->color_pixel,
@@ -642,7 +641,7 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
 
         }
 
-        if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_CLEAR_DEST)
+        if (scale_ctx->flags & SMOL_CLEAR_DEST)
         {
             /* Clear right */
             scale_ctx->clear_dest_func (scale_ctx->color_pixels_clear_batch,
@@ -1139,9 +1138,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     /* Check for noop (direct copy). Only valid when the placement covers
      * the destination exactly; a smaller, offset or clipped placement still
      * needs the scaling path even at a 1:1 size ratio. A composite color
-     * also disqualifies - the source must be blended with it, and even an
-     * opaque source must blend if a layer opacity below 1.0 is set later
-     * (FIXME smol_scale_set_composite_opacity() arrives after this check). */
+     * or a layer opacity below 1.0 also disqualifies - the source must be
+     * blended. */
 
     if (scale_ctx->hdim.src_size_spx == scale_ctx->hdim.dest_size_spx
         && scale_ctx->vdim.src_size_spx == scale_ctx->vdim.dest_size_spx
@@ -1151,7 +1149,8 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         && scale_ctx->vdim.placement_ofs_spx == 0
         && scale_ctx->src_pixel_type == scale_ctx->dest_pixel_type
         && scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST
-        && !scale_ctx->have_composite_color)
+        && !scale_ctx->have_composite_color
+        && scale_ctx->composite_opacity == SMOL_SUBPIXEL_MUL)
     {
         /* The scaling and packing is a no-op, but we may still need to
          * clear dest, so allow the rest of the function to run so we get
@@ -1242,50 +1241,50 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
 
         scale_ctx->dest_unpack_row_func = dest_unpack_rmeta->repack_row_func;
     }
+
+    /* The color pixel is used when compositing over a color, and for the
+     * SMOL_CLEAR_DEST fill outside the placement (with either op). */
+
+    if (color_pixel)
+    {
+        const SmolRepackMeta *color_rmeta;
+        uint8_t mid_order [4];
+        SMOL_ALIGN uint8_t color_rgba [4];
+
+        /* The fill color must be in the same internal channel order as
+         * the scaled source parts, so the compositor blends matching
+         * channels and pack_row_func packs it correctly. */
+
+        /* Convert color pixel to canonical unassoc RGBA */
+
+        color_pixel_to_rgba (color_pixel, color_pixel_type, color_rgba);
+
+        /* Get the mid_order */
+
+        do_reorder (src_pmeta->order, mid_order,
+                    reorder_meta [SMOL_REPACK_SIGNATURE_GET_REORDER (src_rmeta->signature)].dest);
+
+        /* Repack */
+
+        color_rmeta = find_repack_to_order (implementations,
+                                            SMOL_STORAGE_32BPP, scale_ctx->storage_type,
+                                            SMOL_ALPHA_UNASSOCIATED, internal_alpha,
+                                            SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type,
+                                            &pixel_type_meta [get_host_pixel_type (SMOL_PIXEL_RGBA8_UNASSOCIATED)],
+                                            mid_order);
+
+        SMOL_ASSERT (color_rmeta != NULL);
+
+        color_rmeta->repack_row_func (color_rgba, scale_ctx->color_pixel, 1);
+    }
     else
     {
-        /* Compositing on solid color */
-
-        if (color_pixel)
-        {
-            const SmolRepackMeta *color_rmeta;
-            uint8_t mid_order [4];
-            SMOL_ALIGN uint8_t color_rgba [4];
-
-            /* The fill color must be in the same internal channel order as
-             * the scaled source parts, so the compositor blends matching
-             * channels and pack_row_func packs it correctly. */
-
-            /* Convert color pixel to canonical unassoc RGBA */
-
-            color_pixel_to_rgba (color_pixel, color_pixel_type, color_rgba);
-
-            /* Get the mid_order */
-
-            do_reorder (src_pmeta->order, mid_order,
-                        reorder_meta [SMOL_REPACK_SIGNATURE_GET_REORDER (src_rmeta->signature)].dest);
-
-            /* Repack */
-
-            color_rmeta = find_repack_to_order (implementations,
-                                                SMOL_STORAGE_32BPP, scale_ctx->storage_type,
-                                                SMOL_ALPHA_UNASSOCIATED, internal_alpha,
-                                                SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type,
-                                                &pixel_type_meta [get_host_pixel_type (SMOL_PIXEL_RGBA8_UNASSOCIATED)],
-                                                mid_order);
-
-            SMOL_ASSERT (color_rmeta != NULL);
-
-            color_rmeta->repack_row_func (color_rgba, scale_ctx->color_pixel, 1);
-        }
-        else
-        {
-            /* No color provided; use fully transparent black */
-            memset (scale_ctx->color_pixel, 0, sizeof (scale_ctx->color_pixel));
-        }
-
-        populate_clear_batch (scale_ctx);
+        /* No color provided; use fully transparent black */
+        memset (scale_ctx->color_pixel, 0, sizeof (scale_ctx->color_pixel));
     }
+
+    if (scale_ctx->flags & SMOL_CLEAR_DEST)
+        populate_clear_batch (scale_ctx);
 
     /* Install filters and compositors */
 
@@ -1441,6 +1440,24 @@ check_scale_params (const void *src_pixels,
     return 1;
 }
 
+/* Quantizes a [0.0, 1.0] layer opacity to 1/256 steps */
+static uint16_t
+composite_opacity_to_u16 (double opacity)
+{
+    int o;
+
+    if (opacity < 0.0)
+        opacity = 0.0;
+    else if (opacity > 1.0)
+        opacity = 1.0;
+
+    o = (int) (opacity * SMOL_SUBPIXEL_MUL + 0.5);
+    if (o > SMOL_SUBPIXEL_MUL)
+        o = SMOL_SUBPIXEL_MUL;
+
+    return (uint16_t) o;
+}
+
 static int
 smol_scale_init (SmolScaleCtx *scale_ctx,
                  const void *src_pixels,
@@ -1460,6 +1477,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
                  int32_t placement_width_spx,
                  int32_t placement_height_spx,
                  SmolCompositeOp composite_op,
+                 double composite_opacity,
                  SmolFlags flags,
                  SmolPostRowFunc post_row_func,
                  void *user_data)
@@ -1483,7 +1501,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     scale_ctx->dest_rowstride = dest_rowstride;
 
     scale_ctx->composite_op = composite_op;
-    scale_ctx->composite_opacity = SMOL_SUBPIXEL_MUL;  /* Fully opaque by default */
+    scale_ctx->composite_opacity = composite_opacity_to_u16 (composite_opacity);
     scale_ctx->flags = flags;
     scale_ctx->gamma_type = (flags & SMOL_DISABLE_SRGB_LINEARIZATION)
         ? SMOL_GAMMA_SRGB_COMPRESSED : SMOL_GAMMA_SRGB_LINEAR;
@@ -1502,7 +1520,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
 
     /* A placement with no visible extent in either dimension draws nothing;
      * neutralize it to zero size so the pipeline treats it as a no-op
-     * (SMOL_COMPOSITE_SRC_CLEAR_DEST still clears the destination). */
+     * (SMOL_CLEAR_DEST still clears the destination). */
     if (scale_ctx->hdim.placement_size_px == 0 || scale_ctx->vdim.placement_size_px == 0)
     {
         init_dim (&scale_ctx->hdim,
@@ -1596,7 +1614,8 @@ smol_scale_new_simple (const void *src_pixels,
                           0,
                           SMOL_PX_TO_SPX (dest_width),
                           SMOL_PX_TO_SPX (dest_height),
-                          SMOL_COMPOSITE_SRC,
+                          SMOL_COMPOSITE_SRC_OVER_COLOR,
+                          1.0,
                           flags,
                           NULL,
                           NULL))
@@ -1646,7 +1665,8 @@ smol_scale_simple (const void *src_pixels,
                           0,
                           SMOL_PX_TO_SPX (dest_width),
                           SMOL_PX_TO_SPX (dest_height),
-                          SMOL_COMPOSITE_SRC,
+                          SMOL_COMPOSITE_SRC_OVER_COLOR,
+                          1.0,
                           flags,
                           NULL, NULL))
     {
@@ -1690,6 +1710,7 @@ smol_scale_new_full (const void *src_pixels,
                      uint32_t placement_width,
                      uint32_t placement_height,
                      SmolCompositeOp composite_op,
+                     double composite_opacity,
                      SmolFlags flags,
                      SmolPostRowFunc post_row_func,
                      void *user_data)
@@ -1723,6 +1744,7 @@ smol_scale_new_full (const void *src_pixels,
                           MIN (placement_width, (uint32_t) INT32_MAX),
                           MIN (placement_height, (uint32_t) INT32_MAX),
                           composite_op,
+                          composite_opacity,
                           flags,
                           post_row_func,
                           user_data))
@@ -1768,22 +1790,4 @@ smol_scale_batch_full (const SmolScaleCtx *scale_ctx,
                     dest,
                     first_dest_row,
                     n_dest_rows);
-}
-
-void
-smol_scale_set_composite_opacity (SmolScaleCtx *scale_ctx,
-                                  double opacity)
-{
-    int o;
-
-    if (opacity < 0.0)
-        opacity = 0.0;
-    else if (opacity > 1.0)
-        opacity = 1.0;
-
-    o = (int) (opacity * SMOL_SUBPIXEL_MUL + 0.5);
-    if (o > SMOL_SUBPIXEL_MUL)
-        o = SMOL_SUBPIXEL_MUL;
-
-    scale_ctx->composite_opacity = (uint16_t) o;
 }

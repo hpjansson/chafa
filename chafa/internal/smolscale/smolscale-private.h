@@ -371,9 +371,8 @@ struct SmolScaleCtx
     SmolGammaType gamma_type;
     SmolCompositeOp composite_op;
 
-    /* Layer opacity applied to the source with SMOL_COMPOSITE_SRC_OVER_DEST,
-     * in [0, SMOL_SUBPIXEL_MUL]. Defaults to SMOL_SUBPIXEL_MUL (fully opaque).
-     * Set by smol_scale_set_composite_opacity(). */
+    /* Layer opacity applied to the source when compositing, in
+     * [0, SMOL_SUBPIXEL_MUL]. SMOL_SUBPIXEL_MUL is fully opaque. */
     uint16_t composite_opacity;
 
     /* Raw flags passed in by user */
