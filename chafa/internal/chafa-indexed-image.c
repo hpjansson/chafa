@@ -524,12 +524,13 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                          placement_width * SMOL_SUBPIXEL_MUL,
                                          placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
-                                         SMOL_COMPOSITE_SRC_CLEAR_DEST,
+                                         SMOL_COMPOSITE_SRC_OVER_COLOR,
+                                         1.0,
 #if 0
-                                         SMOL_NO_FLAGS,
+                                         SMOL_CLEAR_DEST,
                                          NULL,
 #else
-                                         SMOL_DISABLE_SRGB_LINEARIZATION,
+                                         SMOL_DISABLE_SRGB_LINEARIZATION | SMOL_CLEAR_DEST,
                                          post_scale_row,
 #endif
                                          &ctx);

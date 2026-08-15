@@ -198,8 +198,9 @@ chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaP
                                          placement_width * SMOL_SUBPIXEL_MUL,
                                          placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
-                                         SMOL_COMPOSITE_SRC_CLEAR_DEST,
-                                         SMOL_NO_FLAGS,
+                                         SMOL_COMPOSITE_SRC_OVER_COLOR,
+                                         1.0,
+                                         SMOL_CLEAR_DEST,
                                          NULL,
                                          &ctx);
     chafa_process_batches (&ctx,
