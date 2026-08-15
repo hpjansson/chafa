@@ -3,8 +3,7 @@
 /* Copyright © 2019-2025 Hans Petter Jansson. See COPYING for details. */
 
 #include <assert.h>
-#include <stdlib.h> /* malloc, free, alloca */
-#include <string.h> /* memset */
+#include <string.h> /* memcpy */
 #include <limits.h>
 #include "smolscale-private.h"
 

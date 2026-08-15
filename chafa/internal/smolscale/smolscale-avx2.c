@@ -3,9 +3,8 @@
 /* Copyright © 2019-2025 Hans Petter Jansson. See COPYING for details. */
 
 #include <assert.h> /* assert */
-#include <stdlib.h> /* malloc, free, alloca */
 #include <stddef.h> /* ptrdiff_t */
-#include <string.h> /* memset */
+#include <string.h> /* memcpy */
 #include <limits.h>
 #include <immintrin.h>
 #include "smolscale-private.h"

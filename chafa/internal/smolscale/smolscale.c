@@ -3,7 +3,7 @@
 /* Copyright © 2019-2025 Hans Petter Jansson. See COPYING for details. */
 
 #include <assert.h> /* assert */
-#include <stdlib.h> /* malloc, free, alloca */
+#include <stdlib.h> /* malloc, free */
 #include <string.h> /* memset */
 #include <limits.h>
 #include "smolscale-private.h"
@@ -736,13 +736,13 @@ do_rows (const SmolScaleCtx *scale_ctx,
 
 out:
     for (i = 0; i < n_stored_rows; i++)
-        smol_free (local_ctx.row_storage [i]);
+        free (local_ctx.row_storage [i]);
 
     if (local_ctx.dest_parts_storage)
-        smol_free (local_ctx.dest_parts_storage);
+        free (local_ctx.dest_parts_storage);
 
     if (local_ctx.src_aligned)
-        smol_free (local_ctx.src_aligned_storage);
+        free (local_ctx.src_aligned_storage);
 
     return result;
 }
@@ -1473,8 +1473,6 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     }
 
     scale_ctx->storage_type = MAX (storage_type [0], storage_type [1]);
-
-    /* FIXME: This will break if _SMOL_ALLOC() is set to use alloca() */
     scale_ctx->hdim.precalc = smol_alloc_aligned ((precalc_entries_for_dim (&scale_ctx->hdim)
                                                    + precalc_entries_for_dim (&scale_ctx->vdim)) * 2
                                                   * sizeof (uint16_t),

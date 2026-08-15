@@ -29,17 +29,6 @@ extern "C" {
 # define SMOL_ASSERT(x)
 #endif
 
-/* We'll use at most ~4MB of scratch space. That won't fit on the stack
- * everywhere, so we default to malloc(). If you know better, you can define
- * SMOL_USE_ALLOCA. */
-#ifdef SMOL_USE_ALLOCA
-# define _SMOL_ALLOC(n) alloca (n)
-# define _SMOL_FREE(p)
-#else
-# define _SMOL_ALLOC(n) malloc (n)
-# define _SMOL_FREE(p) free (p)
-#endif
-
 /* Enum switches must handle every value */
 #ifdef __GNUC__
 # pragma GCC diagnostic error "-Wswitch"
@@ -105,12 +94,11 @@ typedef unsigned int SmolBool;
 #define SMOL_ASSUME_ALIGNED_TO(x, t, n) (x) = SMOL_ASSIGN_ALIGNED_TO ((x), t, (n))
 #define SMOL_ASSUME_ALIGNED(x, t) SMOL_ASSUME_ALIGNED_TO ((x), t, SMOL_ALIGNMENT)
 
-/* Pointer to beginning of storage is stored in *r. This must be passed to smol_free() later. */
+/* Pointer to beginning of storage is stored in *r. This must be passed to free() later. */
 #define smol_alloc_aligned_to(s, a, r) \
-  ({ void *p; *(r) = _SMOL_ALLOC ((s) + (a) - 1); \
+  ({ void *p; *(r) = malloc ((s) + (a) - 1); \
      p = (void *) (((uintptr_t) (*(r)) + (a) - 1) & ~(uintptr_t) ((a) - 1)); (p); })
 #define smol_alloc_aligned(s, r) smol_alloc_aligned_to ((s), SMOL_ALIGNMENT, (r))
-#define smol_free(p) _SMOL_FREE(p)
 
 typedef enum
 {
