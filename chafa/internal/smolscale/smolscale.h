@@ -78,7 +78,18 @@ typedef struct SmolScaleCtx SmolScaleCtx;
  * outside it. The visible part is rendered as a window into the virtual
  * placement, and the rest is clipped away. A placement with zero visible
  * extent draws nothing (SMOL_CLEAR_DEST still clears the destination).
- * The full int32 ranges of the placement parameters are accepted. */
+ * The full int32 ranges of the placement parameters are accepted.
+ *
+ * color_pixel (smol_scale_new_full()) optionally points to a single pixel
+ * of type color_pixel_type for the source to be composited over. It may be
+ * NULL for no color. A fully transparent black color is treated the same
+ * as no color. color_pixel_type must be a valid SmolPixelType whenever
+ * color_pixel is non-NULL. composite_opacity is a layer opacity in
+ * [0, SMOL_SUBPIXEL_MUL], where SMOL_SUBPIXEL_MUL (256) is fully opaque;
+ * higher values are clamped.
+ *
+ * dest_pixels may be NULL in the context constructors if every batch call
+ * will supply its own output pointer via smol_scale_batch_full(). */
 
 /* Simple API: Scales an entire image in one shot. You must provide pointers to
  * the source memory and an existing allocation to receive the output data.
@@ -139,6 +150,9 @@ void smol_scale_destroy (SmolScaleCtx *scale_ctx);
 /* It's ok to call smol_scale_batch() without locking from multiple concurrent
  * threads, as long as the outrows do not overlap. Make sure all workers are
  * finished before you call smol_scale_destroy().
+ *
+ * The row range is clamped to the destination extent. A range with no
+ * visible rows is a no-op.
  *
  * Returns 1 on success (including no-op), or 0 on memory allocation failure. */
 
