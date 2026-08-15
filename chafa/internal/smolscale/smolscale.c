@@ -654,7 +654,7 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
                                                         dest_row_index - scale_ctx->vdim.clear_before_px);
 
             if (scale_ctx->have_composite_color
-                || scale_ctx->composite_opacity < SMOL_SUBPIXEL_MUL)
+                || scale_ctx->composite_opacity < SMOL_OPACITY_MAX)
             {
                 scale_ctx->composite_over_color_func (local_ctx->parts_row [scaled_row_index],
                                                       scale_ctx->color_pixel,
@@ -855,7 +855,7 @@ pick_filter_params (uint32_t src_dim,
     if (dest_dim == 1)
     {
         *first_opacity = dest_dim_spx;
-        *last_opacity = 256;
+        *last_opacity = SMOL_OPACITY_MAX;
     }
 
     /* A zero-size placement (which can result from clipping) renders nothing.
@@ -899,8 +899,8 @@ pick_filter_params (uint32_t src_dim,
     else if ((dest_ofs_spx & 0xff) == 0 && src_dim_spx == dest_dim_spx)
     {
         *dest_filter = SMOL_FILTER_COPY;
-        *first_opacity = 256;
-        *last_opacity = 256;
+        *first_opacity = SMOL_OPACITY_MAX;
+        *last_opacity = SMOL_OPACITY_MAX;
     }
     else
     {
@@ -1185,7 +1185,7 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         && scale_ctx->src_pixel_type == scale_ctx->dest_pixel_type
         && scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST
         && !scale_ctx->have_composite_color
-        && scale_ctx->composite_opacity == SMOL_SUBPIXEL_MUL)
+        && scale_ctx->composite_opacity == SMOL_OPACITY_MAX)
     {
         /* The scaling and packing is a no-op, but we may still need to
          * clear dest, so allow the rest of the function to run so we get
@@ -1429,9 +1429,9 @@ init_dim (SmolDim *dim,
      * clipped edge is an interior cut and must stay fully opaque. */
 
     if (dim->clip_before_px > 0)
-        dim->first_opacity = 256;
+        dim->first_opacity = SMOL_OPACITY_MAX;
     if (dim->clip_after_px > 0)
-        dim->last_opacity = 256;
+        dim->last_opacity = SMOL_OPACITY_MAX;
 
     dim->placement_ofs_px = visible_first_px;
     dim->placement_size_px = visible_end_px - visible_first_px;
@@ -1528,7 +1528,7 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
     scale_ctx->dest_rowstride = dest_rowstride;
 
     scale_ctx->composite_op = composite_op;
-    scale_ctx->composite_opacity = MIN (composite_opacity, SMOL_SUBPIXEL_MUL);
+    scale_ctx->composite_opacity = MIN (composite_opacity, SMOL_OPACITY_MAX);
     scale_ctx->flags = flags;
     scale_ctx->gamma_type = (flags & SMOL_DISABLE_SRGB_LINEARIZATION)
         ? SMOL_GAMMA_SRGB_COMPRESSED : SMOL_GAMMA_SRGB_LINEAR;
@@ -1644,7 +1644,7 @@ smol_scale_new_simple (const void *src_pixels,
                           SMOL_PX_TO_SPX (dest_width),
                           SMOL_PX_TO_SPX (dest_height),
                           SMOL_COMPOSITE_SRC_OVER_COLOR,
-                          SMOL_SUBPIXEL_MUL,
+                          SMOL_OPACITY_MAX,
                           flags,
                           NULL,
                           NULL))
@@ -1697,7 +1697,7 @@ smol_scale_simple (const void *src_pixels,
                           SMOL_PX_TO_SPX (dest_width),
                           SMOL_PX_TO_SPX (dest_height),
                           SMOL_COMPOSITE_SRC_OVER_COLOR,
-                          SMOL_SUBPIXEL_MUL,
+                          SMOL_OPACITY_MAX,
                           flags,
                           NULL, NULL))
     {

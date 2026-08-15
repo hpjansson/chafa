@@ -1558,13 +1558,13 @@ add_weighted_parts_128bpp (const uint64_t * SMOL_RESTRICT parts_in,
 static SMOL_INLINE void
 apply_subpixel_opacity_64bpp (uint64_t * SMOL_RESTRICT u64_inout, uint16_t opacity)
 {
-    *u64_inout = ((*u64_inout * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
+    *u64_inout = ((*u64_inout * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ff00ff00ff00ffULL;
 }
 
 static SMOL_INLINE void
 apply_subpixel_opacity_128bpp_half (uint64_t * SMOL_RESTRICT u64_inout, uint16_t opacity)
 {
-    *u64_inout = ((*u64_inout * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+    *u64_inout = ((*u64_inout * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
 }
 
 static SMOL_INLINE void
@@ -2722,14 +2722,14 @@ scale_dest_row_bilinear_##n_halvings##h_64bpp (const SmolScaleCtx *scale_ctx, \
 \
     update_local_ctx_bilinear (scale_ctx, local_ctx, bilin_index); \
 \
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256) \
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX) \
         interp_vertical_bilinear_final_##n_halvings##h_with_opacity_64bpp (precalc_y [bilin_index * 2 + 1], \
                                                                            local_ctx->parts_row [0], \
                                                                            local_ctx->parts_row [1], \
                                                                            local_ctx->parts_row [2], \
                                                                            scale_ctx->hdim.placement_size_px, \
                                                                            scale_ctx->vdim.first_opacity); \
-    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256) \
+    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX) \
         interp_vertical_bilinear_final_##n_halvings##h_with_opacity_64bpp (precalc_y [bilin_index * 2 + 1], \
                                                                            local_ctx->parts_row [0], \
                                                                            local_ctx->parts_row [1], \
@@ -2776,14 +2776,14 @@ scale_dest_row_bilinear_##n_halvings##h_128bpp (const SmolScaleCtx *scale_ctx, \
 \
     update_local_ctx_bilinear (scale_ctx, local_ctx, bilin_index); \
 \
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256) \
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX) \
         interp_vertical_bilinear_final_##n_halvings##h_with_opacity_128bpp (precalc_y [bilin_index * 2 + 1], \
                                                                             local_ctx->parts_row [0], \
                                                                             local_ctx->parts_row [1], \
                                                                             local_ctx->parts_row [2], \
                                                                             scale_ctx->hdim.placement_size_px * 2, \
                                                                             scale_ctx->vdim.first_opacity); \
-    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256) \
+    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX) \
         interp_vertical_bilinear_final_##n_halvings##h_with_opacity_128bpp (precalc_y [bilin_index * 2 + 1], \
                                                                             local_ctx->parts_row [0], \
                                                                             local_ctx->parts_row [1], \
@@ -2809,14 +2809,14 @@ scale_dest_row_bilinear_0h_64bpp (const SmolScaleCtx *scale_ctx,
 
     update_local_ctx_bilinear (scale_ctx, local_ctx, dest_row_index);
 
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_store_with_opacity_64bpp (precalc_y [dest_row_index * 2 + 1],
                                                            local_ctx->parts_row [0],
                                                            local_ctx->parts_row [1],
                                                            local_ctx->parts_row [2],
                                                            scale_ctx->hdim.placement_size_px,
                                                            scale_ctx->vdim.first_opacity);
-    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256)
+    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_store_with_opacity_64bpp (precalc_y [dest_row_index * 2 + 1],
                                                            local_ctx->parts_row [0],
                                                            local_ctx->parts_row [1],
@@ -2842,14 +2842,14 @@ scale_dest_row_bilinear_0h_128bpp (const SmolScaleCtx *scale_ctx,
 
     update_local_ctx_bilinear (scale_ctx, local_ctx, dest_row_index);
 
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_store_with_opacity_128bpp (precalc_y [dest_row_index * 2 + 1],
                                                             local_ctx->parts_row [0],
                                                             local_ctx->parts_row [1],
                                                             local_ctx->parts_row [2],
                                                             scale_ctx->hdim.placement_size_px * 2,
                                                             scale_ctx->vdim.first_opacity);
-    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256)
+    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_store_with_opacity_128bpp (precalc_y [dest_row_index * 2 + 1],
                                                             local_ctx->parts_row [0],
                                                             local_ctx->parts_row [1],
@@ -2885,14 +2885,14 @@ scale_dest_row_bilinear_1h_64bpp (const SmolScaleCtx *scale_ctx,
     bilin_index++;
     update_local_ctx_bilinear (scale_ctx, local_ctx, bilin_index);
 
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_final_1h_with_opacity_64bpp (precalc_y [bilin_index * 2 + 1],
                                                               local_ctx->parts_row [0],
                                                               local_ctx->parts_row [1],
                                                               local_ctx->parts_row [2],
                                                               scale_ctx->hdim.placement_size_px,
                                                               scale_ctx->vdim.first_opacity);
-    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256)
+    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_final_1h_with_opacity_64bpp (precalc_y [bilin_index * 2 + 1],
                                                               local_ctx->parts_row [0],
                                                               local_ctx->parts_row [1],
@@ -2926,14 +2926,14 @@ scale_dest_row_bilinear_1h_128bpp (const SmolScaleCtx *scale_ctx,
     bilin_index++;
     update_local_ctx_bilinear (scale_ctx, local_ctx, bilin_index);
 
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_final_1h_with_opacity_128bpp (precalc_y [bilin_index * 2 + 1],
                                                                local_ctx->parts_row [0],
                                                                local_ctx->parts_row [1],
                                                                local_ctx->parts_row [2],
                                                                scale_ctx->hdim.placement_size_px * 2,
                                                                scale_ctx->vdim.first_opacity);
-    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256)
+    else if (dest_row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
         interp_vertical_bilinear_final_1h_with_opacity_128bpp (precalc_y [bilin_index * 2 + 1],
                                                                local_ctx->parts_row [0],
                                                                local_ctx->parts_row [1],
@@ -3063,7 +3063,7 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
     /* Finalize. The output goes in parts_row [2] so parts_row [0] can
      * carry the boundary row over to the next span. */
 
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
     {
         finalize_vertical_with_opacity_64bpp (local_ctx->parts_row [1],
                                               scale_ctx->vdim.span_mul,
@@ -3071,7 +3071,7 @@ scale_dest_row_box_64bpp (const SmolScaleCtx *scale_ctx,
                                               scale_ctx->hdim.placement_size_px,
                                               scale_ctx->vdim.first_opacity);
     }
-    else if (dest_row_index == scale_ctx->vdim.placement_size_px - 1 && scale_ctx->vdim.last_opacity < 256)
+    else if (dest_row_index == scale_ctx->vdim.placement_size_px - 1 && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
     {
         finalize_vertical_with_opacity_64bpp (local_ctx->parts_row [1],
                                               scale_ctx->vdim.span_mul,
@@ -3200,7 +3200,7 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
     /* Finalize. The output goes in parts_row [2] so parts_row [0] can
      * carry the boundary row over to the next span. */
 
-    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (dest_row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
     {
         finalize_vertical_with_opacity_128bpp (local_ctx->parts_row [1],
                                                scale_ctx->vdim.span_mul,
@@ -3208,7 +3208,7 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
                                                scale_ctx->hdim.placement_size_px,
                                                scale_ctx->vdim.first_opacity);
     }
-    else if (dest_row_index == scale_ctx->vdim.placement_size_px - 1 && scale_ctx->vdim.last_opacity < 256)
+    else if (dest_row_index == scale_ctx->vdim.placement_size_px - 1 && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
     {
         finalize_vertical_with_opacity_128bpp (local_ctx->parts_row [1],
                                                scale_ctx->vdim.span_mul,
@@ -3243,14 +3243,14 @@ scale_dest_row_one_64bpp (const SmolScaleCtx *scale_ctx,
         local_ctx->src_ofs = 0;
     }
 
-    if (row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
     {
         apply_subpixel_opacity_row_copy_64bpp (local_ctx->parts_row [0],
                                                local_ctx->parts_row [1],
                                                scale_ctx->hdim.placement_size_px,
                                                scale_ctx->vdim.first_opacity);
     }
-    else if (row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256)
+    else if (row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
     {
         apply_subpixel_opacity_row_copy_64bpp (local_ctx->parts_row [0],
                                                local_ctx->parts_row [1],
@@ -3283,14 +3283,14 @@ scale_dest_row_one_128bpp (const SmolScaleCtx *scale_ctx,
         local_ctx->src_ofs = 0;
     }
 
-    if (row_index == 0 && scale_ctx->vdim.first_opacity < 256)
+    if (row_index == 0 && scale_ctx->vdim.first_opacity < SMOL_OPACITY_MAX)
     {
         apply_subpixel_opacity_row_copy_128bpp (local_ctx->parts_row [0],
                                                 local_ctx->parts_row [1],
                                                 scale_ctx->hdim.placement_size_px,
                                                 scale_ctx->vdim.first_opacity);
     }
-    else if (row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < 256)
+    else if (row_index == (scale_ctx->vdim.placement_size_px - 1) && scale_ctx->vdim.last_opacity < SMOL_OPACITY_MAX)
     {
         apply_subpixel_opacity_row_copy_128bpp (local_ctx->parts_row [0],
                                                 local_ctx->parts_row [1],
@@ -3341,7 +3341,7 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
     const __m256i zero = _mm256_setzero_si256 ();
     const __m256i opv = _mm256_set1_epi16 ((short) opacity);
     const __m256i cv = _mm256_set1_epi64x ((long long) *color_pixel);
-    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
     const uint64_t c = *color_pixel;
     uint32_t n4 = n_pixels & ~3U;  /* Whole pixel quads */
     uint32_t i;
@@ -3355,7 +3355,7 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         __m256i a, az, t, u;
 
         if (scale_opacity)
-            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_SUBPIXEL_SHIFT);
+            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_OPACITY_SHIFT);
 
         a = _mm256_shuffle_epi8 (s, alpha_shuf);
         az = _mm256_cmpeq_epi16 (a, zero);   /* pixel-wide: all lanes match */
@@ -3377,7 +3377,7 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         uint64_t a, nz, t;
 
         if (scale_opacity)
-            s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
+            s = ((s * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ff00ff00ff00ffULL;
 
         a = s & 0xff;
         nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
@@ -3401,7 +3401,7 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
     const __m256i opv = _mm256_set1_epi32 (opacity);
     const __m256i cv = _mm256_broadcastsi128_si256 (
         _mm_loadu_si128 ((const __m128i *) color_pixel));
-    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
     uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
     uint32_t i;
 
@@ -3415,7 +3415,7 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
         if (scale_opacity)
             s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
-                                                     SMOL_SUBPIXEL_SHIFT),
+                                                     SMOL_OPACITY_SHIFT),
                                   mask24);
 
         /* Broadcast each pixel's source alpha across its four lanes */
@@ -3445,8 +3445,8 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
         if (scale_opacity)
         {
-            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
-            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
         }
 
         a = (s1 >> 8) & 0xff;
@@ -3477,7 +3477,7 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
     const __m256i r128 = _mm256_set1_epi16 (0x80);
     const __m256i zero = _mm256_setzero_si256 ();
     const __m256i opv = _mm256_set1_epi16 ((short) opacity);
-    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
     uint32_t n4 = n_pixels & ~3U;
     uint32_t i;
 
@@ -3490,7 +3490,7 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
         __m256i a, az, t, u;
 
         if (scale_opacity)
-            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_SUBPIXEL_SHIFT);
+            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_OPACITY_SHIFT);
 
         a = _mm256_shuffle_epi8 (s, alpha_shuf);
         az = _mm256_cmpeq_epi16 (a, zero);   /* pixel-wide: all lanes match */
@@ -3512,7 +3512,7 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
         uint64_t a, nz, t;
 
         if (scale_opacity)
-            s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
+            s = ((s * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ff00ff00ff00ffULL;
 
         a = s & 0xff;
         nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
@@ -3534,7 +3534,7 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
     const __m256i x100 = _mm256_set1_epi32 (0x100);
     const __m256i r128 = _mm256_set1_epi32 (128);
     const __m256i opv = _mm256_set1_epi32 (opacity);
-    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
     uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
     uint32_t i;
 
@@ -3548,7 +3548,7 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
 
         if (scale_opacity)
             s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
-                                                     SMOL_SUBPIXEL_SHIFT),
+                                                     SMOL_OPACITY_SHIFT),
                                   mask24);
 
         /* Broadcast each pixel's source alpha across its four lanes. */
@@ -3580,8 +3580,8 @@ composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
 
         if (scale_opacity)
         {
-            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
-            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
         }
 
         a = (s1 >> 8) & 0xff;

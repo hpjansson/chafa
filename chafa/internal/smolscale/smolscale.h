@@ -23,6 +23,11 @@ extern "C" {
 #define SMOL_PX_TO_SPX(px) ((px) * (SMOL_SUBPIXEL_MUL))
 #define SMOL_SPX_TO_PX(spx) (((spx) + (SMOL_SUBPIXEL_MUL) - 1) / (SMOL_SUBPIXEL_MUL))
 
+/* Layer opacity is expressed in 1/256 units, with SMOL_OPACITY_MAX (256)
+ * being fully opaque. */
+#define SMOL_OPACITY_SHIFT 8
+#define SMOL_OPACITY_MAX (1 << (SMOL_OPACITY_SHIFT))
+
 typedef enum
 {
     SMOL_NO_FLAGS                   = 0,
@@ -92,7 +97,7 @@ typedef struct SmolScaleCtx SmolScaleCtx;
  * NULL for no color. A fully transparent black color is treated the same
  * as no color. color_pixel_type must be a valid SmolPixelType whenever
  * color_pixel is non-NULL. composite_opacity is a layer opacity in
- * [0, SMOL_SUBPIXEL_MUL], where SMOL_SUBPIXEL_MUL (256) is fully opaque;
+ * [0, SMOL_OPACITY_MAX], where SMOL_OPACITY_MAX (256) is fully opaque;
  * higher values are clamped.
  *
  * dest_pixels may be NULL in the context constructors if every batch call

@@ -237,7 +237,7 @@ typedef int (SmolVFilterFunc) (const SmolScaleCtx *scale_ctx,
                                uint32_t dest_row_index);
 /* Composites a scaled source parts row over a solid color in place
  * (srcdest_row receives src OVER color). @opacity is a layer opacity in
- * [0, SMOL_SUBPIXEL_MUL] applied to the source's coverage; 0 yields the
+ * [0, SMOL_OPACITY_MAX] applied to the source's coverage; 0 yields the
  * pure color. */
 typedef void (SmolCompositeOverColorFunc) (uint64_t *srcdest_row,
                                            const uint64_t *color_pixel,
@@ -245,7 +245,7 @@ typedef void (SmolCompositeOverColorFunc) (uint64_t *srcdest_row,
                                            uint16_t opacity);
 /* Composites a scaled source parts row over a destination parts row in
  * place (dest_row receives src OVER dest). @opacity is a layer opacity in
- * [0, SMOL_SUBPIXEL_MUL] applied to the source's coverage. */
+ * [0, SMOL_OPACITY_MAX] applied to the source's coverage. */
 typedef void (SmolCompositeOverDestFunc) (const uint64_t *src_row,
                                           uint64_t *dest_row,
                                           uint32_t n_pixels,
@@ -385,7 +385,7 @@ struct SmolScaleCtx
     SmolCompositeOp composite_op;
 
     /* Layer opacity applied to the source when compositing, in
-     * [0, SMOL_SUBPIXEL_MUL]. SMOL_SUBPIXEL_MUL is fully opaque. */
+     * [0, SMOL_OPACITY_MAX]. SMOL_OPACITY_MAX is fully opaque. */
     uint16_t composite_opacity;
 
     /* Raw flags passed in by user */
