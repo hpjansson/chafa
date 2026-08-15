@@ -3326,6 +3326,143 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
  * ----------- */
 
 static void
+composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                               const uint64_t * SMOL_RESTRICT color_pixel,
+                               uint32_t n_pixels,
+                               uint16_t opacity)
+{
+    /* Broadcast each pixel's low 16-bit lane (alpha) to all four lanes */
+    const __m256i alpha_shuf = _mm256_set_epi8 (9, 8, 9, 8, 9, 8, 9, 8,
+                                                1, 0, 1, 0, 1, 0, 1, 0,
+                                                9, 8, 9, 8, 9, 8, 9, 8,
+                                                1, 0, 1, 0, 1, 0, 1, 0);
+    const __m256i ff = _mm256_set1_epi16 (0xff);
+    const __m256i r128 = _mm256_set1_epi16 (0x80);
+    const __m256i zero = _mm256_setzero_si256 ();
+    const __m256i opv = _mm256_set1_epi16 ((short) opacity);
+    const __m256i cv = _mm256_set1_epi64x ((long long) *color_pixel);
+    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    const uint64_t c = *color_pixel;
+    uint32_t n4 = n_pixels & ~3U;  /* Whole pixel quads */
+    uint32_t i;
+
+    /* Four pixels (4 x uint64_t = 16 x 16-bit lanes) per iteration, with
+     * the broadcast color in the dest role */
+
+    for (i = 0; i < n4; i += 4)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + i));
+        __m256i a, az, t, u;
+
+        if (scale_opacity)
+            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_SUBPIXEL_SHIFT);
+
+        a = _mm256_shuffle_epi8 (s, alpha_shuf);
+        az = _mm256_cmpeq_epi16 (a, zero);   /* pixel-wide: all lanes match */
+
+        /* t = color * (0xff - a) + 128. out = src (squelched if a == 0)
+         * + (t + (t >> 8)) >> 8 */
+        t = _mm256_add_epi16 (_mm256_mullo_epi16 (cv, _mm256_sub_epi16 (ff, a)), r128);
+        u = _mm256_srli_epi16 (_mm256_add_epi16 (t, _mm256_srli_epi16 (t, 8)), 8);
+
+        _mm256_storeu_si256 ((__m256i *) (srcdest_row + i),
+                             _mm256_add_epi16 (_mm256_andnot_si256 (az, s), u));
+    }
+
+    /* Scalar epilogue for the last few pixels */
+
+    for (i = n4; i < n_pixels; i++)
+    {
+        uint64_t s = srcdest_row [i];
+        uint64_t a, nz, t;
+
+        if (scale_opacity)
+            s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
+
+        a = s & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+
+        t = c * (0xff - a) + 0x0080008000800080ULL;
+        srcdest_row [i] = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
+    }
+}
+
+static void
+composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                 const uint64_t * SMOL_RESTRICT color_pixel,
+                                 uint32_t n_pixels,
+                                 uint16_t opacity)
+{
+    const __m256i mask24 = _mm256_set1_epi32 (0x00ffffff);
+    const __m256i ff = _mm256_set1_epi32 (0xff);
+    const __m256i x100 = _mm256_set1_epi32 (0x100);
+    const __m256i r128 = _mm256_set1_epi32 (128);
+    const __m256i opv = _mm256_set1_epi32 (opacity);
+    const __m256i cv = _mm256_broadcastsi128_si256 (
+        _mm_loadu_si128 ((const __m128i *) color_pixel));
+    const SmolBool scale_opacity = (opacity < SMOL_SUBPIXEL_MUL);
+    uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
+    uint32_t i;
+
+    /* Two pixels (4 x uint64_t = 8 x 32-bit lanes) per iteration, with
+     * the color pair broadcast to both pixel slots. */
+
+    for (i = 0; i < n2; i += 2)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i a, nz, w, d;
+
+        if (scale_opacity)
+            s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
+                                                     SMOL_SUBPIXEL_SHIFT),
+                                  mask24);
+
+        /* Broadcast each pixel's source alpha across its four lanes */
+        a = _mm256_shuffle_epi32 (_mm256_srli_epi32 (s, 8), SMOL_4X2BIT (2, 2, 2, 2));
+        a = _mm256_and_si256 (a, ff);
+
+        /* nz = 0 if a == 0, else 1. w = 256 when a == 0, else 255 - a */
+        nz = _mm256_srli_epi32 (_mm256_add_epi32 (a, ff), 8);
+        w = _mm256_sub_epi32 (x100, _mm256_add_epi32 (a, nz));
+
+        /* out = src * nz + (color * w + 128) >> 8 */
+        d = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_add_epi32 (
+                                  _mm256_mullo_epi32 (cv, w), r128), 8),
+                              mask24);
+        d = _mm256_add_epi32 (_mm256_mullo_epi32 (s, nz), d);
+
+        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2), d);
+    }
+
+    /* Scalar epilogue for a final odd pixel */
+
+    for (i = n2; i < n_pixels; i++)
+    {
+        uint64_t s0 = srcdest_row [(size_t) i * 2];
+        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t a, nz, w;
+
+        if (scale_opacity)
+        {
+            s0 = ((s0 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
+
+        srcdest_row [(size_t) i * 2] = s0 * nz
+            + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
+               & 0x00ffffff00ffffffULL);
+        srcdest_row [(size_t) i * 2 + 1] = s1 * nz
+            + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
+               & 0x00ffffff00ffffffULL);
+    }
+}
+
+static void
 composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
                               uint64_t * SMOL_RESTRICT dest_row,
                               uint32_t n_pixels,
@@ -3344,11 +3481,7 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
     uint32_t n4 = n_pixels & ~3U;
     uint32_t i;
 
-    /* Four pixels (4 x uint64_t = 16 x 16-bit lanes) per iteration. The
-     * lanes hold at most 0xff and the weights at most 0xff, so every
-     * per-lane intermediate stays below 65536, exactly like the scalar
-     * version's u64 arithmetic (which cannot carry across lanes for the
-     * same reason). */
+    /* Four pixels (4 x uint64_t = 16 x 16-bit lanes) per iteration. */
 
     for (i = 0; i < n4; i += 4)
     {
@@ -3382,7 +3515,7 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
             s = ((s * opacity) >> SMOL_SUBPIXEL_SHIFT) & 0x00ff00ff00ff00ffULL;
 
         a = s & 0xff;
-        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
 
         t = dest_row [i] * (0xff - a) + 0x0080008000800080ULL;
         dest_row [i] = s * nz
@@ -4084,8 +4217,19 @@ static const SmolImplementation implementation =
 
         { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp - unused */
         { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp - unused */
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 64bpp */
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 128bpp */
+
+        /* 64bpp: p8 compressed. The linear row is unreachable: linear
+         * gamma always selects 128bpp storage. */
+        {
+            { NULL, composite_over_color_p8_64bpp, NULL },  /* compressed */
+            { NULL, NULL, NULL }                            /* linear - unused */
+        },
+
+        /* 128bpp: p16 in both gammas */
+        {
+            { NULL, NULL, composite_over_color_p16_128bpp },  /* compressed */
+            { NULL, composite_over_color_p16_128bpp, composite_over_color_p16_128bpp }  /* linear */
+        }
     },
     {
         /* Composite over dest */
@@ -4100,8 +4244,7 @@ static const SmolImplementation implementation =
             { NULL, NULL, NULL }                           /* linear - unused */
         },
 
-        /* 128bpp: p16 in both gammas (alpha lane is gamma-independent and the
-         * source-over arithmetic is space-agnostic). */
+        /* 128bpp: p16 in both gammas */
         {
             { NULL, NULL, composite_over_dest_p16_128bpp },  /* compressed */
             { NULL, composite_over_dest_p16_128bpp, composite_over_dest_p16_128bpp }  /* linear */
