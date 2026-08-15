@@ -1236,7 +1236,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,      COMPRESSED,
     while (dest_row != dest_row_max)
     {
         uint64_t t [2];
-        uint8_t alpha = src_row [1];
+        uint8_t alpha = src_row [1] >> 8;
         unpremul_p16_to_u_128bpp (src_row, t, alpha);
         t [1] = (t [1] & 0xffffffff00000000ULL) | alpha;
         *(dest_row++) = t [0] >> 32;
