@@ -9,8 +9,6 @@
  * If, on the other hand, you're here to hack on Smolscale itself, this file
  * contains all the internal shared declarations. */
 
-#undef SMOL_ENABLE_ASSERTS
-
 #include <stddef.h>
 #include <stdint.h>
 #include "smolscale.h"
