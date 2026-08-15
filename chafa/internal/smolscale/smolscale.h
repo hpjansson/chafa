@@ -62,6 +62,13 @@ typedef enum
 }
 SmolCompositeOp;
 
+/* Called by the batch functions after each destination row has been
+ * written, with a pointer to the row, the destination width in pixels,
+ * and the user_data handed to smol_scale_new_full(). The row may be
+ * modified in place. Every row in the batch range is reported, including
+ * rows the placement doesn't touch. With concurrent batch calls, the
+ * callback runs on the batch's calling thread. */
+
 typedef void (SmolPostRowFunc) (void *row_inout,
                                 int width,
                                 void *user_data);
