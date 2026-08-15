@@ -11,6 +11,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "smolscale.h"
 
 #ifndef _SMOLSCALE_PRIVATE_H_
@@ -92,11 +93,25 @@ typedef unsigned int SmolBool;
 #define SMOL_ASSUME_ALIGNED_TO(x, t, n) (x) = SMOL_ASSIGN_ALIGNED_TO ((x), t, (n))
 #define SMOL_ASSUME_ALIGNED(x, t) SMOL_ASSUME_ALIGNED_TO ((x), t, SMOL_ALIGNMENT)
 
-/* Pointer to beginning of storage is stored in *r. This must be passed to free() later. */
-#define smol_alloc_aligned_to(s, a, r) \
-  ({ void *p; *(r) = malloc ((s) + (a) - 1); \
-     p = (void *) (((uintptr_t) (*(r)) + (a) - 1) & ~(uintptr_t) ((a) - 1)); (p); })
-#define smol_alloc_aligned(s, r) smol_alloc_aligned_to ((s), SMOL_ALIGNMENT, (r))
+/* Allocates size bytes aligned to at least the requested power-of-two
+ * alignment. The pointer to the beginning of the storage is stored in
+ * *storage_out; that pointer must be passed to free() later. On
+ * allocation failure, both the returned pointer and *storage_out are
+ * NULL. */
+static inline void *
+smol_alloc_aligned_to (size_t size, size_t alignment, void **storage_out)
+{
+    void *m = malloc (size + alignment - 1);
+
+    *storage_out = m;
+    return (void *) (((uintptr_t) m + alignment - 1) & ~((uintptr_t) alignment - 1));
+}
+
+static inline void *
+smol_alloc_aligned (size_t size, void **storage_out)
+{
+    return smol_alloc_aligned_to (size, SMOL_ALIGNMENT, storage_out);
+}
 
 typedef enum
 {
@@ -198,15 +213,15 @@ typedef struct
 {
     uint32_t src_ofs;
     uint64_t *parts_row [4];
-    uint64_t *row_storage [4];
+    void *row_storage [4];
     uint32_t *src_aligned;
-    uint32_t *src_aligned_storage;
+    void *src_aligned_storage;
 
     /* Scratch row holding the unpacked destination pixels under the
      * placement rectangle, used only by the SMOL_COMPOSITE_SRC_OVER_DEST
      * path. NULL otherwise. */
     uint64_t *dest_parts_row;
-    uint64_t *dest_parts_storage;
+    void *dest_parts_storage;
 }
 SmolLocalCtx;
 
