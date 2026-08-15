@@ -1066,6 +1066,41 @@ find_repack_to_order (const SmolImplementation **implementations,
     return NULL;
 }
 
+/* Converts a caller-provided color pixel of any supported type to
+ * unassociated RGBA bytes. */
+static void
+color_pixel_to_rgba (const void *color_pixel,
+                     SmolPixelType color_pixel_type,
+                     uint8_t *rgba_out)
+{
+    const SmolPixelTypeMeta *pmeta = &pixel_type_meta [color_pixel_type];
+    const uint8_t *in = color_pixel;
+    uint8_t a;
+    int i;
+
+    /* Ensure 3-channel input is opaque */
+
+    rgba_out [3] = 0xff;
+
+    /* Reorder */
+
+    for (i = 0; i < pmeta->pixel_stride; i++)
+        rgba_out [pmeta->order [i] - 1] = in [i];
+
+    a = rgba_out [3];
+
+    /* Unpremultiply */
+
+    if (pmeta->alpha == SMOL_ALPHA_PREMUL8)
+    {
+        for (i = 0; i < 3; i++)
+        {
+            uint16_t u = a ? (rgba_out [i] * 255 + a / 2) / a : 0;
+            rgba_out [i] = u < 0xff ? u : 0xff;
+        }
+    }
+}
+
 static void
 populate_clear_batch (SmolScaleCtx *scale_ctx)
 {
@@ -1096,8 +1131,6 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     const SmolRepackMeta *src_rmeta, *dest_rmeta;
     SmolAlphaType internal_alpha = SMOL_ALPHA_PREMUL8;
     const SmolImplementation *implementations [IMPLEMENTATION_MAX];
-    uint64_t color_pixel_internal [2];
-    uint64_t color_pixel_as_src [2];
     int i = 0;
 
     if (color_pixel)
@@ -1215,30 +1248,35 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
 
         if (color_pixel)
         {
-            SmolPixelType color_ptype;
-            const SmolPixelTypeMeta *color_pmeta;
-            const SmolRepackMeta *color_in_rmeta, *color_out_rmeta;
+            const SmolRepackMeta *color_rmeta;
+            uint8_t mid_order [4];
+            SMOL_ALIGN uint8_t color_rgba [4];
 
-            color_ptype = get_host_pixel_type (color_pixel_type);
-            color_pmeta = &pixel_type_meta [color_ptype];
+            /* The fill color must be in the same internal channel order as
+             * the scaled source parts, so the compositor blends matching
+             * channels and pack_row_func packs it correctly. */
 
-            find_repacks (implementations,
-                          color_pmeta->storage, scale_ctx->storage_type, src_pmeta->storage,
-                          color_pmeta->alpha, internal_alpha, src_pmeta->alpha,
-                          SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type, SMOL_GAMMA_SRGB_COMPRESSED,
-                          color_pmeta, src_pmeta,
-                          &color_in_rmeta, &color_out_rmeta);
+            /* Convert color pixel to canonical unassoc RGBA */
 
-            SMOL_ASSERT (color_in_rmeta != NULL);
-            SMOL_ASSERT (color_out_rmeta != NULL);
+            color_pixel_to_rgba (color_pixel, color_pixel_type, color_rgba);
 
-            /* We need the fill color to have the same internal byte order as
-             * src. Currently, the simplest way to achieve this is to unpack the color,
-             * repack it to the same format as src, then unpacking it to internal again. */
+            /* Get the mid_order */
 
-            color_in_rmeta->repack_row_func (color_pixel, color_pixel_internal, 1);
-            color_out_rmeta->repack_row_func (color_pixel_internal, color_pixel_as_src, 1);
-            src_rmeta->repack_row_func (color_pixel_as_src, scale_ctx->color_pixel, 1);
+            do_reorder (src_pmeta->order, mid_order,
+                        reorder_meta [SMOL_REPACK_SIGNATURE_GET_REORDER (src_rmeta->signature)].dest);
+
+            /* Repack */
+
+            color_rmeta = find_repack_to_order (implementations,
+                                                SMOL_STORAGE_32BPP, scale_ctx->storage_type,
+                                                SMOL_ALPHA_UNASSOCIATED, internal_alpha,
+                                                SMOL_GAMMA_SRGB_COMPRESSED, scale_ctx->gamma_type,
+                                                &pixel_type_meta [get_host_pixel_type (SMOL_PIXEL_RGBA8_UNASSOCIATED)],
+                                                mid_order);
+
+            SMOL_ASSERT (color_rmeta != NULL);
+
+            color_rmeta->repack_row_func (color_rgba, scale_ctx->color_pixel, 1);
         }
         else
         {
