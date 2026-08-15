@@ -57,7 +57,7 @@ SmolPixelType;
 
 typedef enum
 {
-    SMOL_COMPOSITE_SRC_OVER_COLOR,
+    SMOL_COMPOSITE_SRC_OVER_COLOR = 1,
     SMOL_COMPOSITE_SRC_OVER_DEST
 }
 SmolCompositeOp;

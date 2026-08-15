@@ -1428,13 +1428,18 @@ check_scale_params (const void *src_pixels,
                     SmolPixelType src_pixel_type,
                     uint32_t src_width, uint32_t src_height,
                     SmolPixelType dest_pixel_type,
-                    uint32_t dest_width, uint32_t dest_height)
+                    uint32_t dest_width, uint32_t dest_height,
+                    SmolCompositeOp composite_op)
 {
     if (!src_pixels)
         return 0;
 
     if ((unsigned int) src_pixel_type >= SMOL_PIXEL_MAX
         || (unsigned int) dest_pixel_type >= SMOL_PIXEL_MAX)
+        return 0;
+
+    if (composite_op != SMOL_COMPOSITE_SRC_OVER_COLOR
+        && composite_op != SMOL_COMPOSITE_SRC_OVER_DEST)
         return 0;
 
     if (src_width < 1 || src_width > SMOL_DIM_MAX
@@ -1578,7 +1583,8 @@ smol_scale_new_simple (const void *src_pixels,
     SmolScaleCtx *scale_ctx;
 
     if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
-                             dest_pixel_type, dest_width, dest_height))
+                             dest_pixel_type, dest_width, dest_height,
+                             SMOL_COMPOSITE_SRC_OVER_COLOR))
         return NULL;
 
     scale_ctx = alloc_scale_ctx ();
@@ -1633,7 +1639,8 @@ smol_scale_simple (const void *src_pixels,
     int result = 0;
 
     if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
-                             dest_pixel_type, dest_width, dest_height))
+                             dest_pixel_type, dest_width, dest_height,
+                             SMOL_COMPOSITE_SRC_OVER_COLOR))
         return 0;
 
     if (!smol_scale_init (&scale_ctx,
@@ -1706,7 +1713,8 @@ smol_scale_new_full (const void *src_pixels,
     SmolScaleCtx *scale_ctx;
 
     if (!check_scale_params (src_pixels, src_pixel_type, src_width, src_height,
-                             dest_pixel_type, dest_width, dest_height))
+                             dest_pixel_type, dest_width, dest_height,
+                             composite_op))
         return NULL;
 
     scale_ctx = alloc_scale_ctx ();
