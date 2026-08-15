@@ -1130,10 +1130,21 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     const SmolRepackMeta *src_rmeta, *dest_rmeta;
     SmolAlphaType internal_alpha = SMOL_ALPHA_PREMUL8;
     const SmolImplementation *implementations [IMPLEMENTATION_MAX];
+    SMOL_ALIGN uint8_t color_rgba [4];
     int i = 0;
 
     if (color_pixel)
-        scale_ctx->have_composite_color = TRUE;
+    {
+        /* Convert color pixel to canonical unassoc RGBA. A color that
+         * comes out exactly transparent black is indistinguishable from
+         * no color at all; treat it as such, keeping the copy fast path
+         * available. */
+
+        color_pixel_to_rgba (color_pixel, color_pixel_type, color_rgba);
+
+        if (color_rgba [0] || color_rgba [1] || color_rgba [2] || color_rgba [3])
+            scale_ctx->have_composite_color = TRUE;
+    }
 
     /* Check for noop (direct copy). Only valid when the placement covers
      * the destination exactly; a smaller, offset or clipped placement still
@@ -1245,19 +1256,14 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
     /* The color pixel is used when compositing over a color, and for the
      * SMOL_CLEAR_DEST fill outside the placement (with either op). */
 
-    if (color_pixel)
+    if (scale_ctx->have_composite_color)
     {
         const SmolRepackMeta *color_rmeta;
         uint8_t mid_order [4];
-        SMOL_ALIGN uint8_t color_rgba [4];
 
         /* The fill color must be in the same internal channel order as
          * the scaled source parts, so the compositor blends matching
          * channels and pack_row_func packs it correctly. */
-
-        /* Convert color pixel to canonical unassoc RGBA */
-
-        color_pixel_to_rgba (color_pixel, color_pixel_type, color_rgba);
 
         /* Get the mid_order */
 
