@@ -3465,6 +3465,351 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 }
 
 static void
+composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                         const uint64_t * SMOL_RESTRICT color_pixel,
+                                         uint32_t n_pixels,
+                                         uint16_t opacity)
+{
+    /* Broadcast each pixel's low 16-bit lane (alpha) to all four lanes */
+    const __m256i alpha_shuf = _mm256_set_epi8 (9, 8, 9, 8, 9, 8, 9, 8,
+                                                1, 0, 1, 0, 1, 0, 1, 0,
+                                                9, 8, 9, 8, 9, 8, 9, 8,
+                                                1, 0, 1, 0, 1, 0, 1, 0);
+    const __m256i ff = _mm256_set1_epi16 (0xff);
+    const __m256i one = _mm256_set1_epi16 (1);
+    const __m256i r128 = _mm256_set1_epi16 (0x80);
+    const __m256i zero = _mm256_setzero_si256 ();
+    const __m256i opv = _mm256_set1_epi16 ((short) opacity);
+    const __m256i cv = _mm256_set1_epi64x ((long long) *color_pixel);
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
+    const uint64_t c = *color_pixel;
+    uint32_t n4 = n_pixels & ~3U;  /* Whole pixel quads */
+    uint32_t i;
+
+    /* Four pixels (4 x uint64_t = 16 x 16-bit lanes) per iteration, with
+     * the broadcast color in the dest role */
+
+    for (i = 0; i < n4; i += 4)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + i));
+        __m256i a, az, t, u;
+
+        if (scale_opacity)
+            s = _mm256_srli_epi16 (_mm256_mullo_epi16 (s, opv), SMOL_OPACITY_SHIFT);
+
+        a = _mm256_shuffle_epi8 (s, alpha_shuf);
+        az = _mm256_cmpeq_epi16 (a, zero);   /* pixel-wide: all lanes match */
+
+        /* t = color * (0xff - a) + 128. blend = src (squelched if a == 0)
+         * + (t + (t >> 8)) >> 8 */
+        t = _mm256_add_epi16 (_mm256_mullo_epi16 (cv, _mm256_sub_epi16 (ff, a)), r128);
+        u = _mm256_srli_epi16 (_mm256_add_epi16 (t, _mm256_srli_epi16 (t, 8)), 8);
+        t = _mm256_add_epi16 (_mm256_andnot_si256 (az, s), u);
+
+        /* Re-encode by the source alpha */
+        t = _mm256_srli_epi16 (
+            _mm256_sub_epi16 (_mm256_mullo_epi16 (_mm256_add_epi16 (t, one),
+                                                  _mm256_add_epi16 (a, one)),
+                              one), 8);
+
+        /* Rebuild the alpha lane (word 0 of each pixel) */
+        _mm256_storeu_si256 ((__m256i *) (srcdest_row + i),
+                             _mm256_blend_epi16 (t, a, SMOL_8X1BIT (0, 0, 0, 1, 0, 0, 0, 1)));
+    }
+
+    /* Scalar epilogue for the last few pixels */
+
+    for (i = n4; i < n_pixels; i++)
+    {
+        uint64_t s = srcdest_row [i];
+        uint64_t a, nz, t;
+
+        if (scale_opacity)
+            s = ((s * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ff00ff00ff00ffULL;
+
+        a = s & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+
+        t = c * (0xff - a) + 0x0080008000800080ULL;
+        t = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
+
+        t = (((t + 0x0001000100010001ULL) * (a + 1) - 0x0001000100010001ULL) >> 8)
+            & 0x00ff00ff00ff00ffULL;
+        srcdest_row [i] = (t & 0xffffffffffff0000ULL) | a;
+    }
+}
+
+/* Selects the 128bpp alpha lane (32-bit lane 2 of each pixel) in both pixel slots */
+#define ALPHA_MASK SMOL_8X1BIT (0, 1, 0, 0, 0, 1, 0, 0)
+
+static void
+composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                          const uint64_t * SMOL_RESTRICT color_pixel,
+                                          uint32_t n_pixels,
+                                          uint16_t opacity)
+{
+    const __m256i mask24 = _mm256_set1_epi32 (0x00ffffff);
+    const __m256i ff = _mm256_set1_epi32 (0xff);
+    const __m256i one = _mm256_set1_epi32 (1);
+    const __m256i r128 = _mm256_set1_epi32 (128);
+    const __m256i zero = _mm256_setzero_si256 ();
+    const __m256i opv = _mm256_set1_epi32 (opacity);
+    const __m256i cv = _mm256_broadcastsi128_si256 (
+        _mm_loadu_si128 ((const __m128i *) color_pixel));
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
+    uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
+    uint32_t i;
+
+    /* Two pixels (4 x uint64_t = 8 x 32-bit lanes) per iteration, with
+     * the color pair broadcast to both pixel slots. */
+
+    for (i = 0; i < n2; i += 2)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i a, az, t, u;
+
+        if (scale_opacity)
+            s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
+                                                     SMOL_OPACITY_SHIFT),
+                                  mask24);
+
+        /* Broadcast each pixel's source alpha across its four lanes. Unlike
+         * P16/P8L, the P8 alpha lane holds the bare value. */
+        a = _mm256_and_si256 (_mm256_shuffle_epi32 (s, SMOL_4X2BIT (2, 2, 2, 2)), ff);
+        az = _mm256_cmpeq_epi32 (a, zero);
+
+        /* t = color * (0xff - a) + 128. blend = src (squelched if a == 0)
+         * + (t + (t >> 8)) >> 8 */
+        t = _mm256_add_epi32 (_mm256_mullo_epi32 (cv, _mm256_sub_epi32 (ff, a)), r128);
+        u = _mm256_srli_epi32 (_mm256_add_epi32 (t, _mm256_srli_epi32 (t, 8)), 8);
+        t = _mm256_add_epi32 (_mm256_andnot_si256 (az, s), u);
+
+        /* Re-encode by the source alpha and rebuild the alpha lane */
+        t = _mm256_srli_epi32 (
+            _mm256_sub_epi32 (_mm256_mullo_epi32 (_mm256_add_epi32 (t, one),
+                                                  _mm256_add_epi32 (a, one)),
+                              one), 8);
+
+        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2),
+                             _mm256_blend_epi32 (t, a, ALPHA_MASK));
+    }
+
+    /* Scalar epilogue for a final odd pixel */
+
+    for (i = n2; i < n_pixels; i++)
+    {
+        uint64_t s0 = srcdest_row [(size_t) i * 2];
+        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t a, nz, w, t0, t1;
+
+        if (scale_opacity)
+        {
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = s1 & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0xff - a;
+
+        t0 = color_pixel [0] * w + 0x0000008000000080ULL;
+        t1 = color_pixel [1] * w + 0x0000008000000080ULL;
+        t0 = s0 * nz
+            + (((t0 + ((t0 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
+        t1 = s1 * nz
+            + (((t1 + ((t1 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
+
+        t0 = (((t0 + 0x0000000100000001ULL) * (a + 1) - 0x0000000100000001ULL) >> 8)
+            & 0x000000ff000000ffULL;
+        t1 = (((t1 + 0x0000000100000001ULL) * (a + 1) - 0x0000000100000001ULL) >> 8)
+            & 0x000000ff000000ffULL;
+
+        srcdest_row [(size_t) i * 2] = t0;
+        srcdest_row [(size_t) i * 2 + 1] = (t1 & 0xffffffff00000000ULL) | a;
+    }
+}
+
+static void
+composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                           const uint64_t * SMOL_RESTRICT color_pixel,
+                                           uint32_t n_pixels,
+                                           uint16_t opacity)
+{
+    const __m256i mask24 = _mm256_set1_epi32 (0x00ffffff);
+    const __m256i mask12 = _mm256_set1_epi32 (0x00000fff);
+    const __m256i ff = _mm256_set1_epi32 (0xff);
+    const __m256i one = _mm256_set1_epi32 (1);
+    const __m256i x100 = _mm256_set1_epi32 (0x100);
+    const __m256i r128 = _mm256_set1_epi32 (128);
+    const __m256i opv = _mm256_set1_epi32 (opacity);
+    const __m256i cv = _mm256_broadcastsi128_si256 (
+        _mm_loadu_si128 ((const __m128i *) color_pixel));
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
+    uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
+    uint32_t i;
+
+    /* Two pixels (4 x uint64_t = 8 x 32-bit lanes) per iteration, with
+     * the color pair broadcast to both pixel slots. */
+
+    for (i = 0; i < n2; i += 2)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i a, nz, w, d;
+
+        if (scale_opacity)
+            s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
+                                                     SMOL_OPACITY_SHIFT),
+                                  mask24);
+
+        /* Broadcast each pixel's source alpha across its four lanes */
+        a = _mm256_shuffle_epi32 (_mm256_srli_epi32 (s, 8), SMOL_4X2BIT (2, 2, 2, 2));
+        a = _mm256_and_si256 (a, ff);
+
+        /* nz = 0 if a == 0, else 1. w = 256 when a == 0, else 255 - a */
+        nz = _mm256_srli_epi32 (_mm256_add_epi32 (a, ff), 8);
+        w = _mm256_sub_epi32 (x100, _mm256_add_epi32 (a, nz));
+
+        /* blend = src * nz + (color * w + 128) >> 8 */
+        d = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_add_epi32 (
+                                  _mm256_mullo_epi32 (cv, w), r128), 8),
+                              mask24);
+        d = _mm256_add_epi32 (_mm256_mullo_epi32 (s, nz), d);
+
+        /* Re-encode by the source alpha and rebuild the alpha late */
+        d = _mm256_and_si256 (
+            _mm256_srli_epi32 (_mm256_mullo_epi32 (_mm256_and_si256 (d, mask12),
+                                                   _mm256_add_epi32 (a, one)), 8),
+            mask12);
+
+        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2),
+                             _mm256_blend_epi32 (d, _mm256_or_si256 (
+                                                     _mm256_slli_epi32 (a, 8), ff),
+                                                 ALPHA_MASK));
+    }
+
+    /* Scalar epilogue for a final odd pixel */
+
+    for (i = n2; i < n_pixels; i++)
+    {
+        uint64_t s0 = srcdest_row [(size_t) i * 2];
+        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t a, nz, w, t0, t1;
+
+        if (scale_opacity)
+        {
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
+
+        t0 = s0 * nz + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+        t1 = s1 * nz + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+
+        t0 = (((t0 & 0x00000fff00000fffULL) * (a + 1)) >> 8) & 0x00000fff00000fffULL;
+        t1 = (((t1 & 0x00000fff00000fffULL) * (a + 1)) >> 8) & 0x00000fff00000fffULL;
+
+        srcdest_row [(size_t) i * 2] = t0;
+        srcdest_row [(size_t) i * 2 + 1] = (t1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
+    }
+}
+
+/* Also serves p16l. Both encode channels as value * (alpha + 1) */
+static void
+composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                           const uint64_t * SMOL_RESTRICT color_pixel,
+                                           uint32_t n_pixels,
+                                           uint16_t opacity)
+{
+    const __m256i mask24 = _mm256_set1_epi32 (0x00ffffff);
+    const __m256i mask16 = _mm256_set1_epi32 (0x0000ffff);
+    const __m256i ff = _mm256_set1_epi32 (0xff);
+    const __m256i one = _mm256_set1_epi32 (1);
+    const __m256i x100 = _mm256_set1_epi32 (0x100);
+    const __m256i r128 = _mm256_set1_epi32 (128);
+    const __m256i opv = _mm256_set1_epi32 (opacity);
+    const __m256i cv = _mm256_broadcastsi128_si256 (
+        _mm_loadu_si128 ((const __m128i *) color_pixel));
+    const SmolBool scale_opacity = (opacity < SMOL_OPACITY_MAX);
+    uint32_t n2 = n_pixels & ~1U;  /* Whole pixel pairs */
+    uint32_t i;
+
+    /* Two pixels (4 x uint64_t = 8 x 32-bit lanes) per iteration, with
+     * the color pair broadcast to both pixel slots. */
+
+    for (i = 0; i < n2; i += 2)
+    {
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i a, nz, w, d;
+
+        if (scale_opacity)
+            s = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_mullo_epi32 (s, opv),
+                                                     SMOL_OPACITY_SHIFT),
+                                  mask24);
+
+        /* Broadcast each pixel's source alpha across its four lanes */
+        a = _mm256_shuffle_epi32 (_mm256_srli_epi32 (s, 8), SMOL_4X2BIT (2, 2, 2, 2));
+        a = _mm256_and_si256 (a, ff);
+
+        /* nz = 0 if a == 0, else 1. w = 256 when a == 0, else 255 - a */
+        nz = _mm256_srli_epi32 (_mm256_add_epi32 (a, ff), 8);
+        w = _mm256_sub_epi32 (x100, _mm256_add_epi32 (a, nz));
+
+        /* blend = src * nz + (color * w + 128) >> 8 */
+        d = _mm256_and_si256 (_mm256_srli_epi32 (_mm256_add_epi32 (
+                                  _mm256_mullo_epi32 (cv, w), r128), 8),
+                              mask24);
+        d = _mm256_add_epi32 (_mm256_mullo_epi32 (s, nz), d);
+
+        /* Re-encode by the source alpha, then rebuild the alpha lane */
+        d = _mm256_mullo_epi32 (_mm256_and_si256 (_mm256_srli_epi32 (d, 8), mask16),
+                                _mm256_add_epi32 (a, one));
+
+        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2),
+                             _mm256_blend_epi32 (d, _mm256_or_si256 (
+                                                     _mm256_slli_epi32 (a, 8), ff),
+                                                 ALPHA_MASK));
+    }
+
+    /* Scalar epilogue for a final odd pixel */
+
+    for (i = n2; i < n_pixels; i++)
+    {
+        uint64_t s0 = srcdest_row [(size_t) i * 2];
+        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t a, nz, w;
+
+        if (scale_opacity)
+        {
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
+
+        s0 = s0 * nz + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+        s1 = s1 * nz + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+
+        s0 = ((s0 >> 8) & 0x0000ffff0000ffffULL) * (a + 1);
+        s1 = ((s1 >> 8) & 0x0000ffff0000ffffULL) * (a + 1);
+
+        srcdest_row [(size_t) i * 2] = s0;
+        srcdest_row [(size_t) i * 2 + 1] = (s1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
+    }
+}
+
+#undef ALPHA_MASK
+
+static void
 composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
                               uint64_t * SMOL_RESTRICT dest_row,
                               uint32_t n_pixels,
@@ -4236,10 +4581,31 @@ static const SmolImplementation implementation =
     {
         /* Composite over color, keeping source alpha */
 
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp */
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp */
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 64bpp */
-        { { NULL, NULL, NULL }, { NULL, NULL, NULL } }   /* 128bpp */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp - unused */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp - unused */
+
+        /* 64bpp: p8 compressed. The linear row is unreachable: linear
+         * gamma always selects 128bpp storage. */
+        {
+            { NULL, composite_over_color_src_alpha_p8_64bpp, NULL },  /* compressed */
+            { NULL, NULL, NULL }                                      /* linear - unused */
+        },
+
+        /* 128bpp: p8 and p16 compressed, p8l and p16l linear */
+        {
+            /* compressed */
+            {
+                NULL,  /* unassociated - unused */
+                composite_over_color_src_alpha_p8_128bpp,
+                composite_over_color_src_alpha_p16_128bpp
+            },
+            /* linear (p8l has its own channel scale, p16l shares p16's) */
+            {
+                NULL,  /* unassociated - unused */
+                composite_over_color_src_alpha_p8l_128bpp,
+                composite_over_color_src_alpha_p16_128bpp
+            }
+        }
     },
     {
         /* Composite over dest */
