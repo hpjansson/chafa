@@ -183,7 +183,9 @@ precalc_boxes_array (uint32_t *array,
     dest_ofs_spx %= SMOL_SUBPIXEL_MUL;
 
     /* Output sample can't be less than a pixel. Fringe opacity is applied in
-     * a separate step. FIXME: May cause wrong subpixel distribution -- revisit. */
+     * a separate step. When e.g. a 0.5px output straddles a pixel, both sides
+     * will receive the same sampled color, which is technically incorrect, but
+     * visually better than the alternatives. */
     if (dest_dim_spx < 256)
         dest_dim_spx = 256;
 
