@@ -37,45 +37,8 @@ typedef struct
 
     SmolScaleCtx *scale_ctx;
     guint32 *scaled_data;
-
-    /* BG color with alpha multiplier 255-0 */
-    guint32 bg_color_lut [256];
 }
 DrawPixelsCtx;
-
-static void
-gen_color_lut_rgba8 (guint32 *color_lut, ChafaColor col)
-{
-    gint i;
-
-    for (i = 0; i < 256; i++)
-    {
-        ChafaColor ncol;
-
-        ncol.ch [0] = (col.ch [0] * (255 - i)) / 255;
-        ncol.ch [1] = (col.ch [1] * (255 - i)) / 255;
-        ncol.ch [2] = (col.ch [2] * (255 - i)) / 255;
-        ncol.ch [3] = 0;
-
-        chafa_color8_store_to_rgba8 (ncol, &color_lut [i]);
-    }
-}
-
-static void
-post_scale_row (gpointer row_inout, int width, void *user_data)
-{
-    const DrawPixelsCtx *ctx = user_data;
-    guint32 *row_inout_u32 = row_inout;
-    guint32 *row_inout_end = row_inout_u32 + width;
-
-    /* Composite on solid background color */
-
-    for ( ; row_inout_u32 < row_inout_end; row_inout_u32++)
-    {
-        ChafaColor c = chafa_color8_fetch_from_rgba8 (row_inout_u32);
-        *row_inout_u32 += ctx->bg_color_lut [c.ch [3]];
-    }
-}
 
 static void
 draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
@@ -466,19 +429,10 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
     ctx.dest_height = dest_height;
     ctx.quality = quality;
 
-#if 0
-    /* FIXME: Need a new smolscale compositing mode that preserves src
-     * alpha before this can be implemented */
     bg = *chafa_palette_get_color (&indexed_image->palette,
                                    CHAFA_COLOR_SPACE_RGB,
                                    CHAFA_PALETTE_INDEX_BG);
     bg.ch [3] = 0xff;
-#else
-    gen_color_lut_rgba8 (ctx.bg_color_lut,
-                         *chafa_palette_get_color (&indexed_image->palette,
-                                                   CHAFA_COLOR_SPACE_RGB,
-                                                   CHAFA_PALETTE_INDEX_BG));
-#endif
 
     chafa_tuck_and_align (src_width, src_height,
                           dest_width, dest_height,
@@ -506,15 +460,11 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                          src_height,
                                          src_rowstride,
                                          /* Fill */
-#if 0
                                          bg.ch,
-#else
-                                         NULL,
-#endif
                                          SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          /* Destination */
                                          NULL,
-                                         SMOL_PIXEL_RGBA8_PREMULTIPLIED,
+                                         SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                          dest_width,
                                          dest_height,
                                          dest_width * sizeof (guint32),
@@ -524,15 +474,10 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                          placement_width * SMOL_SUBPIXEL_MUL,
                                          placement_height * SMOL_SUBPIXEL_MUL,
                                          /* Extra args */
-                                         SMOL_COMPOSITE_SRC_OVER_COLOR,
+                                         SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA,
                                          SMOL_OPACITY_MAX,
-#if 0
                                          SMOL_CLEAR_DEST,
                                          NULL,
-#else
-                                         SMOL_DISABLE_SRGB_LINEARIZATION | SMOL_CLEAR_DEST,
-                                         post_scale_row,
-#endif
                                          &ctx);
 
     draw_pixels (&ctx);

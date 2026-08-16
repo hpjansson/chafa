@@ -76,6 +76,10 @@ typedef struct
     ChafaPaletteType palette_type;
     ChafaColor bg_color_rgb;
 
+    /* TRUE if the scaler composites on the background color for us
+     * (smooth path), FALSE if pass 2 must do it (nearest path) */
+    gboolean bg_composited_by_scaler;
+
     /* Result of alpha detection is stored here */
     gint have_alpha_int;
 
@@ -610,10 +614,9 @@ prepare_pixels_pass_1 (PrepareContext *prep_ctx)
      * - Figure out if we have alpha transparency
      */
 
-    batch_func = (GFunc) ((prep_ctx->work_factor_int < 3
-                           && prep_ctx->src_pixel_type == CHAFA_PIXEL_RGBA8_UNASSOCIATED)
-                          ? prepare_pixels_1_worker_nearest
-                          : prepare_pixels_1_worker_smooth);
+    batch_func = (GFunc) (prep_ctx->bg_composited_by_scaler
+                          ? prepare_pixels_1_worker_smooth
+                          : prepare_pixels_1_worker_nearest);
 
     chafa_process_batches (prep_ctx,
                            (GFunc) batch_func,
@@ -649,8 +652,9 @@ composite_alpha_on_bg (ChafaColor bg_color,
     p0 = pixels + (gsize) first_row * width;
     p1 = p0 + (gsize) n_rows * width;
 
-    /* FIXME: This is slow and bad. We should fix it with a new Smolscale
-     * compositing mode. */
+    /* Only used by the nearest-neighbor path. The smooth path has
+     * Smolscale compositing on the background color during scaling
+     * (SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA). */
 
     for ( ; p0 < p1; p0++)
     {
@@ -673,7 +677,7 @@ prepare_pixels_2_worker (ChafaBatchInfo *batch, PrepareContext *prep_ctx)
         normalize_rgb (prep_ctx->dest_pixels, &prep_ctx->hist, prep_ctx->dest_width,
                        batch->first_row, batch->n_rows);
 
-    if (prep_ctx->have_alpha_int)
+    if (prep_ctx->have_alpha_int && !prep_ctx->bg_composited_by_scaler)
         composite_alpha_on_bg (prep_ctx->bg_color_rgb,
                                prep_ctx->dest_pixels, prep_ctx->dest_width,
                                batch->first_row, batch->n_rows);
@@ -734,7 +738,7 @@ need_pass_2 (PrepareContext *prep_ctx)
          && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16
              || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_8
              || prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_FGBG))
-        || prep_ctx->have_alpha_int
+        || (prep_ctx->have_alpha_int && !prep_ctx->bg_composited_by_scaler)
         || prep_ctx->color_space == CHAFA_COLOR_SPACE_DIN99D
         || prep_ctx->dither->mode != CHAFA_DITHER_MODE_NONE)
         return TRUE;
@@ -844,6 +848,10 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
     prep_ctx.bg_color_rgb = *chafa_palette_get_color (palette,
                                                       CHAFA_COLOR_SPACE_RGB,
                                                       CHAFA_PALETTE_INDEX_BG);
+    prep_ctx.bg_color_rgb.ch [3] = 0xff;
+
+    prep_ctx.bg_composited_by_scaler = !(work_factor < 3
+                                         && src_pixel_type == CHAFA_PIXEL_RGBA8_UNASSOCIATED);
 
     prep_ctx.src_pixel_type = src_pixel_type;
     prep_ctx.src_pixels = src_pixels;
@@ -862,11 +870,11 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                               prep_ctx.src_height,
                                               prep_ctx.src_rowstride,
                                               /* Fill */
-                                              NULL,
+                                              prep_ctx.bg_color_rgb.ch,
                                               SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                               /* Destination */
                                               NULL,
-                                              SMOL_PIXEL_RGBA8_UNASSOCIATED,  /* FIXME: Premul */
+                                              SMOL_PIXEL_RGBA8_UNASSOCIATED,
                                               prep_ctx.dest_width,
                                               prep_ctx.dest_height,
                                               prep_ctx.dest_width * sizeof (guint32),
@@ -876,7 +884,7 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                               placement_width * SMOL_SUBPIXEL_MUL,
                                               placement_height * SMOL_SUBPIXEL_MUL,
                                               /* Extra args */
-                                              SMOL_COMPOSITE_SRC_OVER_COLOR,
+                                              SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA,
                                               SMOL_OPACITY_MAX,
                                               SMOL_CLEAR_DEST,
                                               NULL,
