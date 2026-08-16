@@ -315,9 +315,8 @@ to_srgb_pixel_xxxa_128bpp (const uint64_t *pixel_in, uint64_t *pixel_out)
         (((uint64_t) _smol_to_srgb_lut [pixel_in [0] >> 32]) << 32)
         | _smol_to_srgb_lut [pixel_in [0] & 0xffff];
 
-    pixel_out [1] =
-        (((uint64_t) _smol_to_srgb_lut [pixel_in [1] >> 32]) << 32)
-        | (pixel_in [1] & 0xffffffff);  /* FIXME: No need to preserve alpha? */
+    /* The alpha lane is left cleared; every caller rebuilds it */
+    pixel_out [1] = ((uint64_t) _smol_to_srgb_lut [pixel_in [1] >> 32]) << 32;
 }
 
 /* ----------------- *
