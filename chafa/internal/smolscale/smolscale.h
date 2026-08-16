@@ -63,7 +63,8 @@ SmolPixelType;
 typedef enum
 {
     SMOL_COMPOSITE_SRC_OVER_COLOR = 1,
-    SMOL_COMPOSITE_SRC_OVER_DEST
+    SMOL_COMPOSITE_SRC_OVER_DEST,
+    SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA
 }
 SmolCompositeOp;
 
@@ -99,6 +100,15 @@ typedef struct SmolScaleCtx SmolScaleCtx;
  * color_pixel is non-NULL. composite_opacity is a layer opacity in
  * [0, SMOL_OPACITY_MAX], where SMOL_OPACITY_MAX (256) is fully opaque;
  * higher values are clamped.
+ *
+ * SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA blends the color channels like
+ * SMOL_COMPOSITE_SRC_OVER_COLOR, but treats the color as an opaque
+ * backdrop (its alpha is ignored) and emits the source's own coverage as
+ * the destination alpha instead of the composited alpha. Useful when the
+ * caller needs colors flattened against a known background while keeping
+ * each pixel's original coverage for further compositing. With SMOL_CLEAR_DEST,
+ * the area outside the placement is filled with the color at zero
+ * coverage.
  *
  * dest_pixels may be NULL in the context constructors if every batch call
  * will supply its own output pointer via smol_scale_batch_full(). */

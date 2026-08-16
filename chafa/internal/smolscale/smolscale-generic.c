@@ -3325,6 +3325,170 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 }
 
 static void
+composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                         const uint64_t * SMOL_RESTRICT color_pixel,
+                                         uint32_t n_pixels,
+                                         uint16_t opacity)
+{
+    uint64_t c;
+    uint32_t i;
+
+    SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t));
+    SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
+
+    c = *color_pixel;
+
+    for (i = 0; i < n_pixels; i++)
+    {
+        uint64_t s = srcdest_row [i];
+        uint64_t a, nz, t;
+
+        if (opacity < SMOL_OPACITY_MAX)
+            s = ((s * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ff00ff00ff00ffULL;
+
+        a = s & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+
+        t = c * (0xff - a) + 0x0080008000800080ULL;
+        t = s * nz
+            + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
+
+        /* Re-encode by the source alpha and rebuild the alpha lane */
+        t = (((t + 0x0001000100010001ULL) * (a + 1) - 0x0001000100010001ULL) >> 8)
+            & 0x00ff00ff00ff00ffULL;
+        srcdest_row [i] = (t & 0xffffffffffff0000ULL) | a;
+    }
+}
+
+static void
+composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                          const uint64_t * SMOL_RESTRICT color_pixel,
+                                          uint32_t n_pixels,
+                                          uint16_t opacity)
+{
+    uint32_t i;
+
+    SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t) * 2);
+    SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
+
+    for (i = 0; i < n_pixels * 2; i += 2)
+    {
+        uint64_t s0 = srcdest_row [i];
+        uint64_t s1 = srcdest_row [i + 1];
+        uint64_t a, nz, w, t0, t1;
+
+        if (opacity < SMOL_OPACITY_MAX)
+        {
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = s1 & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0xff - a;
+
+        t0 = color_pixel [0] * w + 0x0000008000000080ULL;
+        t1 = color_pixel [1] * w + 0x0000008000000080ULL;
+        t0 = s0 * nz
+            + (((t0 + ((t0 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
+        t1 = s1 * nz
+            + (((t1 + ((t1 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
+
+        /* Re-encode by the source alpha and rebuild the alpha lane */
+        t0 = (((t0 + 0x0000000100000001ULL) * (a + 1) - 0x0000000100000001ULL) >> 8)
+            & 0x000000ff000000ffULL;
+        t1 = (((t1 + 0x0000000100000001ULL) * (a + 1) - 0x0000000100000001ULL) >> 8)
+            & 0x000000ff000000ffULL;
+
+        srcdest_row [i] = t0;
+        srcdest_row [i + 1] = (t1 & 0xffffffff00000000ULL) | a;
+    }
+}
+
+static void
+composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                           const uint64_t * SMOL_RESTRICT color_pixel,
+                                           uint32_t n_pixels,
+                                           uint16_t opacity)
+{
+    uint32_t i;
+
+    SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t) * 2);
+    SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
+
+    for (i = 0; i < n_pixels * 2; i += 2)
+    {
+        uint64_t s0 = srcdest_row [i];
+        uint64_t s1 = srcdest_row [i + 1];
+        uint64_t a, nz, w, t0, t1;
+
+        if (opacity < SMOL_OPACITY_MAX)
+        {
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
+
+        t0 = s0 * nz + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+        t1 = s1 * nz + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+
+        /* Re-encode by the source alpha and rebuild the alpha lane */
+        t0 = (((t0 & 0x00000fff00000fffULL) * (a + 1)) >> 8) & 0x00000fff00000fffULL;
+        t1 = (((t1 & 0x00000fff00000fffULL) * (a + 1)) >> 8) & 0x00000fff00000fffULL;
+
+        srcdest_row [i] = t0;
+        srcdest_row [i + 1] = (t1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
+    }
+}
+
+/* Also serves p16l. Both encode channels as value * (alpha + 1) */
+static void
+composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+                                           const uint64_t * SMOL_RESTRICT color_pixel,
+                                           uint32_t n_pixels,
+                                           uint16_t opacity)
+{
+    uint32_t i;
+
+    SMOL_ASSUME_ALIGNED_TO (srcdest_row, uint64_t *, sizeof (uint64_t) * 2);
+    SMOL_ASSUME_ALIGNED_TO (color_pixel, const uint64_t *, sizeof (uint64_t));
+
+    for (i = 0; i < n_pixels * 2; i += 2)
+    {
+        uint64_t s0 = srcdest_row [i];
+        uint64_t s1 = srcdest_row [i + 1];
+        uint64_t a, nz, w;
+
+        if (opacity < SMOL_OPACITY_MAX)
+        {
+            s0 = ((s0 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+            s1 = ((s1 * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ffffff00ffffffULL;
+        }
+
+        a = (s1 >> 8) & 0xff;
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
+
+        s0 = s0 * nz + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+        s1 = s1 * nz + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
+                        & 0x00ffffff00ffffffULL);
+
+        /* Re-encode by the source alpha and rebuild the alpha lane */
+        s0 = ((s0 >> 8) & 0x0000ffff0000ffffULL) * (a + 1);
+        s1 = ((s1 >> 8) & 0x0000ffff0000ffffULL) * (a + 1);
+
+        srcdest_row [i] = s0;
+        srcdest_row [i + 1] = (s1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
+    }
+}
+
+static void
 composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
                               uint64_t * SMOL_RESTRICT dest_row,
                               uint32_t n_pixels,
@@ -3701,6 +3865,40 @@ static const SmolImplementation implementation =
                 NULL,  /* unassociated - unused */
                 composite_over_color_p16_128bpp,
                 composite_over_color_p16_128bpp
+            }
+        }
+    },
+    {
+        /* Composite over color, keeping source alpha */
+
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp - unused */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp - unused */
+
+        /* 64bpp */
+        {
+            /* compressed */
+            {
+                NULL,  /* unassociated - unused */
+                composite_over_color_src_alpha_p8_64bpp,
+                NULL   /* p16 - n/a */
+            },
+            /* linear: unreachable, linear gamma forces 128bpp storage */
+            { NULL, NULL, NULL }
+        },
+
+        /* 128bpp */
+        {
+            /* compressed */
+            {
+                NULL,  /* unassociated - unused */
+                composite_over_color_src_alpha_p8_128bpp,
+                composite_over_color_src_alpha_p16_128bpp
+            },
+            /* linear (p8l has its own channel scale, p16l shares p16's) */
+            {
+                NULL,  /* unassociated - unused */
+                composite_over_color_src_alpha_p8l_128bpp,
+                composite_over_color_src_alpha_p16_128bpp
             }
         }
     },

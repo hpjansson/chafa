@@ -1129,13 +1129,13 @@ color_pixel_to_rgba (const void *color_pixel,
 }
 
 static void
-populate_clear_batch (SmolScaleCtx *scale_ctx)
+populate_clear_batch (SmolScaleCtx *scale_ctx, const uint64_t *color_parts)
 {
     SMOL_ALIGN uint8_t dest_color [16];
     int pixel_stride;
     int i;
 
-    scale_ctx->pack_row_func (scale_ctx->color_pixel, dest_color, 1);
+    scale_ctx->pack_row_func (color_parts, dest_color, 1);
     pixel_stride = pixel_type_meta [scale_ctx->dest_pixel_type].pixel_stride;
 
     for (i = 0; i != SMOL_CLEAR_BATCH_SIZE; i += pixel_stride)
@@ -1172,6 +1172,10 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
 
         if (color_rgba [0] || color_rgba [1] || color_rgba [2] || color_rgba [3])
             scale_ctx->have_composite_color = TRUE;
+
+        /* The src-alpha op treats the color as an opaque backdrop */
+        if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA)
+            color_rgba [3] = 0xff;
     }
 
     /* Check for noop (direct copy). The placement must be a 1:1,
@@ -1313,13 +1317,6 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         memset (scale_ctx->color_pixel, 0, sizeof (scale_ctx->color_pixel));
     }
 
-    /* This batch is used to clear dest borders and placement fill for
-     * zero-opacity over-color. */
-    if ((scale_ctx->flags & SMOL_CLEAR_DEST)
-        || (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_COLOR
-            && scale_ctx->composite_opacity == 0))
-        populate_clear_batch (scale_ctx);
-
     /* Install filters and compositors */
 
     scale_ctx->hfilter_func = NULL;
@@ -1335,7 +1332,11 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         SmolVFilterFunc *vfilter_func =
             implementations [i]->vfilter_funcs [scale_ctx->storage_type] [scale_ctx->vdim.filter_type];
         SmolCompositeOverColorFunc *composite_over_color_func =
-            implementations [i]->composite_over_color_funcs
+            (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA
+             && scale_ctx->have_composite_color)
+            ? implementations [i]->composite_over_color_src_alpha_funcs
+                [scale_ctx->storage_type] [scale_ctx->gamma_type] [internal_alpha]
+            : implementations [i]->composite_over_color_funcs
                 [scale_ctx->storage_type] [scale_ctx->gamma_type] [internal_alpha];
         SmolCompositeOverDestFunc *composite_over_dest_func =
             implementations [i]->composite_over_dest_funcs
@@ -1367,6 +1368,30 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
 
     SMOL_ASSERT (scale_ctx->hfilter_func != NULL);
     SMOL_ASSERT (scale_ctx->vfilter_func != NULL);
+
+    /* This batch is used to clear dest borders and placement fill for
+     * zero-opacity compositing over a color. For the src-alpha op the
+     * fill is the color at zero coverage, matching what the compositor
+     * produces for fully transparent source pixels. */
+
+    if ((scale_ctx->flags & SMOL_CLEAR_DEST)
+        || (scale_ctx->composite_op != SMOL_COMPOSITE_SRC_OVER_DEST
+            && scale_ctx->composite_opacity == 0))
+    {
+        if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA
+            && scale_ctx->have_composite_color)
+        {
+            SMOL_ALIGN uint64_t clear_parts [2] = { 0, 0 };
+
+            scale_ctx->composite_over_color_func (clear_parts, scale_ctx->color_pixel,
+                                                  1, SMOL_OPACITY_MAX);
+            populate_clear_batch (scale_ctx, clear_parts);
+        }
+        else
+        {
+            populate_clear_batch (scale_ctx, scale_ctx->color_pixel);
+        }
+    }
 }
 
 static void
@@ -1473,7 +1498,8 @@ check_scale_params (const void *src_pixels,
         return 0;
 
     if (composite_op != SMOL_COMPOSITE_SRC_OVER_COLOR
-        && composite_op != SMOL_COMPOSITE_SRC_OVER_DEST)
+        && composite_op != SMOL_COMPOSITE_SRC_OVER_DEST
+        && composite_op != SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA)
         return 0;
 
     if (src_width < 1 || src_width > SMOL_DIM_MAX

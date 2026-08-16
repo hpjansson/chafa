@@ -4234,6 +4234,14 @@ static const SmolImplementation implementation =
         }
     },
     {
+        /* Composite over color, keeping source alpha */
+
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 32bpp */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 64bpp */
+        { { NULL, NULL, NULL }, { NULL, NULL, NULL } }   /* 128bpp */
+    },
+    {
         /* Composite over dest */
 
         { { NULL, NULL, NULL }, { NULL, NULL, NULL } },  /* 24bpp - unused */
