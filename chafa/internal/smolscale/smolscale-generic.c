@@ -244,10 +244,43 @@ precalc_boxes_array (uint32_t *array,
 }
 
 static void
+precalc_nearest_array (uint16_t *array,
+                       uint32_t src_dim_spx,
+                       uint32_t dest_dim_spx,
+                       int32_t dest_clip_before_px,
+                       int32_t dest_visible_px)
+{
+    uint32_t src_dim_px = SMOL_SPX_TO_PX (src_dim_spx);
+    int64_t clip_first = dest_clip_before_px;
+    int64_t clip_last = clip_first + dest_visible_px;
+    int64_t dest_i;
+    int i = 0;
+
+    assert (src_dim_px > 0);
+    assert (dest_dim_spx > 0);
+
+    for (dest_i = clip_first; dest_i < clip_last; dest_i++)
+    {
+        uint64_t ofs_px = (((uint64_t) dest_i * 2 + 1) * src_dim_spx)
+            / ((uint64_t) dest_dim_spx * 2);
+
+        array [i++] = MIN (ofs_px, (uint64_t) src_dim_px - 1);
+    }
+}
+
+static void
 init_dim (SmolDim *dim)
 {
     if (dim->filter_type == SMOL_FILTER_ONE || dim->filter_type == SMOL_FILTER_COPY)
     {
+    }
+    else if (dim->filter_type == SMOL_FILTER_NEAREST)
+    {
+        precalc_nearest_array (dim->precalc,
+                               dim->src_size_spx,
+                               dim->placement_size_spx,
+                               dim->clip_before_px,
+                               dim->placement_size_px);
     }
     else if (dim->filter_type == SMOL_FILTER_BOX)
     {
@@ -2190,6 +2223,41 @@ interp_horizontal_boxes_128bpp (const SmolScaleCtx *scale_ctx,
 }
 
 static void
+interp_horizontal_nearest_64bpp (const SmolScaleCtx *scale_ctx,
+                                 const uint64_t * SMOL_RESTRICT src_row_parts,
+                                 uint64_t * SMOL_RESTRICT dest_row_parts)
+{
+    const uint16_t * SMOL_RESTRICT precalc_x = scale_ctx->hdim.precalc;
+    uint64_t *dest_row_parts_max = dest_row_parts + scale_ctx->hdim.placement_size_px;
+
+    SMOL_ASSUME_ALIGNED (src_row_parts, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (dest_row_parts, uint64_t *);
+
+    while (dest_row_parts != dest_row_parts_max)
+        *(dest_row_parts++) = src_row_parts [*(precalc_x++)];
+}
+
+static void
+interp_horizontal_nearest_128bpp (const SmolScaleCtx *scale_ctx,
+                                  const uint64_t * SMOL_RESTRICT src_row_parts,
+                                  uint64_t * SMOL_RESTRICT dest_row_parts)
+{
+    const uint16_t * SMOL_RESTRICT precalc_x = scale_ctx->hdim.precalc;
+    uint64_t *dest_row_parts_max = dest_row_parts + scale_ctx->hdim.placement_size_px * 2;
+
+    SMOL_ASSUME_ALIGNED (src_row_parts, const uint64_t *);
+    SMOL_ASSUME_ALIGNED (dest_row_parts, uint64_t *);
+
+    while (dest_row_parts != dest_row_parts_max)
+    {
+        uint32_t pixel_ofs = *(precalc_x++) * 2;
+
+        *(dest_row_parts++) = src_row_parts [pixel_ofs];
+        *(dest_row_parts++) = src_row_parts [pixel_ofs + 1];
+    }
+}
+
+static void
 interp_horizontal_one_64bpp (const SmolScaleCtx *scale_ctx,
                              const uint64_t * SMOL_RESTRICT src_row_parts,
                              uint64_t * SMOL_RESTRICT dest_row_parts)
@@ -3126,6 +3194,54 @@ scale_dest_row_box_128bpp (const SmolScaleCtx *scale_ctx,
 }
 
 static int
+scale_dest_row_nearest_64bpp (const SmolScaleCtx *scale_ctx,
+                              SmolLocalCtx *local_ctx,
+                              uint32_t row_index)
+{
+    const uint16_t *precalc_y = scale_ctx->vdim.precalc;
+    uint32_t src_row_ofs = precalc_y [row_index];
+
+    if (src_row_ofs != local_ctx->src_ofs)
+    {
+        scale_horizontal (scale_ctx,
+                          local_ctx,
+                          src_row_ofs_to_pointer (scale_ctx, src_row_ofs),
+                          local_ctx->parts_row [0]);
+        local_ctx->src_ofs = src_row_ofs;
+    }
+
+    memcpy (local_ctx->parts_row [1],
+            local_ctx->parts_row [0],
+            scale_ctx->hdim.placement_size_px * sizeof (uint64_t));
+
+    return 1;
+}
+
+static int
+scale_dest_row_nearest_128bpp (const SmolScaleCtx *scale_ctx,
+                               SmolLocalCtx *local_ctx,
+                               uint32_t row_index)
+{
+    const uint16_t *precalc_y = scale_ctx->vdim.precalc;
+    uint32_t src_row_ofs = precalc_y [row_index];
+
+    if (src_row_ofs != local_ctx->src_ofs)
+    {
+        scale_horizontal (scale_ctx,
+                          local_ctx,
+                          src_row_ofs_to_pointer (scale_ctx, src_row_ofs),
+                          local_ctx->parts_row [0]);
+        local_ctx->src_ofs = src_row_ofs;
+    }
+
+    memcpy (local_ctx->parts_row [1],
+            local_ctx->parts_row [0],
+            scale_ctx->hdim.placement_size_px * sizeof (uint64_t) * 2);
+
+    return 1;
+}
+
+static int
 scale_dest_row_one_64bpp (const SmolScaleCtx *scale_ctx,
                           SmolLocalCtx *local_ctx,
                           uint32_t row_index)
@@ -3790,7 +3906,8 @@ static const SmolImplementation implementation =
             interp_horizontal_bilinear_1h_64bpp,
             interp_horizontal_bilinear_2h_64bpp,
             interp_horizontal_bilinear_3h_64bpp,
-            interp_horizontal_boxes_64bpp
+            interp_horizontal_boxes_64bpp,
+            interp_horizontal_nearest_64bpp
         },
         {
             /* 128bpp */
@@ -3800,7 +3917,8 @@ static const SmolImplementation implementation =
             interp_horizontal_bilinear_1h_128bpp,
             interp_horizontal_bilinear_2h_128bpp,
             interp_horizontal_bilinear_3h_128bpp,
-            interp_horizontal_boxes_128bpp
+            interp_horizontal_boxes_128bpp,
+            interp_horizontal_nearest_128bpp
         }
     },
     {
@@ -3821,7 +3939,8 @@ static const SmolImplementation implementation =
             scale_dest_row_bilinear_1h_64bpp,
             scale_dest_row_bilinear_2h_64bpp,
             scale_dest_row_bilinear_3h_64bpp,
-            scale_dest_row_box_64bpp
+            scale_dest_row_box_64bpp,
+            scale_dest_row_nearest_64bpp
         },
         {
             /* 128bpp */
@@ -3831,7 +3950,8 @@ static const SmolImplementation implementation =
             scale_dest_row_bilinear_1h_128bpp,
             scale_dest_row_bilinear_2h_128bpp,
             scale_dest_row_bilinear_3h_128bpp,
-            scale_dest_row_box_128bpp
+            scale_dest_row_box_128bpp,
+            scale_dest_row_nearest_128bpp
         }
     },
     {

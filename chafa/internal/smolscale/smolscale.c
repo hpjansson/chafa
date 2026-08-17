@@ -827,6 +827,40 @@ get_host_pixel_type (SmolPixelType pixel_type)
  * Context initialization *
  * ---------------------- */
 
+#define SMOL_PLACEMENT_OFS_SPX_MAX ((int32_t) ((INT32_MAX / SMOL_SUBPIXEL_MUL) * SMOL_SUBPIXEL_MUL))
+
+static int32_t
+round_placement_ofs_spx (int32_t ofs_spx)
+{
+    int64_t n = (int64_t) ofs_spx + SMOL_SUBPIXEL_MUL / 2;
+    int64_t px;
+
+    /* Floor division, so negative offsets round the same direction as
+     * positive ones */
+    px = (n >= 0) ? (n / SMOL_SUBPIXEL_MUL)
+        : -((-n + SMOL_SUBPIXEL_MUL - 1) / SMOL_SUBPIXEL_MUL);
+
+    return (int32_t) MIN (px * SMOL_SUBPIXEL_MUL, (int64_t) SMOL_PLACEMENT_OFS_SPX_MAX);
+}
+
+static int32_t
+round_placement_size_spx (int32_t size_spx)
+{
+    int64_t px;
+
+    SMOL_ASSERT (size_spx >= 0);
+
+    /* Exactly zero yields zero */
+    if (size_spx == 0)
+        return 0;
+
+    /* Floor nonzero at one pixel */
+    px = ((int64_t) size_spx + SMOL_SUBPIXEL_MUL / 2) / SMOL_SUBPIXEL_MUL;
+    px = MAX (px, 1);
+
+    return (int32_t) MIN (px * SMOL_SUBPIXEL_MUL, (int64_t) SMOL_PLACEMENT_OFS_SPX_MAX);
+}
+
 static void
 pick_filter_params (uint32_t src_dim,
                     uint32_t src_dim_spx,
@@ -867,6 +901,34 @@ pick_filter_params (uint32_t src_dim,
         *dest_dim_prehalving_spx = 0;
         *dest_halvings = 0;
         *dest_filter = SMOL_FILTER_ONE;
+        return;
+    }
+
+    /* Nearest-neighbor snaps to whole pixels. */
+
+    if (flags & SMOL_INTERP_NEAREST)
+    {
+        /* Dimensions and placement spx have already been rounded at
+         * this point. */
+
+        *dest_dim_prehalving_spx = dest_dim_spx;
+        *dest_halvings = 0;
+        *first_opacity = SMOL_OPACITY_MAX;
+        *last_opacity = SMOL_OPACITY_MAX;
+
+        if (src_dim <= 1)
+        {
+            *dest_filter = SMOL_FILTER_ONE;
+        }
+        else if ((dest_ofs_spx & 0xff) == 0 && src_dim_spx == dest_dim_spx)
+        {
+            *dest_filter = SMOL_FILTER_COPY;
+        }
+        else
+        {
+            *dest_filter = SMOL_FILTER_NEAREST;
+        }
+
         return;
     }
 
@@ -1464,7 +1526,9 @@ init_dim (SmolDim *dim,
 
 /* Number of precalc entries to reserve for a dimension, in units of two
  * uint16s (box entries are one uint32 each, bilinear samples are an
- * offset/factor uint16 pair). Only the visible window is precalculated. */
+ * offset/factor uint16 pair). Nearest needs only one uint16 per output
+ * pixel, i.e. half an entry, so it fits with room to spare. Only the
+ * visible window is precalculated. */
 static uint32_t
 precalc_entries_for_dim (const SmolDim *dim)
 {
@@ -1543,6 +1607,20 @@ smol_scale_init (SmolScaleCtx *scale_ctx,
         placement_height_spx = 0;
         placement_x_spx = 0;
         placement_y_spx = 0;
+    }
+    else if (flags & SMOL_INTERP_NEAREST)
+    {
+        /* Nearest-neighbor has no interpolation kernel or partial coverage,
+         * so the placement is snapped to the destination's pixel grid before
+         * anything derives geometry from it (clipping, filter choice, precalc,
+         * edge opacities). Offset and size round independently rather than
+         * rounding each edge; rounding the edges would make the size wobble
+         * by a pixel as the placement moves. */
+
+        placement_x_spx = round_placement_ofs_spx (placement_x_spx);
+        placement_y_spx = round_placement_ofs_spx (placement_y_spx);
+        placement_width_spx = round_placement_size_spx (placement_width_spx);
+        placement_height_spx = round_placement_size_spx (placement_height_spx);
     }
 
     scale_ctx->src_pixels = src_pixels;

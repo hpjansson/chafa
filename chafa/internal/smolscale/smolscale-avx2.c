@@ -351,7 +351,8 @@ init_dim (SmolDim *dim, int do_batches)
                              dim->clip_before_px,
                              dim->placement_size_px);
     }
-    else /* SMOL_FILTER_BILINEAR_?H */
+    else if (dim->filter_type >= SMOL_FILTER_BILINEAR_0H
+             && dim->filter_type <= SMOL_FILTER_BILINEAR_3H)
     {
         int n_batch_samples = 0;
 
@@ -378,6 +379,12 @@ init_dim (SmolDim *dim, int do_batches)
                                 n_batch_samples,
                                 do_batches);
     }
+    else
+    {
+        /* We don't have any AVX2 nearest filters */
+        SMOL_ASSERT (FALSE);
+    }
+
 }
 
 static void

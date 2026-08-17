@@ -33,7 +33,8 @@ typedef enum
     SMOL_NO_FLAGS                   = 0,
     SMOL_DISABLE_ACCELERATION       = (1 << 0),
     SMOL_DISABLE_SRGB_LINEARIZATION = (1 << 1),
-    SMOL_CLEAR_DEST                 = (1 << 2)
+    SMOL_CLEAR_DEST                 = (1 << 2),
+    SMOL_INTERP_NEAREST             = (1 << 3)
 }
 SmolFlags;
 
