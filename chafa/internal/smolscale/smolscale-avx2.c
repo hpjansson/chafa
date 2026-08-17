@@ -3268,9 +3268,7 @@ scale_dest_row_one_64bpp (const SmolScaleCtx *scale_ctx,
     }
     else
     {
-        memcpy (local_ctx->parts_row [1],
-                local_ctx->parts_row [0],
-                scale_ctx->hdim.placement_size_px * sizeof (uint64_t));
+        return 0;
     }
 
     return 1;
@@ -3308,9 +3306,7 @@ scale_dest_row_one_128bpp (const SmolScaleCtx *scale_ctx,
     }
     else
     {
-        memcpy (local_ctx->parts_row [1],
-                local_ctx->parts_row [0],
-                scale_ctx->hdim.placement_size_px * sizeof (uint64_t) * 2);
+        return 0;
     }
 
     return 1;
@@ -3335,7 +3331,8 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
  * ----------- */
 
 static void
-composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+composite_over_color_p8_64bpp (const uint64_t *src_row,
+                               uint64_t *dest_row,
                                const uint64_t * SMOL_RESTRICT color_pixel,
                                uint32_t n_pixels,
                                uint16_t opacity)
@@ -3360,7 +3357,7 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n4; i += 4)
     {
-        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + i));
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + i));
         __m256i a, az, t, u;
 
         if (scale_opacity)
@@ -3374,7 +3371,7 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         t = _mm256_add_epi16 (_mm256_mullo_epi16 (cv, _mm256_sub_epi16 (ff, a)), r128);
         u = _mm256_srli_epi16 (_mm256_add_epi16 (t, _mm256_srli_epi16 (t, 8)), 8);
 
-        _mm256_storeu_si256 ((__m256i *) (srcdest_row + i),
+        _mm256_storeu_si256 ((__m256i *) (dest_row + i),
                              _mm256_add_epi16 (_mm256_andnot_si256 (az, s), u));
     }
 
@@ -3382,7 +3379,7 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = n4; i < n_pixels; i++)
     {
-        uint64_t s = srcdest_row [i];
+        uint64_t s = src_row [i];
         uint64_t a, nz, t;
 
         if (scale_opacity)
@@ -3392,13 +3389,14 @@ composite_over_color_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
 
         t = c * (0xff - a) + 0x0080008000800080ULL;
-        srcdest_row [i] = s * nz
+        dest_row [i] = s * nz
             + (((t + ((t >> 8) & 0x00ff00ff00ff00ffULL)) >> 8) & 0x00ff00ff00ff00ffULL);
     }
 }
 
 static void
-composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+composite_over_color_p16_128bpp (const uint64_t *src_row,
+                                 uint64_t *dest_row,
                                  const uint64_t * SMOL_RESTRICT color_pixel,
                                  uint32_t n_pixels,
                                  uint16_t opacity)
@@ -3419,7 +3417,7 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n2; i += 2)
     {
-        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + (size_t) i * 2));
         __m256i a, nz, w, d;
 
         if (scale_opacity)
@@ -3441,15 +3439,15 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                               mask24);
         d = _mm256_add_epi32 (_mm256_mullo_epi32 (s, nz), d);
 
-        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2), d);
+        _mm256_storeu_si256 ((__m256i *) (dest_row + (size_t) i * 2), d);
     }
 
     /* Scalar epilogue for a final odd pixel */
 
     for (i = n2; i < n_pixels; i++)
     {
-        uint64_t s0 = srcdest_row [(size_t) i * 2];
-        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t s0 = src_row [(size_t) i * 2];
+        uint64_t s1 = src_row [(size_t) i * 2 + 1];
         uint64_t a, nz, w;
 
         if (scale_opacity)
@@ -3462,17 +3460,18 @@ composite_over_color_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
         w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
 
-        srcdest_row [(size_t) i * 2] = s0 * nz
+        dest_row [(size_t) i * 2] = s0 * nz
             + (((color_pixel [0] * w + 0x0000008000000080ULL) >> 8)
                & 0x00ffffff00ffffffULL);
-        srcdest_row [(size_t) i * 2 + 1] = s1 * nz
+        dest_row [(size_t) i * 2 + 1] = s1 * nz
             + (((color_pixel [1] * w + 0x0000008000000080ULL) >> 8)
                & 0x00ffffff00ffffffULL);
     }
 }
 
 static void
-composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+composite_over_color_src_alpha_p8_64bpp (const uint64_t *src_row,
+                                         uint64_t *dest_row,
                                          const uint64_t * SMOL_RESTRICT color_pixel,
                                          uint32_t n_pixels,
                                          uint16_t opacity)
@@ -3498,7 +3497,7 @@ composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n4; i += 4)
     {
-        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + i));
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + i));
         __m256i a, az, t, u;
 
         if (scale_opacity)
@@ -3520,7 +3519,7 @@ composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                               one), 8);
 
         /* Rebuild the alpha lane (word 0 of each pixel) */
-        _mm256_storeu_si256 ((__m256i *) (srcdest_row + i),
+        _mm256_storeu_si256 ((__m256i *) (dest_row + i),
                              _mm256_blend_epi16 (t, a, SMOL_8X1BIT (0, 0, 0, 1, 0, 0, 0, 1)));
     }
 
@@ -3528,7 +3527,7 @@ composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = n4; i < n_pixels; i++)
     {
-        uint64_t s = srcdest_row [i];
+        uint64_t s = src_row [i];
         uint64_t a, nz, t;
 
         if (scale_opacity)
@@ -3543,7 +3542,7 @@ composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
         t = (((t + 0x0001000100010001ULL) * (a + 1) - 0x0001000100010001ULL) >> 8)
             & 0x00ff00ff00ff00ffULL;
-        srcdest_row [i] = (t & 0xffffffffffff0000ULL) | a;
+        dest_row [i] = (t & 0xffffffffffff0000ULL) | a;
     }
 }
 
@@ -3551,7 +3550,8 @@ composite_over_color_src_alpha_p8_64bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 #define ALPHA_MASK SMOL_8X1BIT (0, 1, 0, 0, 0, 1, 0, 0)
 
 static void
-composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+composite_over_color_src_alpha_p8_128bpp (const uint64_t *src_row,
+                                          uint64_t *dest_row,
                                           const uint64_t * SMOL_RESTRICT color_pixel,
                                           uint32_t n_pixels,
                                           uint16_t opacity)
@@ -3573,7 +3573,7 @@ composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n2; i += 2)
     {
-        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + (size_t) i * 2));
         __m256i a, az, t, u;
 
         if (scale_opacity)
@@ -3598,7 +3598,7 @@ composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                                                   _mm256_add_epi32 (a, one)),
                               one), 8);
 
-        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2),
+        _mm256_storeu_si256 ((__m256i *) (dest_row + (size_t) i * 2),
                              _mm256_blend_epi32 (t, a, ALPHA_MASK));
     }
 
@@ -3606,8 +3606,8 @@ composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = n2; i < n_pixels; i++)
     {
-        uint64_t s0 = srcdest_row [(size_t) i * 2];
-        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t s0 = src_row [(size_t) i * 2];
+        uint64_t s1 = src_row [(size_t) i * 2 + 1];
         uint64_t a, nz, w, t0, t1;
 
         if (scale_opacity)
@@ -3632,13 +3632,14 @@ composite_over_color_src_alpha_p8_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         t1 = (((t1 + 0x0000000100000001ULL) * (a + 1) - 0x0000000100000001ULL) >> 8)
             & 0x000000ff000000ffULL;
 
-        srcdest_row [(size_t) i * 2] = t0;
-        srcdest_row [(size_t) i * 2 + 1] = (t1 & 0xffffffff00000000ULL) | a;
+        dest_row [(size_t) i * 2] = t0;
+        dest_row [(size_t) i * 2 + 1] = (t1 & 0xffffffff00000000ULL) | a;
     }
 }
 
 static void
-composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+composite_over_color_src_alpha_p8l_128bpp (const uint64_t *src_row,
+                                           uint64_t *dest_row,
                                            const uint64_t * SMOL_RESTRICT color_pixel,
                                            uint32_t n_pixels,
                                            uint16_t opacity)
@@ -3661,7 +3662,7 @@ composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n2; i += 2)
     {
-        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + (size_t) i * 2));
         __m256i a, nz, w, d;
 
         if (scale_opacity)
@@ -3689,7 +3690,7 @@ composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
                                                    _mm256_add_epi32 (a, one)), 8),
             mask12);
 
-        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2),
+        _mm256_storeu_si256 ((__m256i *) (dest_row + (size_t) i * 2),
                              _mm256_blend_epi32 (d, _mm256_or_si256 (
                                                      _mm256_slli_epi32 (a, 8), ff),
                                                  ALPHA_MASK));
@@ -3699,8 +3700,8 @@ composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = n2; i < n_pixels; i++)
     {
-        uint64_t s0 = srcdest_row [(size_t) i * 2];
-        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t s0 = src_row [(size_t) i * 2];
+        uint64_t s1 = src_row [(size_t) i * 2 + 1];
         uint64_t a, nz, w, t0, t1;
 
         if (scale_opacity)
@@ -3721,14 +3722,15 @@ composite_over_color_src_alpha_p8l_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         t0 = (((t0 & 0x00000fff00000fffULL) * (a + 1)) >> 8) & 0x00000fff00000fffULL;
         t1 = (((t1 & 0x00000fff00000fffULL) * (a + 1)) >> 8) & 0x00000fff00000fffULL;
 
-        srcdest_row [(size_t) i * 2] = t0;
-        srcdest_row [(size_t) i * 2 + 1] = (t1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
+        dest_row [(size_t) i * 2] = t0;
+        dest_row [(size_t) i * 2 + 1] = (t1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
     }
 }
 
 /* Also serves p16l. Both encode channels as value * (alpha + 1) */
 static void
-composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
+composite_over_color_src_alpha_p16_128bpp (const uint64_t *src_row,
+                                           uint64_t *dest_row,
                                            const uint64_t * SMOL_RESTRICT color_pixel,
                                            uint32_t n_pixels,
                                            uint16_t opacity)
@@ -3751,7 +3753,7 @@ composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = 0; i < n2; i += 2)
     {
-        __m256i s = _mm256_loadu_si256 ((const __m256i *) (srcdest_row + (size_t) i * 2));
+        __m256i s = _mm256_loadu_si256 ((const __m256i *) (src_row + (size_t) i * 2));
         __m256i a, nz, w, d;
 
         if (scale_opacity)
@@ -3777,7 +3779,7 @@ composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         d = _mm256_mullo_epi32 (_mm256_and_si256 (_mm256_srli_epi32 (d, 8), mask16),
                                 _mm256_add_epi32 (a, one));
 
-        _mm256_storeu_si256 ((__m256i *) (srcdest_row + (size_t) i * 2),
+        _mm256_storeu_si256 ((__m256i *) (dest_row + (size_t) i * 2),
                              _mm256_blend_epi32 (d, _mm256_or_si256 (
                                                      _mm256_slli_epi32 (a, 8), ff),
                                                  ALPHA_MASK));
@@ -3787,8 +3789,8 @@ composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
 
     for (i = n2; i < n_pixels; i++)
     {
-        uint64_t s0 = srcdest_row [(size_t) i * 2];
-        uint64_t s1 = srcdest_row [(size_t) i * 2 + 1];
+        uint64_t s0 = src_row [(size_t) i * 2];
+        uint64_t s1 = src_row [(size_t) i * 2 + 1];
         uint64_t a, nz, w;
 
         if (scale_opacity)
@@ -3809,15 +3811,15 @@ composite_over_color_src_alpha_p16_128bpp (uint64_t * SMOL_RESTRICT srcdest_row,
         s0 = ((s0 >> 8) & 0x0000ffff0000ffffULL) * (a + 1);
         s1 = ((s1 >> 8) & 0x0000ffff0000ffffULL) * (a + 1);
 
-        srcdest_row [(size_t) i * 2] = s0;
-        srcdest_row [(size_t) i * 2 + 1] = (s1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
+        dest_row [(size_t) i * 2] = s0;
+        dest_row [(size_t) i * 2 + 1] = (s1 & 0xffffffff00000000ULL) | (a << 8) | 0xff;
     }
 }
 
 #undef ALPHA_MASK
 
 static void
-composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
+composite_over_dest_p8_64bpp (const uint64_t *src_row,
                               uint64_t * SMOL_RESTRICT dest_row,
                               uint32_t n_pixels,
                               uint16_t opacity)
@@ -3878,7 +3880,7 @@ composite_over_dest_p8_64bpp (const uint64_t * SMOL_RESTRICT src_row,
 }
 
 static void
-composite_over_dest_p16_128bpp (const uint64_t * SMOL_RESTRICT src_row,
+composite_over_dest_p16_128bpp (const uint64_t *src_row,
                                 uint64_t * SMOL_RESTRICT dest_row,
                                 uint32_t n_pixels,
                                 uint16_t opacity)
@@ -4225,7 +4227,7 @@ SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
 
 /* PREMUL16 LINEAR -> 32bpp UNASSOCIATED COMPRESSED. */
 static SMOL_INLINE void
-repack_p16l_to_u32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
+repack_p16l_to_u32_avx2 (const uint64_t *src_row,
                          uint32_t * SMOL_RESTRICT dest_row,
                          uint32_t n, int order)
 {
@@ -4314,7 +4316,7 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL16,     LINEAR,
 
 /* PREMUL8 LINEAR -> 32bpp PREMUL8 COMPRESSED. */
 static SMOL_INLINE void
-repack_p8l_to_p32_avx2 (const uint64_t * SMOL_RESTRICT src_row,
+repack_p8l_to_p32_avx2 (const uint64_t *src_row,
                         uint32_t * SMOL_RESTRICT dest_row,
                         uint32_t n, int order)
 {

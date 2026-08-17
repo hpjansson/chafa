@@ -218,9 +218,10 @@ typedef struct
     uint32_t *src_aligned;
     void *src_aligned_storage;
 
-    /* Scratch row holding the unpacked destination pixels under the
-     * placement rectangle, used only by the SMOL_COMPOSITE_SRC_OVER_DEST
-     * path. NULL otherwise. */
+    /* Scratch row a compositor writes into; the unpacked destination
+     * pixels under the placement rectangle for SMOL_COMPOSITE_SRC_OVER_DEST,
+     * or the blended result for the over-color ops. NULL when no compositor
+     * runs. */
     uint64_t *dest_parts_row;
     void *dest_parts_storage;
 }
@@ -236,11 +237,14 @@ typedef void (SmolHFilterFunc) (const SmolScaleCtx *scale_ctx,
 typedef int (SmolVFilterFunc) (const SmolScaleCtx *scale_ctx,
                                SmolLocalCtx *local_ctx,
                                uint32_t dest_row_index);
-/* Composites a scaled source parts row over a solid color in place
- * (srcdest_row receives src OVER color). @opacity is a layer opacity in
- * [0, SMOL_OPACITY_MAX] applied to the source's coverage; 0 yields the
- * pure color. */
-typedef void (SmolCompositeOverColorFunc) (uint64_t *srcdest_row,
+/* Composites a scaled source parts row over a solid color, writing src OVER
+ * color to dest_row. dest_row may either be equal to src_row (composite in
+ * place) or a distinct row that does not overlap it.
+ *
+ * @opacity is a layer opacity in [0, SMOL_OPACITY_MAX] applied to the
+ * source's coverage; 0 yields the pure color. */
+typedef void (SmolCompositeOverColorFunc) (const uint64_t *src_row,
+                                           uint64_t *dest_row,
                                            const uint64_t *color_pixel,
                                            uint32_t n_pixels,
                                            uint16_t opacity);

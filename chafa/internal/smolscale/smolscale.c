@@ -522,6 +522,16 @@ check_row_range (const SmolScaleCtx *scale_ctx,
     return 1;
 }
 
+/* TRUE if the vertical filter hands back a row it keeps across output rows
+ * rather than one it rewrites each time. Such a row must not be composited
+ * in place. */
+static SMOL_INLINE int
+vfilter_returns_cached_row (const SmolScaleCtx *scale_ctx)
+{
+    return scale_ctx->vdim.filter_type == SMOL_FILTER_ONE
+        || scale_ctx->vdim.filter_type == SMOL_FILTER_NEAREST;
+}
+
 /* ------------------- *
  * Scaling: Outer loop *
  * ------------------- */
@@ -647,22 +657,30 @@ scale_dest_row (const SmolScaleCtx *scale_ctx,
         }
         else
         {
+            uint64_t *out_row;
             int scaled_row_index;
 
             scaled_row_index = scale_ctx->vfilter_func (scale_ctx,
                                                         local_ctx,
                                                         dest_row_index - scale_ctx->vdim.clear_before_px);
+            out_row = local_ctx->parts_row [scaled_row_index];
 
             if (scale_ctx->have_composite_color
                 || scale_ctx->composite_opacity < SMOL_OPACITY_MAX)
             {
-                scale_ctx->composite_over_color_func (local_ctx->parts_row [scaled_row_index],
+                /* Composite in place if possible */
+                uint64_t *comp_dest = vfilter_returns_cached_row (scale_ctx)
+                    ? local_ctx->dest_parts_row : out_row;
+
+                scale_ctx->composite_over_color_func (out_row,
+                                                      comp_dest,
                                                       scale_ctx->color_pixel,
                                                       scale_ctx->hdim.placement_size_px,
                                                       scale_ctx->composite_opacity);
+                out_row = comp_dest;
             }
 
-            scale_ctx->pack_row_func (local_ctx->parts_row [scaled_row_index],
+            scale_ctx->pack_row_func (out_row,
                                       dest_hofs_to_pointer (scale_ctx, row_out, scale_ctx->hdim.placement_ofs_px),
                                       scale_ctx->hdim.placement_size_px);
 
@@ -740,11 +758,16 @@ do_rows (const SmolScaleCtx *scale_ctx,
             goto out;
     }
 
-    /* The SMOL_COMPOSITE_SRC_OVER_DEST path needs a scratch row to hold the
-     * unpacked destination pixels under the placement rectangle. Zero
-     * opacity leaves the destination untouched and needs nothing. */
-    if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST
-        && scale_ctx->composite_opacity > 0)
+    /* Both compositors write into a scratch row; over-dest unpacks the
+     * destination under the placement into it and blends there, over-color
+     * writes its blend there. Zero opacity short-circuits both before the
+     * compositor runs, and over-color only composites when there is a color
+     * or a partial opacity. */
+    if (scale_ctx->composite_opacity > 0
+        && (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_DEST
+            || ((scale_ctx->have_composite_color
+                 || scale_ctx->composite_opacity < SMOL_OPACITY_MAX)
+                && vfilter_returns_cached_row (scale_ctx))))
     {
         local_ctx.dest_parts_row =
             smol_alloc_aligned (MAX (scale_ctx->hdim.placement_size_px, 1)
@@ -1443,9 +1466,11 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         if (scale_ctx->composite_op == SMOL_COMPOSITE_SRC_OVER_COLOR_SRC_ALPHA
             && scale_ctx->have_composite_color)
         {
+            SMOL_ALIGN uint64_t src_parts [2] = { 0, 0 };
             SMOL_ALIGN uint64_t clear_parts [2] = { 0, 0 };
 
-            scale_ctx->composite_over_color_func (clear_parts, scale_ctx->color_pixel,
+            scale_ctx->composite_over_color_func (src_parts, clear_parts,
+                                                  scale_ctx->color_pixel,
                                                   1, SMOL_OPACITY_MAX);
             populate_clear_batch (scale_ctx, clear_parts);
         }
