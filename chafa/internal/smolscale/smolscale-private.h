@@ -193,6 +193,15 @@ typedef enum
 }
 SmolGammaType;
 
+typedef enum
+{
+    /* Mixed must be zero and test FALSE */
+    SMOL_BATCH_MIXED = 0,
+    SMOL_BATCH_OPAQUE,
+    SMOL_BATCH_TRANSPARENT
+}
+SmolBatchOpacity;
+
 typedef struct
 {
     unsigned char src [4];
@@ -431,13 +440,6 @@ struct SmolScaleCtx
     SMOL_ALIGN unsigned char color_pixels_clear_batch [SMOL_CLEAR_BATCH_SIZE];
 };
 
-/* Number of pixels to convert per batch. For some conversions, we perform
- * an alpha test per batch to avoid the expensive premul path when the image
- * data is opaque.
- *
- * FIXME: Unimplemented. */
-#define PIXEL_BATCH_SIZE 32
-
 #define SRGB_LINEAR_BITS 11
 #define SRGB_LINEAR_MAX (1 << (SRGB_LINEAR_BITS))
 
@@ -458,6 +460,353 @@ const SmolImplementation *_smol_get_generic_implementation (void);
 #ifdef SMOL_WITH_AVX2
 const SmolImplementation *_smol_get_avx2_implementation (void);
 #endif
+
+/* --------------------- *
+ * Batched opacity tests *
+ * --------------------- */
+
+/* Repackers and compositors have the option of processing each row in
+ * a series of batches, testing each batch for its opacity class before
+ * proceeding with conversions. This can accelerate processing, as opaque
+ * or fully transparent stretches are common cases and it's often faster
+ * to perform a mask and test than un/premultiplication.
+ *
+ * Two variants exist: 3-way (opaque, transparent, mixed) and 2-way (opaque,
+ * mixed). The latter is used when fully transparent pixels need "mixed"
+ * handling, e.g. for preserving their color values; the 3-way will clear
+ * them instead.
+ *
+ * The mixed branch must handle opaque and transparent pixels identically
+ * to their corresponding special cases. */
+
+/* Test builds can force every batch onto the mixed path */
+#ifdef SMOL_TEST_HOOKS
+extern int _smol_disable_opacity_fastpath;
+# define SMOL_OPAQUE_TEST(expr) (_smol_disable_opacity_fastpath ? 0 : (expr))
+#else
+# define SMOL_OPAQUE_TEST(expr) (expr)
+#endif
+
+/* Number of pixels per batch. SIMD code assumes this count implicitly,
+ * so the define cannot be changed. It corresponds to 128 bytes, 256 bytes
+ * and 512 bytes with 32bpp, 64bpp and 128bpp storage respectivelty. */
+#define PIXEL_BATCH_SIZE 32
+
+/* The last digit of a repack's destination channel order names the source
+ * channel that becomes alpha. In a 32bpp source limb channel 1 is most
+ * significant, so channel k occupies bits (4 - k) * 8. */
+#define SMOL_32BPP_ALPHA_MASK(dest_alpha_ch) (0xffU << ((4 - (dest_alpha_ch)) * 8))
+
+/* Alpha field within the limb that carries it: the single limb of a 64bpp
+ * pixel, or limb 1 of a 128bpp one. PREMUL8 COMPRESSED stores a plain
+ * byte; p8l, p16 and p16l all store (alpha << 8) | 0xff. */
+#define SMOL_ALPHA_MASK_P8 0x00ffULL
+#define SMOL_ALPHA_MASK_INFLATED 0xff00ULL
+
+/* --- Batch opacity classifiers --- */
+
+/* Backends may redefine these to point at optimized impls */
+#define SMOL_BATCH_IS_OPAQUE_32BPP(src, mask) \
+    smol_batch_is_opaque_32bpp ((src), (mask))
+#define SMOL_BATCH_ALPHA_CLASS_32BPP(src, mask) \
+    smol_batch_alpha_class_32bpp ((src), (mask))
+#define SMOL_BATCH_IS_OPAQUE_128BPP(src, mask) \
+    smol_batch_is_opaque_128bpp ((src), (mask))
+
+static SMOL_INLINE SmolBatchOpacity
+smol_batch_is_opaque_32bpp (const uint32_t *src, uint32_t alpha_mask)
+{
+    uint32_t acc [4];
+    uint32_t i;
+
+    /* Probe the first pixel */
+    if ((src [0] & alpha_mask) != alpha_mask)
+        return SMOL_BATCH_MIXED;
+
+    acc [0] = acc [1] = acc [2] = acc [3] = ~(uint32_t) 0;
+
+    for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+    {
+        /* Four accumulators reduce dependencies */
+        acc [0] &= src [i];
+        acc [1] &= src [i + 1];
+        acc [2] &= src [i + 2];
+        acc [3] &= src [i + 3];
+    }
+
+    return ((((acc [0] & acc [1]) & (acc [2] & acc [3])) & alpha_mask)
+            == alpha_mask) ? SMOL_BATCH_OPAQUE : SMOL_BATCH_MIXED;
+}
+
+static SMOL_INLINE SmolBatchOpacity
+smol_batch_alpha_class_32bpp (const uint32_t *src, uint32_t alpha_mask)
+{
+    uint32_t acc [4];
+    uint32_t a;
+    uint32_t i;
+
+    /* The first pixel selects which reduction to run */
+    a = src [0] & alpha_mask;
+
+    if (a == alpha_mask)
+    {
+        acc [0] = acc [1] = acc [2] = acc [3] = ~(uint32_t) 0;
+
+        for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+        {
+            acc [0] &= src [i];
+            acc [1] &= src [i + 1];
+            acc [2] &= src [i + 2];
+            acc [3] &= src [i + 3];
+        }
+
+        return ((((acc [0] & acc [1]) & (acc [2] & acc [3])) & alpha_mask)
+                == alpha_mask) ? SMOL_BATCH_OPAQUE : SMOL_BATCH_MIXED;
+    }
+
+    if (a == 0)
+    {
+        acc [0] = acc [1] = acc [2] = acc [3] = 0;
+
+        for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+        {
+            acc [0] |= src [i];
+            acc [1] |= src [i + 1];
+            acc [2] |= src [i + 2];
+            acc [3] |= src [i + 3];
+        }
+
+        return ((((acc [0] | acc [1]) | (acc [2] | acc [3])) & alpha_mask)
+                == 0) ? SMOL_BATCH_TRANSPARENT : SMOL_BATCH_MIXED;
+    }
+
+    return SMOL_BATCH_MIXED;
+}
+
+static SMOL_INLINE SmolBatchOpacity
+smol_batch_alpha_class_128bpp (const uint64_t *src, uint64_t alpha_mask)
+{
+    uint64_t acc [4];
+    uint64_t a;
+    uint32_t i;
+
+    /* The first pixel selects the reduction to run */
+    a = src [1] & alpha_mask;
+
+    if (a == alpha_mask)
+    {
+        acc [0] = acc [1] = acc [2] = acc [3] = ~(uint64_t) 0;
+
+        for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+        {
+            acc [0] &= src [i * 2 + 1];
+            acc [1] &= src [i * 2 + 3];
+            acc [2] &= src [i * 2 + 5];
+            acc [3] &= src [i * 2 + 7];
+        }
+
+        return ((((acc [0] & acc [1]) & (acc [2] & acc [3])) & alpha_mask)
+                == alpha_mask) ? SMOL_BATCH_OPAQUE : SMOL_BATCH_MIXED;
+    }
+
+    if (a == 0)
+    {
+        acc [0] = acc [1] = acc [2] = acc [3] = 0;
+
+        for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+        {
+            acc [0] |= src [i * 2 + 1];
+            acc [1] |= src [i * 2 + 3];
+            acc [2] |= src [i * 2 + 5];
+            acc [3] |= src [i * 2 + 7];
+        }
+
+        return ((((acc [0] | acc [1]) | (acc [2] | acc [3])) & alpha_mask)
+                == 0) ? SMOL_BATCH_TRANSPARENT : SMOL_BATCH_MIXED;
+    }
+
+    return SMOL_BATCH_MIXED;
+}
+
+static SMOL_INLINE SmolBatchOpacity
+smol_batch_alpha_class_64bpp (const uint64_t *src)
+{
+    uint64_t acc [4];
+    uint64_t a;
+    uint32_t i;
+
+    /* The first pixel selects the reduction to run */
+    a = src [0] & SMOL_ALPHA_MASK_P8;
+
+    if (a == SMOL_ALPHA_MASK_P8)
+    {
+        acc [0] = acc [1] = acc [2] = acc [3] = ~(uint64_t) 0;
+
+        for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+        {
+            acc [0] &= src [i];
+            acc [1] &= src [i + 1];
+            acc [2] &= src [i + 2];
+            acc [3] &= src [i + 3];
+        }
+
+        return ((((acc [0] & acc [1]) & (acc [2] & acc [3])) & SMOL_ALPHA_MASK_P8)
+                == SMOL_ALPHA_MASK_P8) ? SMOL_BATCH_OPAQUE : SMOL_BATCH_MIXED;
+    }
+
+    if (a == 0)
+    {
+        acc [0] = acc [1] = acc [2] = acc [3] = 0;
+
+        for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+        {
+            acc [0] |= src [i];
+            acc [1] |= src [i + 1];
+            acc [2] |= src [i + 2];
+            acc [3] |= src [i + 3];
+        }
+
+        return ((((acc [0] | acc [1]) | (acc [2] | acc [3])) & SMOL_ALPHA_MASK_P8)
+                == 0) ? SMOL_BATCH_TRANSPARENT : SMOL_BATCH_MIXED;
+    }
+
+    return SMOL_BATCH_MIXED;
+}
+
+static SMOL_INLINE SmolBatchOpacity
+smol_batch_is_opaque_128bpp (const uint64_t *src, uint64_t alpha_mask)
+{
+    uint64_t acc [4];
+    uint32_t i;
+
+    /* Probe the first pixel */
+    if ((src [1] & alpha_mask) != alpha_mask)
+        return FALSE;
+
+    acc [0] = acc [1] = acc [2] = acc [3] = ~(uint64_t) 0;
+
+    for (i = 0; i < PIXEL_BATCH_SIZE; i += 4)
+    {
+        acc [0] &= src [i * 2 + 1];
+        acc [1] &= src [i * 2 + 3];
+        acc [2] &= src [i * 2 + 5];
+        acc [3] &= src [i * 2 + 7];
+    }
+
+    return ((((acc [0] & acc [1]) & (acc [2] & acc [3])) & alpha_mask)
+            == alpha_mask) ? SMOL_BATCH_OPAQUE : SMOL_BATCH_MIXED;
+}
+
+/* --- Batch repack helpers --- */
+
+/* Driver for the repack row loops. Chunks the row into PIXEL_BATCH_SIZE
+ * pixels, classifying and running the body on each batch. The body sees n
+ * pixels at src_row and dest_row and indexes them with i; it must not advance
+ * either pointer. */
+#define SMOL_REPACK_BATCH_LOOP(src_advance, dest_px_limbs, opaque_test, ...) \
+    do { \
+        uint32_t n_left = (uint32_t) ((dest_row_max - dest_row) \
+                                      / (dest_px_limbs)); \
+        while (n_left >= PIXEL_BATCH_SIZE) \
+        { \
+            const uint32_t n = PIXEL_BATCH_SIZE; \
+            SmolBatchOpacity batch_opacity = SMOL_OPAQUE_TEST (opaque_test); \
+            uint32_t i = 0; \
+            __VA_ARGS__; \
+            (void) i; \
+            src_row += (uint32_t) PIXEL_BATCH_SIZE * (src_advance); \
+            dest_row += (uint32_t) PIXEL_BATCH_SIZE * (dest_px_limbs); \
+            n_left -= PIXEL_BATCH_SIZE; \
+        } \
+        if (n_left) \
+        { \
+            /* Epilogue; not worth classifying */ \
+            const uint32_t n = n_left; \
+            int batch_opacity = 0; \
+            uint32_t i = 0; \
+            __VA_ARGS__; \
+            (void) i; \
+            (void) batch_opacity; \
+        } \
+    } while (0)
+
+#define SMOL_REPACK_BATCHED_2WAY(src_advance, dest_px_limbs, opaque_expr, \
+                                 opaque_stmt, general_stmt) \
+    SMOL_REPACK_BATCH_LOOP ( \
+        src_advance, dest_px_limbs, opaque_expr, \
+        if (batch_opacity == SMOL_BATCH_OPAQUE) \
+            do { opaque_stmt; } while (0); \
+        else \
+            do { general_stmt; } while (0))
+
+#define SMOL_REPACK_BATCHED_3WAY(src_advance, dest_px_limbs, class_expr, \
+                                 clear_bytes, opaque_stmt, general_stmt) \
+    SMOL_REPACK_BATCH_LOOP ( \
+        src_advance, dest_px_limbs, class_expr, \
+        if (batch_opacity == SMOL_BATCH_OPAQUE) \
+            do { opaque_stmt; } while (0); \
+        else if (batch_opacity == SMOL_BATCH_TRANSPARENT) \
+            memset (dest_row, 0, clear_bytes); \
+        else \
+            do { general_stmt; } while (0))
+
+#define SMOL_UNPACK_32BPP_TO_64BPP_BATCHED(pixel_func, alpha_ch) \
+    SMOL_REPACK_BATCHED_3WAY ( \
+        1, 1, SMOL_BATCH_ALPHA_CLASS_32BPP (src_row, \
+                                            SMOL_32BPP_ALPHA_MASK (alpha_ch)), \
+        n * sizeof (uint64_t), \
+        for (i = 0; i < n; i++) \
+            dest_row [i] = pixel_func (src_row [i], TRUE), \
+        for (i = 0; i < n; i++) \
+            dest_row [i] = pixel_func (src_row [i], FALSE))
+
+/* Used by unassoc-to-unassoc paths where color is preserved in transparent pixels */
+#define SMOL_UNPACK_32BPP_TO_128BPP_BATCHED(pixel_func, alpha_ch) \
+    SMOL_REPACK_BATCHED_2WAY ( \
+        1, 2, SMOL_BATCH_IS_OPAQUE_32BPP (src_row, \
+                                          SMOL_32BPP_ALPHA_MASK (alpha_ch)), \
+     for (i = 0; i < n; i++) \
+         pixel_func (src_row [i], dest_row + i * 2, TRUE), \
+     for (i = 0; i < n; i++) \
+         pixel_func (src_row [i], dest_row + i * 2, FALSE))
+
+/* Same, but for premul destinations where transparent color gets wiped */
+#define SMOL_UNPACK_32BPP_TO_P8_128BPP_BATCHED(pixel_func, alpha_ch) \
+    SMOL_REPACK_BATCHED_3WAY ( \
+        1, 2, SMOL_BATCH_ALPHA_CLASS_32BPP (src_row, \
+                                            SMOL_32BPP_ALPHA_MASK (alpha_ch)), \
+        (size_t) n * 2 * sizeof (uint64_t), \
+        for (i = 0; i < n; i++) \
+            pixel_func (src_row [i], dest_row + i * 2, TRUE), \
+        for (i = 0; i < n; i++) \
+            pixel_func (src_row [i], dest_row + i * 2, FALSE))
+
+#define SMOL_PACK_64BPP_TO_32BPP_BATCHED(pixel_func) \
+    SMOL_REPACK_BATCHED_3WAY ( \
+        1, 1, smol_batch_alpha_class_64bpp (src_row), \
+        n * sizeof (uint32_t), \
+        for (i = 0; i < n; i++) \
+            dest_row [i] = pixel_func (src_row [i], TRUE), \
+        for (i = 0; i < n; i++) \
+            dest_row [i] = pixel_func (src_row [i], FALSE))
+
+#define SMOL_PACK_128BPP_TO_32BPP_BATCHED(pixel_func, alpha_mask) \
+    SMOL_REPACK_BATCHED_3WAY ( \
+        2, 1, smol_batch_alpha_class_128bpp (src_row, alpha_mask), \
+        n * sizeof (uint32_t), \
+        for (i = 0; i < n; i++) \
+            dest_row [i] = pixel_func (src_row + i * 2, TRUE), \
+        for (i = 0; i < n; i++) \
+            dest_row [i] = pixel_func (src_row + i * 2, FALSE))
+
+#define SMOL_PACK_128BPP_TO_24BPP_BATCHED(pixel_func, alpha_mask) \
+    SMOL_REPACK_BATCHED_3WAY ( \
+        2, 3, smol_batch_alpha_class_128bpp (src_row, alpha_mask), \
+        n * 3, \
+        for (i = 0; i < n; i++) \
+            pixel_func (src_row + i * 2, dest_row + i * 3, TRUE), \
+        for (i = 0; i < n; i++) \
+            pixel_func (src_row + i * 2, dest_row + i * 3, FALSE))
 
 #ifdef __cplusplus
 }
