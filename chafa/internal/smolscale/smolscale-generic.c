@@ -3195,11 +3195,11 @@ scale_dest_row_copy (const SmolScaleCtx *scale_ctx,
  * ----------- */
 
 static void
-composite_over_color_p8_64bpp (const uint64_t *src_row,
-                               uint64_t *dest_row,
-                               const uint64_t * SMOL_RESTRICT color_pixel,
-                               uint32_t n_pixels,
-                               uint16_t opacity)
+composite_over_color_p8_64bpp_span (const uint64_t *src_row,
+                                    uint64_t *dest_row,
+                                    const uint64_t * SMOL_RESTRICT color_pixel,
+                                    uint32_t n_pixels,
+                                    uint16_t opacity)
 {
     uint64_t c;
     uint32_t i;
@@ -3228,11 +3228,23 @@ composite_over_color_p8_64bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_color_p8_128bpp (const uint64_t *src_row,
-                                uint64_t *dest_row,
-                                const uint64_t * SMOL_RESTRICT color_pixel,
-                                uint32_t n_pixels,
-                                uint16_t opacity)
+composite_over_color_p8_64bpp (const uint64_t *src_row,
+                               uint64_t *dest_row,
+                               const uint64_t * SMOL_RESTRICT color_pixel,
+                               uint32_t n_pixels,
+                               uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_p8_64bpp_span,
+                                       smol_batch_alpha_class_64bpp (src_row + i),
+                                       1);
+}
+
+static void
+composite_over_color_p8_128bpp_span (const uint64_t *src_row,
+                                     uint64_t *dest_row,
+                                     const uint64_t * SMOL_RESTRICT color_pixel,
+                                     uint32_t n_pixels,
+                                     uint16_t opacity)
 {
     uint32_t i;
 
@@ -3266,11 +3278,24 @@ composite_over_color_p8_128bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_color_p16_128bpp (const uint64_t *src_row,
-                                 uint64_t *dest_row,
-                                 const uint64_t * SMOL_RESTRICT color_pixel,
-                                 uint32_t n_pixels,
-                                 uint16_t opacity)
+composite_over_color_p8_128bpp (const uint64_t *src_row,
+                                uint64_t *dest_row,
+                                const uint64_t * SMOL_RESTRICT color_pixel,
+                                uint32_t n_pixels,
+                                uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_p8_128bpp_span,
+                                       smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                      SMOL_ALPHA_MASK_P8),
+                                       2);
+}
+
+static void
+composite_over_color_p16_128bpp_span (const uint64_t *src_row,
+                                      uint64_t *dest_row,
+                                      const uint64_t * SMOL_RESTRICT color_pixel,
+                                      uint32_t n_pixels,
+                                      uint16_t opacity)
 {
     uint32_t i;
 
@@ -3302,11 +3327,24 @@ composite_over_color_p16_128bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_color_src_alpha_p8_64bpp (const uint64_t *src_row,
-                                         uint64_t *dest_row,
-                                         const uint64_t * SMOL_RESTRICT color_pixel,
-                                         uint32_t n_pixels,
-                                         uint16_t opacity)
+composite_over_color_p16_128bpp (const uint64_t *src_row,
+                                 uint64_t *dest_row,
+                                 const uint64_t * SMOL_RESTRICT color_pixel,
+                                 uint32_t n_pixels,
+                                 uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_p16_128bpp_span,
+                                       smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                      SMOL_ALPHA_MASK_INFLATED),
+                                       2);
+}
+
+static void
+composite_over_color_src_alpha_p8_64bpp_span (const uint64_t *src_row,
+                                              uint64_t *dest_row,
+                                              const uint64_t * SMOL_RESTRICT color_pixel,
+                                              uint32_t n_pixels,
+                                              uint16_t opacity)
 {
     uint64_t c;
     uint32_t i;
@@ -3340,11 +3378,23 @@ composite_over_color_src_alpha_p8_64bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_color_src_alpha_p8_128bpp (const uint64_t *src_row,
-                                          uint64_t *dest_row,
-                                          const uint64_t * SMOL_RESTRICT color_pixel,
-                                          uint32_t n_pixels,
-                                          uint16_t opacity)
+composite_over_color_src_alpha_p8_64bpp (const uint64_t *src_row,
+                                         uint64_t *dest_row,
+                                         const uint64_t * SMOL_RESTRICT color_pixel,
+                                         uint32_t n_pixels,
+                                         uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_src_alpha_p8_64bpp_span,
+                                       smol_batch_alpha_class_64bpp (src_row + i),
+                                       1);
+}
+
+static void
+composite_over_color_src_alpha_p8_128bpp_span (const uint64_t *src_row,
+                                               uint64_t *dest_row,
+                                               const uint64_t * SMOL_RESTRICT color_pixel,
+                                               uint32_t n_pixels,
+                                               uint16_t opacity)
 {
     uint32_t i;
 
@@ -3387,7 +3437,20 @@ composite_over_color_src_alpha_p8_128bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_color_src_alpha_p8l_128bpp (const uint64_t *src_row,
+composite_over_color_src_alpha_p8_128bpp (const uint64_t *src_row,
+                                          uint64_t *dest_row,
+                                          const uint64_t * SMOL_RESTRICT color_pixel,
+                                          uint32_t n_pixels,
+                                          uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_src_alpha_p8_128bpp_span,
+                                       smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                      SMOL_ALPHA_MASK_P8),
+                                       2);
+}
+
+static void
+composite_over_color_src_alpha_p8l_128bpp_span (const uint64_t *src_row,
                                            uint64_t *dest_row,
                                            const uint64_t * SMOL_RESTRICT color_pixel,
                                            uint32_t n_pixels,
@@ -3429,13 +3492,26 @@ composite_over_color_src_alpha_p8l_128bpp (const uint64_t *src_row,
     }
 }
 
-/* Also serves p16l. Both encode channels as value * (alpha + 1) */
 static void
-composite_over_color_src_alpha_p16_128bpp (const uint64_t *src_row,
+composite_over_color_src_alpha_p8l_128bpp (const uint64_t *src_row,
                                            uint64_t *dest_row,
                                            const uint64_t * SMOL_RESTRICT color_pixel,
                                            uint32_t n_pixels,
                                            uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_src_alpha_p8l_128bpp_span,
+                                       smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                      SMOL_ALPHA_MASK_INFLATED),
+                                       2);
+}
+
+/* Also serves p16l. Both encode channels as value * (alpha + 1) */
+static void
+composite_over_color_src_alpha_p16_128bpp_span (const uint64_t *src_row,
+                                                uint64_t *dest_row,
+                                                const uint64_t * SMOL_RESTRICT color_pixel,
+                                                uint32_t n_pixels,
+                                                uint16_t opacity)
 {
     uint32_t i;
 
@@ -3474,10 +3550,23 @@ composite_over_color_src_alpha_p16_128bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_dest_p8_64bpp (const uint64_t *src_row,
-                              uint64_t * SMOL_RESTRICT dest_row,
-                              uint32_t n_pixels,
-                              uint16_t opacity)
+composite_over_color_src_alpha_p16_128bpp (const uint64_t *src_row,
+                                           uint64_t *dest_row,
+                                           const uint64_t * SMOL_RESTRICT color_pixel,
+                                           uint32_t n_pixels,
+                                           uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_COLOR_BATCHED (composite_over_color_src_alpha_p16_128bpp_span,
+                                       smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                      SMOL_ALPHA_MASK_INFLATED),
+                                       2);
+}
+
+static void
+composite_over_dest_p8_64bpp_span (const uint64_t *src_row,
+                                   uint64_t * SMOL_RESTRICT dest_row,
+                                   uint32_t n_pixels,
+                                   uint16_t opacity)
 {
     uint32_t i;
 
@@ -3508,10 +3597,21 @@ composite_over_dest_p8_64bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_dest_p8_128bpp (const uint64_t *src_row,
-                               uint64_t * SMOL_RESTRICT dest_row,
-                               uint32_t n_pixels,
-                               uint16_t opacity)
+composite_over_dest_p8_64bpp (const uint64_t *src_row,
+                              uint64_t * SMOL_RESTRICT dest_row,
+                              uint32_t n_pixels,
+                              uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_DEST_BATCHED (composite_over_dest_p8_64bpp_span,
+                                      smol_batch_alpha_class_64bpp (src_row + i),
+                                      1);
+}
+
+static void
+composite_over_dest_p8_128bpp_span (const uint64_t *src_row,
+                                    uint64_t * SMOL_RESTRICT dest_row,
+                                    uint32_t n_pixels,
+                                    uint16_t opacity)
 {
     uint32_t i;
 
@@ -3547,10 +3647,22 @@ composite_over_dest_p8_128bpp (const uint64_t *src_row,
 }
 
 static void
-composite_over_dest_p16_128bpp (const uint64_t *src_row,
-                                uint64_t * SMOL_RESTRICT dest_row,
-                                uint32_t n_pixels,
-                                uint16_t opacity)
+composite_over_dest_p8_128bpp (const uint64_t *src_row,
+                               uint64_t * SMOL_RESTRICT dest_row,
+                               uint32_t n_pixels,
+                               uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_DEST_BATCHED (composite_over_dest_p8_128bpp_span,
+                                      smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                     SMOL_ALPHA_MASK_P8),
+                                      2);
+}
+
+static void
+composite_over_dest_p16_128bpp_span (const uint64_t *src_row,
+                                     uint64_t * SMOL_RESTRICT dest_row,
+                                     uint32_t n_pixels,
+                                     uint16_t opacity)
 {
     uint32_t i;
 
@@ -3584,6 +3696,18 @@ composite_over_dest_p16_128bpp (const uint64_t *src_row,
         dest_row [i + 1] = s1 * nz + (((dest_row [i + 1] * w + 0x0000008000000080ULL) >> 8)
                                       & 0x00ffffff00ffffffULL);
     }
+}
+
+static void
+composite_over_dest_p16_128bpp (const uint64_t *src_row,
+                                uint64_t * SMOL_RESTRICT dest_row,
+                                uint32_t n_pixels,
+                                uint16_t opacity)
+{
+    SMOL_COMPOSITE_OVER_DEST_BATCHED (composite_over_dest_p16_128bpp_span,
+                                      smol_batch_alpha_class_128bpp (src_row + (size_t) i * 2,
+                                                                     SMOL_ALPHA_MASK_INFLATED),
+                                      2);
 }
 
 /* -------- *

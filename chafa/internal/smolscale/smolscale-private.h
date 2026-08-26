@@ -808,6 +808,118 @@ smol_batch_is_opaque_128bpp (const uint64_t *src, uint64_t alpha_mask)
         for (i = 0; i < n; i++) \
             pixel_func (src_row + i * 2, dest_row + i * 3, FALSE))
 
+/* --- Batch compositing helpers --- */
+
+#define SMOL_COMPOSITE_OVER_COLOR_BATCHED(span_func, class_expr, n_limbs) \
+    do { \
+        SMOL_ALIGN uint64_t zero_px [2] = { 0, 0 }; \
+        SMOL_ALIGN uint64_t fill_px [2] = { 0, 0 }; \
+        uint32_t i = 0, span_start = 0; \
+        int allow_opaque = (opacity == SMOL_OPACITY_MAX); \
+        int have_fill = FALSE; \
+\
+        while (i + PIXEL_BATCH_SIZE <= n_pixels) \
+        { \
+            SmolBatchOpacity batch_opacity = SMOL_OPAQUE_TEST (class_expr); \
+\
+            if (batch_opacity == SMOL_BATCH_OPAQUE && !allow_opaque) \
+                batch_opacity = SMOL_BATCH_MIXED; \
+\
+            if (batch_opacity == SMOL_BATCH_MIXED) \
+            { \
+                /* Cumulate mixed batches */ \
+                i += PIXEL_BATCH_SIZE; \
+                continue; \
+            } \
+\
+            if (span_start < i) \
+                span_func (src_row + (size_t) span_start * (n_limbs), \
+                           dest_row + (size_t) span_start * (n_limbs), \
+                           color_pixel, i - span_start, opacity); \
+\
+            if (batch_opacity == SMOL_BATCH_OPAQUE) \
+            { \
+                if (dest_row != src_row) \
+                    memcpy (dest_row + (size_t) i * (n_limbs), \
+                            src_row + (size_t) i * (n_limbs), \
+                            (size_t) PIXEL_BATCH_SIZE * (n_limbs) * sizeof (uint64_t)); \
+            } \
+            else \
+            { \
+                uint64_t *dp = dest_row + (size_t) i * (n_limbs); \
+                uint32_t k; \
+\
+                /* FIXME: Set up the fill buffer on init */ \
+                if (!have_fill) \
+                { \
+                    span_func (zero_px, fill_px, color_pixel, 1, opacity); \
+                    have_fill = TRUE; \
+                } \
+                if ((n_limbs) == 2) \
+                { \
+                    for (k = 0; k < PIXEL_BATCH_SIZE; k++) \
+                    { \
+                        dp [k * 2] = fill_px [0]; \
+                        dp [k * 2 + 1] = fill_px [1]; \
+                    } \
+                } \
+                else \
+                { \
+                    for (k = 0; k < PIXEL_BATCH_SIZE; k++) \
+                        dp [k] = fill_px [0]; \
+                } \
+            } \
+\
+            i += PIXEL_BATCH_SIZE; \
+            span_start = i; \
+        } \
+\
+        if (span_start < n_pixels) \
+            span_func (src_row + (size_t) span_start * (n_limbs), \
+                       dest_row + (size_t) span_start * (n_limbs), \
+                       color_pixel, n_pixels - span_start, opacity); \
+    } while (0)
+
+#define SMOL_COMPOSITE_OVER_DEST_BATCHED(span_func, class_expr, n_limbs) \
+    do { \
+        uint32_t i = 0, span_start = 0; \
+        int allow_opaque = (opacity == SMOL_OPACITY_MAX); \
+\
+        while (i + PIXEL_BATCH_SIZE <= n_pixels) \
+        { \
+            SmolBatchOpacity batch_opacity = SMOL_OPAQUE_TEST (class_expr); \
+\
+            if (batch_opacity == SMOL_BATCH_OPAQUE && !allow_opaque) \
+                batch_opacity = SMOL_BATCH_MIXED; \
+\
+            if (batch_opacity == SMOL_BATCH_MIXED) \
+            { \
+                /* Cumulate mixed batches */ \
+                i += PIXEL_BATCH_SIZE; \
+                continue; \
+            } \
+\
+            if (span_start < i) \
+                span_func (src_row + (size_t) span_start * (n_limbs), \
+                           dest_row + (size_t) span_start * (n_limbs), \
+                           i - span_start, opacity); \
+\
+            if (batch_opacity == SMOL_BATCH_OPAQUE) \
+                memcpy (dest_row + (size_t) i * (n_limbs), \
+                        src_row + (size_t) i * (n_limbs), \
+                        (size_t) PIXEL_BATCH_SIZE * (n_limbs) * sizeof (uint64_t)); \
+            /* SMOL_BATCH_TRANSPARENT: The row already holds the dest */ \
+\
+            i += PIXEL_BATCH_SIZE; \
+            span_start = i; \
+        } \
+\
+        if (span_start < n_pixels) \
+            span_func (src_row + (size_t) span_start * (n_limbs), \
+                       dest_row + (size_t) span_start * (n_limbs), \
+                       n_pixels - span_start, opacity); \
+    } while (0)
+
 #ifdef __cplusplus
 }
 #endif
