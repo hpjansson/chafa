@@ -444,7 +444,7 @@ struct SmolScaleCtx
 #define SRGB_LINEAR_MAX (1 << (SRGB_LINEAR_BITS))
 
 extern const uint16_t _smol_from_srgb_lut [256];
-extern const uint8_t _smol_to_srgb_lut [SRGB_LINEAR_MAX + 4];  /* +4: SIMD gather padding */
+extern const uint8_t _smol_to_srgb_lut [SRGB_LINEAR_MAX];
 
 #define INVERTED_DIV_SHIFT_P8 (21 - 8)
 #define INVERTED_DIV_SHIFT_P8L (22 - SRGB_LINEAR_BITS)

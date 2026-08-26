@@ -122,8 +122,14 @@ static const SmolPixelType pixel_type_u32_le [SMOL_PIXEL_MAX] =
  * sRGB/linear conversion: Shared code *
  * ----------------------------------- */
 
-/* These tables are manually tweaked to be reversible without information
- * loss; _smol_to_srgb_lut [_smol_from_srgb_lut [i]] == i.
+/* These tables are reversible without information loss;
+ * _smol_to_srgb_lut [_smol_from_srgb_lut [i]] == i.
+ *
+ * The forward curve is max ((c * c + 16) >> 5 + correction, c) and the inverse
+ * is min (round (sqrt (l * 32530 / 1024)), l).
+ *
+ * The AVX2 backend computes these instead of gathering, so any tuning here
+ * must keep the formulas in sync.
  *
  * As a side effect, the values are off true sRGB by < 4.5% (gamma 2.0 vs 2.4). */
 
@@ -153,9 +159,7 @@ const uint16_t _smol_from_srgb_lut [256] =
     2000, 2015, 2031, 2047, 
 };
 
-/* Four bytes of padding so 32-bit vector gathers can read the last
- * entries safely. */
-const uint8_t _smol_to_srgb_lut [SRGB_LINEAR_MAX + 4] =
+const uint8_t _smol_to_srgb_lut [SRGB_LINEAR_MAX] =
 {
       0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13, 
      14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27, 
