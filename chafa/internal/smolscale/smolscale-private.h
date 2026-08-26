@@ -697,6 +697,60 @@ smol_batch_is_opaque_128bpp (const uint64_t *src, uint64_t alpha_mask)
             == alpha_mask) ? SMOL_BATCH_OPAQUE : SMOL_BATCH_MIXED;
 }
 
+/* --- Unrolling helpers for the batch repacks --- */
+
+/* Manual partial unroll for the per-pixel repack loops. The statement sees
+ * the pixel index as j.
+ *
+ * Use smaller unrolling factors on bigger bodies to avoid overflowing
+ * the uop cache. */
+
+#define SMOL_UNROLL_STEP(base, ...) { const uint32_t j = (base); __VA_ARGS__; }
+
+#define SMOL_UNROLL_2(n, ...) \
+    do { \
+        uint32_t u = 0; \
+        for ( ; u + 2 <= (n); u += 2) \
+        { \
+            SMOL_UNROLL_STEP (u,     __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 1, __VA_ARGS__) \
+        } \
+        for ( ; u < (n); u++) \
+            SMOL_UNROLL_STEP (u, __VA_ARGS__) \
+    } while (0)
+
+#define SMOL_UNROLL_4(n, ...) \
+    do { \
+        uint32_t u = 0; \
+        for ( ; u + 4 <= (n); u += 4) \
+        { \
+            SMOL_UNROLL_STEP (u,     __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 1, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 2, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 3, __VA_ARGS__) \
+        } \
+        for ( ; u < (n); u++) \
+            SMOL_UNROLL_STEP (u, __VA_ARGS__) \
+    } while (0)
+
+#define SMOL_UNROLL_8(n, ...) \
+    do { \
+        uint32_t u = 0; \
+        for ( ; u + 8 <= (n); u += 8) \
+        { \
+            SMOL_UNROLL_STEP (u,     __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 1, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 2, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 3, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 4, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 5, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 6, __VA_ARGS__) \
+            SMOL_UNROLL_STEP (u + 7, __VA_ARGS__) \
+        } \
+        for ( ; u < (n); u++) \
+            SMOL_UNROLL_STEP (u, __VA_ARGS__) \
+    } while (0)
+
 /* --- Batch repack helpers --- */
 
 /* Driver for the repack row loops. Chunks the row into PIXEL_BATCH_SIZE
@@ -755,20 +809,16 @@ smol_batch_is_opaque_128bpp (const uint64_t *src, uint64_t alpha_mask)
         1, 1, SMOL_BATCH_ALPHA_CLASS_32BPP (src_row, \
                                             SMOL_32BPP_ALPHA_MASK (alpha_ch)), \
         n * sizeof (uint64_t), \
-        for (i = 0; i < n; i++) \
-            dest_row [i] = pixel_func (src_row [i], TRUE), \
-        for (i = 0; i < n; i++) \
-            dest_row [i] = pixel_func (src_row [i], FALSE))
+        SMOL_UNROLL_8 (n, dest_row [j] = pixel_func (src_row [j], TRUE)), \
+        SMOL_UNROLL_8 (n, dest_row [j] = pixel_func (src_row [j], FALSE)))
 
 /* Used by unassoc-to-unassoc paths where color is preserved in transparent pixels */
 #define SMOL_UNPACK_32BPP_TO_128BPP_BATCHED(pixel_func, alpha_ch) \
     SMOL_REPACK_BATCHED_2WAY ( \
         1, 2, SMOL_BATCH_IS_OPAQUE_32BPP (src_row, \
                                           SMOL_32BPP_ALPHA_MASK (alpha_ch)), \
-     for (i = 0; i < n; i++) \
-         pixel_func (src_row [i], dest_row + i * 2, TRUE), \
-     for (i = 0; i < n; i++) \
-         pixel_func (src_row [i], dest_row + i * 2, FALSE))
+        SMOL_UNROLL_4 (n, pixel_func (src_row [j], dest_row + j * 2, TRUE)), \
+        SMOL_UNROLL_4 (n, pixel_func (src_row [j], dest_row + j * 2, FALSE)))
 
 /* Same, but for premul destinations where transparent color gets wiped */
 #define SMOL_UNPACK_32BPP_TO_P8_128BPP_BATCHED(pixel_func, alpha_ch) \
@@ -776,37 +826,29 @@ smol_batch_is_opaque_128bpp (const uint64_t *src, uint64_t alpha_mask)
         1, 2, SMOL_BATCH_ALPHA_CLASS_32BPP (src_row, \
                                             SMOL_32BPP_ALPHA_MASK (alpha_ch)), \
         (size_t) n * 2 * sizeof (uint64_t), \
-        for (i = 0; i < n; i++) \
-            pixel_func (src_row [i], dest_row + i * 2, TRUE), \
-        for (i = 0; i < n; i++) \
-            pixel_func (src_row [i], dest_row + i * 2, FALSE))
+        SMOL_UNROLL_4 (n, pixel_func (src_row [j], dest_row + j * 2, TRUE)), \
+        SMOL_UNROLL_4 (n, pixel_func (src_row [j], dest_row + j * 2, FALSE)))
 
 #define SMOL_PACK_64BPP_TO_32BPP_BATCHED(pixel_func) \
     SMOL_REPACK_BATCHED_3WAY ( \
         1, 1, smol_batch_alpha_class_64bpp (src_row), \
         n * sizeof (uint32_t), \
-        for (i = 0; i < n; i++) \
-            dest_row [i] = pixel_func (src_row [i], TRUE), \
-        for (i = 0; i < n; i++) \
-            dest_row [i] = pixel_func (src_row [i], FALSE))
+        SMOL_UNROLL_8 (n, dest_row [j] = pixel_func (src_row [j], TRUE)), \
+        SMOL_UNROLL_8 (n, dest_row [j] = pixel_func (src_row [j], FALSE)))
 
 #define SMOL_PACK_128BPP_TO_32BPP_BATCHED(pixel_func, alpha_mask) \
     SMOL_REPACK_BATCHED_3WAY ( \
         2, 1, smol_batch_alpha_class_128bpp (src_row, alpha_mask), \
         n * sizeof (uint32_t), \
-        for (i = 0; i < n; i++) \
-            dest_row [i] = pixel_func (src_row + i * 2, TRUE), \
-        for (i = 0; i < n; i++) \
-            dest_row [i] = pixel_func (src_row + i * 2, FALSE))
+        SMOL_UNROLL_4 (n, dest_row [j] = pixel_func (src_row + j * 2, TRUE)), \
+        SMOL_UNROLL_4 (n, dest_row [j] = pixel_func (src_row + j * 2, FALSE)))
 
 #define SMOL_PACK_128BPP_TO_24BPP_BATCHED(pixel_func, alpha_mask) \
     SMOL_REPACK_BATCHED_3WAY ( \
         2, 3, smol_batch_alpha_class_128bpp (src_row, alpha_mask), \
         n * 3, \
-        for (i = 0; i < n; i++) \
-            pixel_func (src_row + i * 2, dest_row + i * 3, TRUE), \
-        for (i = 0; i < n; i++) \
-            pixel_func (src_row + i * 2, dest_row + i * 3, FALSE))
+        SMOL_UNROLL_4 (n, pixel_func (src_row + j * 2, dest_row + j * 3, TRUE)), \
+        SMOL_UNROLL_4 (n, pixel_func (src_row + j * 2, dest_row + j * 3, FALSE)))
 
 /* --- Batch compositing helpers --- */
 
