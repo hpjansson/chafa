@@ -352,6 +352,17 @@ to_srgb_pixel_xxxa_128bpp (const uint64_t *pixel_in, uint64_t *pixel_out)
     pixel_out [1] = ((uint64_t) _smol_to_srgb_lut [pixel_in [1] >> 32]) << 32;
 }
 
+/* Fused reorder and linearization for 32bpp source */
+static SMOL_INLINE void
+from_srgb_pixel_u32_to_xxxa_128bpp (uint32_t p, int shift_1, int shift_2, int shift_3,
+                                    uint64_t alpha_lane, uint64_t * SMOL_RESTRICT out)
+{
+    out [0] = ((uint64_t) _smol_from_srgb_lut [(p >> shift_1) & 0xff] << 32)
+        | _smol_from_srgb_lut [(p >> shift_2) & 0xff];
+    out [1] = ((uint64_t) _smol_from_srgb_lut [(p >> shift_3) & 0xff] << 32)
+        | alpha_lane;
+}
+
 /* ----------------- *
  * Premultiplication *
  * ----------------- */
@@ -952,13 +963,10 @@ unpack_pixel_a234_u_to_234a_pl_128bpp (uint32_t p,
                                        uint64_t *out,
                                        int opaque)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p >> 24;
 
-    out [0] = ((p64 & 0x00ff0000) << 16) | ((p64 & 0x0000ff00) >> 8);
-    out [1] = ((p64 & 0x000000ff) << 32) | alpha;
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 16, 8, 0,
+                                        ((uint64_t) alpha << 8) | 0xff, out);
 
     if (!opaque)
         premul_ul_to_p8l_128bpp (out, alpha);
@@ -1006,13 +1014,9 @@ unpack_pixel_a234_u_to_234a_p16l_128bpp (uint32_t p,
                                          uint64_t *out,
                                          int opaque)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p >> 24;
 
-    out [0] = ((p64 & 0x00ff0000) << 16) | ((p64 & 0x0000ff00) >> 8);
-    out [1] = ((p64 & 0x000000ff) << 32);
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 16, 8, 0, 0xff, out);
 
     if (opaque)
     {
@@ -1058,13 +1062,10 @@ unpack_pixel_123a_u_to_123a_pl_128bpp (uint32_t p,
                                        uint64_t *out,
                                        int opaque)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p;
 
-    out [0] = ((p64 & 0xff000000) << 8) | ((p64 & 0x00ff0000) >> 16);
-    out [1] = ((p64 & 0x0000ff00) << 24) | alpha;
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 24, 16, 8,
+                                        ((uint64_t) alpha << 8) | 0xff, out);
 
     if (!opaque)
         premul_ul_to_p8l_128bpp (out, alpha);
@@ -1112,13 +1113,9 @@ unpack_pixel_123a_u_to_123a_p16l_128bpp (uint32_t p,
                                          uint64_t *out,
                                          int opaque)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p;
 
-    out [0] = ((p64 & 0xff000000) << 8) | ((p64 & 0x00ff0000) >> 16);
-    out [1] = ((p64 & 0x0000ff00) << 24);
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 24, 16, 8, 0xff, out);
 
     if (opaque)
     {
@@ -1204,13 +1201,10 @@ unpack_pixel_123a_u_to_321a_pl_128bpp (uint32_t p,
                                        uint64_t *out,
                                        int opaque)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p;
 
-    out [0] = ((p64 & 0x0000ff00) << 24) | ((p64 & 0x00ff0000) >> 16);
-    out [1] = ((p64 & 0xff000000) << 8) | alpha;
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 8, 16, 24,
+                                        ((uint64_t) alpha << 8) | 0xff, out);
 
     if (!opaque)
         premul_ul_to_p8l_128bpp (out, alpha);
@@ -1257,13 +1251,9 @@ static SMOL_INLINE void
 unpack_pixel_123a_u_to_321a_p16l_128bpp (uint32_t p,
                                          uint64_t *out)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p;
 
-    out [0] = ((p64 & 0x0000ff00) << 24) | ((p64 & 0x00ff0000) >> 16);
-    out [1] = ((p64 & 0xff000000) << 8);
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 8, 16, 24, 0xff, out);
     premul_ul_to_p16l_128bpp (out, alpha);
 
     out [1] = (out [1] & 0xffffffff00000000ULL) | ((uint16_t) alpha << 8) | 0xff;
@@ -1353,13 +1343,10 @@ unpack_pixel_a234_u_to_432a_pl_128bpp (uint32_t p,
                                        uint64_t *out,
                                        int opaque)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p >> 24;
 
-    out [0] = ((p64 & 0x000000ff) << 32) | ((p64 & 0x0000ff00) >> 8);
-    out [1] = ((p64 & 0x00ff0000) << 16) | alpha;
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 0, 8, 16,
+                                        ((uint64_t) alpha << 8) | 0xff, out);
 
     if (!opaque)
         premul_ul_to_p8l_128bpp (out, alpha);
@@ -1406,13 +1393,9 @@ static SMOL_INLINE void
 unpack_pixel_a234_u_to_432a_p16l_128bpp (uint32_t p,
                                          uint64_t *out)
 {
-    uint64_t p64 = p;
     uint8_t alpha = p >> 24;
 
-    out [0] = ((p64 & 0x000000ff) << 32) | ((p64 & 0x0000ff00) >> 8);
-    out [1] = ((p64 & 0x00ff0000) << 16);
-
-    from_srgb_pixel_xxxa_128bpp (out);
+    from_srgb_pixel_u32_to_xxxa_128bpp (p, 0, 8, 16, 0xff, out);
     premul_ul_to_p16l_128bpp (out, alpha);
 
     out [1] = (out [1] & 0xffffffff00000000ULL) | ((uint16_t) alpha << 8) | 0xff;
