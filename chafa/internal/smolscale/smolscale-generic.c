@@ -1738,15 +1738,15 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
                                                      uint32_t * SMOL_RESTRICT dp, \
                                                      uint32_t n) \
     { \
-        uint32_t *end = dp + n; \
-        while (dp + 2 <= end) \
+        uint32_t i = 0; \
+        for ( ; i + 2 <= n; i += 2) \
         { \
             dp [0] = pack_pixel_p16_to_##a##b##c##d##_u_128bpp (sp, TRUE); \
             dp [1] = pack_pixel_p16_to_##a##b##c##d##_u_128bpp (sp + 2, TRUE); \
             dp += 2; \
             sp += 4; \
         } \
-        while (dp != end) \
+        for ( ; i < n; i++) \
         { \
             *(dp++) = pack_pixel_p16_to_##a##b##c##d##_u_128bpp (sp, TRUE); \
             sp += 2; \
@@ -1757,15 +1757,15 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
                                                     uint32_t * SMOL_RESTRICT dp, \
                                                     uint32_t n) \
     { \
-        uint32_t *end = dp + n; \
-        while (dp + 2 <= end) \
+        uint32_t i = 0; \
+        for ( ; i + 2 <= n; i += 2) \
         { \
             dp [0] = pack_pixel_p16_to_##a##b##c##d##_u_128bpp (sp, FALSE); \
             dp [1] = pack_pixel_p16_to_##a##b##c##d##_u_128bpp (sp + 2, FALSE); \
             dp += 2; \
             sp += 4; \
         } \
-        while (dp != end) \
+        for ( ; i < n; i++) \
         { \
             *(dp++) = pack_pixel_p16_to_##a##b##c##d##_u_128bpp (sp, FALSE); \
             sp += 2; \
@@ -1801,15 +1801,15 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
                                                       uint32_t * SMOL_RESTRICT dp, \
                                                       uint32_t n) \
     { \
-        uint32_t *end = dp + n; \
-        while (dp + 2 <= end) \
+        uint32_t i = 0; \
+        for ( ; i + 2 <= n; i += 2) \
         { \
             dp [0] = pack_pixel_p16l_to_##a##b##c##d##_u_128bpp (sp, TRUE); \
             dp [1] = pack_pixel_p16l_to_##a##b##c##d##_u_128bpp (sp + 2, TRUE); \
             dp += 2; \
             sp += 4; \
         } \
-        while (dp != end) \
+        for ( ; i < n; i++) \
         { \
             *(dp++) = pack_pixel_p16l_to_##a##b##c##d##_u_128bpp (sp, TRUE); \
             sp += 2; \
@@ -1820,15 +1820,15 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       LINEAR,
                                                      uint32_t * SMOL_RESTRICT dp, \
                                                      uint32_t n) \
     { \
-        uint32_t *end = dp + n; \
-        while (dp + 2 <= end) \
+        uint32_t i = 0; \
+        for ( ; i + 2 <= n; i += 2) \
         { \
             dp [0] = pack_pixel_p16l_to_##a##b##c##d##_u_128bpp (sp, FALSE); \
             dp [1] = pack_pixel_p16l_to_##a##b##c##d##_u_128bpp (sp + 2, FALSE); \
             dp += 2; \
             sp += 4; \
         } \
-        while (dp != end) \
+        for ( ; i < n; i++) \
         { \
             *(dp++) = pack_pixel_p16l_to_##a##b##c##d##_u_128bpp (sp, FALSE); \
             sp += 2; \
