@@ -34,7 +34,7 @@
 
 #ifdef SMOL_TEST_HOOKS
 /* Test builds can force every batch onto the mixed path */
-int _smol_disable_opaque_fastpath = FALSE;
+int _smol_disable_opacity_fastpath = FALSE;
 #endif
 
 /* ----------------------- *
