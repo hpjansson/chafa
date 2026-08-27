@@ -1291,6 +1291,17 @@ get_implementations (SmolScaleCtx *scale_ctx, const void *color_pixel, SmolPixel
         scale_ctx->is_noop = TRUE;
     }
 
+    /* A COPY hfilter with no horizontal clipping reproduces the unpacked
+     * row verbatim, so the unpacker can write directly into the scaled row
+     * and the filter pass can be skipped. */
+
+    if (scale_ctx->hdim.filter_type == SMOL_FILTER_COPY
+        && scale_ctx->hdim.clip_before_px == 0
+        && scale_ctx->hdim.placement_size_px == scale_ctx->hdim.src_size_px)
+    {
+        scale_ctx->skip_hfilter = TRUE;
+    }
+
     /* Enumerate implementations, preferred first */
 
     if (!(scale_ctx->flags & SMOL_DISABLE_ACCELERATION))

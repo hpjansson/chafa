@@ -428,6 +428,11 @@ struct SmolScaleCtx
     /* TRUE if input rows can be copied directly to output. */
     unsigned int is_noop : 1;
 
+    /* TRUE if the horizontal filter is an unclipped 1:1 copy, so the
+       unpacker can write straight into the scaled row and hfilter_func
+       can be skipped. */
+    unsigned int skip_hfilter : 1;
+
     /* TRUE if we have a color_pixel to composite on. */
     unsigned int have_composite_color : 1;
 

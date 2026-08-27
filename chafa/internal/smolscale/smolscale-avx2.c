@@ -2288,12 +2288,21 @@ scale_horizontal (const SmolScaleCtx *scale_ctx,
         src_row = (const char *) local_ctx->src_aligned;
     }
 
-    scale_ctx->src_unpack_row_func (src_row,
-                                    src_row_unpacked,
-                                    scale_ctx->hdim.src_size_px);
-    scale_ctx->hfilter_func (scale_ctx,
-                             src_row_unpacked,
-                             dest_row_parts);
+    if (scale_ctx->skip_hfilter)
+    {
+        scale_ctx->src_unpack_row_func (src_row,
+                                        dest_row_parts,
+                                        scale_ctx->hdim.src_size_px);
+    }
+    else
+    {
+        scale_ctx->src_unpack_row_func (src_row,
+                                        src_row_unpacked,
+                                        scale_ctx->hdim.src_size_px);
+        scale_ctx->hfilter_func (scale_ctx,
+                                 src_row_unpacked,
+                                 dest_row_parts);
+    }
 
     apply_horiz_edge_opacity (scale_ctx, dest_row_parts);
 }
