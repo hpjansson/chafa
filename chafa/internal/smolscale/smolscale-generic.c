@@ -363,6 +363,18 @@ from_srgb_pixel_u32_to_xxxa_128bpp (uint32_t p, int shift_1, int shift_2, int sh
         | alpha_lane;
 }
 
+/* Fused reorder and linearization for 24bpp (opaque) source */
+static SMOL_INLINE void
+from_srgb_pixel_u24_to_xxxa_128bpp (const uint8_t * SMOL_RESTRICT in,
+                                    int i_1, int i_2, int i_3,
+                                    uint64_t * SMOL_RESTRICT out)
+{
+    out [0] = ((uint64_t) _smol_from_srgb_lut [in [i_1]] << 32)
+        | _smol_from_srgb_lut [in [i_2]];
+    out [1] = ((uint64_t) _smol_from_srgb_lut [in [i_3]] << 32)
+        | 0xffff;
+}
+
 /* ----------------- *
  * Premultiplication *
  * ----------------- */
@@ -820,24 +832,9 @@ SMOL_REPACK_ROW_DEF (123,   24,  8, PREMUL8, COMPRESSED,
 
 SMOL_REPACK_ROW_DEF (123,   24,  8, PREMUL8, COMPRESSED,
                      1234, 128, 64, PREMUL8, LINEAR) {
-    while (dest_row + 8 <= dest_row_max)
-    {
-        unpack_pixel_123_p8_to_123a_p8_128bpp (src_row, dest_row);
-        from_srgb_pixel_xxxa_128bpp (dest_row);
-        unpack_pixel_123_p8_to_123a_p8_128bpp (src_row + 3, dest_row + 2);
-        from_srgb_pixel_xxxa_128bpp (dest_row + 2);
-        unpack_pixel_123_p8_to_123a_p8_128bpp (src_row + 6, dest_row + 4);
-        from_srgb_pixel_xxxa_128bpp (dest_row + 4);
-        unpack_pixel_123_p8_to_123a_p8_128bpp (src_row + 9, dest_row + 6);
-        from_srgb_pixel_xxxa_128bpp (dest_row + 6);
-        src_row += 12;
-        dest_row += 8;
-    }
-
     while (dest_row != dest_row_max)
     {
-        unpack_pixel_123_p8_to_123a_p8_128bpp (src_row, dest_row);
-        from_srgb_pixel_xxxa_128bpp (dest_row);
+        from_srgb_pixel_u24_to_xxxa_128bpp (src_row, 0, 1, 2, dest_row);
         src_row += 3;
         dest_row += 2;
     }
@@ -863,24 +860,9 @@ SMOL_REPACK_ROW_DEF (123,   24,  8, PREMUL8, COMPRESSED,
 
 SMOL_REPACK_ROW_DEF (123,   24,  8, PREMUL8, COMPRESSED,
                      3214, 128, 64, PREMUL8, LINEAR) {
-    while (dest_row + 8 <= dest_row_max)
-    {
-        unpack_pixel_123_p8_to_321a_p8_128bpp (src_row, dest_row);
-        from_srgb_pixel_xxxa_128bpp (dest_row);
-        unpack_pixel_123_p8_to_321a_p8_128bpp (src_row + 3, dest_row + 2);
-        from_srgb_pixel_xxxa_128bpp (dest_row + 2);
-        unpack_pixel_123_p8_to_321a_p8_128bpp (src_row + 6, dest_row + 4);
-        from_srgb_pixel_xxxa_128bpp (dest_row + 4);
-        unpack_pixel_123_p8_to_321a_p8_128bpp (src_row + 9, dest_row + 6);
-        from_srgb_pixel_xxxa_128bpp (dest_row + 6);
-        src_row += 12;
-        dest_row += 8;
-    }
-
     while (dest_row != dest_row_max)
     {
-        unpack_pixel_123_p8_to_321a_p8_128bpp (src_row, dest_row);
-        from_srgb_pixel_xxxa_128bpp (dest_row);
+        from_srgb_pixel_u24_to_xxxa_128bpp (src_row, 2, 1, 0, dest_row);
         src_row += 3;
         dest_row += 2;
     }
