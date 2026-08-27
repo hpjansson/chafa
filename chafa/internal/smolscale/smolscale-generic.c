@@ -756,6 +756,8 @@ SMOL_REPACK_ROW_DEF (1234, 32, 32, UNASSOCIATED, COMPRESSED,
 static SMOL_INLINE void
 p8_to_p8l_in_place_128bpp (uint64_t *inout, int opaque)
 {
+    uint64_t w0, w1;
+    uint32_t idiv, alpha_p1;
     uint8_t alpha;
 
     if (opaque)
@@ -764,12 +766,21 @@ p8_to_p8l_in_place_128bpp (uint64_t *inout, int opaque)
         return;
     }
 
-    alpha = inout [1];
-    unpremul_p8_to_u_128bpp (inout, inout, alpha);
-    inout [1] = (inout [1] & 0xffffffff00000000ULL) | alpha;
-    from_srgb_pixel_xxxa_128bpp (inout);
-    premul_ul_to_p8l_128bpp (inout, alpha);
-    inout [1] = (inout [1] & 0xffffffff00000000ULL)
+    w0 = inout [0];
+    w1 = inout [1];
+    alpha = (uint8_t) w1;
+    idiv = _smol_inv_div_p8_lut [alpha];
+    alpha_p1 = alpha + 1u;
+
+    w0 = ((w0 * idiv) >> INVERTED_DIV_SHIFT_P8) & 0x000000ff000000ffULL;
+    w1 = ((w1 * idiv) >> INVERTED_DIV_SHIFT_P8) & 0x000000ff000000ffULL;
+
+    w0 = ((uint64_t) _smol_from_srgb_lut [w0 >> 32] << 32)
+        | _smol_from_srgb_lut [w0 & 0xff];
+    w1 = (uint64_t) _smol_from_srgb_lut [w1 >> 32] << 32;
+
+    inout [0] = ((w0 * alpha_p1) >> 8) & 0x000007ff000007ffULL;
+    inout [1] = (((w1 * alpha_p1) >> 8) & 0x000007ff00000000ULL)
         | ((uint64_t) alpha << 8) | 0xff;
 }
 
