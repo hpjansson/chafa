@@ -913,6 +913,16 @@ unpack_pixel_123a_p8_to_123a_p8_128bpp (uint32_t p,
 
 SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
                      1234, 128, 64, PREMUL8, COMPRESSED) {
+    while (dest_row + 8 <= dest_row_max)
+    {
+        unpack_pixel_123a_p8_to_123a_p8_128bpp (src_row [0], dest_row);
+        unpack_pixel_123a_p8_to_123a_p8_128bpp (src_row [1], dest_row + 2);
+        unpack_pixel_123a_p8_to_123a_p8_128bpp (src_row [2], dest_row + 4);
+        unpack_pixel_123a_p8_to_123a_p8_128bpp (src_row [3], dest_row + 6);
+        src_row += 4;
+        dest_row += 8;
+    }
+
     while (dest_row != dest_row_max)
     {
         unpack_pixel_123a_p8_to_123a_p8_128bpp (*(src_row++), dest_row);
@@ -931,6 +941,16 @@ unpack_pixel_a234_p8_to_234a_p8_128bpp (uint32_t p,
 
 SMOL_REPACK_ROW_DEF (1234,  32, 32, PREMUL8, COMPRESSED,
                      2341, 128, 64, PREMUL8, COMPRESSED) {
+    while (dest_row + 8 <= dest_row_max)
+    {
+        unpack_pixel_a234_p8_to_234a_p8_128bpp (src_row [0], dest_row);
+        unpack_pixel_a234_p8_to_234a_p8_128bpp (src_row [1], dest_row + 2);
+        unpack_pixel_a234_p8_to_234a_p8_128bpp (src_row [2], dest_row + 4);
+        unpack_pixel_a234_p8_to_234a_p8_128bpp (src_row [3], dest_row + 6);
+        src_row += 4;
+        dest_row += 8;
+    }
+
     while (dest_row != dest_row_max)
     {
         unpack_pixel_a234_p8_to_234a_p8_128bpp (*(src_row++), dest_row);
@@ -1348,6 +1368,15 @@ SMOL_REPACK_ROW_DEF (1234, 128, 64, PREMUL8,       COMPRESSED,
 #define DEF_REPACK_FROM_1234_128BPP_TO_32BPP(a, b, c, d) \
     SMOL_REPACK_ROW_DEF (1234,       128, 64, PREMUL8,       COMPRESSED, \
                          a##b##c##d,  32, 32, PREMUL8,       COMPRESSED) { \
+        while (dest_row + 4 <= dest_row_max) \
+        { \
+            dest_row [0] = PACK_FROM_1234_128BPP (src_row, a, b, c, d); \
+            dest_row [1] = PACK_FROM_1234_128BPP ((src_row + 2), a, b, c, d); \
+            dest_row [2] = PACK_FROM_1234_128BPP ((src_row + 4), a, b, c, d); \
+            dest_row [3] = PACK_FROM_1234_128BPP ((src_row + 6), a, b, c, d); \
+            dest_row += 4; \
+            src_row += 8; \
+        } \
         while (dest_row != dest_row_max) \
         { \
             *(dest_row++) = PACK_FROM_1234_128BPP (src_row, a, b, c, d); \
