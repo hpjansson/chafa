@@ -151,6 +151,22 @@ void chafa_color_accum_div_scalar (ChafaColorAccum *color, gint scalar);
 
 void chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99);
 
+/* Map an 8-bit channel value to the nearest of n_levels evenly spaced levels,
+ * and a level back to its 8-bit representation. These round-trip exactly for
+ * any n_levels in [2, 256]. With 256 levels they return the identity. */
+
+static inline gint
+chafa_color_channel_to_level (gint ch_value, gint n_levels)
+{
+    return (ch_value * (n_levels - 1) + 127) / 255;
+}
+
+static inline gint
+chafa_color_level_to_channel (gint level, gint n_levels)
+{
+    return (level * 255 + (n_levels - 1) / 2) / (n_levels - 1);
+}
+
 G_END_DECLS
 
 #endif /* __CHAFA_COLOR_H__ */

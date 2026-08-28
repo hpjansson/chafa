@@ -46,6 +46,12 @@ typedef struct
     gint n_colors;
     gint alpha_threshold;
     gint transparent_index;
+
+    /* Number of representable levels per color channel, [2..256]. Colors
+     * entering the palette are snapped to the nearest level, so lookups
+     * operate on what the output can actually display. */
+    gint n_channel_levels;
+    guint8 channel_level_lut [256];
 }
 ChafaPalette;
 
@@ -79,6 +85,32 @@ void chafa_palette_set_alpha_threshold (ChafaPalette *palette, gint alpha_thresh
 
 gint chafa_palette_get_transparent_index (const ChafaPalette *palette);
 void chafa_palette_set_transparent_index (ChafaPalette *palette, gint index);
+
+gint chafa_palette_get_channel_levels (const ChafaPalette *palette);
+void chafa_palette_set_channel_levels (ChafaPalette *palette, gint n_levels);
+
+static inline gint
+chafa_palette_channel_to_level (const ChafaPalette *palette, gint ch_value)
+{
+    return (ch_value * (palette->n_channel_levels - 1) + 127) / 255;
+}
+
+static inline gint
+chafa_palette_level_to_channel (const ChafaPalette *palette, gint level)
+{
+    return (level * 255 + (palette->n_channel_levels - 1) / 2)
+        / (palette->n_channel_levels - 1);
+}
+
+/* Snap a color's RGB channels to the palette's channel resolution */
+static inline ChafaColor
+chafa_palette_snap_color (const ChafaPalette *palette, ChafaColor color)
+{
+    color.ch [0] = palette->channel_level_lut [color.ch [0]];
+    color.ch [1] = palette->channel_level_lut [color.ch [1]];
+    color.ch [2] = palette->channel_level_lut [color.ch [2]];
+    return color;
+}
 
 G_END_DECLS
 

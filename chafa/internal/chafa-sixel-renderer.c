@@ -31,6 +31,9 @@
 
 #define SIXEL_CELL_HEIGHT 6
 
+/* Sixel color channels range over 0..100 */
+#define SIXEL_CHANNEL_LEVELS 101
+
 typedef struct
 {
     ChafaSixelRenderer *sixel_renderer;
@@ -65,12 +68,16 @@ chafa_sixel_renderer_new (gint width, gint height,
     sixel_renderer->height = height;
     sixel_renderer->color_space = color_space;
     sixel_renderer->image = chafa_indexed_image_new (width, chafa_round_up_to_multiple_of (height, SIXEL_CELL_HEIGHT),
-                                                   palette, dither);
+                                                     palette, dither);
 
     if (!sixel_renderer->image)
     {
         g_free (sixel_renderer);
         sixel_renderer = NULL;
+    }
+    else
+    {
+        chafa_palette_set_channel_levels (&sixel_renderer->image->palette, SIXEL_CHANNEL_LEVELS);
     }
 
     return sixel_renderer;
@@ -444,13 +451,14 @@ build_sixel_palette (ChafaSixelRenderer *sixel_renderer, ChafaPassthroughEncoder
         *(p++) = '2';  /* Color space: RGB */
         *(p++) = ';';
 
-        /* Sixel color channel range is 0..100 */
-
-        p = chafa_format_dec_u8 (p, (col->ch [0] * 100) / 255);
+        p = chafa_format_dec_u8 (p, chafa_palette_channel_to_level (
+            &sixel_renderer->image->palette, col->ch [0]));
         *(p++) = ';';
-        p = chafa_format_dec_u8 (p, (col->ch [1] * 100) / 255);
+        p = chafa_format_dec_u8 (p, chafa_palette_channel_to_level (
+            &sixel_renderer->image->palette, col->ch [1]));
         *(p++) = ';';
-        p = chafa_format_dec_u8 (p, (col->ch [2] * 100) / 255);
+        p = chafa_format_dec_u8 (p, chafa_palette_channel_to_level (
+            &sixel_renderer->image->palette, col->ch [2]));
     }
 
     chafa_passthrough_encoder_append_len (ptenc, str, p - str);

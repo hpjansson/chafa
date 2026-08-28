@@ -502,11 +502,11 @@ vec3f32_add_color (ChafaVec3f32 *out, const ChafaColor *col)
 }
 
 static void
-color_from_vec3f32_trunc (ChafaColor *col, const ChafaVec3f32 *v)
+color_from_vec3f32_round (ChafaColor *col, const ChafaVec3f32 *v)
 {
-    col->ch [0] = v->v [0];
-    col->ch [1] = v->v [1];
-    col->ch [2] = v->v [2];
+    col->ch [0] = (gint) (v->v [0] + 0.5f);
+    col->ch [1] = (gint) (v->v [1] + 0.5f);
+    col->ch [2] = (gint) (v->v [2] + 0.5f);
     /* Ignore alpha */
 }
 
@@ -708,7 +708,7 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
     {
         ChafaColor col = { 0 };
 
-        color_from_vec3f32_trunc (&col, &bins [i].accum);
+        color_from_vec3f32_round (&col, &bins [i].accum);
         col.ch [3] = 0xff;
 
         pal->colors [k].col [CHAFA_COLOR_SPACE_RGB] = col;
@@ -726,15 +726,19 @@ out:
     return k + 1;
 }
 
+/* Snap the RGB colors of pens [first, first + n) to the palette's channel
+ * resolution and derive their DIN99d colors from the result */
 static void
-gen_din99d_color_space (ChafaPalette *palette)
+snap_colors (ChafaPalette *palette, gint first, gint n)
 {
     gint i;
 
-    for (i = 0; i < palette->n_colors; i++)
+    for (i = first; i < first + n; i++)
     {
-        chafa_color_rgb_to_din99d (&palette->colors [i].col [CHAFA_COLOR_SPACE_RGB],
-                                   &palette->colors [i].col [CHAFA_COLOR_SPACE_DIN99D]);
+        ChafaColor *rgb = &palette->colors [i].col [CHAFA_COLOR_SPACE_RGB];
+
+        *rgb = chafa_palette_snap_color (palette, *rgb);
+        chafa_color_rgb_to_din99d (rgb, &palette->colors [i].col [CHAFA_COLOR_SPACE_DIN99D]);
     }
 }
 
@@ -759,6 +763,31 @@ gen_table (ChafaPalette *palette, ChafaColorSpace color_space)
     chafa_color_table_sort (&palette->table [color_space]);
 }
 
+/* Generate the lookup tables from the current colors. The RGB table is
+ * always generated; the DIN99d table only if that color space is in use. */
+static void
+gen_tables (ChafaPalette *palette, ChafaColorSpace color_space)
+{
+    gen_table (palette, CHAFA_COLOR_SPACE_RGB);
+
+    if (color_space == CHAFA_COLOR_SPACE_DIN99D)
+        gen_table (palette, CHAFA_COLOR_SPACE_DIN99D);
+}
+
+static void
+gen_channel_level_lut (ChafaPalette *palette, gint n_levels)
+{
+    gint i;
+
+    palette->n_channel_levels = n_levels;
+
+    for (i = 0; i < 256; i++)
+    {
+        palette->channel_level_lut [i] =
+            chafa_color_level_to_channel (chafa_color_channel_to_level (i, n_levels), n_levels);
+    }
+}
+
 static void
 clean_up (ChafaPalette *palette_out)
 {
@@ -766,9 +795,9 @@ clean_up (ChafaPalette *palette_out)
     gint best_diff = G_MAXINT;
     gint best_pair = 1;
 
-    /* Reserve 0th pen for transparency and move colors up.
-     * Eliminate duplicates and colors that would be the same in
-     * sixel representation (0..100). */
+    /* Reserve 0th pen for transparency, move colors up and eliminate
+     * duplicates. Since colors have been snapped to the output's channel
+     * resolution, colors that would display the same are exact duplicates. */
 
     DEBUG (g_printerr ("Colors before: %d\n", palette_out->n_colors));
 
@@ -780,13 +809,11 @@ clean_up (ChafaPalette *palette_out)
         a = &palette_out->colors [j - 1].col [CHAFA_COLOR_SPACE_RGB];
         b = &palette_out->colors [i].col [CHAFA_COLOR_SPACE_RGB];
 
-        /* Dividing by 256 is strictly not correct, but it's close enough for
-         * comparison purposes, and a lot faster too. */
-        t = (gint) (a->ch [0] * 100) / 256 - (gint) (b->ch [0] * 100) / 256;
+        t = (gint) a->ch [0] - (gint) b->ch [0];
         diff = t * t;
-        t = (gint) (a->ch [1] * 100) / 256 - (gint) (b->ch [1] * 100) / 256;
+        t = (gint) a->ch [1] - (gint) b->ch [1];
         diff += t * t;
-        t = (gint) (a->ch [2] * 100) / 256 - (gint) (b->ch [2] * 100) / 256;
+        t = (gint) a->ch [2] - (gint) b->ch [2];
         diff += t * t;
 
         if (diff == 0)
@@ -835,9 +862,11 @@ chafa_palette_init (ChafaPalette *palette_out, ChafaPaletteType type)
 {
     gint i;
 
+    memset (palette_out, 0, sizeof (*palette_out));
     chafa_init_palette ();
     palette_out->type = type;
     palette_out->transparent_index = CHAFA_PALETTE_INDEX_TRANSPARENT;
+    gen_channel_level_lut (palette_out, 256);
 
     for (i = 0; i < CHAFA_PALETTE_INDEX_MAX; i++)
     {
@@ -942,14 +971,12 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gsize n
                                          params->bits_per_ch,
                                          step,
                                          palette_out->alpha_threshold);
-    clean_up (palette_out);
-    gen_table (palette_out, CHAFA_COLOR_SPACE_RGB);
 
-    if (color_space == CHAFA_COLOR_SPACE_DIN99D)
-    {
-        gen_din99d_color_space (palette_out);
-        gen_table (palette_out, CHAFA_COLOR_SPACE_DIN99D);
-    }
+    /* Snap before deduplicating, so colors that would display the same
+     * are exact duplicates */
+    snap_colors (palette_out, 0, palette_out->n_colors);
+    clean_up (palette_out);
+    gen_tables (palette_out, color_space);
 }
 
 gint
@@ -1092,8 +1119,7 @@ void
 chafa_palette_set_color (ChafaPalette *palette, gint index, const ChafaColor *color)
 {
     palette->colors [index].col [CHAFA_COLOR_SPACE_RGB] = *color;
-    chafa_color_rgb_to_din99d (&palette->colors [index].col [CHAFA_COLOR_SPACE_RGB],
-                               &palette->colors [index].col [CHAFA_COLOR_SPACE_DIN99D]);
+    snap_colors (palette, index, 1);
 }
 
 gint
@@ -1120,3 +1146,30 @@ chafa_palette_set_transparent_index (ChafaPalette *palette, gint index)
     palette->transparent_index = index;
 }
 
+gint
+chafa_palette_get_channel_levels (const ChafaPalette *palette)
+{
+    return palette->n_channel_levels;
+}
+
+void
+chafa_palette_set_channel_levels (ChafaPalette *palette, gint n_levels)
+{
+    g_return_if_fail (n_levels >= 2 && n_levels <= 256);
+
+    if (n_levels == palette->n_channel_levels)
+        return;
+
+    gen_channel_level_lut (palette, n_levels);
+    snap_colors (palette, 0, CHAFA_PALETTE_INDEX_MAX);
+
+    /* Rebuild any lookup tables generated from the old colors */
+
+    if (palette->type == CHAFA_PALETTE_TYPE_DYNAMIC_256
+        && palette->table [CHAFA_COLOR_SPACE_RGB].n_entries > 0)
+    {
+        gen_tables (palette,
+                    palette->table [CHAFA_COLOR_SPACE_DIN99D].n_entries > 0
+                    ? CHAFA_COLOR_SPACE_DIN99D : CHAFA_COLOR_SPACE_RGB);
+    }
+}

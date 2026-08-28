@@ -53,18 +53,18 @@ static gint
 quantize_pixel (const ChafaPalette *palette, ChafaColorSpace color_space,
                 ChafaColorHash *color_hash, ChafaColor color)
 {
-    ChafaColor cached_color;
+    guint32 key;
     gint index;
 
     if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (palette))
         return chafa_palette_get_transparent_index (palette);
 
-    /* Sixel color resolution is only slightly less than 7 bits per channel,
-     * so eliminate the low-order bits to get better hash performance. Also
-     * mask out the alpha channel. */
-    cached_color = chafa_color8_from_u32 (chafa_color8_to_u32 (color) & GUINT32_FROM_BE (0xfefefe00));
-
-    index = chafa_color_hash_lookup (color_hash, chafa_color8_to_u32 (cached_color));
+    /* Snap to the palette's channel resolution before both the cache lookup
+     * and the palette search, so that cached results are exact. The alpha
+     * channel is not part of the cache key. */
+    color = chafa_palette_snap_color (palette, color);
+    key = GUINT32_FROM_LE (chafa_color8_to_u32 (color)) & 0x00ffffffU;
+    index = chafa_color_hash_lookup (color_hash, key);
 
     if (index < 0)
     {
@@ -79,7 +79,7 @@ quantize_pixel (const ChafaPalette *palette, ChafaColorSpace color_space,
 
         /* Don't insert transparent pixels, since color hash does not store transparency */
         if (index != chafa_palette_get_transparent_index (palette))
-            chafa_color_hash_replace (color_hash, chafa_color8_to_u32 (cached_color), index);
+            chafa_color_hash_replace (color_hash, key, index);
     }
 
     return index;
