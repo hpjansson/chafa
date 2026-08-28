@@ -18,6 +18,7 @@ LOG_DRIVER = $(top_srcdir)/tests/test-driver.sh
 check_PROGRAMS = \
 	byte-fifo-test \
 	canvas-test \
+	color-hash-test \
 	loader-arithmetic-test \
 	term-info-test
 
@@ -26,6 +27,9 @@ byte_fifo_test_SOURCES = \
 
 canvas_test_SOURCES = \
 	canvas-test.c
+
+color_hash_test_SOURCES = \
+	color-hash-test.c
 
 loader_arithmetic_test_SOURCES = \
 	loader-arithmetic-test.c \
@@ -54,6 +58,7 @@ endif
 TESTS = \
 	byte-fifo-test \
 	canvas-test \
+	color-hash-test \
 	loader-arithmetic-test \
 	term-info-test \
 	$(TOOL_CHECKS)

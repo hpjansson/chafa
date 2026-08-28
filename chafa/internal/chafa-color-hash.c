@@ -25,24 +25,27 @@
 void
 chafa_color_hash_init (ChafaColorHash *color_hash)
 {
-    guint i;
-    guint32 j;
+    guint32 *bucket;
+    gint i, j;
 
-    /* Initialize with invalid entries */
+    color_hash->map = g_malloc (CHAFA_COLOR_HASH_N_ENTRIES * sizeof (guint32));
 
-    for (i = 0, j = 0; i < CHAFA_COLOR_HASH_N_ENTRIES; i++)
+    /* Fill with invalid entries. Compilers can reduce this to SIMD, in which
+     * case it's almost as fast as memset(). */
+    for (i = 0, bucket = color_hash->map;
+         i < CHAFA_COLOR_HASH_N_BUCKETS;
+         i++, bucket += CHAFA_COLOR_HASH_N_WAYS)
     {
-        while (_chafa_color_hash_calc_hash (j) == i)
-        {
-            j++;
-            j %= 0x01000000;
-        }
+        guint32 entry = (guint32) (i + 1) << 8;
 
-        color_hash->map [i] = j << 8;
+        for (j = 0; j < CHAFA_COLOR_HASH_N_WAYS; j++)
+            bucket [j] = entry;
     }
 }
 
 void
-chafa_color_hash_deinit (G_GNUC_UNUSED ChafaColorHash *color_hash)
+chafa_color_hash_deinit (ChafaColorHash *color_hash)
 {
+    g_free (color_hash->map);
+    color_hash->map = NULL;
 }
