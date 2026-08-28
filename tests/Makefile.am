@@ -20,6 +20,7 @@ check_PROGRAMS = \
 	canvas-test \
 	color-hash-test \
 	loader-arithmetic-test \
+	palette-test \
 	term-info-test
 
 byte_fifo_test_SOURCES = \
@@ -34,6 +35,9 @@ color_hash_test_SOURCES = \
 loader_arithmetic_test_SOURCES = \
 	loader-arithmetic-test.c \
 	$(top_srcdir)/tools/chafa/chicle-util.c
+
+palette_test_SOURCES = \
+	palette-test.c
 
 term_info_test_SOURCES = \
 	term-info-test.c
@@ -60,6 +64,7 @@ TESTS = \
 	canvas-test \
 	color-hash-test \
 	loader-arithmetic-test \
+	palette-test \
 	term-info-test \
 	$(TOOL_CHECKS)
 
