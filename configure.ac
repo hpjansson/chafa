@@ -141,7 +141,7 @@ AS_IF([test "$with_tools" != no], [
     ,
     with_heif=yes)
   AS_IF([test "$with_heif" != no], [
-    PKG_CHECK_MODULES(HEIF, [libheif],,
+    PKG_CHECK_MODULES(HEIF, [libheif >= 1.12.0],,
       missing_rpms="$missing_rpms libheif-devel"
       missing_debs="$missing_debs libheif-dev"
       with_heif=no)])
