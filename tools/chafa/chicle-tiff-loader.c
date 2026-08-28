@@ -41,6 +41,17 @@
 #define BYTES_PER_PIXEL 4
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
+/* TIFFReadRGBAImage() produces native-endian ABGR words with R in the low
+ * byte, which is RGBA in memory on little-endian hosts and ABGR on
+ * big-endian ones. */
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+# define PIXEL_TYPE_PREMULTIPLIED CHAFA_PIXEL_ABGR8_PREMULTIPLIED
+# define PIXEL_TYPE_UNASSOCIATED CHAFA_PIXEL_ABGR8_UNASSOCIATED
+#else
+# define PIXEL_TYPE_PREMULTIPLIED CHAFA_PIXEL_RGBA8_PREMULTIPLIED
+# define PIXEL_TYPE_UNASSOCIATED CHAFA_PIXEL_RGBA8_UNASSOCIATED
+#endif
+
 struct ChicleTiffLoader
 {
     ChicleFileMapping *mapping;
@@ -229,7 +240,7 @@ chicle_tiff_loader_new_from_mapping (ChicleFileMapping *mapping)
      * for an EXTRASAMPLES field, and if it doesn't explicitly specify
      * premultiplied alpha, we fail safe to unassociated alpha. */
 
-    loader->pixel_type = CHAFA_PIXEL_RGBA8_PREMULTIPLIED;
+    loader->pixel_type = PIXEL_TYPE_PREMULTIPLIED;
 
     if (samples_per_pixel == 2 || samples_per_pixel >= 4)
     {
@@ -238,7 +249,7 @@ chicle_tiff_loader_new_from_mapping (ChicleFileMapping *mapping)
 
         if (TIFFGetField (tiff, TIFFTAG_EXTRASAMPLES, &n_extra_samples, &extra_samples)
             && n_extra_samples >= 1 && extra_samples && extra_samples [0] != EXTRASAMPLE_ASSOCALPHA)
-            loader->pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+            loader->pixel_type = PIXEL_TYPE_UNASSOCIATED;
     }
 
     frame_data = _TIFFmalloc (width * height * (guint64) BYTES_PER_PIXEL);
