@@ -40,6 +40,10 @@ typedef struct
     /* Each pen is 24 bits (B8G8R8) of color information */
     guint32 pens [CHAFA_COLOR_TABLE_MAX_ENTRIES];
 
+    /* Colors of the sorted entries, i.e. entry_colors [i] is the color of
+     * entries [i].pen. Dense, so linear (SIMD) scans can use it directly. */
+    guint32 entry_colors [CHAFA_COLOR_TABLE_MAX_ENTRIES];
+
     gint n_entries;
     guint is_sorted : 1;
 

@@ -27,6 +27,7 @@
 
 #include "internal/chafa-color-table.h"
 #include "internal/chafa-pca.h"
+#include "internal/chafa-private.h"
 
 #define CHAFA_COLOR_TABLE_ENABLE_PROFILING 0
 #define DEBUG_PEN_CHOICE(x)
@@ -309,6 +310,10 @@ chafa_color_table_sort (ChafaColorTable *color_table)
     do_pca (color_table);
 
     qsort (color_table->entries, color_table->n_entries, sizeof (ChafaColorTableEntry), compare_entries);
+
+    for (i = 0; i < color_table->n_entries; i++)
+        color_table->entry_colors [i] = color_table->pens [color_table->entries [i].pen];
+
     color_table->is_sorted = TRUE;
 }
 
@@ -324,6 +329,16 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
     g_assert (color_table->is_sorted);
 
     profile_counter_inc (n_lookups);
+
+#ifdef HAVE_AVX2_INTRINSICS
+    if (chafa_have_avx2 ())
+    {
+        /* Brute force over the dense color array beats the pruned search */
+        i = chafa_find_nearest_u32_avx2 (color_table->entry_colors, color_table->n_entries,
+                                         want_color & 0x00ffffff);
+        return color_table->entries [i].pen;
+    }
+#endif
 
     project_color (color_table, want_color, v);
 

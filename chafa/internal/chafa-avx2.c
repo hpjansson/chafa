@@ -163,3 +163,80 @@ chafa_color_accum_div_scalar_avx2 (ChafaColorAccum *accum, guint16 divisor)
     accum_u64 = extract_128_epi64 (accum_128, 0);
     memcpy (accum, &accum_u64, sizeof (guint64));
 }
+
+/* Find the element of an array of u32 that is closest to a wanted value,
+ * treating each u32 as four unsigned bytes and using the sum of squared
+ * per-byte differences as the distance. This is the squared Euclidean
+ * distance for packed 8-bit-per-channel colors, with the byte order and
+ * the meaning of the fourth byte left to the caller (zero it in both the
+ * array and the wanted value to compare three channels only).
+ *
+ * Returns the index of the closest element. Ties go to the lowest index.
+ * n must be in the range [1..16384]. */
+gint
+chafa_find_nearest_u32_avx2 (const guint32 *array, gint n, guint32 want)
+{
+    /* Each candidate's distance is packed with its index as
+     * (distance << 14) | index, so a single unsigned min yields both the
+     * smallest distance and the lowest index as a tie-breaker. The distance
+     * is at most 4 * 255^2 < 2^18, leaving 14 bits for the index. */
+    const __m256i lane_ids = _mm256_setr_epi32 (0, 1, 2, 3, 4, 5, 6, 7);
+    const __m256i even_mask = _mm256_set1_epi32 (0x00ff00ff);
+    const __m256i all_ones = _mm256_set1_epi32 (-1);
+    const __m256i want_32 = _mm256_set1_epi32 (want);
+    const __m256i want_even = _mm256_and_si256 (want_32, even_mask);
+    const __m256i want_odd = _mm256_srli_epi16 (want_32, 8);
+    __m256i best = all_ones;
+    __m256i idx = lane_ids;
+    __m128i best_128;
+    gint i;
+
+    g_assert (n > 0);
+    g_assert (n <= (1 << 14));
+
+    for (i = 0; i + 8 <= n; i += 8)
+    {
+        __m256i c, even, odd, dist;
+
+        c = _mm256_loadu_si256 ((const __m256i *) (array + i));
+
+        /* Split each u32 into two 16-bit pairs. Bytes 0 and 2 in the even
+         * halves, bytes 1 and 3 in the odd halves. The differences fit in
+         * i16, and madd then sums the two squares of each pair into the i32
+         * slot of the color they came from, keeping the array's order. */
+        even = _mm256_sub_epi16 (_mm256_and_si256 (c, even_mask), want_even);
+        odd = _mm256_sub_epi16 (_mm256_srli_epi16 (c, 8), want_odd);
+        dist = _mm256_add_epi32 (_mm256_madd_epi16 (even, even),
+                                 _mm256_madd_epi16 (odd, odd));
+
+        best = _mm256_min_epu32 (best, _mm256_or_si256 (_mm256_slli_epi32 (dist, 14), idx));
+        idx = _mm256_add_epi32 (idx, _mm256_set1_epi32 (8));
+    }
+
+    if (i < n)
+    {
+        /* Epilogue: Load only the valid lanes and disqualify the rest with the
+         * maximum packed value. */
+        __m256i valid, c, even, odd, dist, packed;
+
+        valid = _mm256_cmpgt_epi32 (_mm256_set1_epi32 (n - i), lane_ids);
+        c = _mm256_maskload_epi32 ((const gint *) (array + i), valid);
+
+        even = _mm256_sub_epi16 (_mm256_and_si256 (c, even_mask), want_even);
+        odd = _mm256_sub_epi16 (_mm256_srli_epi16 (c, 8), want_odd);
+        dist = _mm256_add_epi32 (_mm256_madd_epi16 (even, even),
+                                 _mm256_madd_epi16 (odd, odd));
+
+        packed = _mm256_or_si256 (_mm256_slli_epi32 (dist, 14), idx);
+        packed = _mm256_or_si256 (packed, _mm256_andnot_si256 (valid, all_ones));
+        best = _mm256_min_epu32 (best, packed);
+    }
+
+    /* Horizontal min over the eight lanes */
+    best_128 = _mm_min_epu32 (_mm256_castsi256_si128 (best),
+                              _mm256_extracti128_si256 (best, 1));
+    best_128 = _mm_min_epu32 (best_128, _mm_shuffle_epi32 (best_128, _MM_SHUFFLE (1, 0, 3, 2)));
+    best_128 = _mm_min_epu32 (best_128, _mm_shuffle_epi32 (best_128, _MM_SHUFFLE (2, 3, 0, 1)));
+
+    return _mm_cvtsi128_si32 (best_128) & ((1 << 14) - 1);
+}
