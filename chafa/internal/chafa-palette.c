@@ -221,7 +221,7 @@ chafa_init_palette (void)
     fixed_palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [0].ch [3] = 0x00;
     fixed_palette_256 [CHAFA_PALETTE_INDEX_TRANSPARENT].col [1].ch [3] = 0x00;
 
-    for (i = 0; i < 0x5f / 2; i++)
+    for (i = 0; i < (0x5f + 0x01) / 2; i++)
         color_cube_216_channel_index [i] = 0;
     for ( ; i < (0x5f + 0x87) / 2; i++)
         color_cube_216_channel_index [i] = 1;
@@ -280,7 +280,7 @@ pick_color_fixed_24_grays (const ChafaColor *color, ChafaColorSpace color_space,
     error = chafa_color_diff_fast (color, palette_color);
     if (error < last_error)
     {
-        update_candidates (candidates, i, error);
+        update_candidates (candidates, i + 1, error);
         last_error = error;
         step = 1;
         i++;
