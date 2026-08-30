@@ -18,6 +18,7 @@
  * along with Chafa.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "config.h"
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -410,4 +411,75 @@ chicle_path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
 
     g_free (label);
     g_free (sanitized_path);
+}
+
+/* ---------------- *
+ * tmux interaction *
+ * ---------------- */
+
+/* Finds the socket of the tmux server we're running under. $TMUX is
+ * "socket_path,server_pid,session_id", and everything up to the first comma is
+ * the socket path.
+ *
+ * Returns NULL if we're not running inside tmux. Free with g_free(). */
+static gchar *
+get_tmux_socket_path (void)
+{
+    const gchar *tmux_env = g_getenv ("TMUX");
+
+    if (!tmux_env || *tmux_env == '\0' || *tmux_env == ',')
+        return NULL;
+
+    return g_strndup (tmux_env, strcspn (tmux_env, ","));
+}
+
+/* Runs a command against the tmux server we're running under. The tmux client
+ * inherits our environment, so the server can tell which pane we're in from
+ * $TMUX_PANE and resolve the current window, session and client accordingly.
+ *
+ * Does nothing and returns FALSE if we're not running inside tmux, or if
+ * the command failed. Otherwise returns TRUE and, if @standard_output_out is
+ * not NULL, stores the command's output there (free with g_free()). */
+gboolean
+chicle_run_tmux_cmd (gchar **standard_output_out, ...)
+{
+    GPtrArray *argv;
+    gchar *socket_path;
+    gchar *standard_output = NULL;
+    gint wait_status = -1;
+    gboolean result = FALSE;
+    const gchar *arg;
+    va_list args;
+
+    socket_path = get_tmux_socket_path ();
+    if (!socket_path)
+        return FALSE;
+
+    argv = g_ptr_array_new_with_free_func (g_free);
+    g_ptr_array_add (argv, g_strdup ("tmux"));
+    g_ptr_array_add (argv, g_strdup ("-S"));
+    g_ptr_array_add (argv, socket_path);
+
+    va_start (args, standard_output_out);
+    while ((arg = va_arg (args, const gchar *)))
+        g_ptr_array_add (argv, g_strdup (arg));
+    va_end (args);
+
+    g_ptr_array_add (argv, NULL);
+
+    if (g_spawn_sync (NULL, (gchar **) argv->pdata, NULL,
+                      G_SPAWN_SEARCH_PATH | G_SPAWN_STDERR_TO_DEV_NULL,
+                      NULL, NULL, &standard_output, NULL, &wait_status, NULL)
+        && g_spawn_check_exit_status (wait_status, NULL))
+    {
+        result = TRUE;
+    }
+
+    if (result && standard_output_out)
+        *standard_output_out = standard_output;
+    else
+        g_free (standard_output);
+
+    g_ptr_array_free (argv, TRUE);
+    return result;
 }
