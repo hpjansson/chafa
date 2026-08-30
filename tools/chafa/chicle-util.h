@@ -57,6 +57,8 @@ void chicle_print_rep_char (ChafaTerm *term, gchar c, gint n);
 void chicle_path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
                               gint field_width, gboolean use_unicode, gboolean link_label);
 
+gboolean chicle_run_tmux_cmd (gchar **standard_output_out, ...) G_GNUC_NULL_TERMINATED;
+
 G_END_DECLS
 
 #endif /* __CHICLE_UTIL_H__ */

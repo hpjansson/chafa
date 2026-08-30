@@ -67,6 +67,9 @@ gint global_path_queue_n_stdin;
 gint global_n_path_streams;
 ChafaTerm *term;
 
+static gchar *tmux_allow_passthrough_original;
+static gboolean tmux_allow_passthrough_is_changed;
+
 static guchar
 get_hex_byte (const gchar *str)
 {
@@ -1683,27 +1686,68 @@ detect_terminal (gchar **envp,
     *polite_out = g_environ_getenv (envp, "LF_LEVEL") ? TRUE : FALSE;
 }
 
-static gchar *tmux_allow_passthrough_original;
-static gboolean tmux_allow_passthrough_is_changed;
+/* Asks tmux whether the terminal it's attached to can display sixels. tmux
+ * claims sixel support in its own DA1 response regardless, so probing the
+ * pane can't tell us. However tmux keeps track of its client's features, and
+ * we can query those from the CLI.
+ *
+ * Returns CHICLE_TRISTATE_AUTO if tmux couldn't be asked or gave no answer,
+ * e.g. we're not inside tmux, it's an old version without client features,
+ * or the session has no client. CHICLE_TRISTATE_FALSE means we got a query
+ * response and it's a definite no. */
+static ChicleTristate
+query_tmux_client_sixels (void)
+{
+    ChicleTristate result = CHICLE_TRISTATE_AUTO;
+    gchar *standard_output = NULL;
+    gchar **features;
+    gint i;
+
+    if (!chicle_run_tmux_cmd (&standard_output,
+                              "display-message", "-p", "#{client_termfeatures}", NULL))
+        return result;
+
+    /* Comma-separated, e.g. "bpaste,ccolour,clipboard,cstyle,focus,sixel,title" */
+
+    features = g_strsplit_set (standard_output, ", \t\r\n", -1);
+
+    for (i = 0; features [i]; i++)
+    {
+        if (!*features [i])
+            continue;
+
+        if (!strcmp (features [i], "sixel"))
+        {
+            result = CHICLE_TRISTATE_TRUE;
+            break;
+        }
+
+        /* Features were reported, but sixel isn't among them */
+        result = CHICLE_TRISTATE_FALSE;
+    }
+
+    g_strfreev (features);
+    g_free (standard_output);
+    return result;
+}
 
 gboolean
 chicle_apply_passthrough_workarounds_tmux (void)
 {
     gboolean result = FALSE;
     gchar *standard_output = NULL;
-    gchar *standard_error = NULL;
     gchar **strings;
     gchar *mode = NULL;
-    gint wait_status = -1;
 
     /* allow-passthrough can be either unset, "on" or "all". Both "on" and "all"
      * are fine, so don't mess with it if we don't have to.
      *
      * Also note that we may be in a remote session inside tmux. */
 
-    if (!g_spawn_command_line_sync ("tmux show allow-passthrough",
-                                    &standard_output, &standard_error,
-                                    &wait_status, NULL))
+    g_return_val_if_fail (tmux_allow_passthrough_original == NULL, FALSE);
+    g_return_val_if_fail (tmux_allow_passthrough_is_changed == FALSE, FALSE);
+
+    if (!chicle_run_tmux_cmd (&standard_output, "show", "allow-passthrough", NULL))
         goto out;
 
     strings = g_strsplit_set (standard_output, " ", -1);
@@ -1714,57 +1758,41 @@ chicle_apply_passthrough_workarounds_tmux (void)
     }
     g_strfreev (strings);
 
-    g_free (standard_output);
-    standard_output = NULL;
-    g_free (standard_error);
-    standard_error = NULL;
-
     if (!mode || (strcmp (mode, "on") && strcmp (mode, "all")))
     {
-        result = g_spawn_command_line_sync ("tmux set-option allow-passthrough on",
-                                            &standard_output, &standard_error,
-                                            &wait_status, NULL);
-        if (result)
-        {
-            tmux_allow_passthrough_original = mode;
-            tmux_allow_passthrough_is_changed = TRUE;
-        }
-    }
-    else
-    {
-        g_free (mode);
+        result = chicle_run_tmux_cmd (NULL, "set-option", "allow-passthrough", "on", NULL);
+        if (!result)
+            goto out;
+
+        tmux_allow_passthrough_original = mode;
+        mode = NULL;  /* Transfer ownership */
+        tmux_allow_passthrough_is_changed = TRUE;
     }
 
 out:
+    g_free (mode);
     g_free (standard_output);
-    g_free (standard_error);
     return result;
 }
 
 gboolean
 chicle_retire_passthrough_workarounds_tmux (void)
 {
-    gboolean result = FALSE;
-    gchar *standard_output = NULL;
-    gchar *standard_error = NULL;
-    gchar *cmd = NULL;
-    gint wait_status = -1;
+    gboolean result;
 
     if (!tmux_allow_passthrough_is_changed)
         return TRUE;
 
     if (tmux_allow_passthrough_original)
     {
-        cmd = g_strdup_printf ("tmux set-option allow-passthrough %s",
-                               tmux_allow_passthrough_original);
+        result = chicle_run_tmux_cmd (NULL, "set-option", "allow-passthrough",
+                                      tmux_allow_passthrough_original, NULL);
     }
     else
     {
-        cmd = g_strdup ("tmux set-option -u allow-passthrough");
+        result = chicle_run_tmux_cmd (NULL, "set-option", "-u", "allow-passthrough", NULL);
     }
 
-    result = g_spawn_command_line_sync (cmd, &standard_output, &standard_error,
-                                        &wait_status, NULL);
     if (result)
     {
         g_free (tmux_allow_passthrough_original);
@@ -1772,9 +1800,6 @@ chicle_retire_passthrough_workarounds_tmux (void)
         tmux_allow_passthrough_is_changed = FALSE;
     }
 
-    g_free (cmd);
-    g_free (standard_output);
-    g_free (standard_error);
     return result;
 }
 
@@ -2079,6 +2104,24 @@ chicle_parse_options (int *argc, char **argv [])
 
         if (ctty_term)
             chafa_term_destroy (ctty_term);
+    }
+
+    /* tmux answers DA1 with sixel capability on its own behalf, whether or not
+     * the terminal it's attached to can display sixels. Ask if the outer
+     * terminal can do sixels, and turn it off if the answer is a definite no. */
+
+    {
+        ChafaTermInfo *term_info = chafa_term_get_term_info (term);
+
+        if (!options.pixel_mode_set
+            && options.pixel_mode == CHAFA_PIXEL_MODE_SIXELS
+            && chafa_term_info_get_passthrough_type (term_info) == CHAFA_PASSTHROUGH_TMUX
+            && query_tmux_client_sixels () == CHICLE_TRISTATE_FALSE)
+        {
+            chafa_term_info_set_seq (term_info, CHAFA_TERM_SEQ_BEGIN_SIXELS, NULL, NULL);
+            chafa_term_info_set_seq (term_info, CHAFA_TERM_SEQ_END_SIXELS, NULL, NULL);
+            options.pixel_mode = chafa_term_info_get_best_pixel_mode (term_info);
+        }
     }
 
     /* Fall back on COLUMNS. It's the best we can do in some environments (e.g. CI). */
