@@ -210,7 +210,10 @@ refine_pen_choice (const ChafaColorTable *color_table, guint want_color, const g
         profile_counter_inc (n_b);
         DEBUG_PEN_CHOICE (g_printerr ("b=%d\n", b));
 
-        if (b <= *best_diff)
+        /* The axes can be slightly non-orthogonal due to rounding, so we
+         * inflate best_diff slightly for the comparison. Cast to guint since
+         * it starts out at G_MAXINT and would overflow otherwise. */
+        if ((guint) a + (guint) b <= (guint) *best_diff + ((guint) *best_diff >> 4))
         {
             d = color_diff (color_table->pens [pj->pen], want_color);
 
