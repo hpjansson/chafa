@@ -25,6 +25,7 @@
 G_BEGIN_DECLS
 
 #define CHAFA_COLOR_TABLE_MAX_ENTRIES 256
+#define CHAFA_COLOR_TABLE_N_BUCKETS 64
 
 typedef struct
 {
@@ -51,6 +52,18 @@ typedef struct
     ChafaVec3i32 average;
 
     gint eigen_mul [2];
+
+    /* Coarse map from first projection to entry index. We use this to jump
+     * to the neighborhood of the color we're looking for. Faster than binary
+     * search, since there's no branching.
+     *
+     * bucket_start [k] is the first entry whose first projection is
+     * >= v0_min + k * v0_range / CHAFA_COLOR_TABLE_N_BUCKETS. The last element
+     * is n_entries. */
+    gint bucket_v0_min;
+    gint bucket_v0_range;
+    gint bucket_v0_mul;  /* N_BUCKETS / v0_range in 16.16 fixed point */
+    guint16 bucket_start [CHAFA_COLOR_TABLE_N_BUCKETS + 1];
 }
 ChafaColorTable;
 
