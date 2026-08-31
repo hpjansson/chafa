@@ -31,33 +31,44 @@ G_BEGIN_DECLS
 
 #define CHAFA_COLOR_HASH_N_WAYS_SHIFT 2
 #define CHAFA_COLOR_HASH_N_WAYS (1 << CHAFA_COLOR_HASH_N_WAYS_SHIFT)
-#define CHAFA_COLOR_HASH_N_BUCKETS_SHIFT 14
-#define CHAFA_COLOR_HASH_N_BUCKETS (1 << CHAFA_COLOR_HASH_N_BUCKETS_SHIFT)
-#define CHAFA_COLOR_HASH_N_ENTRIES (CHAFA_COLOR_HASH_N_BUCKETS * CHAFA_COLOR_HASH_N_WAYS)
+
+/* The number of buckets is chosen per image based on the number of pixels.
+ * Bigger tables cost more to prefill for every image, and past a few
+ * megabytes they start fighting for the last-level cache. */
+#define CHAFA_COLOR_HASH_MIN_BUCKETS_SHIFT 10
+#define CHAFA_COLOR_HASH_MAX_BUCKETS_SHIFT 18
 
 typedef struct
 {
     guint32 *map;
+    guint bucket_mask;
 }
 ChafaColorHash;
 
-void   chafa_color_hash_init    (ChafaColorHash *color_hash);
-void   chafa_color_hash_deinit  (ChafaColorHash *color_hash);
+/* n_pixels is the number of pixels the hash will serve, used to size it */
+void chafa_color_hash_init (ChafaColorHash *color_hash, gsize n_pixels);
+void chafa_color_hash_deinit (ChafaColorHash *color_hash);
 
 static inline guint
-_chafa_color_hash_calc_bucket (guint32 color)
+chafa_color_hash_get_n_buckets (const ChafaColorHash *color_hash)
+{
+    return color_hash->bucket_mask + 1;
+}
+
+static inline guint
+_chafa_color_hash_calc_bucket (const ChafaColorHash *color_hash, guint32 color)
 {
     guint32 c = color & 0x00ffffffU;
 
     /* Measured with a good distribution. The carry spills across channels. If
      * this ever changes, we must also revise the table init. */
-    return (c + (c >> 12)) & (CHAFA_COLOR_HASH_N_BUCKETS - 1);
+    return (c + (c >> 12)) & color_hash->bucket_mask;
 }
 
 static inline guint32 *
 _chafa_color_hash_get_bucket (const ChafaColorHash *color_hash, guint32 color)
 {
-    return color_hash->map + (_chafa_color_hash_calc_bucket (color) << CHAFA_COLOR_HASH_N_WAYS_SHIFT);
+    return color_hash->map + (_chafa_color_hash_calc_bucket (color_hash, color) << CHAFA_COLOR_HASH_N_WAYS_SHIFT);
 }
 
 static inline void

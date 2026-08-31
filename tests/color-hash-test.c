@@ -28,10 +28,22 @@
 static void
 sentinel_test (void)
 {
-    gint i;
+    /* Smallest and largest tables */
+    static const gsize n_pixels [] = { 1, G_MAXSIZE / 2 };
+    guint k;
 
-    for (i = 0; i < CHAFA_COLOR_HASH_N_BUCKETS; i++)
-        g_assert_cmpuint (_chafa_color_hash_calc_bucket ((guint32) (i + 1)), !=, (guint) i);
+    for (k = 0; k < G_N_ELEMENTS (n_pixels); k++)
+    {
+        ChafaColorHash hash;
+        guint i;
+
+        chafa_color_hash_init (&hash, n_pixels [k]);
+
+        for (i = 0; i < chafa_color_hash_get_n_buckets (&hash); i++)
+            g_assert_cmpuint (_chafa_color_hash_calc_bucket (&hash, (guint32) (i + 1)), !=, i);
+
+        chafa_color_hash_deinit (&hash);
+    }
 }
 
 /* A fresh table must miss on every color, including white and black */
@@ -41,7 +53,7 @@ empty_test (void)
     ChafaColorHash hash;
     guint32 color;
 
-    chafa_color_hash_init (&hash);
+    chafa_color_hash_init (&hash, 1000000);
 
     g_assert_cmpint (chafa_color_hash_lookup (&hash, 0x000000), ==, -1);
     g_assert_cmpint (chafa_color_hash_lookup (&hash, 0xffffff), ==, -1);
@@ -62,18 +74,18 @@ lru_test (void)
     guint bucket;
     gint n, i;
 
-    chafa_color_hash_init (&hash);
+    chafa_color_hash_init (&hash, 1000000);
 
     /* Find N_WAYS + 1 distinct colors sharing a bucket */
 
     colors [0] = 0x123456;
-    bucket = _chafa_color_hash_calc_bucket (colors [0]);
+    bucket = _chafa_color_hash_calc_bucket (&hash, colors [0]);
 
     for (n = 1, i = 1; n < CHAFA_COLOR_HASH_N_WAYS + 1; i++)
     {
         guint32 color = (colors [0] + (guint32) i * 65537) & 0xffffff;
 
-        if (color != colors [0] && _chafa_color_hash_calc_bucket (color) == bucket)
+        if (color != colors [0] && _chafa_color_hash_calc_bucket (&hash, color) == bucket)
             colors [n++] = color;
     }
 

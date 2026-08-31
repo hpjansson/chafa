@@ -331,7 +331,7 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     ChafaColorHash chash;
 
-    chafa_color_hash_init (&chash);
+    chafa_color_hash_init (&chash, (gsize) ctx->dest_width * ctx->dest_height);
 
     switch (ctx->indexed_image->dither.mode)
     {

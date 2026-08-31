@@ -23,17 +23,27 @@
 #include "internal/chafa-color-hash.h"
 
 void
-chafa_color_hash_init (ChafaColorHash *color_hash)
+chafa_color_hash_init (ChafaColorHash *color_hash, gsize n_pixels)
 {
     guint32 *bucket;
+    gint shift = CHAFA_COLOR_HASH_MIN_BUCKETS_SHIFT;
+    gint n_buckets;
     gint i, j;
 
-    color_hash->map = g_malloc (CHAFA_COLOR_HASH_N_ENTRIES * sizeof (guint32));
+    /* One bucket per 16 pixels, i.e. about 1/4 as many entries as pixels,
+     * clamped to our limits. */
+    while (shift < CHAFA_COLOR_HASH_MAX_BUCKETS_SHIFT
+           && ((gsize) 1 << shift) * 16 < n_pixels)
+        shift++;
+
+    n_buckets = 1 << shift;
+    color_hash->bucket_mask = n_buckets - 1;
+    color_hash->map = g_malloc ((gsize) n_buckets * CHAFA_COLOR_HASH_N_WAYS * sizeof (guint32));
 
     /* Fill with invalid entries. Compilers can reduce this to SIMD, in which
      * case it's almost as fast as memset(). */
     for (i = 0, bucket = color_hash->map;
-         i < CHAFA_COLOR_HASH_N_BUCKETS;
+         i < n_buckets;
          i++, bucket += CHAFA_COLOR_HASH_N_WAYS)
     {
         guint32 entry = (guint32) (i + 1) << 8;
