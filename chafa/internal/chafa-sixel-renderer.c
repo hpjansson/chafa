@@ -251,7 +251,7 @@ out:
     return p;
 }
 
-static gchar *
+static inline gchar *
 format_pen (guint8 pen, gchar *p)
 {
     *(p++) = '#';
@@ -271,7 +271,7 @@ typedef struct
 }
 PenScan;
 
-static void
+static inline void
 flush_run (PenScan *ps)
 {
     if (ps->need_cr)
@@ -285,11 +285,30 @@ flush_run (PenScan *ps)
         ps->need_pen = FALSE;
     }
 
-    /* Most runs are a single character */
-    if (ps->n_reps == 1)
-        *(ps->p++) = ps->rep_schar;
+    if (ps->n_reps <= 3)
+    {
+        gchar *p = ps->p;
+
+        /* Write three chars unconditionally and advance by the actual count */
+        p [0] = ps->rep_schar;
+        p [1] = ps->rep_schar;
+        p [2] = ps->rep_schar;
+        ps->p = p + ps->n_reps;
+    }
+    else if (ps->n_reps < 255)
+    {
+        /* "!<count><char>", the count from a table */
+        gchar *p = ps->p;
+
+        *(p++) = '!';
+        p = chafa_format_dec_u8 (p, ps->n_reps);
+        *(p++) = ps->rep_schar;
+        ps->p = p;
+    }
     else
+    {
         ps->p = format_schar_reps (ps->rep_schar, ps->n_reps, ps->p);
+    }
 
     ps->need_cr_next = TRUE;
 }
@@ -404,7 +423,8 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     n_sixel_rows = (batch->n_rows + SIXEL_CELL_HEIGHT - 1) / SIXEL_CELL_HEIGHT;
     sixel_row_init (&srow, ctx->sixel_renderer->width);
 
-    sixel_ansi = p = g_malloc (256 * ((gsize) ctx->sixel_renderer->width + 5) * n_sixel_rows + 1);
+    /* +16 = terminator and slack for flush_run()'s unconditional short-run stores */
+    sixel_ansi = p = g_malloc (256 * ((gsize) ctx->sixel_renderer->width + 5) * n_sixel_rows + 16);
 
     for (i = 0; i < n_sixel_rows; i++)
     {
