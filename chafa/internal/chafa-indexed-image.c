@@ -140,33 +140,32 @@ static void
 draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
                            ChafaColorHash *chash)
 {
+    const gint width = ctx->dest_width;
     const guint32 *src_p;
-    guint8 *dest_p, *dest_end_p;
+    guint32 *row;
+    guint8 *dest_p;
     gint x, y;
 
-    src_p = ctx->scaled_data + ((gsize) ctx->dest_width * batch->first_row);
-    dest_p = ctx->indexed_image->pixels + ((gsize) ctx->dest_width * batch->first_row);
-    dest_end_p = dest_p + ((gsize) ctx->dest_width * batch->n_rows);
+    src_p = ctx->scaled_data + ((gsize) width * batch->first_row);
+    dest_p = ctx->indexed_image->pixels + ((gsize) width * batch->first_row);
+    row = g_malloc ((gsize) width * sizeof (guint32));
 
-    x = 0;
-    y = batch->first_row;
-
-    for ( ; dest_p < dest_end_p; src_p++, dest_p++)
+    for (y = batch->first_row; y < batch->first_row + batch->n_rows; y++)
     {
-        ChafaColor col;
-        gint index;
+        /* Dither a whole row at a time, then quantize it */
+        chafa_dither_pixels (&ctx->indexed_image->dither, src_p, row, 0, y, width);
 
-        col = chafa_color8_fetch_from_rgba8 (src_p);
-        col = chafa_dither_color (&ctx->indexed_image->dither, col, x, y);
-        index = quantize_pixel (&ctx->indexed_image->palette, ctx->color_space, chash, col);
-        *dest_p = index;
-
-        if (++x >= ctx->dest_width)
+        for (x = 0; x < width; x++)
         {
-            x = 0;
-            y++;
+            ChafaColor col = chafa_color8_fetch_from_rgba8 (row + x);
+
+            *(dest_p++) = quantize_pixel (&ctx->indexed_image->palette, ctx->color_space, chash, col);
         }
+
+        src_p += width;
     }
+
+    g_free (row);
 }
 
 static void

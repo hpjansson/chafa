@@ -123,6 +123,9 @@ typedef struct
 }
 ChafaPixel;
 
+/* Assert pixels take up exactly 4 bytes */
+typedef char chafa_pixel_is_4_bytes [sizeof (ChafaPixel) == sizeof (guint32) ? 1 : -1];
+
 /* Color selection candidate pair */
 
 typedef struct

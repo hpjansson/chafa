@@ -299,17 +299,10 @@ static void
 simple_dither (const ChafaDither *dither, ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = pixels + dest_y * width;
-    ChafaPixel *pixel_max = pixel + n_rows * width;
-    gint x, y;
+    gint y;
 
-    for (y = dest_y; pixel < pixel_max; y++)
-    {
-        for (x = 0; x < width; x++)
-        {
-            pixel->col = chafa_dither_color (dither, pixel->col, x, y);
-            pixel++;
-        }
-    }
+    for (y = dest_y; y < dest_y + n_rows; y++, pixel += width)
+        chafa_dither_pixels (dither, (const guint32 *) pixel, (guint32 *) pixel, 0, y, width);
 }
 
 static void
@@ -451,17 +444,14 @@ dither_and_convert_rgb_to_din99d (const ChafaDither *dither,
                                   ChafaPixel *pixels, gint width, gint dest_y, gint n_rows)
 {
     ChafaPixel *pixel = pixels + dest_y * width;
-    ChafaPixel *pixel_max = pixel + n_rows * width;
     gint x, y;
 
-    for (y = dest_y; pixel < pixel_max; y++)
+    for (y = dest_y; y < dest_y + n_rows; y++)
     {
-        for (x = 0; x < width; x++)
-        {
-            pixel->col = chafa_dither_color (dither, pixel->col, x, y);
+        chafa_dither_pixels (dither, (const guint32 *) pixel, (guint32 *) pixel, 0, y, width);
+
+        for (x = 0; x < width; x++, pixel++)
             chafa_color_rgb_to_din99d (&pixel->col, &pixel->col);
-            pixel++;
-        }
     }
 }
 

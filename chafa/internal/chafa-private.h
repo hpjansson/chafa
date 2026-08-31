@@ -221,6 +221,10 @@ void chafa_extract_cell_mean_colors_avx2 (const ChafaPixel *pixels, ChafaColorAc
 void chafa_color_accum_div_scalar_avx2 (ChafaColorAccum *accum, guint16 divisor);
 gint chafa_find_nearest_u32_avx2 (const guint32 *array, gint n, guint32 want);
 gint chafa_find_nearest_u32_dist_avx2 (const guint32 *array, gint n, guint32 want, gint *dist_out);
+void chafa_dither_pixels_avx2 (const guint32 *src, guint32 *dst,
+                               const guint8 *pos_row, const guint8 *neg_row,
+                               gint grain_shift, guint col_mask, guint col,
+                               gint n);
 #endif
 
 #if defined(HAVE_POPCNT64_INTRINSICS) || defined(HAVE_POPCNT32_INTRINSICS)

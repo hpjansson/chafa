@@ -261,3 +261,41 @@ chafa_find_nearest_u32_dist_avx2 (const guint32 *array, gint n, guint32 want, gi
     *dist_out = packed >> PACKED_INDEX_BITS;
     return packed & PACKED_INDEX_MASK;
 }
+
+/* Dither n pixels (a multiple of eight, aligned to eight) using one row of
+ * byte modifiers. */
+void
+chafa_dither_pixels_avx2 (const guint32 *src, guint32 *dst,
+                          const guint8 *pos_row, const guint8 *neg_row,
+                          gint grain_shift, guint col_mask, guint col,
+                          gint n)
+{
+    /* Which of the eight loaded columns each of the eight pixels uses */
+    static const gint32 perm_tables [4] [8] =
+    {
+        { 0, 1, 2, 3, 4, 5, 6, 7 },
+        { 0, 0, 1, 1, 2, 2, 3, 3 },
+        { 0, 0, 0, 0, 1, 1, 1, 1 },
+        { 0, 0, 0, 0, 0, 0, 0, 0 }
+    };
+    const __m256i perm = _mm256_loadu_si256 ((const __m256i *) perm_tables [grain_shift]);
+    const guint cols_per_vec = 8 >> grain_shift;
+    gint i;
+
+    g_assert (grain_shift >= 0 && grain_shift <= 3);
+    g_assert ((n & 7) == 0);
+
+    for (i = 0; i < n; i += 8)
+    {
+        __m256i pos = _mm256_permutevar8x32_epi32 (_mm256_loadu_si256 (
+            (const __m256i *) (pos_row + col * 4)), perm);
+        __m256i neg = _mm256_permutevar8x32_epi32 (_mm256_loadu_si256 (
+            (const __m256i *) (neg_row + col * 4)), perm);
+        __m256i px = _mm256_loadu_si256 ((const __m256i *) (src + i));
+
+        px = _mm256_subs_epu8 (_mm256_adds_epu8 (px, pos), neg);
+        _mm256_storeu_si256 ((__m256i *) (dst + i), px);
+
+        col = (col + cols_per_vec) & col_mask;
+    }
+}
