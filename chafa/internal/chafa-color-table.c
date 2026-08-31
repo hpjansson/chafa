@@ -358,7 +358,7 @@ chafa_color_table_find_nearest_pen (const ChafaColorTable *color_table, guint32 
 
     /* Left scan for closer match */
 
-    for (j = m; j >= 0; j--)
+    for (j = MIN (m, color_table->n_entries - 1); j >= 0; j--)
     {
         if (!refine_pen_choice (color_table, want_color, v, j, &best_pen, &best_diff))
             break;
