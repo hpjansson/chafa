@@ -23,6 +23,7 @@
 #include <string.h>  /* memcpy, memset */
 #include <math.h>  /* pow, cbrt, log, sqrt, atan2, cos, sin */
 #include "chafa.h"
+#include "internal/chafa-batch.h"
 #include "internal/chafa-private.h"
 
 #define DEBUG(x)
@@ -492,6 +493,39 @@ find_nearest (PnnBin *bins, PnnBinIndex index, const ChafaVec3f32 *rgb_weights)
     bin1->nearest = nearest;
 }
 
+/* The initial nearest-neighbor pass; each bin's result depends only on the
+ * other bins' read-only fields, so batches of bins can run in parallel */
+typedef struct
+{
+    PnnBin *bins;
+    const ChafaVec3f32 *rgb_weights;
+}
+FindNearestCtx;
+
+static void
+find_nearest_worker (ChafaBatchInfo *batch, const FindNearestCtx *ctx)
+{
+    gint i;
+
+    for (i = batch->first_row; i < batch->first_row + batch->n_rows; i++)
+        find_nearest (ctx->bins, i, ctx->rgb_weights);
+}
+
+static void
+find_initial_nearest (PnnBin *bins, gint n_bins, ChafaVec3f32 *rgb_weights)
+{
+    FindNearestCtx ctx = { bins, rgb_weights };
+
+    /* The pass is quadratic in the number of bins. Don't bother with
+     * threading if n_bins is small. */
+    chafa_process_batches (&ctx,
+                           (GFunc) find_nearest_worker,
+                           NULL,
+                           n_bins,
+                           n_bins >= 512 ? chafa_get_n_actual_threads () : 1,
+                           1);
+}
+
 static void
 vec3f32_add_color (ChafaVec3f32 *out, const ChafaColor *col)
 {
@@ -607,6 +641,10 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
     }
     bins [j].count = quanfn (bins [j].count, quan_rt);
 
+    /* --- Find each bin's initial nearest neighbor --- */
+
+    find_initial_nearest (bins, n_bins, &rgb_weights);
+
     /* --- Set up heap --- */
 
     heap = g_new0 (PnnBinIndex, max_bins + 1);
@@ -614,10 +652,7 @@ pnn_palette (ChafaPalette *pal, gconstpointer pixels,
     for (i = 0; i < n_bins; i++)
     {
         PnnBinIndex h, l, l2;
-        gfloat err;
-
-        find_nearest (bins, i, &rgb_weights);
-        err = bins [i].err;
+        gfloat err = bins [i].err;
 
         heap [0]++;
         for (l = heap [0]; l > 1; l = l2)
