@@ -38,6 +38,19 @@ G_BEGIN_DECLS
 #define CHAFA_COLOR_HASH_MIN_BUCKETS_SHIFT 10
 #define CHAFA_COLOR_HASH_MAX_BUCKETS_SHIFT 18
 
+/* The table may be shared by threads without locking. As long as 32-bit
+ * loads and stores are free from tearing, the worst that can happen is that
+ * the ordering of an LRU bucket gets scrambled, which will only cause a few
+ * extra cache misses. The relaxed atomics compile to plain loads and stores,
+ * but I've kept them as documentation. */
+#if defined(__GNUC__) || defined(__clang__)
+# define _chafa_color_hash_load(p) __atomic_load_n ((p), __ATOMIC_RELAXED)
+# define _chafa_color_hash_store(p, v) __atomic_store_n ((p), (v), __ATOMIC_RELAXED)
+#else
+# define _chafa_color_hash_load(p) (*(p))
+# define _chafa_color_hash_store(p, v) (*(p) = (v))
+#endif
+
 typedef struct
 {
     guint32 *map;
@@ -77,10 +90,10 @@ chafa_color_hash_replace (ChafaColorHash *color_hash, guint32 color, guint8 pen)
     guint32 *bucket = _chafa_color_hash_get_bucket (color_hash, color);
     guint32 entry = ((color & 0x00ffffffU) << 8) | pen;
 
-    bucket [3] = bucket [2];
-    bucket [2] = bucket [1];
-    bucket [1] = bucket [0];
-    bucket [0] = entry;
+    _chafa_color_hash_store (&bucket [3], _chafa_color_hash_load (&bucket [2]));
+    _chafa_color_hash_store (&bucket [2], _chafa_color_hash_load (&bucket [1]));
+    _chafa_color_hash_store (&bucket [1], _chafa_color_hash_load (&bucket [0]));
+    _chafa_color_hash_store (&bucket [0], entry);
 }
 
 static inline gint
@@ -90,34 +103,34 @@ chafa_color_hash_lookup (ChafaColorHash *color_hash, guint32 color)
     guint32 want = (color & 0x00ffffffU) << 8;
     guint32 entry;
 
-    entry = bucket [0];
+    entry = _chafa_color_hash_load (&bucket [0]);
     if ((entry & 0xffffff00U) == want)
         return entry & 0xff;
 
-    entry = bucket [1];
+    entry = _chafa_color_hash_load (&bucket [1]);
     if ((entry & 0xffffff00U) == want)
     {
-        bucket [1] = bucket [0];
-        bucket [0] = entry;
-        return entry & 0xff;
-    }
-
-    entry = bucket [2];
-    if ((entry & 0xffffff00U) == want)
-    {
-        bucket [2] = bucket [1];
-        bucket [1] = bucket [0];
-        bucket [0] = entry;
+        _chafa_color_hash_store (&bucket [1], _chafa_color_hash_load (&bucket [0]));
+        _chafa_color_hash_store (&bucket [0], entry);
         return entry & 0xff;
     }
 
-    entry = bucket [3];
+    entry = _chafa_color_hash_load (&bucket [2]);
     if ((entry & 0xffffff00U) == want)
     {
-        bucket [3] = bucket [2];
-        bucket [2] = bucket [1];
-        bucket [1] = bucket [0];
-        bucket [0] = entry;
+        _chafa_color_hash_store (&bucket [2], _chafa_color_hash_load (&bucket [1]));
+        _chafa_color_hash_store (&bucket [1], _chafa_color_hash_load (&bucket [0]));
+        _chafa_color_hash_store (&bucket [0], entry);
+        return entry & 0xff;
+    }
+
+    entry = _chafa_color_hash_load (&bucket [3]);
+    if ((entry & 0xffffff00U) == want)
+    {
+        _chafa_color_hash_store (&bucket [3], _chafa_color_hash_load (&bucket [2]));
+        _chafa_color_hash_store (&bucket [2], _chafa_color_hash_load (&bucket [1]));
+        _chafa_color_hash_store (&bucket [1], _chafa_color_hash_load (&bucket [0]));
+        _chafa_color_hash_store (&bucket [0], entry);
         return entry & 0xff;
     }
 

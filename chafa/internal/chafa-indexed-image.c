@@ -37,6 +37,9 @@ typedef struct
 
     SmolScaleCtx *scale_ctx;
     guint32 *scaled_data;
+
+    /* One color hash per image, shared between threads */
+    ChafaColorHash *color_hash;
 }
 DrawPixelsCtx;
 
@@ -144,14 +147,14 @@ quantize_pixel_with_error (const ChafaPalette *palette, ChafaColorSpace color_sp
 }
 
 static void
-draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
-                             ChafaColorHash *chash)
+draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     const guint32 *src_p;
     guint8 *dest_p, *dest_end_p;
     QuantizeCtx qc;
 
-    quantize_ctx_init (&qc, &ctx->indexed_image->palette, ctx->color_space, chash);
+    quantize_ctx_init (&qc, &ctx->indexed_image->palette, ctx->color_space,
+                       ctx->color_hash);
 
     src_p = ctx->scaled_data + ((gsize) ctx->dest_width * batch->first_row);
     dest_p = ctx->indexed_image->pixels + ((gsize) ctx->dest_width * batch->first_row);
@@ -162,8 +165,7 @@ draw_pixels_pass_2_nodither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 }
 
 static void
-draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
-                           ChafaColorHash *chash)
+draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     const gint width = ctx->dest_width;
     const guint32 *src_p;
@@ -172,7 +174,8 @@ draw_pixels_pass_2_dither (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
     QuantizeCtx qc;
     gint x, y;
 
-    quantize_ctx_init (&qc, &ctx->indexed_image->palette, ctx->color_space, chash);
+    quantize_ctx_init (&qc, &ctx->indexed_image->palette, ctx->color_space,
+                       ctx->color_hash);
 
     src_p = ctx->scaled_data + ((gsize) width * batch->first_row);
     dest_p = ctx->indexed_image->pixels + ((gsize) width * batch->first_row);
@@ -211,7 +214,7 @@ distribute_error (ChafaColorAccum error_in, ChafaColorAccum *error_out_0,
 }
 
 static guint8
-fs_dither_pixel (const DrawPixelsCtx *ctx, G_GNUC_UNUSED ChafaColorHash *chash,
+fs_dither_pixel (const DrawPixelsCtx *ctx,
                  const guint32 *inpixel_p,
                  ChafaColorAccum error_in,
                  ChafaColorAccum *error_out_0, ChafaColorAccum *error_out_1,
@@ -228,7 +231,7 @@ fs_dither_pixel (const DrawPixelsCtx *ctx, G_GNUC_UNUSED ChafaColorHash *chash,
 }
 
 static void
-fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *inrow_p,
+fs_dither_row (const DrawPixelsCtx *ctx, const guint32 *inrow_p,
                guint8 *outrow_p, ChafaColorAccum *error_row, ChafaColorAccum *next_error_row,
                gint width, gint y)
 {
@@ -238,7 +241,7 @@ fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *i
     {
         /* Forwards pass */
 
-        outrow_p [0] = fs_dither_pixel (ctx, chash, &inrow_p [0], error_row [0],
+        outrow_p [0] = fs_dither_pixel (ctx, &inrow_p [0], error_row [0],
                                         &error_row [1],
                                         &next_error_row [1],
                                         &next_error_row [0],
@@ -246,14 +249,14 @@ fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *i
 
         for (x = 1; x < width - 1; x++)
         {
-            outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+            outrow_p [x] = fs_dither_pixel (ctx, &inrow_p [x], error_row [x],
                                             &error_row [x + 1],
                                             &next_error_row [x + 1],
                                             &next_error_row [x],
                                             &next_error_row [x - 1]);
         }
 
-        outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+        outrow_p [x] = fs_dither_pixel (ctx, &inrow_p [x], error_row [x],
                                         &next_error_row [x],
                                         &next_error_row [x],
                                         &next_error_row [x - 1],
@@ -265,7 +268,7 @@ fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *i
 
         x = width - 1;
 
-        outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+        outrow_p [x] = fs_dither_pixel (ctx, &inrow_p [x], error_row [x],
                                         &error_row [x - 1],
                                         &next_error_row [x - 1],
                                         &next_error_row [x],
@@ -273,14 +276,14 @@ fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *i
 
         for (x--; x >= 1; x--)
         {
-            outrow_p [x] = fs_dither_pixel (ctx, chash, &inrow_p [x], error_row [x],
+            outrow_p [x] = fs_dither_pixel (ctx, &inrow_p [x], error_row [x],
                                             &error_row [x - 1],
                                             &next_error_row [x - 1],
                                             &next_error_row [x],
                                             &next_error_row [x + 1]);
         }
 
-        outrow_p [0] = fs_dither_pixel (ctx, chash, &inrow_p [0], error_row [0],
+        outrow_p [0] = fs_dither_pixel (ctx, &inrow_p [0], error_row [0],
                                         &next_error_row [0],
                                         &next_error_row [0],
                                         &next_error_row [1],
@@ -289,8 +292,7 @@ fs_dither_row (const DrawPixelsCtx *ctx, ChafaColorHash *chash, const guint32 *i
 }
 
 static void
-draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
-                       ChafaColorHash *chash)
+draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
     ChafaColorAccum *error_row [2];
     const guint32 *src_p;
@@ -314,7 +316,7 @@ draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 
         memset (error_row [1], 0, (gsize) ctx->dest_width * sizeof (ChafaColorAccum));
 
-        fs_dither_row (ctx, chash, src_p, dest_p, error_row [0], error_row [1],
+        fs_dither_row (ctx, src_p, dest_p, error_row [0], error_row [1],
                        ctx->dest_width, y);
 
         error_row_temp = error_row [0];
@@ -329,23 +331,19 @@ draw_pixels_pass_2_fs (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx,
 static void
 draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
-    ChafaColorHash chash;
-
-    chafa_color_hash_init (&chash, (gsize) ctx->dest_width * ctx->dest_height);
-
     switch (ctx->indexed_image->dither.mode)
     {
         case CHAFA_DITHER_MODE_NONE:
-            draw_pixels_pass_2_nodither (batch, ctx, &chash);
+            draw_pixels_pass_2_nodither (batch, ctx);
             break;
 
         case CHAFA_DITHER_MODE_ORDERED:
         case CHAFA_DITHER_MODE_NOISE:
-            draw_pixels_pass_2_dither (batch, ctx, &chash);
+            draw_pixels_pass_2_dither (batch, ctx);
             break;
 
         case CHAFA_DITHER_MODE_DIFFUSION:
-            draw_pixels_pass_2_fs (batch, ctx, &chash);
+            draw_pixels_pass_2_fs (batch, ctx);
             break;
 
         case CHAFA_DITHER_MODE_MAX:
@@ -353,12 +351,13 @@ draw_pixels_pass_2_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
             break;
     }
 
-    chafa_color_hash_deinit (&chash);
 }
 
 static void
 draw_pixels (DrawPixelsCtx *ctx)
 {
+    ChafaColorHash color_hash;
+
     chafa_process_batches (ctx,
                            (GFunc) draw_pixels_pass_1_worker,
                            NULL,
@@ -370,6 +369,9 @@ draw_pixels (DrawPixelsCtx *ctx)
                             ctx->scaled_data, (gsize) ctx->dest_width * ctx->dest_height,
                             ctx->color_space, ctx->quality);
 
+    chafa_color_hash_init (&color_hash, (gsize) ctx->dest_width * ctx->dest_height);
+    ctx->color_hash = &color_hash;
+
     /* Single thread only for diffusion; it's a fully serial operation */
     chafa_process_batches (ctx,
                            (GFunc) draw_pixels_pass_2_worker,
@@ -378,6 +380,9 @@ draw_pixels (DrawPixelsCtx *ctx)
                            ctx->indexed_image->dither.mode == CHAFA_DITHER_MODE_DIFFUSION
                              ? 1 : chafa_get_n_actual_threads (),
                            1);
+
+    chafa_color_hash_deinit (&color_hash);
+    ctx->color_hash = NULL;
 }
 
 ChafaIndexedImage *
