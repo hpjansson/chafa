@@ -116,6 +116,80 @@ lru_test (void)
     chafa_color_hash_deinit (&hash);
 }
 
+/* The pen every key is stored with. We use a fixed function so a hit can be
+ * checked against it */
+static guint8
+pen_for_key (guint32 key)
+{
+    return (guint8) ((key * 2654435761U) >> 21);
+}
+
+typedef struct
+{
+    ChafaColorHash *hash;
+    guint seed;
+    glong n_bad;
+    glong n_hits;
+}
+HammerCtx;
+
+static gpointer
+hammer_thread (gpointer data)
+{
+    HammerCtx *ctx = data;
+    GRand *rand = g_rand_new_with_seed (ctx->seed);
+    gint i;
+
+    for (i = 0; i < 2000000; i++)
+    {
+        guint32 key = g_rand_int_range (rand, 0, 4096) * 2654435U & 0x00ffffffU;
+        gint pen = chafa_color_hash_lookup (ctx->hash, key);
+
+        if (pen < 0)
+        {
+            chafa_color_hash_replace (ctx->hash, key, pen_for_key (key));
+        }
+        else
+        {
+            ctx->n_hits++;
+            if (pen != pen_for_key (key))
+                ctx->n_bad++;
+        }
+    }
+
+    g_rand_free (rand);
+    return NULL;
+}
+
+static void
+shared_test (void)
+{
+    ChafaColorHash hash;
+    HammerCtx ctx [8];
+    GThread *threads [8];
+    gint i;
+
+    chafa_color_hash_init (&hash, 1);
+
+    for (i = 0; i < 8; i++)
+    {
+        ctx [i].hash = &hash;
+        ctx [i].seed = 100 + i;
+        ctx [i].n_bad = 0;
+        ctx [i].n_hits = 0;
+        threads [i] = g_thread_new ("color-hash-shared-test", hammer_thread, &ctx [i]);
+    }
+
+    for (i = 0; i < 8; i++)
+    {
+        g_thread_join (threads [i]);
+        g_assert_cmpint (ctx [i].n_hits, >, 0);
+        g_assert_cmpint (ctx [i].n_bad, ==, 0);
+    }
+
+    chafa_color_hash_deinit (&hash);
+}
+
 int
 main (int argc, char *argv [])
 {
@@ -124,6 +198,8 @@ main (int argc, char *argv [])
     g_test_add_func ("/color-hash/sentinel", sentinel_test);
     g_test_add_func ("/color-hash/empty", empty_test);
     g_test_add_func ("/color-hash/lru", lru_test);
+
+    g_test_add_func ("/color-hash/shared", shared_test);
 
     return g_test_run ();
 }
