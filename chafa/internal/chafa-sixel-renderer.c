@@ -22,7 +22,6 @@
 #include "chafa.h"
 #include "smolscale/smolscale.h"
 #include "internal/chafa-batch.h"
-#include "internal/chafa-bitfield.h"
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-math-util.h"
 #include "internal/chafa-passthrough-encoder.h"
@@ -40,20 +39,6 @@ typedef struct
     ChafaPassthroughEncoder *ptenc;
 }
 BuildSixelsCtx;
-
-typedef struct
-{
-    /* Lower six bytes are vertical pixel strip; LSB is bottom pixel */
-    guint64 d;
-}
-SixelData;
-
-typedef struct
-{
-    SixelData *data;
-    ChafaBitfield filter_bits;
-}
-SixelRow;
 
 ChafaSixelRenderer *
 chafa_sixel_renderer_new (gint width, gint height,
@@ -118,91 +103,115 @@ chafa_sixel_renderer_draw_all_pixels (ChafaSixelRenderer *sixel_renderer, ChafaP
                                      quality);
 }
 
-#define FILTER_BANK_WIDTH 64
+/* Columns are processed in banks. For each pen, a sixel row keeps the list
+ * of banks that contain at least one pixel of that pen, in increasing
+ * order, so the pen's scan visits only those and turns the gaps into runs
+ * of empty sixels. */
+#define BANK_WIDTH 64
+
+typedef struct
+{
+    gint n_banks;
+    guint16 *bank_lists;  /* [CHAFA_PALETTE_INDEX_MAX] [n_banks] */
+    guint16 n_pen_banks [CHAFA_PALETTE_INDEX_MAX];
+
+    /* The sixel patterns of every bank-pen, one byte per column, filled
+     * in by scattering each pixel once. Only the strips of pens present in a
+     * bank are ever touched. */
+    guint8 *pattern_strips;  /* [n_banks] [CHAFA_PALETTE_INDEX_MAX] [BANK_WIDTH] */
+}
+SixelRow;
 
 static void
-filter_set (SixelRow *srow, guint8 pen, gint bank)
+sixel_row_init (SixelRow *srow, gint width)
 {
-    chafa_bitfield_set_bit (&srow->filter_bits, bank * 256 + (gint) pen, TRUE);
+    srow->n_banks = (width + BANK_WIDTH - 1) / BANK_WIDTH;
+    srow->bank_lists = g_malloc ((gsize) CHAFA_PALETTE_INDEX_MAX * srow->n_banks * sizeof (guint16));
+    srow->pattern_strips = g_malloc ((gsize) srow->n_banks * CHAFA_PALETTE_INDEX_MAX * BANK_WIDTH);
 }
 
-static gboolean
-filter_get (const SixelRow *srow, guint8 pen, gint bank)
+static void
+sixel_row_deinit (SixelRow *srow)
 {
-    return chafa_bitfield_get_bit (&srow->filter_bits, bank * 256 + (gint) pen);
+    g_free (srow->pattern_strips);
+    g_free (srow->bank_lists);
 }
 
+static inline guint8 *
+pattern_strip (const SixelRow *srow, gint bank, gint pen)
+{
+    return srow->pattern_strips + ((gsize) bank * CHAFA_PALETTE_INDEX_MAX + pen) * BANK_WIDTH;
+}
+
+/* Mask of the columns whose pattern byte differs from the previous one,
+ * column 0 being compared against prev_bits. Eight columns per 64-bit
+ * word. */
+static guint64
+pattern_strip_changes (const guint8 *strip, gint n_cols, guint8 prev_bits)
+{
+    const guint64 lo7 = 0x7f7f7f7f7f7f7f7fULL;
+    const guint64 hi = 0x8080808080808080ULL;
+    guint64 change_mask = 0;
+    gint x;
+
+    for (x = 0; x < n_cols; x += 8)
+    {
+        guint64 w, prev, diff, changed;
+
+        memcpy (&w, strip + x, 8);  /* The row is always 64 bytes */
+        w = GUINT64_FROM_LE (w);
+
+        prev = (w << 8) | prev_bits;
+        diff = w ^ prev;
+        changed = (((diff & lo7) + lo7) | diff) & hi;  /* 0x80 in changed bytes */
+
+        /* Gather the eight byte flags into eight bits */
+        change_mask |= (((changed >> 7) * 0x0102040810204080ULL) >> 56) << x;
+
+        prev_bits = w >> 56;
+    }
+
+    if (n_cols < 64)
+        change_mask &= ((guint64) 1 << n_cols) - 1;
+
+    return change_mask;
+}
+
+/* Build the per-pen bank lists and the sixel pattern rows of every pen present
+ * in each bank. */
 static void
 fetch_sixel_row (SixelRow *srow, const guint8 *pixels, gint width)
 {
-    const guint8 *pixels_end, *p;
-    SixelData *sdata = srow->data;
-    gint x;
+    gint bank, x, y;
 
-    /* The ordering of output bytes is 351240; this is the inverse of
-     * 140325. see sixel_data_do_schar(). */
+    memset (srow->n_pen_banks, 0, sizeof (srow->n_pen_banks));
 
-    for (pixels_end = pixels + width, x = 0; pixels < pixels_end; pixels++, x++)
+    for (bank = 0, x = 0; x < width; x += BANK_WIDTH, bank++)
     {
-        guint64 d;
-        gint bank = x / FILTER_BANK_WIDTH;
+        guint8 seen [CHAFA_PALETTE_INDEX_MAX] = { 0 };
+        gint n = MIN (BANK_WIDTH, width - x);
 
-        p = pixels;
+        for (y = 0; y < SIXEL_CELL_HEIGHT; y++)
+        {
+            const guint8 *p = pixels + (gsize) y * width + x;
+            gint col;
 
-        filter_set (srow, *p, bank);
-        d = (guint64) *p;
-        p += width;
+            for (col = 0; col < n; col++)
+            {
+                guint8 pen = p [col];
+                guint8 *row = pattern_strip (srow, bank, pen);
 
-        filter_set (srow, *p, bank);
-        d |= (guint64) *p << (3 * 8);
-        p += width;
+                if (!seen [pen])
+                {
+                    seen [pen] = 1;
+                    memset (row, 0, BANK_WIDTH);
+                    srow->bank_lists [pen * srow->n_banks + srow->n_pen_banks [pen]++] = bank;
+                }
 
-        filter_set (srow, *p, bank);
-        d |= (guint64) *p << (2 * 8);
-        p += width;
-
-        filter_set (srow, *p, bank);
-        d |= (guint64) *p << (5 * 8);
-        p += width;
-
-        filter_set (srow, *p, bank);
-        d |= (guint64) *p << (1 * 8);
-        p += width;
-
-        filter_set (srow, *p, bank);
-        d |= (guint64) *p << (4 * 8);
-
-        (sdata++)->d = d;
+                row [col] |= 1 << y;
+            }
+        }
     }
-} 
-
-static gchar
-sixel_data_to_schar (const SixelData *sdata, guint64 expanded_pen)
-{
-    guint64 a;
-    gchar c;
-
-    a = ~(sdata->d ^ expanded_pen);
-
-    /* Matching bytes will now contain 0xff. Any other value is a mismatch. */
-
-    a &= (a & 0x0000f0f0f0f0f0f0) >> 4;
-    a &= (a & 0x00000c0c0c0c0c0c) >> 2;
-    a &= (a & 0x0000020202020202) >> 1;
-
-    /* Matching bytes will now contain 0x01. Misses contain 0x00. */
-
-    a |= a >> (24 - 1);
-    a |= a >> (16 - 2);
-    a |= a >> (8 - 4);
-
-    /* Set bits are now packed in the lower 6 bits, reordered like this:
-     *
-     * 012345 -> 03/14/25 -> 14/0325 -> 140325 */
-
-    c = a & 0x3f;
-
-    return '?' + c;
 }
 
 static gchar *
@@ -249,134 +258,139 @@ format_pen (guint8 pen, gchar *p)
     return chafa_format_dec_u8 (p, pen);
 }
 
+/* Context for scanning one pen */
+typedef struct
+{
+    gchar *p;
+    gint pen;
+    gchar rep_schar;  /* Character of the run in progress, or 0 for none */
+    gint n_reps;
+    gboolean need_pen;
+    gboolean need_cr;
+    gboolean need_cr_next;
+}
+PenScan;
+
+static void
+flush_run (PenScan *ps)
+{
+    if (ps->need_cr)
+    {
+        *(ps->p++) = '$';
+        ps->need_cr = FALSE;
+    }
+    if (ps->need_pen)
+    {
+        ps->p = format_pen (ps->pen, ps->p);
+        ps->need_pen = FALSE;
+    }
+
+    /* Most runs are a single character */
+    if (ps->n_reps == 1)
+        *(ps->p++) = ps->rep_schar;
+    else
+        ps->p = format_schar_reps (ps->rep_schar, ps->n_reps, ps->p);
+
+    ps->need_cr_next = TRUE;
+}
+
+/* Account for n_cols columns without this pen */
+static inline void
+skip_columns (PenScan *ps, gint n_cols)
+{
+    if (ps->rep_schar != '?' && ps->rep_schar != 0)
+    {
+        flush_run (ps);
+        ps->n_reps = 0;
+    }
+
+    ps->rep_schar = '?';
+    ps->n_reps += n_cols;
+}
+
 /* force_full_width is a workaround for a bug in mlterm; we need to
  * draw the entire first row even if the rightmost pixels are transparent,
  * otherwise the first row with non-transparent pixels will have
  * garbage rendered in it */
 static gchar *
-build_sixel_row_ansi (const ChafaSixelRenderer *scanvas, const SixelRow *srow, gchar *p, gboolean force_full_width)
+build_sixel_row_ansi (const ChafaSixelRenderer *scanvas, const SixelRow *srow,
+                      gchar *p, gboolean force_full_width)
 {
-    gint pen = 0;
-    gboolean need_cr = FALSE;
-    gboolean need_cr_next = FALSE;
-    const SixelData *sdata = srow->data;
+    PenScan ps;
     gint width = scanvas->width;
+    gint pen = 0;
+
+    ps.p = p;
+    ps.need_cr = FALSE;
+    ps.need_cr_next = FALSE;
 
     do
     {
-        guint64 expanded_pen;
-        gboolean need_pen = TRUE;
-        gchar rep_schar;
-        gint n_reps;
-        gint i;
+        const guint16 *banks = srow->bank_lists + pen * srow->n_banks;
+        gint n_pen_banks = srow->n_pen_banks [pen];
+        gint next_bank = 0;
+        gint k;
 
         if (pen == chafa_palette_get_transparent_index (&scanvas->image->palette))
             continue;
 
-        /* Assign pen value to each of lower six bytes */
-        expanded_pen = pen;
-        expanded_pen |= expanded_pen << 8;
-        expanded_pen |= expanded_pen << 16;
-        expanded_pen |= expanded_pen << 16;
+        ps.pen = pen;
+        ps.rep_schar = 0;
+        ps.n_reps = 0;
+        ps.need_pen = TRUE;
 
-        rep_schar = 0;
-        n_reps = 0;
-
-        for (i = 0; i < width; )
+        for (k = 0; k < n_pen_banks; k++)
         {
-            gint step = MIN (FILTER_BANK_WIDTH, width - i);
-            gchar schar;
+            gint bank = banks [k];
+            gint i = bank * BANK_WIDTH;
+            gint step = MIN (BANK_WIDTH, width - i);
+            const guint8 *strip = pattern_strip (srow, bank, pen);
+            guint64 changes;
+            gint cur = 0;
 
-            /* Skip over FILTER_BANK_WIDTH sixels at once if possible */
+            /* Banks before this one have no pixels of this pen */
+            if (bank > next_bank)
+                skip_columns (&ps, (bank - next_bank) * BANK_WIDTH);
+            next_bank = bank + 1;
 
-            if (!filter_get (srow, pen, i / FILTER_BANK_WIDTH))
+            /* Visit only the columns where the pattern changes */
+            changes = pattern_strip_changes (strip, step, ps.rep_schar ? ps.rep_schar - '?' : 0xff);
+
+            while (changes)
             {
-                if (rep_schar != '?' && rep_schar != 0)
-                {
-                    if (need_cr)
-                    {
-                        *(p++) = '$';
-                        need_cr = FALSE;
-                    }
-                    if (need_pen)
-                    {
-                        p = format_pen (pen, p);
-                        need_pen = FALSE;
-                    }
+                gint b = chafa_count_trailing_zeros_u64 (changes);
 
-                    p = format_schar_reps (rep_schar, n_reps, p);
-                    need_cr_next = TRUE;
-                    n_reps = 0;
-                }
+                changes &= changes - 1;
+                ps.n_reps += b - cur;
+                cur = b;
 
-                rep_schar = '?';
-                n_reps += step;
-                i += step;
-                continue;
+                if (ps.rep_schar != 0)
+                    flush_run (&ps);
+
+                ps.rep_schar = '?' + strip [b];
+                ps.n_reps = 0;
             }
 
-            /* The pen appears in this bank; iterate over sixels */
-
-            for ( ; step > 0; step--, i++)
-            {
-                schar = sixel_data_to_schar (&sdata [i], expanded_pen);
-
-                if (schar == rep_schar)
-                {
-                    n_reps++;
-                }
-                else if (rep_schar == 0)
-                {
-                    rep_schar = schar;
-                    n_reps = 1;
-                }
-                else
-                {
-                    if (need_cr)
-                    {
-                        *(p++) = '$';
-                        need_cr = FALSE;
-                    }
-                    if (need_pen)
-                    {
-                        p = format_pen (pen, p);
-                        need_pen = FALSE;
-                    }
-
-                    p = format_schar_reps (rep_schar, n_reps, p);
-                    need_cr_next = TRUE;
-
-                    rep_schar = schar;
-                    n_reps = 1;
-                }
-            }
+            ps.n_reps += step - cur;
         }
 
-        if (rep_schar != '?' || force_full_width)
-        {
-            if (need_cr)
-            {
-                *(p++) = '$';
-                need_cr = FALSE;
-            }
-            if (need_pen)
-            {
-                p = format_pen (pen, p);
-                need_pen = FALSE;
-            }
+        /* Trailing banks without this pen */
+        if (next_bank < srow->n_banks)
+            skip_columns (&ps, width - next_bank * BANK_WIDTH);
 
-            p = format_schar_reps (rep_schar, n_reps, p);
-            need_cr_next = TRUE;
+        if (ps.rep_schar != '?' || force_full_width)
+        {
+            flush_run (&ps);
 
             /* Only need to do this for a single pen */
             force_full_width = FALSE;
         }
 
-        need_cr = need_cr_next;
+        ps.need_cr = ps.need_cr_next;
     }
     while (++pen < chafa_palette_get_n_colors (&scanvas->image->palette));
 
-    return p;
+    return ps.p;
 }
 
 static void
@@ -388,8 +402,7 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     gint i;
 
     n_sixel_rows = (batch->n_rows + SIXEL_CELL_HEIGHT - 1) / SIXEL_CELL_HEIGHT;
-    srow.data = g_malloc (sizeof (SixelData) * (gsize) ctx->sixel_renderer->width);
-    chafa_bitfield_init (&srow.filter_bits, ((ctx->sixel_renderer->width + FILTER_BANK_WIDTH - 1) / FILTER_BANK_WIDTH) * 256);
+    sixel_row_init (&srow, ctx->sixel_renderer->width);
 
     sixel_ansi = p = g_malloc (256 * ((gsize) ctx->sixel_renderer->width + 5) * n_sixel_rows + 1);
 
@@ -397,15 +410,13 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     {
         gboolean is_global_first_row = batch->first_row + i == 0;
         gboolean is_global_last_row = batch->first_row + (i + 1) * SIXEL_CELL_HEIGHT >= ctx->sixel_renderer->height;
+        const guint8 *pixels = ctx->sixel_renderer->image->pixels
+            + (gsize) ctx->sixel_renderer->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT);
 
-        fetch_sixel_row (&srow,
-                         ctx->sixel_renderer->image->pixels
-                         + (gsize) ctx->sixel_renderer->image->width * (batch->first_row + i * SIXEL_CELL_HEIGHT),
-                         ctx->sixel_renderer->image->width);
+        fetch_sixel_row (&srow, pixels, ctx->sixel_renderer->image->width);
         p = build_sixel_row_ansi (ctx->sixel_renderer, &srow, p,
                                   (is_global_first_row) || (is_global_last_row)
                                   ? TRUE : FALSE);
-        chafa_bitfield_clear (&srow.filter_bits);
 
         /* GNL after every row except final */
         if (!is_global_last_row)
@@ -415,8 +426,7 @@ build_sixel_row_worker (ChafaBatchInfo *batch, const BuildSixelsCtx *ctx)
     batch->ret_p = sixel_ansi;
     batch->ret_n = p - sixel_ansi;
 
-    chafa_bitfield_deinit (&srow.filter_bits);
-    g_free (srow.data);
+    sixel_row_deinit (&srow);
 }
 
 static void

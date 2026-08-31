@@ -35,6 +35,25 @@ void chafa_tuck_and_align (gint src_width, gint src_height,
 
 gint chafa_round_up_to_multiple_of (gint value, gint m);
 
+/* Index of the lowest set bit. n must not be zero. */
+static inline gint
+chafa_count_trailing_zeros_u64 (guint64 n)
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll (n);
+#else
+    gint i = 0;
+
+    while (!(n & 1))
+    {
+        n >>= 1;
+        i++;
+    }
+
+    return i;
+#endif
+}
+
 G_END_DECLS
 
 #endif /* __CHAFA_MATH_UTIL_H__ */
