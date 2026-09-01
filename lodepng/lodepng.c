@@ -38,6 +38,10 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #include "lodepng-avx2.h"
 #endif
 
+#ifdef HAVE_LIBDEFLATE
+#include <libdeflate.h>
+#endif
+
 #ifdef LODEPNG_COMPILE_DISK
 #include <limits.h> /* LONG_MAX */
 #include <stdio.h> /* file handling */
@@ -2262,15 +2266,45 @@ static unsigned zlib_decompress(unsigned char** out, size_t* outsize, size_t exp
       if(settings->max_output_size && *outsize > settings->max_output_size) error = 109;
     }
   } else {
-    ucvector v = ucvector_init(*out, *outsize);
-    if(expected_size) {
-      /*reserve the memory to avoid intermediate reallocations*/
-      ucvector_resize(&v, *outsize + expected_size);
-      v.size = *outsize;
+#ifdef HAVE_LIBDEFLATE
+    /*When the exact output size is known up front (always the
+    case for PNG scanline data), decompress in one shot with libdeflate.
+    On any failure, fall through to the built-in inflate below so error
+    behavior is exactly as before.*/
+    if(*out == 0 && *outsize == 0 && expected_size != 0
+       && (!settings->max_output_size || expected_size <= settings->max_output_size)) {
+      struct libdeflate_decompressor* d = libdeflate_alloc_decompressor();
+      if(d) {
+        unsigned char* buf = (unsigned char*)lodepng_malloc(expected_size);
+        size_t actual = 0;
+        int ok = (buf != 0
+                  && libdeflate_zlib_decompress(d, in, insize, buf, expected_size,
+                                                &actual) == LIBDEFLATE_SUCCESS
+                  && actual == expected_size);
+
+        libdeflate_free_decompressor(d);
+
+        if(ok) {
+          *out = buf;
+          *outsize = actual;
+          return 0;
+        }
+
+        lodepng_free(buf);
+      }
     }
-    error = lodepng_zlib_decompressv(&v, in, insize, settings);
-    *out = v.data;
-    *outsize = v.size;
+#endif
+    {
+      ucvector v = ucvector_init(*out, *outsize);
+      if(expected_size) {
+        /*reserve the memory to avoid intermediate reallocations*/
+        ucvector_resize(&v, *outsize + expected_size);
+        v.size = *outsize;
+      }
+      error = lodepng_zlib_decompressv(&v, in, insize, settings);
+      *out = v.data;
+      *outsize = v.size;
+    }
   }
   return error;
 }
