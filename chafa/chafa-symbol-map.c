@@ -363,6 +363,10 @@ compare_symbols_popcount (const void *a, const void *b)
         return -1;
     if (a_sym->popcount > b_sym->popcount)
         return 1;
+    if (a_sym->c < b_sym->c)
+        return -1;
+    if (a_sym->c > b_sym->c)
+        return 1;
     return 0;
 }
 
@@ -377,6 +381,14 @@ compare_symbols2_popcount (const void *a, const void *b)
         return -1;
     if (a_sym->sym [0].popcount + a_sym->sym [1].popcount
         > b_sym->sym [0].popcount + b_sym->sym [1].popcount)
+        return 1;
+    if (a_sym->sym [0].c < b_sym->sym [0].c)
+        return -1;
+    if (a_sym->sym [0].c > b_sym->sym [0].c)
+        return 1;
+    if (a_sym->sym [1].c < b_sym->sym [1].c)
+        return -1;
+    if (a_sym->sym [1].c > b_sym->sym [1].c)
         return 1;
     return 0;
 }
