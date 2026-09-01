@@ -28,7 +28,15 @@ The manual and changelog are in the header file "lodepng.h"
 Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for C.
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "lodepng.h"
+
+#ifdef HAVE_AVX2_INTRINSICS
+#include "lodepng-avx2.h"
+#endif
 
 #ifdef LODEPNG_COMPILE_DISK
 #include <limits.h> /* LONG_MAX */
@@ -145,6 +153,27 @@ static size_t lodepng_strlen(const char* a) {
 #endif
 
 #define LODEPNG_ABS(x) ((x) < 0 ? -(x) : (x))
+
+#ifdef HAVE_AVX2_INTRINSICS
+/* Minimal CPU feature detection */
+static int lodepng_have_avx2(void)
+{
+  static int cached = -1;
+  int r = cached;
+
+  if(r < 0) {
+#ifdef HAVE_GCC_X86_FEATURE_BUILTINS
+    __builtin_cpu_init();
+    r = __builtin_cpu_supports("avx2") ? 1 : 0;
+#else
+    r = 0;
+#endif
+    cached = r;
+  }
+
+  return r;
+}
+#endif
 
 #if defined(LODEPNG_COMPILE_PNG) || defined(LODEPNG_COMPILE_DECODER)
 /* Safely check if adding two integers will overflow (no undefined
@@ -4117,6 +4146,13 @@ static unsigned unfilterScanline(unsigned char* recon, const unsigned char* scan
   */
 
   size_t i;
+
+#ifdef HAVE_AVX2_INTRINSICS
+  if(lodepng_have_avx2()
+     && lodepng_unfilter_scanline_avx2(recon, scanline, precon, bytewidth, filterType, length))
+    return 0;
+#endif
+
   switch(filterType) {
     case 0:
       for(i = 0; i != length; ++i) recon[i] = scanline[i];
