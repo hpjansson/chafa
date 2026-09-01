@@ -32,7 +32,6 @@
 #include <lodepng.h>
 #include "chicle-png-loader.h"
 
-#define BYTES_PER_PIXEL 4
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct ChiclePngLoader
@@ -42,7 +41,31 @@ struct ChiclePngLoader
     size_t file_data_len;
     gpointer frame_data;
     gint width, height;
+    ChafaPixelType pixel_type;
+    gint bytes_per_pixel;
 };
+
+/* If the file is an RGB888 image with no transparency chunk, we can
+ * take LodePNG's output and convert it in Smolscale, which is much more
+ * efficient in both CPU time and peak RSS. */
+static gboolean
+can_decode_as_rgb8 (const guint8 *data, size_t len)
+{
+    LodePNGState state;
+    unsigned width, height;
+    gboolean result = FALSE;
+
+    lodepng_state_init (&state);
+
+    if (lodepng_inspect (&width, &height, &state, data, len) == 0
+        && state.info_png.color.colortype == LCT_RGB
+        && state.info_png.color.bitdepth == 8
+        && lodepng_chunk_find_const (data, data + len, "tRNS") == NULL)
+        result = TRUE;
+
+    lodepng_state_cleanup (&state);
+    return result;
+}
 
 static ChiclePngLoader *
 chicle_png_loader_new (void)
@@ -74,7 +97,19 @@ chicle_png_loader_new_from_mapping (ChicleFileMapping *mapping)
     if (!loader->file_data)
         goto out;
 
-    lode_state.info_raw.colortype = LCT_RGBA;
+    if (can_decode_as_rgb8 (loader->file_data, loader->file_data_len))
+    {
+        lode_state.info_raw.colortype = LCT_RGB;
+        loader->pixel_type = CHAFA_PIXEL_RGB8;
+        loader->bytes_per_pixel = 3;
+    }
+    else
+    {
+        lode_state.info_raw.colortype = LCT_RGBA;
+        loader->pixel_type = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+        loader->bytes_per_pixel = 4;
+    }
+
     lode_state.info_raw.bitdepth = 8;
     lode_state.decoder.zlibsettings.max_output_size = IMAGE_BUFFER_SIZE_MAX;
 
@@ -144,13 +179,13 @@ chicle_png_loader_get_frame_data (ChiclePngLoader *loader,
     g_return_val_if_fail (loader != NULL, NULL);
 
     if (pixel_type_out)
-        *pixel_type_out = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
+        *pixel_type_out = loader->pixel_type;
     if (width_out)
         *width_out = loader->width;
     if (height_out)
         *height_out = loader->height;
     if (rowstride_out)
-        *rowstride_out = loader->width * BYTES_PER_PIXEL;
+        *rowstride_out = loader->width * loader->bytes_per_pixel;
 
     return loader->frame_data;
 }
