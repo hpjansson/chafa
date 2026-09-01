@@ -5030,14 +5030,27 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
     }
   }
 
-  if(!state->error) {
-    *out = (unsigned char*)lodepng_malloc(outsize);
-    if(!*out) state->error = 83; /*alloc fail*/
-  }
+  if(!state->error && state->info_png.interlace_method == 0
+     && lodepng_get_bpp(&state->info_png.color) >= 8) {
+    /* Unfiltering is the only step. Run it in place to save faulting a
+    second buffer the size of the entire image. */
+    unsigned bpp = lodepng_get_bpp(&state->info_png.color);
+    state->error = unfilter(scanlines, scanlines, *w, *h, bpp);
+    if(!state->error) {
+      unsigned char* trimmed = (unsigned char*)lodepng_realloc(scanlines, outsize);
+      *out = trimmed ? trimmed : scanlines;
+      scanlines = NULL;
+    }
+  } else {
+    if(!state->error) {
+      *out = (unsigned char*)lodepng_malloc(outsize);
+      if(!*out) state->error = 83; /*alloc fail*/
+    }
 
-  if(!state->error) {
-    lodepng_memset(*out, 0, outsize);
-    state->error = postProcessScanlines(*out, scanlines, *w, *h, &state->info_png);
+    if(!state->error) {
+      lodepng_memset(*out, 0, outsize);
+      state->error = postProcessScanlines(*out, scanlines, *w, *h, &state->info_png);
+    }
   }
   lodepng_free(scanlines);
 }
