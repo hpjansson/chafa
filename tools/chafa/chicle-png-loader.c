@@ -78,6 +78,9 @@ chicle_png_loader_new_from_mapping (ChicleFileMapping *mapping)
     lode_state.info_raw.bitdepth = 8;
     lode_state.decoder.zlibsettings.max_output_size = IMAGE_BUFFER_SIZE_MAX;
 
+    /* We build LodePNG without CRC verification. Adler-32 is pointless. */
+    lode_state.decoder.zlibsettings.ignore_adler32 = 1;
+
     /* Decodes to RGBA8 */
     if ((lode_error = lodepng_decode (&frame_data, &width, &height,
                                       &lode_state,
