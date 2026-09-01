@@ -46,6 +46,8 @@ chafa_calc_cell_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *colo
     __m256i fg_4x_u64, bg_4x_u64;
     const __m128i *pixels_4x_p = (const __m128i *) pixels;
     const __m128i *sym_mask_4x_p = (const __m128i *) sym_mask_u32;
+    const __m256i rgb_mask = _mm256_set_epi16 (0, -1, -1, -1, 0, -1, -1, -1,
+                                               0, -1, -1, -1, 0, -1, -1, -1);
     gint i;
 
     fg_4x_u32 = _mm_set1_epi32 (chafa_color8_to_u32 (color_pair->colors [CHAFA_COLOR_PAIR_FG]));
@@ -67,6 +69,10 @@ chafa_calc_cell_error_avx2 (const ChafaPixel *pixels, const ChafaColorPair *colo
         fg0 = _mm256_and_si256 (m0, _mm256_sub_epi16 (fg_4x_u64, p0));
         bg0 = _mm256_andnot_si256 (m0, _mm256_sub_epi16 (bg_4x_u64, p0));
         d0 = _mm256_or_si256 (fg0, bg0);
+
+        /* Drop the alpha lane */
+        d0 = _mm256_and_si256 (d0, rgb_mask);
+
         d0 = _mm256_madd_epi16 (d0, d0);
 
         err_8x_u32 = _mm256_add_epi32 (err_8x_u32, d0);

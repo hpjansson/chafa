@@ -27,7 +27,8 @@ gint
 chafa_calc_cell_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *color_pair, const guint8 *cov)
 {
     guint32 cpair_u32 [2];
-    __m128i err = { 0 };
+    const __m128i rgb_mask = _mm_set_epi32 (0, -1, -1, -1);
+    __m128i err = _mm_setzero_si128 ();
     gint i;
 
     cpair_u32 [0] = chafa_color8_to_u32 (color_pair->colors [0]);
@@ -40,9 +41,13 @@ chafa_calc_cell_error_sse41 (const ChafaPixel *pixels, const ChafaColorPair *col
         t0 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (chafa_color8_to_u32 (pixels [i].col)));
         t1 = _mm_cvtepu8_epi32 (_mm_cvtsi32_si128 (cpair_u32 [cov [i]]));
 
-        t = t0 - t1;
+        t = _mm_sub_epi32 (t0, t1);
+
+        /* Drop the alpha lane */
+        t = _mm_and_si128 (t, rgb_mask);
+
         t = _mm_mullo_epi32 (t, t);
-        err += t;
+        err = _mm_add_epi32 (err, t);
     }
 
     /* FIXME: Perhaps not ideal */
