@@ -533,6 +533,8 @@ case "$host" in
     ;;
 esac
 
+AC_SUBST(CHAFA_VISIBILITY_CFLAGS)
+
 dnl
 dnl We're not picky about floating point behavior, and this makes e.g.
 dnl lrintf() a lot faster.
