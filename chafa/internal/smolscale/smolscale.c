@@ -15,15 +15,10 @@
 /* The box algorithms are only sufficiently precise when
  * src_dim > dest_dim * 5, and box_64bpp only starts outperforming
  * bilinear+halving at much higher ratios (with SIMD). We hand off
- * bilinear at a non-^2 factor for continuity; an exact area average
- * over an R-pixel span at fractional subpixel phase needs R+1 taps,
- * while the 2H kernel's support is R*3/4 + 2, so it falls short by
- * R/4 - 1 pixels. The missing fraction shows up as phase-dependent
- * shimmer under subpixel placement and motion, worst near the top of
- * the band (approaching a full pixel at 8x, where a Nyquist grating
- * can swing the output by 180/255). Box carries fractional span ends
- * natively, making it both phase-exact and position-continuous, so it
- * takes over where the tent kernel's tap budget runs out.
+ * from bilinear at a non-^2 factor to maximize continuity at fractional
+ * subpixel phases. Box carries fractional span ends natively, making
+ * it both phase-exact and position-continuous. The factor is determined
+ * experimentally.
  *
  * The cutoff cannot exceed 16, as we don't support bilinear filters
  * with more than three halvings (8x2 taps). */
@@ -1581,7 +1576,7 @@ precalc_entries_for_dim (const SmolDim *dim)
 }
 
 /* Validates the user-facing parameters shared by all entry points. Returns
- * 1 if they're usable, 0 otherwise (whereafter the caller fails gracefully).
+ * 1 if they're usable, 0 otherwise.
  *
  * dest_pixels is intentionally not checked here; the batch APIs allow it to
  * be NULL at init time and supplied later via smol_scale_batch_full(). */

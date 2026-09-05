@@ -195,16 +195,10 @@ precalc_boxes_array (uint32_t *array,
     stride = frac_stepF / (uint64_t) SMOL_BIG_MUL;
     f = (frac_stepF / SMOL_SMALL_MUL) % SMOL_SMALL_MUL;
 
-    /* Floor division by (b + 1) guarantees the normalization always
-     * undershoots: 255 * span_step <= 256 * (b + 1) - 1, so accum *
-     * span_mul stays below vmax * SMOL_BOXES_MULTIPLIER and the
-     * + SMOL_BOXES_MULTIPLIER / 2 rounding in scale_64bpp() /
-     * scale_128bpp_half() can never push a lane past its canonical
-     * maximum. Rounding this division to nearest instead can overshoot
-     * for spans beyond ~570 px, spilling the premul16 alpha lane past
-     * 0xffff, which the compositor would read back as alpha 0. The
-     * undershoot costs under 1 LSB (16-bit) at ratios below 256x. */
-
+    /* Floor division by (b + 1) to ensure undershoot. Rounding this division
+     * to nearest instead can overshoot for spans beyond ~570px, pushing the
+     * premul16 alpha lane past 0xffff. The undershoot costs under 1 LSB
+     * (16-bit) at ratios below 256x. */
     a = (SMOL_BOXES_MULTIPLIER * 255);
     b = ((stride * 255) + ((f * 255) / 256));
     *span_step = frac_stepF / SMOL_SMALL_MUL;
@@ -383,12 +377,11 @@ static SMOL_INLINE void
 premul_u_to_p8_128bpp (uint64_t * SMOL_RESTRICT inout,
                        uint16_t alpha)
 {
-    /* ((c + 1) * (alpha + 1) - 1) >> 8 = (c*alpha + c + alpha) >> 8.
+    /* ((c + 1) * (alpha + 1) - 1) >> 8 = (c * alpha + c + alpha) >> 8.
      * Closer to a round-to-nearest c*alpha/255 than the simpler
-     * (c*(alpha+1)) >> 8: at random (c, alpha), it produces a 0-error
+     * (c*(alpha+1)) >> 8: At random (c, alpha), it produces a 0-error
      * round-trip in ~50% of cases vs ~17% for truncation, and the LUT in
-     * smolscale.c is tuned to invert exactly this form. The constant is
-     * added/subtracted in each packed channel slot. */
+     * smolscale.c is tuned to invert exactly this form. */
 
     inout [0] = (((inout [0] + 0x0000000100000001) * (alpha + 1) - 0x0000000100000001)
                  >> 8) & 0x000000ff000000ff;
@@ -511,14 +504,6 @@ unpremul_p16l_to_ul_128bpp (const uint64_t * SMOL_RESTRICT in,
      | (SHIFT_S ((in [((b) - 1) >> 1]), (((b) - 1) & 1) * 32 + 24 - 40) & 0x00ff0000) \
      | (SHIFT_S ((in [((c) - 1) >> 1]), (((c) - 1) & 1) * 32 + 24 - 48) & 0x0000ff00) \
      | (SHIFT_S ((in [((d) - 1) >> 1]), (((d) - 1) & 1) * 32 + 24 - 56) & 0x000000ff))
-
-#define SWAP_2_AND_3(n) ((n) == 2 ? 3 : (n) == 3 ? 2 : n)
-
-#define PACK_FROM_1324_64BPP(in, a, b, c, d) \
-    ((SHIFT_S ((in), (SWAP_2_AND_3 (a) - 1) * 16 + 8 - 32) & 0xff000000) \
-     | (SHIFT_S ((in), (SWAP_2_AND_3 (b) - 1) * 16 + 8 - 40) & 0x00ff0000) \
-     | (SHIFT_S ((in), (SWAP_2_AND_3 (c) - 1) * 16 + 8 - 48) & 0x0000ff00) \
-     | (SHIFT_S ((in), (SWAP_2_AND_3 (d) - 1) * 16 + 8 - 56) & 0x000000ff))
 
 /* ---------------------- *
  * Repacking: 24/32 -> 64 *
@@ -3957,7 +3942,7 @@ composite_over_dest_p8_64bpp_span (const uint64_t *src_row,
             s = ((s * opacity) >> SMOL_OPACITY_SHIFT) & 0x00ff00ff00ff00ffULL;
 
         a = s & 0xff;
-        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
 
         /* The raw-alpha p8 encoding wants dest weighted by (255 - a) / 255
          * exactly, or dest decays with repeated compositing:
@@ -4012,9 +3997,9 @@ composite_over_dest_p8_128bpp_span (const uint64_t *src_row,
         /* Same exact rounded /255 dest weighting as the 64bpp variant;
          * per-lane t < 2^17, so the neighboring lane's spill lands at
          * bit >= 24 and the mask clears it. */
-        t0 = dest_row [i]     * w + 0x0000008000000080ULL;
+        t0 = dest_row [i] * w + 0x0000008000000080ULL;
         t1 = dest_row [i + 1] * w + 0x0000008000000080ULL;
-        dest_row [i]     = s0 * nz
+        dest_row [i] = s0 * nz
             + (((t0 + ((t0 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
         dest_row [i + 1] = s1 * nz
             + (((t1 + ((t1 >> 8) & 0x00ffffff00ffffffULL)) >> 8) & 0x00ffffff00ffffffULL);
@@ -4057,8 +4042,8 @@ composite_over_dest_p16_128bpp_span (const uint64_t *src_row,
         }
 
         a = (s1 >> 8) & 0xff;
-        nz = (a + 0xffULL) >> 8;    /* 0 if a == 0, else 1 */
-        w = 0x100 - a - nz;         /* 256 when a == 0, else 255 - a */
+        nz = (a + 0xffULL) >> 8;  /* 0 if a == 0, else 1 */
+        w = 0x100 - a - nz;  /* 256 when a == 0, else 255 - a */
 
         /* The (alpha + 1) premultiplied encoding wants dest weighted by
          * (255 - a) / 256, rounded to nearest so repeated compositing
@@ -4066,8 +4051,8 @@ composite_over_dest_p16_128bpp_span (const uint64_t *src_row,
          * dest through bit-exactly, and s * nz cancels the source's
          * un-zeroed premul color. Lane products stay below 2^32, so
          * nothing carries across lanes. */
-        dest_row [i]     = s0 * nz + (((dest_row [i]     * w + 0x0000008000000080ULL) >> 8)
-                                      & 0x00ffffff00ffffffULL);
+        dest_row [i] = s0 * nz + (((dest_row [i] * w + 0x0000008000000080ULL) >> 8)
+                                  & 0x00ffffff00ffffffULL);
         dest_row [i + 1] = s1 * nz + (((dest_row [i + 1] * w + 0x0000008000000080ULL) >> 8)
                                       & 0x00ffffff00ffffffULL);
     }
