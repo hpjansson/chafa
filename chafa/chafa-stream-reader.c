@@ -74,6 +74,10 @@ struct ChafaStreamReader
 
     guint is_console : 1;
 
+    /* TRUE if the caller supplied a token separator, i.e. consumes tokens
+     * with chafa_stream_reader_read_token () rather than raw bytes. */
+    guint is_token_stream : 1;
+
     /* TRUE if EOF event was seen on input FD */
     guint eof_seen : 1;
 
@@ -186,7 +190,12 @@ read_from_stream (ChafaStreamReader *stream_reader, guchar *out, gint max)
         saved_errno = errno;
         g_unix_set_fd_nonblocking (stream_reader->fd, FALSE, NULL);
 
-        if (result < 1)
+        if (result == 0)
+        {
+            /* EOF */
+            result = -1;
+        }
+        else if (result < 0)
         {
             result = (saved_errno == EAGAIN || saved_errno == EINTR) ? 0 : -1;
         }
@@ -314,6 +323,7 @@ chafa_stream_reader_init (ChafaStreamReader *stream_reader, gint fd,
 
     if (token_separator && token_separator_len > 0)
     {
+        stream_reader->is_token_stream = TRUE;
         stream_reader->token_separator = g_memdup (token_separator, token_separator_len);
         stream_reader->token_separator_len = token_separator_len;
     }
@@ -513,10 +523,37 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
     return result;
 }
 
+/* TRUE if a read call would return something or we hit EOF/shutdown. A token
+ * stream needs a complete token, otherwise waiting on it would spin. */
+static gboolean
+have_data_locked (ChafaStreamReader *stream_reader)
+{
+    if (stream_reader->eof_seen || stream_reader->shutdown_done)
+        return TRUE;
+
+    if (stream_reader->is_token_stream)
+        return chafa_byte_fifo_search (stream_reader->fifo,
+                                       stream_reader->token_separator,
+                                       stream_reader->token_separator_len,
+                                       &stream_reader->token_restart_pos) >= 0;
+
+    return chafa_byte_fifo_get_len (stream_reader->fifo) > 0;
+}
+
+/* Wait until a read call would return something, or until the stream has
+ * ended. Caller holds mutex. Returns FALSE on timeout, TRUE otherwise. */
 static gboolean
 chafa_stream_reader_wait_until_locked (ChafaStreamReader *stream_reader, gint64 end_time_us)
 {
-    return g_cond_wait_until (&stream_reader->cond, &stream_reader->mutex, end_time_us);
+    while (!have_data_locked (stream_reader))
+    {
+        if (end_time_us < 0)
+            g_cond_wait (&stream_reader->cond, &stream_reader->mutex);
+        else if (!g_cond_wait_until (&stream_reader->cond, &stream_reader->mutex, end_time_us))
+            return FALSE;
+    }
+
+    return TRUE;
 }
 
 gboolean
@@ -547,12 +584,6 @@ chafa_stream_reader_wait (ChafaStreamReader *stream_reader, gint timeout_ms)
 
     g_mutex_lock (&stream_reader->mutex);
 
-    if (stream_reader->shutdown_done)
-    {
-        g_mutex_unlock (&stream_reader->mutex);
-        return;
-    }
-
     if (timeout_ms > 0)
     {
         gint64 end_time_us = g_get_monotonic_time () + timeout_ms * 1000;
@@ -560,7 +591,7 @@ chafa_stream_reader_wait (ChafaStreamReader *stream_reader, gint timeout_ms)
     }
     else
     {
-        g_cond_wait (&stream_reader->cond, &stream_reader->mutex);
+        chafa_stream_reader_wait_until_locked (stream_reader, -1);
     }
 
     g_mutex_unlock (&stream_reader->mutex);
