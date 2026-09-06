@@ -2372,7 +2372,9 @@ chicle_parse_options (int *argc, char **argv [])
     {
         options.args = collect_variable_arguments (argc, argv, 1);
     }
-    else if (global_path_queue_n_stdin < 1 && !isatty (STDIN_FILENO))
+    else if (global_path_queue_n_stdin < 1
+             && chicle_path_queue_get_length (global_path_queue) == 0
+             && !isatty (STDIN_FILENO))
     {
         /* Receiving data through a pipe, and no file arguments. Act as if
          * invoked with "chafa -". */
