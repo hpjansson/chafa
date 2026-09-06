@@ -27,7 +27,8 @@ G_BEGIN_DECLS
 
 typedef struct JpegLoader JpegLoader;
 
-JpegLoader *chicle_jpeg_loader_new_from_mapping (ChicleFileMapping *mapping);
+JpegLoader *chicle_jpeg_loader_new_from_mapping (ChicleFileMapping *mapping,
+                                                 gint target_width, gint target_height);
 void chicle_jpeg_loader_destroy (JpegLoader *loader);
 
 gboolean chicle_jpeg_loader_get_is_animation (JpegLoader *loader);

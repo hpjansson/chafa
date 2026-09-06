@@ -314,8 +314,40 @@ convert_cmyk_row_to_rgb (const guchar *cmyk, guchar *rgb, gint width)
         convert_cmyk_pixel_to_rgb (cmyk + 4 * i, rgb + 3 * i);
 }
 
+/* If we're outputting to a much smaller target, use DCT scaling and save a
+ * bunch of effort */
+static void
+select_dct_scaling (struct jpeg_decompress_struct *cinfo,
+                    gint target_width, gint target_height)
+{
+    gdouble ratio;
+    guint denom;
+
+    if (target_width < 1 || target_height < 1
+        || cinfo->image_width < 1 || cinfo->image_height < 1)
+        return;
+
+    /* Use the larger output dimension */
+    ratio = MAX (cinfo->image_width / (gdouble) target_width,
+                 cinfo->image_height / (gdouble) target_height);
+
+    /* Stick to fractions with libjpeg-turbo fast paths */
+    if (ratio >= 8.0)
+        denom = 8;
+    else if (ratio >= 4.0)
+        denom = 4;
+    else if (ratio >= 2.0)
+        denom = 2;
+    else
+        return;
+
+    cinfo->scale_num = 1;
+    cinfo->scale_denom = denom;
+}
+
 JpegLoader *
-chicle_jpeg_loader_new_from_mapping (ChicleFileMapping *mapping)
+chicle_jpeg_loader_new_from_mapping (ChicleFileMapping *mapping,
+                                     gint target_width, gint target_height)
 {
     guint width, height;
     guint rowstride;
@@ -381,6 +413,7 @@ chicle_jpeg_loader_new_from_mapping (ChicleFileMapping *mapping)
 
     cinfo.output_components = 3;
 
+    select_dct_scaling (&cinfo, target_width, target_height);
     jpeg_start_decompress (&cinfo);
 
     width = cinfo.output_width;
