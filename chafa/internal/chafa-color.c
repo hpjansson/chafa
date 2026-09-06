@@ -83,7 +83,7 @@ ChafaColorLab;
 static gdouble
 invert_rgb_channel_compand (gdouble v)
 {
-    return v <= 0.04045 ? (v / 12.92) : pow ((v + 0.055) / 1.044, 2.4);
+    return v <= 0.04045 ? (v * (1.0 / 12.92)) : pow ((v + 0.055) * (1.0 / 1.044), 2.4);
 }
 
 static void
@@ -94,7 +94,7 @@ convert_rgb_to_xyz (const ChafaColor *rgbi, ChafaColorXYZ *xyz)
 
     for (i = 0; i < 3; i++)
     {
-        rgbf.c [i] = (gdouble) rgbi->ch [i] / 255.0;
+        rgbf.c [i] = (gdouble) rgbi->ch [i] * (1.0 / 255.0);
         rgbf.c [i] = invert_rgb_channel_compand (rgbf.c [i]);
     }
 
@@ -109,18 +109,18 @@ convert_rgb_to_xyz (const ChafaColor *rgbi, ChafaColorXYZ *xyz)
 static gdouble
 lab_f (gdouble v)
 {
-    return v > XYZ_EPSILON ? cbrt (v) : (XYZ_KAPPA * v + 16.0) / 116.0;
+    return v > XYZ_EPSILON ? cbrt (v) : (XYZ_KAPPA * v + 16.0) * (1.0 / 116.0);
 }
 
 static void
 convert_xyz_to_lab (const ChafaColorXYZ *xyz, ChafaColorLab *lab)
 {
-    ChafaColorXYZ wp = { { 0.95047, 1.0, 1.08883 } };  /* D65 white point */
+    ChafaColorXYZ wp_inv = { { 1.0 / 0.95047, 1.0, 1.0 / 1.08883 } };  /* Inverse D65 white point */
     ChafaColorXYZ xyz2;
     gint i;
 
     for (i = 0; i < 3; i++)
-        xyz2.c [i] = lab_f (xyz->c [i] / wp.c [i]);
+        xyz2.c [i] = lab_f (xyz->c [i] * wp_inv.c [i]);
 
     lab->c [0] = 116.0 * xyz2.c [1] - 16.0;
     lab->c [1] = 500.0 * (xyz2.c [0] - xyz2.c [1]);
