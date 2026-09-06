@@ -19,21 +19,64 @@
 
 #include "config.h"
 
-#include <string.h>  /* memcpy */
 #include "internal/chafa-pca.h"
 
 #define PCA_POWER_MAX_ITERATIONS 1000
-#define PCA_POWER_MIN_ERROR 0.0001f
 
+/* Stop when the residual has dropped to this fraction of the eigenvalue */
+#define PCA_POWER_REL_ERROR 1e-5f
+
+typedef struct
+{
+    gfloat m [3] [3];
+}
+Matrix33f32;
+
+/* Symmetric matrix, mul in upper matrix triangle */
+static void
+matrix33_mul_vec3_sym (ChafaVec3f32 *out, const Matrix33f32 *a, const ChafaVec3f32 *v)
+{
+    out->v [0] = a->m [0] [0] * v->v [0] + a->m [0] [1] * v->v [1] + a->m [0] [2] * v->v [2];
+    out->v [1] = a->m [0] [1] * v->v [0] + a->m [1] [1] * v->v [1] + a->m [1] [2] * v->v [2];
+    out->v [2] = a->m [0] [2] * v->v [0] + a->m [1] [2] * v->v [1] + a->m [2] [2] * v->v [2];
+}
+
+/* Accumulate the scatter matrix  */
+static void
+matrix33_scatter_vec3_sym (Matrix33f32 *out, const ChafaVec3f32 *vecs, gint n_vecs, const ChafaVec3f32 *average)
+{
+    gfloat xx = .0f, xy = .0f, xz = .0f, yy = .0f, yz = .0f, zz = .0f;
+    gint i;
+
+    for (i = 0; i < n_vecs; i++)
+    {
+        gfloat x = vecs [i].v [0] - average->v [0];
+        gfloat y = vecs [i].v [1] - average->v [1];
+        gfloat z = vecs [i].v [2] - average->v [2];
+
+        xx += x * x;
+        xy += x * y;
+        xz += x * z;
+        yy += y * y;
+        yz += y * z;
+        zz += z * z;
+    }
+
+    out->m [0] [0] = xx;
+    out->m [0] [1] = xy;
+    out->m [0] [2] = xz;
+    out->m [1] [1] = yy;
+    out->m [1] [2] = yz;
+    out->m [2] [2] = zz;
+}
+
+/* Power iteration on the scatter matrix */
 static gfloat
-pca_converge (const ChafaVec3f32 *vecs_in, gint n_vecs,
-              ChafaVec3f32 *eigenvector_out)
+pca_converge (const Matrix33f32 *a, ChafaVec3f32 *eigenvector_out)
 {
     ChafaVec3f32 r = CHAFA_VEC3F32_INIT (.11, .23, .51);
-    gfloat eigenvalue;
-    gint i, j;
-
-    /* Power iteration */
+    gfloat eigenvalue = .0f;
+    gint j;
 
     /* FIXME: r should probably be random, and we should try again
      * if we pick a bad one */
@@ -42,29 +85,26 @@ pca_converge (const ChafaVec3f32 *vecs_in, gint n_vecs,
 
     for (j = 0; j < PCA_POWER_MAX_ITERATIONS; j++)
     {
-        ChafaVec3f32 s = CHAFA_VEC3F32_INIT_ZERO;
-        ChafaVec3f32 t;
+        ChafaVec3f32 s, t;
         gfloat err;
 
-        for (i = 0; i < n_vecs; i++)
-        {
-            gfloat u;
-
-            u = chafa_vec3f32_dot (&vecs_in [i], &r);
-            chafa_vec3f32_mul_scalar (&t, &vecs_in [i], u);
-            chafa_vec3f32_add (&s, &s, &t);
-        }
-
+        matrix33_mul_vec3_sym (&s, a, &r);
         eigenvalue = chafa_vec3f32_dot (&r, &s);
+
+        if (eigenvalue <= .0f)
+        {
+            /* Identical vectors; bail out */
+            eigenvalue = .0f;
+            break;
+        }
 
         chafa_vec3f32_mul_scalar (&t, &r, eigenvalue);
         chafa_vec3f32_sub (&t, &t, &s);
         err = chafa_vec3f32_get_magnitude (&t);
 
-        chafa_vec3f32_copy (&r, &s);
-        chafa_vec3f32_normalize (&r, &r);
+        chafa_vec3f32_normalize (&r, &s);
 
-        if (err < PCA_POWER_MIN_ERROR)
+        if (err <= eigenvalue * PCA_POWER_REL_ERROR)
             break;
     }
 
@@ -72,38 +112,28 @@ pca_converge (const ChafaVec3f32 *vecs_in, gint n_vecs,
     return eigenvalue;
 }
 
+/* Deflate the scatter matrix */
 static void
-pca_deflate (ChafaVec3f32 *vecs, gint n_vecs, const ChafaVec3f32 *eigenvector)
+pca_deflate (Matrix33f32 *a, gfloat eigenvalue, const ChafaVec3f32 *e)
 {
-    gint i;
-
-    /* Calculate scores, reconstruct with scores and eigenvector,
-     * then subtract from original vectors to generate residuals.
-     * We should be able to get the next component from those. */
-
-    for (i = 0; i < n_vecs; i++)
-    {
-        ChafaVec3f32 t;
-        gfloat score;
-
-        score = chafa_vec3f32_dot (&vecs [i], eigenvector);
-        chafa_vec3f32_mul_scalar (&t, eigenvector, score);
-        chafa_vec3f32_sub (&vecs [i], &vecs [i], &t);
-    }
+    a->m [0] [0] -= eigenvalue * e->v [0] * e->v [0];
+    a->m [0] [1] -= eigenvalue * e->v [0] * e->v [1];
+    a->m [0] [2] -= eigenvalue * e->v [0] * e->v [2];
+    a->m [1] [1] -= eigenvalue * e->v [1] * e->v [1];
+    a->m [1] [2] -= eigenvalue * e->v [1] * e->v [2];
+    a->m [2] [2] -= eigenvalue * e->v [2] * e->v [2];
 }
 
 /**
  * chafa_vec3f32_array_compute_pca:
  * @vecs_in: Input vector array
  * @n_vecs: Number of vectors in array
- * @n_components: Number of components to compute (1 or 2)
+ * @n_components: Number of components to compute (1 to 3)
  * @eigenvectors_out: Pointer to array to store n_components eigenvectors in, or NULL
  * @eigenvalues_out: Pointer to array to store n_components eigenvalues in, or NULL
  * @average_out: Pointer to a vector to store array average (for centering), or NULL
  *
- * Compute principal components from an array of 3D vectors. This
- * implementation is naive and probably not that fast, but it should
- * be good enough for our purposes.
+ * Compute principal components from an array of 3D vectors.
  **/
 void
 chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
@@ -112,51 +142,33 @@ chafa_vec3f32_array_compute_pca (const ChafaVec3f32 *vecs_in, gint n_vecs,
                                  gfloat *eigenvalues_out,
                                  ChafaVec3f32 *average_out)
 {
-    ChafaVec3f32 *v;
     ChafaVec3f32 average;
-    ChafaVec3f32 t;
-    gfloat eigenvalue;
+    Matrix33f32 a;
     gint i;
 
-    v = g_malloc (n_vecs * sizeof (ChafaVec3f32));
-    memcpy (v, vecs_in, n_vecs * sizeof (ChafaVec3f32));
+    g_assert (n_components >= 1 && n_components <= 3);
 
-    /* Calculate average */
-
-    chafa_vec3f32_average_array (&average, v, n_vecs);
-
-    /* Recenter around average */
-
-    chafa_vec3f32_set_zero (&t);
-    chafa_vec3f32_sub (&t, &t, &average);
-    chafa_vec3f32_add_to_array (v, &t, n_vecs);
-
-    /* Compute principal components */
+    chafa_vec3f32_average_array (&average, vecs_in, n_vecs);
+    matrix33_scatter_vec3_sym (&a, vecs_in, n_vecs, &average);
 
     for (i = 0; ; )
     {
-        eigenvalue = pca_converge (v, n_vecs, &t);
+        ChafaVec3f32 e;
+        gfloat eigenvalue;
+
+        eigenvalue = pca_converge (&a, &e);
 
         if (eigenvectors_out)
-        {
-            chafa_vec3f32_copy (eigenvectors_out, &t);
-            eigenvectors_out++;
-        }
-
+            chafa_vec3f32_copy (&eigenvectors_out [i], &e);
         if (eigenvalues_out)
-        {
-            *eigenvalues_out = eigenvalue;
-            eigenvalues_out++;
-        }
+            eigenvalues_out [i] = eigenvalue;
 
         if (++i >= n_components)
             break;
 
-        pca_deflate (v, n_vecs, &t);
+        pca_deflate (&a, eigenvalue, &e);
     }
 
     if (average_out)
         chafa_vec3f32_copy (average_out, &average);
-
-    g_free (v);
 }
