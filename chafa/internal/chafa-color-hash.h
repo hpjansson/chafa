@@ -36,7 +36,7 @@ G_BEGIN_DECLS
  * Bigger tables cost more to prefill for every image, and past a few
  * megabytes they start fighting for the last-level cache. */
 #define CHAFA_COLOR_HASH_MIN_BUCKETS_SHIFT 10
-#define CHAFA_COLOR_HASH_MAX_BUCKETS_SHIFT 18
+#define CHAFA_COLOR_HASH_MAX_BUCKETS_SHIFT 16
 
 /* The table may be shared by threads without locking. As long as 32-bit
  * loads and stores are free from tearing, the worst that can happen is that
