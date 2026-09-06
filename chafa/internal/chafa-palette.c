@@ -479,8 +479,7 @@ find_nearest (PnnBin *bins, PnnBinIndex index, const ChafaVec3f32 *rgb_weights)
         chafa_vec3f32_sub (&tv, &bins [i].accum.f, &bin1->accum.f);
         chafa_vec3f32_hadamard (&tv, &tv, &tv);
         chafa_vec3f32_hadamard (&tv, &tv, rgb_weights);
-        chafa_vec3f32_mul_scalar (&tv, &tv, nerr2 * (1 - RATIO));
-        nerr += chafa_vec3f32_sum_to_scalar (&tv);
+        nerr += nerr2 * (1 - RATIO) * chafa_vec3f32_sum_to_scalar (&tv);
         if (nerr >= err)
             continue;
 
@@ -489,8 +488,7 @@ find_nearest (PnnBin *bins, PnnBinIndex index, const ChafaVec3f32 *rgb_weights)
             chafa_vec3f32_sub (&tv, &bins [i].accum.f, &bin1->accum.f);
             chafa_vec3f32_hadamard (&tv, &tv, &pnn_coeffs [j]);
             chafa_vec3f32_hadamard (&tv, &tv, &tv);
-            chafa_vec3f32_mul_scalar (&tv, &tv, nerr2 * RATIO);
-            nerr += chafa_vec3f32_sum_to_scalar (&tv);
+            nerr += nerr2 * RATIO * chafa_vec3f32_sum_to_scalar (&tv);
             if (nerr >= err)
                 break;
         }
