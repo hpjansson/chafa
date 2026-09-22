@@ -919,7 +919,7 @@ clean_up (ChafaPalette *palette_out)
 
     g_assert (palette_out->n_colors >= 0 && palette_out->n_colors <= 256);
 
-    if (palette_out->transparent_index < 256)
+    if (palette_out->transparent_index < palette_out->n_colors)
     {
         if (palette_out->n_colors < 256)
         {
