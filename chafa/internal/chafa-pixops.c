@@ -224,7 +224,25 @@ fs_dither_grain (const ChafaDither *dither,
     ChafaColor acol;
     const ChafaColor *col;
     gint index;
+    gint alpha_sum = 0;
     gint x, y, i;
+
+    /* Leave the BG flat (e.g. padding) */
+
+    p = pixel;
+
+    for (y = 0; y < grain_height; y++)
+    {
+        for (x = 0; x < grain_width; x++, p++)
+            alpha_sum += p->col.ch [3];
+
+        p += image_width - grain_width;
+    }
+
+    if (alpha_sum == 0)
+        return;
+
+    /* Apply dither */
 
     p = pixel;
 
@@ -470,6 +488,15 @@ prepare_pixels_1_inner (PreparePixelsBatch1Ret *ret,
                         ChafaPixel *pixel)
 {
     ChafaColor *col = &pixel->col;
+
+    if (col->ch [3] == 0)
+    {
+        /* Make sure transparency carries BG color for correct alpha
+         * thresholding. */
+        col->ch [0] = prep_ctx->bg_color_rgb.ch [0];
+        col->ch [1] = prep_ctx->bg_color_rgb.ch [1];
+        col->ch [2] = prep_ctx->bg_color_rgb.ch [2];
+    }
 
     if (prep_ctx->preprocessing_enabled
         && (prep_ctx->palette_type == CHAFA_PALETTE_TYPE_FIXED_16

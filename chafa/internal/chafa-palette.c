@@ -1026,6 +1026,7 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gsize n
                         ChafaColorSpace color_space, gfloat quality)
 {
     const QualityParams *params;
+    ChafaColor bg;
     gsize step;
 
     if (palette_out->type != CHAFA_PALETTE_TYPE_DYNAMIC_256)
@@ -1050,10 +1051,16 @@ chafa_palette_generate (ChafaPalette *palette_out, gconstpointer pixels, gsize n
     palette_out->n_colors = pnn_palette (palette_out,
                                          pixels,
                                          n_pixels,
-                                         255,
+                                         254, /* One pen is kept for the BG */
                                          params->bits_per_ch,
                                          step,
-                                         palette_out->alpha_threshold);
+                                         MAX (palette_out->alpha_threshold, 1));
+
+    /* Append BG color to the dynamic 0-255 range */
+    bg = palette_out->colors [CHAFA_PALETTE_INDEX_BG].col [CHAFA_COLOR_SPACE_RGB];
+    bg.ch [3] = 0xff;
+    palette_out->colors [palette_out->n_colors].col [CHAFA_COLOR_SPACE_RGB] = bg;
+    palette_out->n_colors++;
 
     /* Snap before deduplicating, so colors that would display the same
      * are exact duplicates */
