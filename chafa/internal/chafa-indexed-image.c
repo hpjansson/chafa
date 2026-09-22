@@ -77,6 +77,16 @@ post_scale_row (gpointer row_inout, int width, void *user_data)
     }
 }
 
+/* The palette's background color, opaque and in RGB */
+static ChafaColor
+get_bg_color (const ChafaPalette *palette)
+{
+    ChafaColor bg = *chafa_palette_get_color (palette, CHAFA_COLOR_SPACE_RGB, CHAFA_PALETTE_INDEX_BG);
+
+    bg.ch [3] = 0xff;
+    return bg;
+}
+
 static void
 draw_pixels_pass_1_worker (ChafaBatchInfo *batch, const DrawPixelsCtx *ctx)
 {
@@ -95,6 +105,10 @@ quantize_pixel (const ChafaPalette *palette, ChafaColorSpace color_space,
 
     if ((gint) (color.ch [3]) < chafa_palette_get_alpha_threshold (palette))
         return chafa_palette_get_transparent_index (palette);
+
+    /* Fully transparent must carry the BG color for alpha thresholding */
+    if (color.ch [3] == 0)
+        color = get_bg_color (palette);
 
     /* Sixel color resolution is only slightly less than 7 bits per channel,
      * so eliminate the low-order bits to get better hash performance. Also
@@ -138,6 +152,9 @@ quantize_pixel_with_error (const ChafaPalette *palette, ChafaColorSpace color_sp
 
         return chafa_palette_get_transparent_index (palette);
     }
+
+    if (color.ch [3] == 0)
+        color = get_bg_color (palette);
 
     if (color_space == CHAFA_COLOR_SPACE_DIN99D)
         chafa_color_rgb_to_din99d (&color, &color);
@@ -233,6 +250,16 @@ fs_dither_pixel (const DrawPixelsCtx *ctx, G_GNUC_UNUSED ChafaColorHash *chash,
 {
     ChafaColor col = chafa_color8_fetch_from_rgba8 (inpixel_p);
     guint8 index;
+
+    if (col.ch [3] == 0)
+    {
+        /* Keep transparency flat (for padding + alpha threshold) */
+        col = get_bg_color (&ctx->indexed_image->palette);
+        col.ch [3] = 0;
+        memset (&error_in, 0, sizeof (error_in));
+        return quantize_pixel_with_error (&ctx->indexed_image->palette, ctx->color_space,
+                                          col, &error_in);
+    }
 
     index = quantize_pixel_with_error (&ctx->indexed_image->palette, ctx->color_space, col, &error_in);
     distribute_error (error_in,
@@ -479,6 +506,8 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                                    CHAFA_COLOR_SPACE_RGB,
                                                    CHAFA_PALETTE_INDEX_BG));
 #endif
+
+    bg = get_bg_color (&indexed_image->palette);
 
     chafa_tuck_and_align (src_width, src_height,
                           dest_width, dest_height,
