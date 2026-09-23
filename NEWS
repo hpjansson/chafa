@@ -1,6 +1,36 @@
 Chafa releases
 ==============
 
+1.18.3 (2026-09-23)
+-------------------
+
+This is a bugfix release.
+
+* libheif 1.12.0 or later is now formally required for HEIF support. We were
+  already calling functions introduced in 1.9.0 and 1.12.0.
+
+* Sixels are no longer used inside tmux when the outer terminal can't display
+  them. tmux claims the capability on its own behalf regardless of what's
+  outside it, so we now ask what its client supports instead (github#348,
+  reported by Philip Gillißen).
+
+* Padding and fully transparent areas revealed by alpha thresholding are now
+  correctly painted in the flat background color instead of the closest match
+  (github#354, reported by @ismay-tue).
+
+* Bug fixes:
+  github#347  Alignment-induced crash on AMD/CachyOS (reported by Yousef Eslam
+              Mohamed and Leon Connor Holm).
+  [unfiled]   CLI: Hang when --files was used and standard input was a pipe.
+  [unfiled]   CLI: Potential busy-wait for a complete token from a file list.
+  [unfiled]   CLI: TIFF images decoded with wrong channel order on big-endian.
+  [unfiled]   CLI: Integer overflow in image loader size arithmetic (邹永赫).
+  [unfiled]   CLI: Unbounded allocation decoding GIF frames larger than the
+              file's logical extent.
+  [unfiled]   OOB read one entry past the end of the palette color table.
+  [unfiled]   Double free of the pixel canvas after chafa_canvas_new_similar().
+  [unfiled]   Spurious pen added to palettes with fewer than 255 colors.
+
 1.18.2 (2026-04-30)
 -------------------
 
