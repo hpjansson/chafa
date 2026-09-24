@@ -45,7 +45,7 @@ struct ChicleWebpLoader
     size_t file_data_len;
     gint width, height;
     ChafaPixelType pixel_type;
-    WebPAnimDecoder *anim_dec;
+    WebPAnimDecoder *anim_decoder;
     gpointer this_frame_data, next_frame_data;
     gint this_timestamp, next_timestamp;
     guint is_animation : 1;
@@ -54,7 +54,64 @@ struct ChicleWebpLoader
 static gboolean
 decode_next_frame (ChicleWebpLoader *loader, uint8_t **buf, int *timestamp)
 {
-    return WebPAnimDecoderGetNext (loader->anim_dec, buf, timestamp);
+    if (!loader->anim_decoder)
+        return FALSE;
+    return WebPAnimDecoderGetNext (loader->anim_decoder, buf, timestamp);
+}
+
+/* Optimized decoding for stills. These decode straight into our buffer,
+ * and we allow libwebp to downscale on the fly by 1/2, 1/4 or 1/8, which
+ * allows it to skip some work. */
+static gboolean
+decode_still (ChicleWebpLoader *loader, const WebPBitstreamFeatures *features,
+              gint target_width, gint target_height)
+{
+    WebPDecoderConfig config;
+    gint out_width = features->width, out_height = features->height;
+    gsize frame_size;
+
+    if (!WebPInitDecoderConfig (&config))
+        return FALSE;
+
+    if (target_width > 0 && target_height > 0)
+    {
+        gdouble ratio = MAX (features->width / (gdouble) target_width,
+                             features->height / (gdouble) target_height);
+        gint denom = ratio >= 8.0 ? 8 : ratio >= 4.0 ? 4 : ratio >= 2.0 ? 2 : 1;
+
+        if (denom > 1)
+        {
+            out_width = (features->width + denom - 1) / denom;
+            out_height = (features->height + denom - 1) / denom;
+            config.options.use_scaling = 1;
+            config.options.scaled_width = out_width;
+            config.options.scaled_height = out_height;
+        }
+    }
+
+    config.options.use_threads = 1;
+
+    if (!chicle_checked_image_buffer_size (out_width, out_height, BYTES_PER_PIXEL,
+                                          IMAGE_BUFFER_SIZE_MAX, &frame_size))
+        return FALSE;
+
+    loader->this_frame_data = g_malloc (frame_size);
+    config.output.colorspace = MODE_RGBA;
+    config.output.is_external_memory = 1;
+    config.output.u.RGBA.rgba = loader->this_frame_data;
+    config.output.u.RGBA.stride = out_width * BYTES_PER_PIXEL;
+    config.output.u.RGBA.size = frame_size;
+
+    if (WebPDecode (loader->file_data, loader->file_data_len, &config) != VP8_STATUS_OK)
+    {
+        g_free (loader->this_frame_data);
+        loader->this_frame_data = NULL;
+        return FALSE;
+    }
+
+    loader->width = out_width;
+    loader->height = out_height;
+    return TRUE;
 }
 
 static gboolean
@@ -85,12 +142,13 @@ chicle_webp_loader_new (void)
 }
 
 ChicleWebpLoader *
-chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping)
+chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping,
+                                     gint target_width, gint target_height)
 {
     ChicleWebpLoader *loader = NULL;
     gboolean success = FALSE;
     WebPBitstreamFeatures features;
-    WebPAnimDecoderOptions anim_dec_options;
+    WebPAnimDecoderOptions anim_decoder_options;
     WebPData webp_data;
     WebPAnimInfo anim_info;
 
@@ -115,22 +173,33 @@ chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping)
     if (WebPGetFeatures (loader->file_data, loader->file_data_len, &features) != VP8_STATUS_OK)
         goto out;
 
+    /* Fast path for still images */
+
+    if (!features.has_animation)
+    {
+        loader->pixel_type = features.has_alpha ? CHAFA_PIXEL_RGBA8_UNASSOCIATED : CHAFA_PIXEL_RGBA8_PREMULTIPLIED;
+        if (!decode_still (loader, &features, target_width, target_height))
+            goto out;
+        success = TRUE;
+        goto out;
+    }
+
     /* Set up the animation decoder */
 
     webp_data.bytes = loader->file_data;
     webp_data.size = loader->file_data_len;
 
-    WebPAnimDecoderOptionsInit (&anim_dec_options);
-    anim_dec_options.color_mode = MODE_RGBA;
-    anim_dec_options.use_threads = TRUE;
+    WebPAnimDecoderOptionsInit (&anim_decoder_options);
+    anim_decoder_options.color_mode = MODE_RGBA;
+    anim_decoder_options.use_threads = TRUE;
 
-    loader->anim_dec = WebPAnimDecoderNew (&webp_data, &anim_dec_options);
-    if (!loader->anim_dec)
+    loader->anim_decoder = WebPAnimDecoderNew (&webp_data, &anim_decoder_options);
+    if (!loader->anim_decoder)
         goto out;
 
     /* Get animation info and validate */
 
-    if (!WebPAnimDecoderGetInfo (loader->anim_dec, &anim_info))
+    if (!WebPAnimDecoderGetInfo (loader->anim_decoder, &anim_info))
         goto out;
 
     if (anim_info.canvas_width < 1 || anim_info.canvas_width >= (1 << 28)
@@ -175,8 +244,8 @@ out:
 void
 chicle_webp_loader_destroy (ChicleWebpLoader *loader)
 {
-    if (loader->anim_dec)
-        WebPAnimDecoderDelete (loader->anim_dec);
+    if (loader->anim_decoder)
+        WebPAnimDecoderDelete (loader->anim_decoder);
 
     if (loader->mapping)
         chicle_file_mapping_destroy (loader->mapping);
@@ -256,7 +325,10 @@ chicle_webp_loader_goto_first_frame (ChicleWebpLoader *loader)
 {
     g_return_if_fail (loader != NULL);
 
-    WebPAnimDecoderReset (loader->anim_dec);
+    if (!loader->anim_decoder)
+        return;
+
+    WebPAnimDecoderReset (loader->anim_decoder);
     g_free (loader->this_frame_data);
     loader->this_frame_data = NULL;
     g_free (loader->next_frame_data);
@@ -278,5 +350,6 @@ chicle_webp_loader_goto_next_frame (ChicleWebpLoader *loader)
         return TRUE;
     }
 
-    return WebPAnimDecoderHasMoreFrames (loader->anim_dec) ? TRUE : FALSE;
+    return (loader->anim_decoder && WebPAnimDecoderHasMoreFrames (loader->anim_decoder))
+        ? TRUE : FALSE;
 }

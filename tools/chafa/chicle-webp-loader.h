@@ -27,7 +27,8 @@ G_BEGIN_DECLS
 
 typedef struct ChicleWebpLoader ChicleWebpLoader;
 
-ChicleWebpLoader *chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping);
+ChicleWebpLoader *chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping,
+                                                       gint target_width, gint target_height);
 void chicle_webp_loader_destroy (ChicleWebpLoader *loader);
 
 gboolean chicle_webp_loader_get_is_animation (ChicleWebpLoader *loader);
