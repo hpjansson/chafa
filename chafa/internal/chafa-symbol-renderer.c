@@ -509,18 +509,11 @@ apply_fill_fg_only (ChafaCanvas *canvas, const ChafaWorkCell *wcell, ChafaCanvas
 
     cell->bg_color = transparent_cell_color (canvas->config.canvas_mode);
 
-    /* FIXME: Do we care enough to weight channels properly here, or convert from DIN99d?
-     * Output looks acceptable without. Would have to check if it makes a noticeable
-     * difference. */
-    fg_value = (canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG].ch [0]
-                + canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG].ch [1]
-                + canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG].ch [2])
-               / 3;
-    bg_value = (canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG].ch [0]
-                + canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG].ch [1]
-                + canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG].ch [2])
-               / 3;
-    mean_value = (mean.ch [0] + mean.ch [1] + mean.ch [2]) / 3;
+    fg_value = chafa_color_brightness (&canvas->default_colors.colors [CHAFA_COLOR_PAIR_FG],
+                                       canvas->config.color_space);
+    bg_value = chafa_color_brightness (&canvas->default_colors.colors [CHAFA_COLOR_PAIR_BG],
+                                       canvas->config.color_space);
+    mean_value = chafa_color_brightness (&mean, canvas->config.color_space);
 
     n_bits = ((mean_value * 64) + 128) / 255;
     if (fg_value < bg_value)

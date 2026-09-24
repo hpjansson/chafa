@@ -170,6 +170,8 @@ chafa_color_level_to_channel (gint level, gint n_levels)
     return (level * 255 + (n_levels - 1) / 2) / (n_levels - 1);
 }
 
+gint chafa_color_brightness (const ChafaColor *col, ChafaColorSpace cs);
+
 G_END_DECLS
 
 #endif /* __CHAFA_COLOR_H__ */

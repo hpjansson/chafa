@@ -178,3 +178,12 @@ chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99)
     din99->ch [2] = din99d_ch_to_byte (C * sin (h) * 2.5 + 128.0);
     din99->ch [3] = rgb->ch [3];
 }
+
+gint
+chafa_color_brightness (const ChafaColor *col, ChafaColorSpace cs)
+{
+    if (cs == CHAFA_COLOR_SPACE_DIN99D)
+        return col->ch [0] * 255 / 250;
+
+    return (col->ch [0] + col->ch [1] + col->ch [2]) / 3;
+}
