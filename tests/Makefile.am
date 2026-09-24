@@ -19,6 +19,7 @@ check_PROGRAMS = \
 	byte-fifo-test \
 	canvas-test \
 	color-hash-test \
+	color-test \
 	loader-arithmetic-test \
 	palette-test \
 	term-info-test
@@ -31,6 +32,9 @@ canvas_test_SOURCES = \
 
 color_hash_test_SOURCES = \
 	color-hash-test.c
+
+color_test_SOURCES = \
+	color-test.c
 
 loader_arithmetic_test_SOURCES = \
 	loader-arithmetic-test.c \
@@ -63,6 +67,7 @@ TESTS = \
 	byte-fifo-test \
 	canvas-test \
 	color-hash-test \
+	color-test \
 	loader-arithmetic-test \
 	palette-test \
 	term-info-test \
