@@ -83,7 +83,7 @@ ChafaColorLab;
 static gdouble
 invert_rgb_channel_compand (gdouble v)
 {
-    return v <= 0.04045 ? (v * (1.0 / 12.92)) : pow ((v + 0.055) * (1.0 / 1.044), 2.4);
+    return v <= 0.04045 ? (v * (1.0 / 12.92)) : pow ((v + 0.055) * (1.0 / 1.055), 2.4);
 }
 
 static void
@@ -115,7 +115,12 @@ lab_f (gdouble v)
 static void
 convert_xyz_to_lab (const ChafaColorXYZ *xyz, ChafaColorLab *lab)
 {
-    ChafaColorXYZ wp_inv = { { 1.0 / 0.95047, 1.0, 1.0 / 1.08883 } };  /* Inverse D65 white point */
+    ChafaColorXYZ wp_inv =
+    {
+        { 1.0 / (1.12 * 0.95047 - 0.12 * 1.08883),
+          1.0,
+          1.0 / 1.08883 }
+    };
     ChafaColorXYZ xyz2;
     gint i;
 
@@ -125,6 +130,13 @@ convert_xyz_to_lab (const ChafaColorXYZ *xyz, ChafaColorLab *lab)
     lab->c [0] = 116.0 * xyz2.c [1] - 16.0;
     lab->c [1] = 500.0 * (xyz2.c [0] - xyz2.c [1]);
     lab->c [2] = 200.0 * (xyz2.c [1] - xyz2.c [2]);
+}
+
+static guint8
+din99d_ch_to_byte (gdouble v)
+{
+    gint i = (gint) (v + 0.5);
+    return (guint8) CLAMP (i, 0, 255);
 }
 
 void
@@ -155,14 +167,14 @@ chafa_color_rgb_to_din99d (const ChafaColor *rgb, ChafaColor *din99)
 
     C = 22.5 * log (1.0 + 0.06 * G);
 
-    h = atan2 (f, ee) + 0.8726646 /* 50 degrees */;
+    h = atan2 (f, ee) + 0.8726646;  /* 50 degrees */
     while (h < 0.0) h += 6.283185;  /* 360 degrees */
     while (h > 6.283185) h -= 6.283185;  /* 360 degrees */
 
-    /* The final values should be in the range [0..255] */
+    /* The final values should be in the range [0..250] */
 
-    din99->ch [0] = adj_L * 2.5;
-    din99->ch [1] = C * cos (h) * 2.5 + 128.0;
-    din99->ch [2] = C * sin (h) * 2.5 + 128.0;
+    din99->ch [0] = din99d_ch_to_byte (adj_L * 2.5);
+    din99->ch [1] = din99d_ch_to_byte (C * cos (h) * 2.5 + 128.0);
+    din99->ch [2] = din99d_ch_to_byte (C * sin (h) * 2.5 + 128.0);
     din99->ch [3] = rgb->ch [3];
 }
