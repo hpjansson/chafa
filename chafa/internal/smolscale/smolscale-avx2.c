@@ -440,16 +440,6 @@ to_srgb_8x (__m256i l)
  * ----------------- */
 
 static SMOL_INLINE void
-premul_u_to_p8_128bpp (uint64_t * SMOL_RESTRICT inout,
-                       uint8_t alpha)
-{
-    inout [0] = (((inout [0] + 0x0000000100000001) * ((uint16_t) alpha + 1) - 0x0000000100000001)
-                 >> 8) & 0x000000ff000000ff;
-    inout [1] = (((inout [1] + 0x0000000100000001) * ((uint16_t) alpha + 1) - 0x0000000100000001)
-                 >> 8) & 0x000000ff000000ff;
-}
-
-static SMOL_INLINE void
 unpremul_p8_to_u_128bpp (const uint64_t *in,
                          uint64_t *out,
                          uint8_t alpha)
@@ -481,16 +471,6 @@ unpremul_p8_to_u_64bpp (const uint64_t in,
     unpremul_p8_to_u_128bpp (in_128bpp, out_128bpp, alpha);
 
     return out_128bpp [0] | (out_128bpp [1] << 16);
-}
-
-static SMOL_INLINE void
-premul_u_to_p16_128bpp (uint64_t *inout,
-                        uint8_t alpha)
-{
-    /* (alpha + 1) keeps RGB recoverable when alpha=0; matches the LUT in
-     * smolscale.c (ceil (2^16 / (alpha + 1))) so the round-trip is exact. */
-    inout [0] = inout [0] * ((uint16_t) alpha + 1);
-    inout [1] = inout [1] * ((uint16_t) alpha + 1);
 }
 
 static SMOL_INLINE void
