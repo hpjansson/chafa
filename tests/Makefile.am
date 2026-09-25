@@ -22,6 +22,7 @@ check_PROGRAMS = \
 	color-test \
 	loader-arithmetic-test \
 	palette-test \
+	stream-reader-test \
 	term-info-test
 
 byte_fifo_test_SOURCES = \
@@ -42,6 +43,9 @@ loader_arithmetic_test_SOURCES = \
 
 palette_test_SOURCES = \
 	palette-test.c
+
+stream_reader_test_SOURCES = \
+	stream-reader-test.c
 
 term_info_test_SOURCES = \
 	term-info-test.c
@@ -70,6 +74,7 @@ TESTS = \
 	color-test \
 	loader-arithmetic-test \
 	palette-test \
+	stream-reader-test \
 	term-info-test \
 	$(TOOL_CHECKS)
 

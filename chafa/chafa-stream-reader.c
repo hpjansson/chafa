@@ -490,6 +490,10 @@ chafa_stream_reader_read (ChafaStreamReader *stream_reader, gpointer out, gint m
  * separator and stores a pointer to it in @out. The token is always zero-
  * terminated, is owned by the caller and must be freed with @g_free().
  *
+ * Zero-length tokens are returned as empty strings. A separator at the start
+ * of the stream or two adjacent separators will result in a zero-length token.
+ * An empty remainder at EOF will not.
+ *
  * Tokens longer than @max_len will be discarded. If a negative @max_len is
  * passed, no upper limit will be enforced.
  *
@@ -518,8 +522,6 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
     maybe_start_thread (stream_reader);
 
     g_mutex_lock (&stream_reader->mutex);
-
-    /* FIXME: Are zero-length tokens handled correctly? */
 
     token = chafa_byte_fifo_split_next (stream_reader->fifo,
                                         stream_reader->token_separator,
