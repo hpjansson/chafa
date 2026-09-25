@@ -981,7 +981,7 @@ parse_selectors (ChafaSymbolMap *symbol_map, const gchar *selectors, GError **er
 
             p0++;
 
-            for ( ; p0 && *p0; p0 = g_utf8_next_char (p0))
+            for ( ; p0 && *p0; p0 = g_utf8_find_next_char (p0, NULL))
             {
                 gunichar c = g_utf8_get_char (p0);
 

@@ -566,7 +566,7 @@ utf8_skip_spaces (const gchar *str)
          c != 0 && g_unichar_isspace (c);
          c = g_utf8_get_char (str))
     {
-        str = g_utf8_next_char (str);
+        str = g_utf8_find_next_char (str, NULL);
     }
 
     return str;
@@ -597,7 +597,7 @@ parse_fraction_or_real (const gchar *str, gdouble *real_out)
         if (g_utf8_get_char (end) != '/' && g_utf8_get_char (end) != ':')
             goto out;
 
-        sep = g_utf8_next_char (sep);
+        sep = g_utf8_find_next_char (sep, NULL);
         p0 = utf8_skip_spaces (sep);
         height = g_ascii_strtoll (p0, (gchar **)(intptr_t) &end, 10);
         if (end == p0)

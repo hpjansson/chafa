@@ -280,11 +280,11 @@ chicle_ellipsize_string (const gchar *str, gint len_max, gboolean use_unicode)
 
     for (p = str, i = 0; *p && i < len_max; i++)
     {
-        p = g_utf8_next_char (p);
+        p = g_utf8_find_next_char (p, NULL);
     }
 
     j = p - str;
-    if (*p && !*g_utf8_next_char (p))
+    if (*p && !*g_utf8_find_next_char (p, NULL))
         return g_strdup (str);
 
     ellipsized = g_malloc (j + 7);
