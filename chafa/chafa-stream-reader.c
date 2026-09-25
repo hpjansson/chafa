@@ -49,6 +49,9 @@
 /* Max fifo size before forced sync */
 #define FIFO_DEFAULT_MAX 32768
 
+/* Fifo grow increment */
+#define FIFO_GROW_INCREMENT 32768
+
 struct ChafaStreamReader
 {
     gint refs;
@@ -77,6 +80,10 @@ struct ChafaStreamReader
     /* TRUE if the caller supplied a token separator, i.e. consumes tokens
      * with chafa_stream_reader_read_token () rather than raw bytes. */
     guint is_token_stream : 1;
+
+    /* TRUE while an oversized token is being discarded piecemeal as it
+     * arrives. Cleared when its separator (or EOF) has been consumed. */
+    guint skipping_token : 1;
 
     /* TRUE if EOF event was seen on input FD */
     guint eof_seen : 1;
@@ -273,7 +280,7 @@ thread_main (gpointer data)
                 stream_reader->idle_id = g_idle_add (in_idle_func, stream_reader);
         }
 
-        while (chafa_byte_fifo_get_len (stream_reader->fifo) > FIFO_DEFAULT_MAX
+        while (chafa_byte_fifo_get_len (stream_reader->fifo) > stream_reader->buf_max
                && !stream_reader->shutdown_reqd)
             g_cond_wait (&stream_reader->cond, &stream_reader->mutex);
 
@@ -459,7 +466,7 @@ static void
 popped_fifo (ChafaStreamReader *stream_reader)
 {
     /* If there's space in the buffer, tell thread to resume reading */
-    if (chafa_byte_fifo_get_len (stream_reader->fifo) <= FIFO_DEFAULT_MAX)
+    if (chafa_byte_fifo_get_len (stream_reader->fifo) <= stream_reader->buf_max)
         g_cond_broadcast (&stream_reader->cond);
 }
 
@@ -478,6 +485,57 @@ chafa_stream_reader_read (ChafaStreamReader *stream_reader, gpointer out, gint m
     g_mutex_unlock (&stream_reader->mutex);
 
     return result;
+}
+
+/* Look for the next separator. Returns the token length (separator position),
+ * or -1 if no complete token is in the buffer yet. */
+static gint
+find_separator_locked (ChafaStreamReader *stream_reader)
+{
+    return chafa_byte_fifo_search (stream_reader->fifo,
+                                   stream_reader->token_separator,
+                                   stream_reader->token_separator_len,
+                                   &stream_reader->token_restart_pos);
+}
+
+static gboolean
+stream_ended_locked (ChafaStreamReader *stream_reader)
+{
+    return stream_reader->eof_seen || stream_reader->shutdown_done;
+}
+
+/* Discard bytes belonging to an oversized token. Returns TRUE once the whole
+ * token is gone (separator included), and FALSE if we haven't seen the end of
+ * it yet, in which case we stay in skip mode and resume when more data comes in. */
+static gboolean
+skip_token_locked (ChafaStreamReader *stream_reader)
+{
+    gint sep_pos = find_separator_locked (stream_reader);
+
+    if (sep_pos >= 0)
+    {
+        chafa_byte_fifo_drop (stream_reader->fifo,
+                              sep_pos + stream_reader->token_separator_len);
+    }
+    else if (stream_ended_locked (stream_reader))
+    {
+        chafa_byte_fifo_drop (stream_reader->fifo,
+                              chafa_byte_fifo_get_len (stream_reader->fifo));
+    }
+    else
+    {
+        /* Everything before the restart position has been ruled out as the
+         * start of a separator, so it's safe to throw away. A partial match
+         * at the tail stays until we know how it ends. */
+        chafa_byte_fifo_drop (stream_reader->fifo,
+                              stream_reader->token_restart_pos
+                              - chafa_byte_fifo_get_pos (stream_reader->fifo));
+        stream_reader->skipping_token = TRUE;
+        return FALSE;
+    }
+
+    stream_reader->skipping_token = FALSE;
+    return TRUE;
 }
 
 /**
@@ -516,6 +574,7 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
 {
     gchar *token = NULL;
     gint result = CHAFA_STREAM_READER_ERROR_NO_DATA;
+    gint token_len, consume_len;
 
     g_return_val_if_fail (stream_reader != NULL, CHAFA_STREAM_READER_ERROR_NO_DATA);
 
@@ -523,40 +582,70 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
 
     g_mutex_lock (&stream_reader->mutex);
 
-    token = chafa_byte_fifo_split_next (stream_reader->fifo,
-                                        stream_reader->token_separator,
-                                        stream_reader->token_separator_len,
-                                        &stream_reader->token_restart_pos,
-                                        &result);
-    if (!token &&
-        (stream_reader->eof_seen || stream_reader->shutdown_done))
+    if (stream_reader->skipping_token)
     {
-        gint len = chafa_byte_fifo_get_len (stream_reader->fifo);
-
-        /* Return remaining data after final separator */
-
-        if (len > 0)
-        {
-            token = g_malloc (len + 1);
-            chafa_byte_fifo_pop (stream_reader->fifo, token, len);
-            token [len] = '\0';
-            result = len;
-        }
+        /* Finish discarding an oversized token from an earlier call */
+        if (skip_token_locked (stream_reader))
+            result = CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN;
+        goto out;
     }
 
-    if (token && max_len >= 0 && result > max_len)
+    token_len = find_separator_locked (stream_reader);
+
+    if (token_len >= 0)
     {
-        /* Oversized token; it's already been popped, so the next call
-         * moves on to the one after it. */
+        consume_len = token_len + stream_reader->token_separator_len;
+    }
+    else if (stream_ended_locked (stream_reader))
+    {
+        /* Remaining data after the final separator is the last token */
+        token_len = chafa_byte_fifo_get_len (stream_reader->fifo);
+        if (token_len == 0)
+            goto out;
+        consume_len = token_len;
+    }
+    else
+    {
+        /* Incomplete token. Since everything before it has been consumed,
+         * its length is at least the buffered length, so deal with it
+         * before it's complete. */
+        gint buffered_len = chafa_byte_fifo_get_len (stream_reader->fifo);
 
-        /* FIXME: This is too facile. We should keep track of the length
-         * lower in the stack, and start discarding without doing any
-         * allocation. We may have to turn max_len into a member var set
-         * during init to achieve this. */
+        if (max_len >= 0 && buffered_len > max_len)
+        {
+            /* Already oversized; start discarding instead of buffering */
+            skip_token_locked (stream_reader);
+        }
+        else if (buffered_len > stream_reader->buf_max)
+        {
+            /* Legitimately bigger than our buffer. The reader thread is
+             * stalled on it, so grow the limit to let it through. */
+            stream_reader->buf_max = buffered_len + FIFO_GROW_INCREMENT;
+        }
 
-        g_free (token);
-        token = NULL;
+        goto out;
+    }
+
+    if (max_len >= 0 && token_len > max_len)
+    {
+        /* Oversized but complete; skip it without copying */
+        chafa_byte_fifo_drop (stream_reader->fifo, consume_len);
         result = CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN;
+    }
+    else
+    {
+        token = g_malloc (token_len + 1);
+        chafa_byte_fifo_pop (stream_reader->fifo, token, token_len);
+        token [token_len] = '\0';
+        chafa_byte_fifo_drop (stream_reader->fifo, consume_len - token_len);
+        result = token_len;
+    }
+
+out:
+    if (result != CHAFA_STREAM_READER_ERROR_NO_DATA)
+    {
+        /* Token consumed; any buffer growth granted for it is over */
+        stream_reader->buf_max = FIFO_DEFAULT_MAX;
     }
 
     popped_fifo (stream_reader);
@@ -568,18 +657,23 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
 }
 
 /* TRUE if a read call would return something or we hit EOF/shutdown. A token
- * stream needs a complete token, otherwise waiting on it would spin. */
+ * stream needs a complete token, otherwise waiting on it would spin. The
+ * exception is when the reader thread has stalled on a full buffer with no
+ * separator in it; then chafa_stream_reader_read_token() must run to either
+ * discard the token or make room for it. */
 static gboolean
 have_data_locked (ChafaStreamReader *stream_reader)
 {
-    if (stream_reader->eof_seen || stream_reader->shutdown_done)
+    if (stream_ended_locked (stream_reader))
         return TRUE;
 
     if (stream_reader->is_token_stream)
-        return chafa_byte_fifo_search (stream_reader->fifo,
-                                       stream_reader->token_separator,
-                                       stream_reader->token_separator_len,
-                                       &stream_reader->token_restart_pos) >= 0;
+    {
+        if (chafa_byte_fifo_get_len (stream_reader->fifo) > stream_reader->buf_max)
+            return TRUE;
+
+        return find_separator_locked (stream_reader) >= 0;
+    }
 
     return chafa_byte_fifo_get_len (stream_reader->fifo) > 0;
 }
