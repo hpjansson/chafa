@@ -27,7 +27,8 @@ IGNORE_HFILES = \
 	chafa.h \
 	chafa-private.h \
 	chafa-term-seq-doc-in.h \
-	named-colors.h
+	named-colors.h \
+	internal
 
 # Extra options to supply to gtkdoc-mkdb
 MKDB_OPTIONS=--output-format=xml --name-space=chafa
