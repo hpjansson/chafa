@@ -234,17 +234,6 @@ coverage_to_bitmap (const gchar *cov, gint rowstride)
 }
 
 static void
-bitmap_to_coverage (guint64 bitmap, gchar *cov_out)
-{
-    gint i;
-
-    for (i = 0; i < CHAFA_SYMBOL_N_PIXELS; i++)
-    {
-        cov_out [i] = (bitmap >> (63 - i)) & 1;
-    }
-}
-
-static void
 gen_braille_sym (gchar *cov, guint8 val)
 {
     memset (cov, 0, CHAFA_SYMBOL_N_PIXELS);
