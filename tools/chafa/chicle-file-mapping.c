@@ -260,7 +260,7 @@ get_random_u64 (void)
         u64 ^= ((guint64) g_random_int ()) << 32;
 
         p = g_thread_self ();
-        u64 ^= (guint64) p;
+        u64 ^= (guint64) GPOINTER_TO_SIZE (p);
     }
 
     return u64;
