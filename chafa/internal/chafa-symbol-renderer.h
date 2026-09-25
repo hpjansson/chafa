@@ -27,15 +27,10 @@ G_BEGIN_DECLS
 typedef struct
 {
     ChafaCanvas *canvas;
-    gint x, y;
-    gint width, height;
-    gpointer rgba_image;
 }
 ChafaSymbolRenderer;
 
-ChafaSymbolRenderer *chafa_symbol_renderer_new (ChafaCanvas *canvas,
-						gint x, gint y,
-						gint width, gint height);
+ChafaSymbolRenderer *chafa_symbol_renderer_new (ChafaCanvas *canvas);
 void chafa_symbol_renderer_destroy (ChafaSymbolRenderer *symbol_renderer);
 
 void chafa_symbol_renderer_draw_all_pixels (ChafaSymbolRenderer *symbol_renderer,
@@ -43,8 +38,7 @@ void chafa_symbol_renderer_draw_all_pixels (ChafaSymbolRenderer *symbol_renderer
 					    gconstpointer src_pixels,
 					    gint src_width, gint src_height, gint src_rowstride,
 					    ChafaAlign halign, ChafaAlign valign,
-					    ChafaTuck tuck,
-					    gfloat quality);
+					    ChafaTuck tuck);
 
 G_END_DECLS
 

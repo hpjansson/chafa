@@ -427,11 +427,7 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
     {
         /* Symbol mode */
 
-        canvas->pixel_renderer = chafa_symbol_renderer_new (canvas,
-                                                            0,
-                                                            0,
-                                                            canvas->config.width,
-                                                            canvas->config.height);
+        canvas->pixel_renderer = chafa_symbol_renderer_new (canvas);
         if (canvas->pixel_renderer)
             chafa_symbol_renderer_draw_all_pixels (canvas->pixel_renderer,
                                                    src_pixel_type,
@@ -439,8 +435,7 @@ draw_all_pixels (ChafaCanvas *canvas, ChafaPixelType src_pixel_type,
                                                    src_width, src_height,
                                                    src_rowstride,
                                                    halign, valign,
-                                                   tuck,
-                                                   canvas->config.work_factor);
+                                                   tuck);
     }
     else if (canvas->config.pixel_mode == CHAFA_PIXEL_MODE_SIXELS)
     {

@@ -910,9 +910,7 @@ update_cells (ChafaCanvas *canvas)
 }
 
 ChafaSymbolRenderer *
-chafa_symbol_renderer_new (ChafaCanvas *canvas,
-			   gint x, gint y,
-			   gint width, gint height)
+chafa_symbol_renderer_new (ChafaCanvas *canvas)
 {
     ChafaSymbolRenderer *renderer;
 
@@ -933,8 +931,7 @@ chafa_symbol_renderer_draw_all_pixels (ChafaSymbolRenderer *renderer,
 				       gconstpointer src_pixels,
 				       gint src_width, gint src_height, gint src_rowstride,
 				       ChafaAlign halign, ChafaAlign valign,
-				       ChafaTuck tuck,
-				       gfloat quality)
+				       ChafaTuck tuck)
 {
     ChafaCanvas *canvas;
 
