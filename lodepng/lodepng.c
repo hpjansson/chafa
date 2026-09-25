@@ -4906,9 +4906,10 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
   while(!IEND && !state->error) {
     unsigned chunkLength;
     const unsigned char* data; /*the data in the chunk*/
+    size_t chunkOffset = (size_t)(chunk - in); /*wraps to a huge value if chunk < in*/
 
     /*error: size of the in buffer too small to contain next chunk*/
-    if((size_t)((chunk - in) + 12) > insize || chunk < in) {
+    if(chunkOffset > insize || insize - chunkOffset < 12) {
       if(state->decoder.ignore_end) break; /*other errors may still happen though*/
       CERROR_BREAK(state->error, 30);
     }
@@ -4921,7 +4922,7 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
       CERROR_BREAK(state->error, 63);
     }
 
-    if((size_t)((chunk - in) + chunkLength + 12) > insize || (chunk + chunkLength + 12) < in) {
+    if(insize - chunkOffset - 12 < chunkLength) {
       CERROR_BREAK(state->error, 64); /*error: size of the in buffer too small to contain next chunk*/
     }
 
