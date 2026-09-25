@@ -207,6 +207,13 @@ fifo_search (ChafaByteFifo *fifo,
     }
 
 out:
+    if (result < 0)
+    {
+        /* Make sure we move *pos as far as we can, even with data_len == 1 */
+        gint64 resume_pos = fifo->pos + fifo->len - (data_len - 1);
+        *pos = MAX (*pos, resume_pos);
+    }
+
     return result;
 }
 
