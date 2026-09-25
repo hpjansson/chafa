@@ -927,11 +927,11 @@ chafa_symbol_renderer_destroy (ChafaSymbolRenderer *renderer)
 
 void
 chafa_symbol_renderer_draw_all_pixels (ChafaSymbolRenderer *renderer,
-				       ChafaPixelType src_pixel_type,
-				       gconstpointer src_pixels,
-				       gint src_width, gint src_height, gint src_rowstride,
-				       ChafaAlign halign, ChafaAlign valign,
-				       ChafaTuck tuck)
+                                       ChafaPixelType src_pixel_type,
+                                       gconstpointer src_pixels,
+                                       gint src_width, gint src_height, gint src_rowstride,
+                                       ChafaAlign halign, ChafaAlign valign,
+                                       ChafaTuck tuck)
 {
     ChafaCanvas *canvas;
 
@@ -949,35 +949,35 @@ chafa_symbol_renderer_draw_all_pixels (ChafaSymbolRenderer *renderer,
     canvas->pixels = g_try_new (ChafaPixel, (gsize) canvas->width_pixels * canvas->height_pixels);
     if (canvas->pixels)
     {
-	chafa_prepare_pixel_data_for_symbols (&canvas->fg_palette, &canvas->dither,
-					      canvas->config.color_space,
-					      canvas->config.preprocessing_enabled,
-					      canvas->work_factor_int,
-					      src_pixel_type,
-					      src_pixels,
-					      src_width, src_height,
-					      src_rowstride,
-					      canvas->pixels,
-					      canvas->width_pixels, canvas->height_pixels,
-					      canvas->config.cell_width,
-					      canvas->config.cell_height,
-					      halign, valign,
-					      tuck);
+        chafa_prepare_pixel_data_for_symbols (&canvas->fg_palette, &canvas->dither,
+                                              canvas->config.color_space,
+                                              canvas->config.preprocessing_enabled,
+                                              canvas->work_factor_int,
+                                              src_pixel_type,
+                                              src_pixels,
+                                              src_width, src_height,
+                                              src_rowstride,
+                                              canvas->pixels,
+                                              canvas->width_pixels, canvas->height_pixels,
+                                              canvas->config.cell_width,
+                                              canvas->config.cell_height,
+                                              halign, valign,
+                                              tuck);
 
-	if (canvas->config.alpha_threshold == 0)
-	    canvas->have_alpha = FALSE;
+        if (canvas->config.alpha_threshold == 0)
+            canvas->have_alpha = FALSE;
 
-	update_cells (canvas);
-	canvas->needs_clear = FALSE;
+        update_cells (canvas);
+        canvas->needs_clear = FALSE;
 
-	g_free (canvas->pixels);
-	canvas->pixels = NULL;
+        g_free (canvas->pixels);
+        canvas->pixels = NULL;
     }
     else
     {
 #if 0
 	g_warning ("ChafaCanvas: Out of memory allocating %ux%u pixels.",
-		   canvas->width_pixels, canvas->height_pixels);
+               canvas->width_pixels, canvas->height_pixels);
 #endif
     }
 }
