@@ -34,6 +34,12 @@
 
 G_BEGIN_DECLS
 
+#if defined(__clang__)
+# define CHAFA_NO_SANITIZE_INTEGER __attribute__ ((no_sanitize ("integer")))
+#else
+# define CHAFA_NO_SANITIZE_INTEGER
+#endif
+
 /* Character symbols and symbol classes */
 
 #define CHAFA_N_SYMBOLS_MAX 2048  /* For static temp arrays */
@@ -244,7 +250,7 @@ static inline guint64 chafa_slow_pop_count (guint64 v) G_GNUC_UNUSED;
 static inline gint chafa_population_count_u64 (guint64 v) G_GNUC_UNUSED;
 static inline void chafa_population_count_vu64 (const guint64 *vv, gint *vc, gint n) G_GNUC_UNUSED;
 
-__attribute__ ((no_sanitize ("integer")))
+CHAFA_NO_SANITIZE_INTEGER
 static inline guint64
 chafa_slow_pop_count (guint64 v)
 {
