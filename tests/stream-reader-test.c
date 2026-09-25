@@ -31,6 +31,11 @@
  * wakeup logic fails instead of hanging the suite. */
 #define WAIT_TIMEOUT_US (10 * G_USEC_PER_SEC)
 
+/* Bigger than the reader's internal buffer cap plus the pipe buffer, forcing
+ * the reader thread to stall on backpressure when a separator has yet to be
+ * found. */
+#define BIG_TOKEN_LEN 100000
+
 typedef struct
 {
     gint fd;
@@ -54,7 +59,7 @@ writer_thread (gpointer data)
     }
 
     close (args->fd);
-    return NULL;
+    return args;
 }
 
 /* Feed the reader from a pipe. Small payloads are written synchronously,
@@ -101,7 +106,7 @@ finish_reader (ChafaStreamReader *reader, GThread *writer)
     gint fd = chafa_stream_reader_get_fd (reader);
 
     if (writer)
-        g_thread_join (writer);
+        g_free (g_thread_join (writer));
 
     chafa_stream_reader_unref (reader);
     close (fd);
@@ -240,11 +245,60 @@ oversized_token_test (void)
     finish_reader (reader, writer);
 }
 
+/* A token longer than the reader's buffer cap must be skipped (or returned,
+ * if no limit is set) rather than deadlocking the reader thread. */
+static void
+huge_token_test (void)
+{
+    ChafaStreamReader *reader;
+    GThread *writer;
+    gchar *data;
+    gchar *token = NULL;
+    gsize len;
+    gint result;
+
+    len = BIG_TOKEN_LEN + 4;
+    data = g_malloc (len + 1);
+    memset (data, 'a', BIG_TOKEN_LEN);
+    memcpy (data + BIG_TOKEN_LEN, "\nok\n", 5);
+
+    /* Discard with limit */
+
+    reader = build_reader (data, len, "\n", &writer);
+    assert_result (reader, 16, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_token (reader, 16, "ok");
+    assert_eof (reader, 16);
+    finish_reader (reader, writer);
+
+    /* Return whole with no limit */
+
+    reader = build_reader (data, len, "\n", &writer);
+    result = read_token_blocking (reader, &token, -1);
+    g_assert_cmpint (result, ==, BIG_TOKEN_LEN);
+    g_assert_nonnull (token);
+    g_assert_true (token [0] == 'a' && token [BIG_TOKEN_LEN - 1] == 'a'
+                   && token [BIG_TOKEN_LEN] == '\0');
+    g_free (token);
+    assert_token (reader, -1, "ok");
+    assert_eof (reader, -1);
+    finish_reader (reader, writer);
+
+    /* Huge remainder with no trailing separator */
+
+    reader = build_reader (data, BIG_TOKEN_LEN, "\n", &writer);
+    assert_result (reader, 16, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_eof (reader, 16);
+    finish_reader (reader, writer);
+
+    g_free (data);
+}
+
 int
 main (int argc, char *argv [])
 {
     g_test_init (&argc, &argv, NULL);
 
+    g_test_add_func ("/stream-reader/huge-token", huge_token_test);
     g_test_add_func ("/stream-reader/multibyte-separator", multibyte_separator_test);
     g_test_add_func ("/stream-reader/oversized-token", oversized_token_test);
     g_test_add_func ("/stream-reader/remainder", remainder_test);
