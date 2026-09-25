@@ -220,8 +220,9 @@ pop_stream_path_token (ChiclePathQueue *path_queue)
     if (path_queue->current_path_token)
         return TRUE;
 
-    /* Discard blank lines until we encounter a non-blank line or an error */
-    while (result == 0)
+    /* Discard blank lines and oversized tokens until we encounter a usable
+     * line or run out of input. */
+    while (result == 0 || result == CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN)
     {
         g_free (path_queue->current_path_token);
         path_queue->current_path_token = NULL;

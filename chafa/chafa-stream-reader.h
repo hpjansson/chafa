@@ -28,6 +28,13 @@
 
 G_BEGIN_DECLS
 
+typedef enum
+{
+    CHAFA_STREAM_READER_ERROR_NO_DATA = -1,
+    CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN = -2
+}
+ChafaStreamReaderError;
+
 typedef struct ChafaStreamReader ChafaStreamReader;
 
 CHAFA_AVAILABLE_IN_1_20

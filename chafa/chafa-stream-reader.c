@@ -480,19 +480,46 @@ chafa_stream_reader_read (ChafaStreamReader *stream_reader, gpointer out, gint m
     return result;
 }
 
-/* FIXME: Honor max_len, both for a regular split and remainder. Return an
- * error code on oversized tokens, and skip over them. */
+/**
+ * chafa_stream_reader_read_token:
+ * @stream_reader: The #ChafaStreamReader to read from
+ * @out: Where to store the pointer to the token
+ * @max_len: Maximum length of the token
+ *
+ * Reads a token from @stream_reader using the previously provided token
+ * separator and stores a pointer to it in @out. The token is always zero-
+ * terminated, is owned by the caller and must be freed with @g_free().
+ *
+ * Tokens longer than @max_len will be discarded. If a negative @max_len is
+ * passed, no upper limit will be enforced.
+ *
+ * On success, @out is set and the return value is the length of the token
+ * in bytes (zero or greater, excluding the terminator). On error, @out is
+ * left untouched and a negative error code is returned. Error codes are as
+ * follows:
+ *
+ * #CHAFA_STREAM_READER_ERROR_NO_DATA: No complete token is available yet. This
+ * also happens on EOF, which must be checked with @chafa_stream_reader_is_eof().
+ *
+ * #CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN: A token was read successfully,
+ * but it was longer than @max_len. At this point it has been silently skipped
+ * and the reader can immediately try to read the next token.
+ *
+ * Returns: Length of the token or an error code
+ **/
 gint
 chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out, gint max_len)
 {
     gchar *token = NULL;
-    gint result = -1;
+    gint result = CHAFA_STREAM_READER_ERROR_NO_DATA;
 
-    g_return_val_if_fail (stream_reader != NULL, -1);
+    g_return_val_if_fail (stream_reader != NULL, CHAFA_STREAM_READER_ERROR_NO_DATA);
 
     maybe_start_thread (stream_reader);
 
     g_mutex_lock (&stream_reader->mutex);
+
+    /* FIXME: Are zero-length tokens handled correctly? */
 
     token = chafa_byte_fifo_split_next (stream_reader->fifo,
                                         stream_reader->token_separator,
@@ -513,6 +540,21 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
             token [len] = '\0';
             result = len;
         }
+    }
+
+    if (token && max_len >= 0 && result > max_len)
+    {
+        /* Oversized token; it's already been popped, so the next call
+         * moves on to the one after it. */
+
+        /* FIXME: This is too facile. We should keep track of the length
+         * lower in the stack, and start discarding without doing any
+         * allocation. We may have to turn max_len into a member var set
+         * during init to achieve this. */
+
+        g_free (token);
+        token = NULL;
+        result = CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN;
     }
 
     popped_fifo (stream_reader);
