@@ -115,20 +115,6 @@ color_diff (guint32 a, guint32 b)
     return diff;
 }
 
-static gint
-project_color_1axis (const ChafaColorTable *color_table, guint32 color)
-{
-    ChafaVec3i32 v;
-
-    v.v [0] = (color & 0xff) * FIXED_MUL;
-    v.v [1] = ((color >> 8) & 0xff) * FIXED_MUL;
-    v.v [2] = ((color >> 16) & 0xff) * FIXED_MUL;
-
-    chafa_vec3i32_sub (&v, &v, &color_table->average);
-
-    return scalar_project_vec3i32 (&v, &color_table->eigenvectors [0], color_table->eigen_mul [0]);
-}
-
 static void
 project_color_2axis (const ChafaColorTable *color_table, guint32 color, gint *v_out)
 {
@@ -324,6 +310,20 @@ find_nearest_pen_generic (const ChafaColorTable *color_table, guint32 want_color
 
 #define AVX2_LANDING_ENTRIES 32
 #define AVX2_SCAN_ENTRIES 8
+
+static gint
+project_color_1axis (const ChafaColorTable *color_table, guint32 color)
+{
+    ChafaVec3i32 v;
+
+    v.v [0] = (color & 0xff) * FIXED_MUL;
+    v.v [1] = ((color >> 8) & 0xff) * FIXED_MUL;
+    v.v [2] = ((color >> 16) & 0xff) * FIXED_MUL;
+
+    chafa_vec3i32_sub (&v, &v, &color_table->average);
+
+    return scalar_project_vec3i32 (&v, &color_table->eigenvectors [0], color_table->eigen_mul [0]);
+}
 
 static gint
 find_nearest_pen_avx2 (const ChafaColorTable *color_table, guint32 want_color)
