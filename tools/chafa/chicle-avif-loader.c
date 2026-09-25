@@ -300,7 +300,9 @@ chicle_avif_loader_goto_first_frame (ChicleAvifLoader *loader)
     loader->frame_is_decoded = FALSE;
     loader->frame_is_success = FALSE;
 
-    avifDecoderReset (loader->decoder);
+    /* If the reset fails, the next frame fetch fails too and ends the
+     * animation. We can't do better here. */
+    (void) avifDecoderReset (loader->decoder);
 }
 
 gboolean
