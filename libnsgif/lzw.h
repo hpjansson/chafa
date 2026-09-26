@@ -4,6 +4,7 @@
  *                http://www.opensource.org/licenses/mit-license.php
  *
  * Copyright 2017 Michael Drake <michael.drake@codethink.co.uk>
+ * Copyright 2021 Michael Drake <tlsa@netsurf-browser.org>
  */
 
 #ifndef LZW_H_
@@ -16,14 +17,11 @@
  * Decoder for GIF LZW data.
  */
 
-
 /** Maximum LZW code size in bits */
 #define LZW_CODE_MAX 12
 
-
 /* Declare lzw internal context structure */
 struct lzw_ctx;
-
 
 /** LZW decoding response codes */
 typedef enum lzw_result {
@@ -32,10 +30,11 @@ typedef enum lzw_result {
 	LZW_NO_MEM,    /**< Error: Out of memory */
 	LZW_NO_DATA,   /**< Error: Out of data */
 	LZW_EOI_CODE,  /**< Error: End of Information code */
+	LZW_NO_COLOUR, /**< Error: No colour map provided. */
 	LZW_BAD_ICODE, /**< Error: Bad initial LZW code */
+	LZW_BAD_PARAM, /**< Error: Bad function parameter. */
 	LZW_BAD_CODE,  /**< Error: Bad LZW code */
 } lzw_result;
-
 
 /**
  * Create an LZW decompression context.
@@ -58,48 +57,81 @@ void lzw_context_destroy(
 /**
  * Initialise an LZW decompression context for decoding.
  *
- * Caller owns neither `stack_base_out` or `stack_pos_out`.
- *
- * \param[in]  ctx                  The LZW decompression context to initialise.
- * \param[in]  compressed_data      The compressed data.
- * \param[in]  compressed_data_len  Byte length of compressed data.
- * \param[in]  compressed_data_pos  Start position in data.  Must be position
- *                                  of a size byte at sub-block start.
- * \param[in]  code_size            The initial LZW code size to use.
- * \param[out] stack_base_out       Returns base of decompressed data stack.
- * \param[out] stack_pos_out        Returns current stack position.
- *                                  There are `stack_pos_out - stack_base_out`
- *                                  current stack entries.
+ * \param[in]  ctx                The LZW decompression context to initialise.
+ * \param[in]  minimum_code_size  The LZW Minimum Code Size.
+ * \param[in]  input_data         The compressed data.
+ * \param[in]  input_length       Byte length of compressed data.
+ * \param[in]  input_pos          Start position in data.  Must be position
+ *                                of a size byte at sub-block start.
  * \return LZW_OK on success, or appropriate error code otherwise.
  */
 lzw_result lzw_decode_init(
 		struct lzw_ctx *ctx,
-		const uint8_t *compressed_data,
-		uint64_t compressed_data_len,
-		uint64_t compressed_data_pos,
-		uint8_t code_size,
-		const uint8_t ** const stack_base_out,
-		const uint8_t ** const stack_pos_out);
+		uint8_t minimum_code_size,
+		const uint8_t *input_data,
+		size_t input_length,
+		size_t input_pos);
 
 /**
- * Fill the LZW stack with decompressed data
+ * Read input codes until end of LZW context owned output buffer.
  *
- * Ensure anything on the stack is used before calling this, as anything
- * on the stack before this call will be trampled.
+ * Ensure anything in output is used before calling this, as anything
+ * there before this call will be trampled.
  *
- * Caller does not own `stack_pos_out`.
- *
- * \param[in]  ctx            LZW reading context, updated.
- * \param[out] stack_pos_out  Returns current stack position.
- *                            Use with `stack_base_out` value from previous
- *                            lzw_decode_init() call.
- *                            There are `stack_pos_out - stack_base_out`
- *                            current stack entries.
+ * \param[in]  ctx             LZW reading context, updated.
+ * \param[out] output_data     Returns pointer to array of output values.
+ * \param[out] output_written  Returns the number of values written to data.
  * \return LZW_OK on success, or appropriate error code otherwise.
  */
-lzw_result lzw_decode(
-		struct lzw_ctx *ctx,
-		const uint8_t ** const stack_pos_out);
+lzw_result lzw_decode(struct lzw_ctx *ctx,
+		const uint8_t *restrict *const restrict output_data,
+		uint32_t *restrict                      output_written);
 
+/**
+ * Initialise an LZW decompression context for decoding to colour map values.
+ *
+ * For transparency to work correctly, the given client buffer must have
+ * the values from the previous frame.  The transparency_idx should be a value
+ * of 256 or above, if the frame does not have transparency.
+ *
+ * \param[in]  ctx                The LZW decompression context to initialise.
+ * \param[in]  minimum_code_size  The LZW Minimum Code Size.
+ * \param[in]  transparency_idx   Index representing transparency.
+ * \param[in]  colour_table       Index to pixel colour mapping.
+ * \param[in]  input_data         The compressed data.
+ * \param[in]  input_length       Byte length of compressed data.
+ * \param[in]  input_pos          Start position in data.  Must be position
+ *                                of a size byte at sub-block start.
+ * \return LZW_OK on success, or appropriate error code otherwise.
+ */
+lzw_result lzw_decode_init_map(
+		struct lzw_ctx *ctx,
+		uint8_t minimum_code_size,
+		uint32_t transparency_idx,
+		const uint32_t *colour_table,
+		const uint8_t *input_data,
+		size_t input_length,
+		size_t input_pos);
+
+/**
+ * Read LZW codes into client buffer, mapping output to colours.
+ *
+ * The context must have been initialised using \ref lzw_decode_init_map
+ * before calling this function, in order to provide the colour mapping table
+ * and any transparency index.
+ *
+ * Ensure anything in output is used before calling this, as anything
+ * there before this call will be trampled.
+ *
+ * \param[in]  ctx             LZW reading context, updated.
+ * \param[in]  output_data     Client buffer to fill with colour mapped values.
+ * \param[in]  output_length   Size of output array.
+ * \param[out] output_written  Returns the number of values written to data.
+ * \return LZW_OK on success, or appropriate error code otherwise.
+ */
+lzw_result lzw_decode_map(struct lzw_ctx *ctx,
+		uint32_t *restrict output_data,
+		uint32_t           output_length,
+		uint32_t *restrict output_written);
 
 #endif

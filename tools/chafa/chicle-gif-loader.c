@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 
 #include <chafa.h>
-#include <libnsgif.h>
+#include <nsgif.h>
 #include "chicle-gif-loader.h"
 
 #define BYTES_PER_PIXEL 4
@@ -40,15 +40,15 @@ struct ChicleGifLoader
     ChicleFileMapping *mapping;
     const guint8 *file_data;
     size_t file_data_len;
-    gif_animation gif;
-    gif_result code;
+    nsgif_t *gif;
+    const nsgif_info_t *info;
+    nsgif_bitmap_t *frame_bitmap;
     gint current_frame_index;
-    guint gif_is_initialized : 1;
     guint frame_is_decoded : 1;
     guint frame_is_success : 1;
 };
 
-static void *
+static nsgif_bitmap_t *
 bitmap_create (int width, int height)
 {
     if ((width * (gint64) height * BYTES_PER_PIXEL) > IMAGE_BUFFER_SIZE_MAX)
@@ -57,57 +57,35 @@ bitmap_create (int width, int height)
     return g_malloc0 (width * height * BYTES_PER_PIXEL);
 }
 
-static gboolean
-maybe_decode_frame (ChicleGifLoader *loader)
-{
-    gif_result code;
-
-    if (loader->frame_is_decoded)
-        return loader->frame_is_success;
-
-    code = gif_decode_frame (&loader->gif, loader->current_frame_index);
-
-    loader->frame_is_decoded = TRUE;
-    loader->frame_is_success = (code == GIF_OK ? TRUE : FALSE);
-
-    return loader->frame_is_success;
-}
-
 static void
-bitmap_set_opaque (void *bitmap, bool opaque)
-{
-    (void) opaque;  /* unused */
-    (void) bitmap;  /* unused */
-    g_assert (bitmap);
-}
-
-static bool
-bitmap_test_opaque (void *bitmap)
-{
-    (void) bitmap;  /* unused */
-    g_assert (bitmap != NULL);
-    return false;
-}
-
-static unsigned char *
-bitmap_get_buffer (void *bitmap)
-{
-    g_assert (bitmap != NULL);
-    return bitmap;
-}
-
-static void
-bitmap_destroy (void *bitmap)
+bitmap_destroy (nsgif_bitmap_t *bitmap)
 {
     g_assert (bitmap != NULL);
     g_free (bitmap);
 }
 
-static void
-bitmap_modified (void *bitmap)
+static uint8_t *
+bitmap_get_buffer (nsgif_bitmap_t *bitmap)
 {
-    (void) bitmap;  /* unused */
     g_assert (bitmap != NULL);
+    return bitmap;
+}
+
+static gboolean
+maybe_decode_frame (ChicleGifLoader *loader)
+{
+    nsgif_error code;
+
+    if (loader->frame_is_decoded)
+        return loader->frame_is_success;
+
+    code = nsgif_frame_decode (loader->gif, loader->current_frame_index,
+                               &loader->frame_bitmap);
+
+    loader->frame_is_decoded = TRUE;
+    loader->frame_is_success = (code == NSGIF_OK ? TRUE : FALSE);
+
+    return loader->frame_is_success;
 }
 
 static ChicleGifLoader *
@@ -119,16 +97,16 @@ chicle_gif_loader_new (void)
 ChicleGifLoader *
 chicle_gif_loader_new_from_mapping (ChicleFileMapping *mapping)
 {
-    gif_bitmap_callback_vt bitmap_callbacks =
+    static const nsgif_bitmap_cb_vt bitmap_callbacks =
     {
         bitmap_create,
         bitmap_destroy,
         bitmap_get_buffer,
-        bitmap_set_opaque,
-        bitmap_test_opaque,
-        bitmap_modified
+        NULL,  /* set_opaque */
+        NULL,  /* test_opaque */
+        NULL,  /* modified */
+        NULL   /* get_rowspan */
     };
-    gif_result code;
     ChicleGifLoader *loader = NULL;
     gboolean success = FALSE;
 
@@ -145,17 +123,16 @@ chicle_gif_loader_new_from_mapping (ChicleFileMapping *mapping)
     if (!loader->file_data)
         goto out;
 
-    gif_create (&loader->gif, &bitmap_callbacks);
-    loader->gif_is_initialized = TRUE;
+    if (nsgif_create (&bitmap_callbacks, NSGIF_BITMAP_FMT_R8G8B8A8, &loader->gif) != NSGIF_OK)
+        goto out;
 
-    do
-    {
-        code = gif_initialise (&loader->gif, loader->file_data_len, loader->file_data);
+    /* Ignore scan errors - some of the frames may still be recovered */
+    nsgif_data_scan (loader->gif, loader->file_data_len, loader->file_data);
+    nsgif_data_complete (loader->gif);
 
-        if (code != GIF_OK && code != GIF_WORKING)
-            goto out;
-    }
-    while (code != GIF_OK);
+    loader->info = nsgif_get_info (loader->gif);
+    if (loader->info->frame_count < 1)
+        goto out;
 
     /* Ensure we can decode a frame. If not, we can try other loaders */
     if (!maybe_decode_frame (loader))
@@ -168,8 +145,8 @@ out:
     {
         if (loader)
         {
-            if (loader->gif_is_initialized)
-                gif_finalise (&loader->gif);
+            if (loader->gif)
+                nsgif_destroy (loader->gif);
 
             g_free (loader);
             loader = NULL;
@@ -185,8 +162,8 @@ chicle_gif_loader_destroy (ChicleGifLoader *loader)
     if (loader->mapping)
         chicle_file_mapping_destroy (loader->mapping);
 
-    if (loader->gif_is_initialized)
-        gif_finalise (&loader->gif);
+    if (loader->gif)
+        nsgif_destroy (loader->gif);
 
     g_free (loader);
 }
@@ -195,9 +172,9 @@ gboolean
 chicle_gif_loader_get_is_animation (ChicleGifLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, 0);
-    g_return_val_if_fail (loader->gif_is_initialized, 0);
+    g_return_val_if_fail (loader->gif != NULL, 0);
 
-    return loader->gif.frame_count > 1 ? TRUE : FALSE;
+    return loader->info->frame_count > 1 ? TRUE : FALSE;
 }
 
 gconstpointer
@@ -208,38 +185,41 @@ chicle_gif_loader_get_frame_data (ChicleGifLoader *loader,
                                   gint *rowstride_out)
 {
     g_return_val_if_fail (loader != NULL, NULL);
-    g_return_val_if_fail (loader->gif_is_initialized, NULL);
+    g_return_val_if_fail (loader->gif != NULL, NULL);
 
     if (!maybe_decode_frame (loader))
         return NULL;
 
     if (width_out)
-        *width_out = loader->gif.width;
+        *width_out = loader->info->width;
     if (height_out)
-        *height_out = loader->gif.height;
+        *height_out = loader->info->height;
     if (pixel_type_out)
         *pixel_type_out = CHAFA_PIXEL_RGBA8_UNASSOCIATED;
     if (rowstride_out)
-        *rowstride_out = loader->gif.width * 4;
+        *rowstride_out = loader->info->width * 4;
 
-    return loader->gif.frame_image;
+    return loader->frame_bitmap;
 }
 
 gint
 chicle_gif_loader_get_frame_delay (ChicleGifLoader *loader)
 {
+    const nsgif_frame_info_t *frame_info;
     gint frame_delay_ms;
 
     g_return_val_if_fail (loader != NULL, 0);
-    g_return_val_if_fail (loader->gif_is_initialized, 0);
+    g_return_val_if_fail (loader->gif != NULL, 0);
 
     if (!maybe_decode_frame (loader))
         return 0;
 
-    frame_delay_ms = loader->gif.frames [loader->current_frame_index].frame_delay;
+    frame_info = nsgif_get_frame_info (loader->gif, loader->current_frame_index);
+    if (!frame_info)
+        return 0;
 
     /* Convert from centiseconds to milliseconds */
-    frame_delay_ms *= 10;
+    frame_delay_ms = frame_info->delay * 10;
 
     /* It's common for GIF animations to omit the frame delays. If it looks like that's
      * what's happening, go with a 20fps default. */
@@ -253,7 +233,7 @@ void
 chicle_gif_loader_goto_first_frame (ChicleGifLoader *loader)
 {
     g_return_if_fail (loader != NULL);
-    g_return_if_fail (loader->gif_is_initialized);
+    g_return_if_fail (loader->gif != NULL);
 
     if (loader->current_frame_index == 0)
         return;
@@ -267,9 +247,9 @@ gboolean
 chicle_gif_loader_goto_next_frame (ChicleGifLoader *loader)
 {
     g_return_val_if_fail (loader != NULL, FALSE);
-    g_return_val_if_fail (loader->gif_is_initialized, FALSE);
+    g_return_val_if_fail (loader->gif != NULL, FALSE);
 
-    if (loader->current_frame_index + 1 >= (gint) loader->gif.frame_count)
+    if (loader->current_frame_index + 1 >= (gint) loader->info->frame_count)
         return FALSE;
 
     loader->current_frame_index++;

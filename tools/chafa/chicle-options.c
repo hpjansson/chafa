@@ -170,7 +170,8 @@ collect_variable_arguments (int *argc, char **argv [], gint first_arg)
 
 static const gchar copyright_notice [] =
     "Copyright (C) 2018-2025 Hans Petter Jansson et al.\n"
-    "Incl. libnsgif copyright (C) 2004 Richard Wilson, copyright (C) 2008 Sean Fox\n"
+    "Incl. libnsgif copyright (C) 2004 Richard Wilson, copyright (C) 2008 Sean Fox,\n"
+    "  copyright (C) 2013-2021 Michael Drake\n"
     "Incl. LodePNG copyright (C) 2005-2018 Lode Vandevenne\n"
     "Incl. QOI decoder copyright (C) 2021 Dominic Szablewski\n\n"
     "This is free software; see the source for copying conditions. There is NO\n"

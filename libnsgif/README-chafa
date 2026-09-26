@@ -1,10 +1,12 @@
 Notes on libnsgif as bundled with Chafa
 =======================================
 
-The libnsgif bundled with Chafa is currently based on version 0.2.1. The
-original source is here:
+The libnsgif bundled with Chafa is currently based on upstream commit
+22e99eb6818b1284d0f3ff1b7f46159e87221220 (2026-08-05; release 1.0.0 plus five
+later commits). The original source is here:
 
-http://www.netsurf-browser.org/projects/libnsgif/
+https://www.netsurf-browser.org/projects/libnsgif/
+https://github.com/netsurf-browser/libnsgif
 
 It has been slightly adapted from the original to make it fit into the Chafa
 build. It may have further modifications to make it more convenient to use
