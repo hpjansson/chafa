@@ -162,9 +162,9 @@ win32_get_reader_handle (ChafaTerm *term)
 static HANDLE
 win32_get_writer_handle (ChafaTerm *term)
 {
-    if (term->reader)
+    if (term->writer)
     {
-        gint fd = chafa_stream_reader_get_fd (term->reader);
+        gint fd = chafa_stream_writer_get_fd (term->writer);
         if (fd >= 0)
             return (HANDLE) _get_osfhandle (fd);
     }
