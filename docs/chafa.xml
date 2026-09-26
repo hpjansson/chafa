@@ -261,6 +261,15 @@ Alias for "--label on".
 </varlistentry>
 
 <varlistentry>
+<term><option>--link <replaceable>mode</replaceable></option></term>
+<listitem><para>
+Link labels [auto, on, off]. Turns labels into clickable hyperlinks. Use
+with "--label on". "Auto" enables links when the terminal supports it. Defaults
+to auto.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
 <term><option>--margin-bottom <replaceable>num</replaceable></option></term>
 <listitem><para>
 When terminal size is detected, reserve at least this many rows at the bottom
