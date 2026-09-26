@@ -976,8 +976,8 @@ chafa_symbol_renderer_draw_all_pixels (ChafaSymbolRenderer *renderer,
     else
     {
 #if 0
-	g_warning ("ChafaCanvas: Out of memory allocating %ux%u pixels.",
-               canvas->width_pixels, canvas->height_pixels);
+        g_warning ("ChafaCanvas: Out of memory allocating %ux%u pixels.",
+                   canvas->width_pixels, canvas->height_pixels);
 #endif
     }
 }
