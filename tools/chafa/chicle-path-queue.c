@@ -362,6 +362,7 @@ chicle_path_queue_try_pop (ChiclePathQueue *path_queue)
     {
         case PATH_SOURCE_PATH:
             path = path_queue->current_src->data;
+            path_queue->current_src->data = NULL;
             clear_current_src (path_queue);
             break;
         case PATH_SOURCE_PATH_LIST:
