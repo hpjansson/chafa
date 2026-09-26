@@ -42,7 +42,8 @@ ChafaStreamReader *chafa_stream_reader_new_from_fd (gint fd);
 CHAFA_AVAILABLE_IN_1_20
 ChafaStreamReader *chafa_stream_reader_new_from_fd_full (gint fd,
                                                          gconstpointer token_separator,
-                                                         gint token_separator_len);
+                                                         gint token_separator_len,
+                                                         gint max_token_len);
 CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_reader_ref (ChafaStreamReader *stream_reader);
 CHAFA_AVAILABLE_IN_1_20
@@ -56,7 +57,7 @@ gboolean chafa_stream_reader_is_console (ChafaStreamReader *stream_reader);
 CHAFA_AVAILABLE_IN_1_20
 gint chafa_stream_reader_read (ChafaStreamReader *stream_reader, gpointer out, gint max_len);
 CHAFA_AVAILABLE_IN_1_20
-gint chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out, gint max_len);
+gint chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out);
 
 CHAFA_AVAILABLE_IN_1_20
 gboolean chafa_stream_reader_wait_until (ChafaStreamReader *stream_reader, gint64 end_time_us);

@@ -160,7 +160,8 @@ open_current_stream (ChiclePathQueue *path_queue)
 
     if (fd >= 0)
         path_queue->current_reader = chafa_stream_reader_new_from_fd_full (
-            fd, path_queue->current_src->separator, path_queue->current_src->separator_len);
+            fd, path_queue->current_src->separator, path_queue->current_src->separator_len,
+            PATH_TOKEN_LEN_MAX);
 }
 
 /* Ensure there's a current_src and that it's not empty. For streams, this
@@ -228,8 +229,7 @@ pop_stream_path_token (ChiclePathQueue *path_queue)
         path_queue->current_path_token = NULL;
 
         result = chafa_stream_reader_read_token (path_queue->current_reader,
-                                                 (gpointer *) &path_queue->current_path_token,
-                                                 PATH_TOKEN_LEN_MAX);
+                                                 (gpointer *) &path_queue->current_path_token);
         if (result > 0 && !strcmp (path_queue->current_src->separator, "\n"))
         {
             /* If we're separating on \n, handle \r\n by eliminating the \r too */

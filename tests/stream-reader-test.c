@@ -65,7 +65,7 @@ writer_thread (gpointer data)
 /* Feed the reader from a pipe. Small payloads are written synchronously,
  * large ones from a thread so the writer can't fill the pipe and stall. */
 static ChafaStreamReader *
-build_reader (const gchar *data, gsize len, const gchar *sep,
+build_reader (const gchar *data, gsize len, const gchar *sep, gint max_token_len,
               GThread **writer_out)
 {
     ChafaStreamReader *reader;
@@ -76,7 +76,7 @@ build_reader (const gchar *data, gsize len, const gchar *sep,
     g_assert (r == 0);
 
     if (sep)
-        reader = chafa_stream_reader_new_from_fd_full (fds [0], sep, strlen (sep));
+        reader = chafa_stream_reader_new_from_fd_full (fds [0], sep, strlen (sep), max_token_len);
     else
         reader = chafa_stream_reader_new_from_fd (fds [0]);
 
@@ -115,7 +115,7 @@ finish_reader (ChafaStreamReader *reader, GThread *writer)
 /* Wait for a token with a bounded timeout. Returns the token length, an
  * error code, or CHAFA_STREAM_READER_ERROR_NO_DATA at EOF. */
 static gint
-read_token_blocking (ChafaStreamReader *reader, gchar **token_out, gint max_len)
+read_token_blocking (ChafaStreamReader *reader, gchar **token_out)
 {
     for (;;)
     {
@@ -126,7 +126,7 @@ read_token_blocking (ChafaStreamReader *reader, gchar **token_out, gint max_len)
                                                g_get_monotonic_time () + WAIT_TIMEOUT_US);
         g_assert_true (woke);
 
-        result = chafa_stream_reader_read_token (reader, (gpointer *) token_out, max_len);
+        result = chafa_stream_reader_read_token (reader, (gpointer *) token_out);
         if (result != CHAFA_STREAM_READER_ERROR_NO_DATA)
             return result;
         if (chafa_stream_reader_is_eof (reader))
@@ -135,12 +135,12 @@ read_token_blocking (ChafaStreamReader *reader, gchar **token_out, gint max_len)
 }
 
 static void
-assert_token (ChafaStreamReader *reader, gint max_len, const gchar *expected)
+assert_token (ChafaStreamReader *reader, const gchar *expected)
 {
     gchar *token = NULL;
     gint result;
 
-    result = read_token_blocking (reader, &token, max_len);
+    result = read_token_blocking (reader, &token);
     g_assert_cmpint (result, ==, (gint) strlen (expected));
     g_assert_nonnull (token);
     g_assert_cmpstr (token, ==, expected);
@@ -148,12 +148,12 @@ assert_token (ChafaStreamReader *reader, gint max_len, const gchar *expected)
 }
 
 static void
-assert_result (ChafaStreamReader *reader, gint max_len, gint expected)
+assert_result (ChafaStreamReader *reader, gint expected)
 {
     gchar *token = (gchar *) 0x1;
     gint result;
 
-    result = read_token_blocking (reader, &token, max_len);
+    result = read_token_blocking (reader, &token);
     g_assert_cmpint (result, ==, expected);
 
     /* Out pointer must be left untouched on error */
@@ -161,9 +161,9 @@ assert_result (ChafaStreamReader *reader, gint max_len, gint expected)
 }
 
 static void
-assert_eof (ChafaStreamReader *reader, gint max_len)
+assert_eof (ChafaStreamReader *reader)
 {
-    assert_result (reader, max_len, CHAFA_STREAM_READER_ERROR_NO_DATA);
+    assert_result (reader, CHAFA_STREAM_READER_ERROR_NO_DATA);
     g_assert_true (chafa_stream_reader_is_eof (reader));
 }
 
@@ -173,20 +173,20 @@ zero_length_tokens_test (void)
     ChafaStreamReader *reader;
     GThread *writer;
 
-    reader = build_reader ("\n\nabc\n\n", 7, "\n", &writer);
-    assert_token (reader, -1, "");
-    assert_token (reader, -1, "");
-    assert_token (reader, -1, "abc");
-    assert_token (reader, -1, "");
-    assert_eof (reader, -1);
+    reader = build_reader ("\n\nabc\n\n", 7, "\n", -1, &writer);
+    assert_token (reader, "");
+    assert_token (reader, "");
+    assert_token (reader, "abc");
+    assert_token (reader, "");
+    assert_eof (reader);
     finish_reader (reader, writer);
 
-    /* max_len == 0 admits empty tokens only */
-    reader = build_reader ("\nab\n\n", 5, "\n", &writer);
-    assert_token (reader, 0, "");
-    assert_result (reader, 0, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
-    assert_token (reader, 0, "");
-    assert_eof (reader, 0);
+    /* A limit of 0 admits empty tokens only */
+    reader = build_reader ("\nab\n\n", 5, "\n", 0, &writer);
+    assert_token (reader, "");
+    assert_result (reader, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_token (reader, "");
+    assert_eof (reader);
     finish_reader (reader, writer);
 }
 
@@ -197,22 +197,22 @@ remainder_test (void)
     GThread *writer;
 
     /* Data after the final separator is a token of its own */
-    reader = build_reader ("abc\ndef", 7, "\n", &writer);
-    assert_token (reader, -1, "abc");
-    assert_token (reader, -1, "def");
-    assert_eof (reader, -1);
+    reader = build_reader ("abc\ndef", 7, "\n", -1, &writer);
+    assert_token (reader, "abc");
+    assert_token (reader, "def");
+    assert_eof (reader);
     finish_reader (reader, writer);
 
     /* ...unless it's oversized */
-    reader = build_reader ("abc\ndefg", 8, "\n", &writer);
-    assert_token (reader, 3, "abc");
-    assert_result (reader, 3, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
-    assert_eof (reader, 3);
+    reader = build_reader ("abc\ndefg", 8, "\n", 3, &writer);
+    assert_token (reader, "abc");
+    assert_result (reader, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_eof (reader);
     finish_reader (reader, writer);
 
     /* Empty stream */
-    reader = build_reader ("", 0, "\n", &writer);
-    assert_eof (reader, -1);
+    reader = build_reader ("", 0, "\n", -1, &writer);
+    assert_eof (reader);
     finish_reader (reader, writer);
 }
 
@@ -222,12 +222,12 @@ multibyte_separator_test (void)
     ChafaStreamReader *reader;
     GThread *writer;
 
-    reader = build_reader ("a--b----c-d--", 13, "--", &writer);
-    assert_token (reader, -1, "a");
-    assert_token (reader, -1, "b");
-    assert_token (reader, -1, "");
-    assert_token (reader, -1, "c-d");
-    assert_eof (reader, -1);
+    reader = build_reader ("a--b----c-d--", 13, "--", -1, &writer);
+    assert_token (reader, "a");
+    assert_token (reader, "b");
+    assert_token (reader, "");
+    assert_token (reader, "c-d");
+    assert_eof (reader);
     finish_reader (reader, writer);
 }
 
@@ -237,11 +237,11 @@ oversized_token_test (void)
     ChafaStreamReader *reader;
     GThread *writer;
 
-    reader = build_reader ("abcd\nxy\nabc\n", 12, "\n", &writer);
-    assert_result (reader, 3, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
-    assert_token (reader, 3, "xy");
-    assert_token (reader, 3, "abc");
-    assert_eof (reader, 3);
+    reader = build_reader ("abcd\nxy\nabc\n", 12, "\n", 3, &writer);
+    assert_result (reader, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_token (reader, "xy");
+    assert_token (reader, "abc");
+    assert_eof (reader);
     finish_reader (reader, writer);
 }
 
@@ -264,30 +264,30 @@ huge_token_test (void)
 
     /* Discard with limit */
 
-    reader = build_reader (data, len, "\n", &writer);
-    assert_result (reader, 16, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
-    assert_token (reader, 16, "ok");
-    assert_eof (reader, 16);
+    reader = build_reader (data, len, "\n", 16, &writer);
+    assert_result (reader, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_token (reader, "ok");
+    assert_eof (reader);
     finish_reader (reader, writer);
 
     /* Return whole with no limit */
 
-    reader = build_reader (data, len, "\n", &writer);
-    result = read_token_blocking (reader, &token, -1);
+    reader = build_reader (data, len, "\n", -1, &writer);
+    result = read_token_blocking (reader, &token);
     g_assert_cmpint (result, ==, BIG_TOKEN_LEN);
     g_assert_nonnull (token);
     g_assert_true (token [0] == 'a' && token [BIG_TOKEN_LEN - 1] == 'a'
                    && token [BIG_TOKEN_LEN] == '\0');
     g_free (token);
-    assert_token (reader, -1, "ok");
-    assert_eof (reader, -1);
+    assert_token (reader, "ok");
+    assert_eof (reader);
     finish_reader (reader, writer);
 
     /* Huge remainder with no trailing separator */
 
-    reader = build_reader (data, BIG_TOKEN_LEN, "\n", &writer);
-    assert_result (reader, 16, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
-    assert_eof (reader, 16);
+    reader = build_reader (data, BIG_TOKEN_LEN, "\n", 16, &writer);
+    assert_result (reader, CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN);
+    assert_eof (reader);
     finish_reader (reader, writer);
 
     g_free (data);

@@ -71,6 +71,10 @@ struct ChafaStreamReader
     gpointer token_separator;
     gint token_separator_len;
 
+    /* Longest token we'll allocate and hand out. Longer tokens will be skipped.
+     * Negative means maximum length is unlimited. */
+    gint token_len_max;
+
     gint fd;
     guint idle_id;
     gint buf_max;
@@ -318,10 +322,12 @@ is_eof_unlocked (ChafaStreamReader *stream_reader)
 
 static void
 chafa_stream_reader_init (ChafaStreamReader *stream_reader, gint fd,
-                          gconstpointer token_separator, gint token_separator_len)
+                          gconstpointer token_separator, gint token_separator_len,
+                          gint token_len_max)
 {
     stream_reader->refs = 1;
     stream_reader->fd = fd;
+    stream_reader->token_len_max = token_len_max;
     stream_reader->buf_max = FIFO_DEFAULT_MAX;
     stream_reader->fifo = chafa_byte_fifo_new ();
     stream_reader->wakeup = chafa_wakeup_new ();
@@ -400,21 +406,37 @@ chafa_stream_reader_new_from_fd (gint fd)
     g_return_val_if_fail (fd >= 0, NULL);
 
     stream_reader = g_new0 (ChafaStreamReader, 1);
-    chafa_stream_reader_init (stream_reader, fd, NULL, -1);
+    chafa_stream_reader_init (stream_reader, fd, NULL, -1, -1);
 
     return stream_reader;
 }
 
+/**
+ * chafa_stream_reader_new_from_fd_full:
+ * @fd: File descriptor to read from
+ * @token_separator: Byte sequence separating tokens, or %NULL for none
+ * @token_separator_len: Length of @token_separator in bytes
+ * @token_len_max: Maximum token length in bytes, or a negative value for
+ *   no limit
+ *
+ * Creates a new #ChafaStreamReader reading from @fd. If a token separator
+ * is supplied, the stream can be consumed as tokens with
+ * chafa_stream_reader_read_token(). Tokens longer than @token_len_max are
+ * discarded.
+ *
+ * Returns: The new #ChafaStreamReader
+ **/
 ChafaStreamReader *
 chafa_stream_reader_new_from_fd_full (gint fd, gconstpointer token_separator,
-                                      gint token_separator_len)
+                                      gint token_separator_len, gint token_len_max)
 {
     ChafaStreamReader *stream_reader;
 
     g_return_val_if_fail (fd >= 0, NULL);
 
     stream_reader = g_new0 (ChafaStreamReader, 1);
-    chafa_stream_reader_init (stream_reader, fd, token_separator, token_separator_len);
+    chafa_stream_reader_init (stream_reader, fd, token_separator, token_separator_len,
+                              token_len_max);
 
     return stream_reader;
 }
@@ -542,7 +564,6 @@ skip_token_locked (ChafaStreamReader *stream_reader)
  * chafa_stream_reader_read_token:
  * @stream_reader: The #ChafaStreamReader to read from
  * @out: Where to store the pointer to the token
- * @max_len: Maximum length of the token
  *
  * Reads a token from @stream_reader using the previously provided token
  * separator and stores a pointer to it in @out. The token is always zero-
@@ -552,8 +573,8 @@ skip_token_locked (ChafaStreamReader *stream_reader)
  * of the stream or two adjacent separators will result in a zero-length token.
  * An empty remainder at EOF will not.
  *
- * Tokens longer than @max_len will be discarded. If a negative @max_len is
- * passed, no upper limit will be enforced.
+ * Tokens longer than the maximum length passed to
+ * chafa_stream_reader_new_from_fd_full() will be discarded.
  *
  * On success, @out is set and the return value is the length of the token
  * in bytes (zero or greater, excluding the terminator). On error, @out is
@@ -564,13 +585,13 @@ skip_token_locked (ChafaStreamReader *stream_reader)
  * also happens on EOF, which must be checked with @chafa_stream_reader_is_eof().
  *
  * #CHAFA_STREAM_READER_ERROR_DISCARDED_TOKEN: A token was read successfully,
- * but it was longer than @max_len. At this point it has been silently skipped
+ * but it was longer than the maximum length. At this point it has been skipped
  * and the reader can immediately try to read the next token.
  *
  * Returns: Length of the token or an error code
  **/
 gint
-chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out, gint max_len)
+chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out)
 {
     gchar *token = NULL;
     gint result = CHAFA_STREAM_READER_ERROR_NO_DATA;
@@ -611,7 +632,8 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
          * before it's complete. */
         gint buffered_len = chafa_byte_fifo_get_len (stream_reader->fifo);
 
-        if (max_len >= 0 && buffered_len > max_len)
+        if (stream_reader->token_len_max >= 0
+            && buffered_len > stream_reader->token_len_max)
         {
             /* Already oversized; start discarding instead of buffering */
             skip_token_locked (stream_reader);
@@ -626,7 +648,8 @@ chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out,
         goto out;
     }
 
-    if (max_len >= 0 && token_len > max_len)
+    if (stream_reader->token_len_max >= 0
+        && token_len > stream_reader->token_len_max)
     {
         /* Oversized but complete; skip it without copying */
         chafa_byte_fifo_drop (stream_reader->fifo, consume_len);
