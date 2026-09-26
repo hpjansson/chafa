@@ -50,7 +50,7 @@ void chafa_stream_writer_set_buffer_max (ChafaStreamWriter *stream_writer, gint 
 CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_writer_write (ChafaStreamWriter *stream_writer, gconstpointer data, gint len);
 CHAFA_AVAILABLE_IN_1_20
-gint chafa_stream_writer_print (ChafaStreamWriter *stream_writer, const gchar *format, ...);
+gint chafa_stream_writer_print (ChafaStreamWriter *stream_writer, const gchar *format, ...) G_GNUC_PRINTF (2, 3);
 CHAFA_AVAILABLE_IN_1_20
 gboolean chafa_stream_writer_flush (ChafaStreamWriter *stream_writer);
 
