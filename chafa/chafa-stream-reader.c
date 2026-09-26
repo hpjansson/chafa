@@ -425,6 +425,8 @@ chafa_stream_reader_new_from_fd (gint fd)
  * discarded.
  *
  * Returns: The new #ChafaStreamReader
+ *
+ * Since: 1.20
  **/
 ChafaStreamReader *
 chafa_stream_reader_new_from_fd_full (gint fd, gconstpointer token_separator,
@@ -589,6 +591,8 @@ skip_token_locked (ChafaStreamReader *stream_reader)
  * and the reader can immediately try to read the next token.
  *
  * Returns: Length of the token or an error code
+ *
+ * Since: 1.20
  **/
 gint
 chafa_stream_reader_read_token (ChafaStreamReader *stream_reader, gpointer *out)

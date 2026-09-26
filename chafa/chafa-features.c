@@ -229,6 +229,8 @@ chafa_describe_features (ChafaFeatures features)
  * Queries the maximum number of worker threads to use for parallel processing.
  *
  * Returns: The number of threads, or -1 if determined automatically
+ *
+ * Since: 1.10
  **/
 gint
 chafa_get_n_threads (void)
@@ -245,6 +247,8 @@ chafa_get_n_threads (void)
  *
  * Setting this to 0 or 1 will avoid using thread pools and instead perform
  * all processing in the main thread.
+ *
+ * Since: 1.10
  **/
 void
 chafa_set_n_threads (gint n)
@@ -261,6 +265,8 @@ chafa_set_n_threads (gint n)
  * parallel processing.
  *
  * Returns: Number of threads, always >= 1
+ *
+ * Since: 1.10
  **/
 gint
 chafa_get_n_actual_threads (void)

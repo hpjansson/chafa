@@ -164,6 +164,8 @@ chafa_calc_canvas_geometry (gint src_width,
  *
  * Frees an array of #GString. If @gsa is %NULL, simply returns without
  * doing anything.
+ *
+ * Since: 1.14
  **/
 void
 chafa_free_gstring_array (GString **gsa)
