@@ -1114,6 +1114,7 @@ detect_term_of_type (TermType term_type, gchar **envp)
         pri = match_term_def (&term_def [i], envp);
         if (pri > best_pri
             || (pri == best_pri
+                && best_def_i >= 0
                 && !strcmp_wrap (term_def [i].name, term_def [best_def_i].name)
                 && ((term_def [i].variant && !term_def [best_def_i].variant)
                     || (!strcmp_wrap (term_def [i].variant, term_def [best_def_i].variant)
