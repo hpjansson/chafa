@@ -436,11 +436,11 @@ PnnBin;
 static gint
 color_to_index (const ChafaColor *color, gint bits_per_ch)
 {
-    guint8 mask = 0xff << (8 - bits_per_ch);
+    gint shift = 8 - bits_per_ch;
 
-    return ((color->ch [0] & mask) << (bits_per_ch * 2 - (8 - bits_per_ch)))
-        | ((color->ch [1] & mask) << (bits_per_ch - (8 - bits_per_ch)))
-        | ((color->ch [2] & mask) >> (8 - bits_per_ch));
+    return ((color->ch [0] >> shift) << (bits_per_ch * 2))
+        | ((color->ch [1] >> shift) << bits_per_ch)
+        | (color->ch [2] >> shift);
 }
 
 static gfloat
