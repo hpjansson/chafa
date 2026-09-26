@@ -41,6 +41,7 @@ local options=(
   --polite"[Polite mode. Defaults to on. Turning this off may enhance presentation and prevent interference from other programs, but risks leaving the terminal in an altered state (rude).]:BOOL:(on off)"
   {-p,--preprocess}"[Image preprocessing. Defaults to on with 16 colors or lower, off otherwise]:BOOL:(on off)"
   --probe"[Probe terminal's capabilities and wait for response. A positive real number denotes the maximum time to wait for a response, in seconds. Defaults to 5.0]:MODE:(auto on off)"
+  --probe-mode"[How to probe the terminal. Any is the default and will probe by any means available. Ctty will probe the controlling tty, which is useful when chafa is part of a pipeline. Stdio will only consider standard input/output]:MODE:(any ctty stdio)"
   --relative"[Use relative cursor positioning. Defaults to off]:BOOL:(on off)"
   --scale"[Scale image, respecting terminal's maximum dimensions. 1.0 approximates original pixel dimensions. Specify max to use all available space. Defaults to 1.0 for pixel graphics and 4.0 for symbols]:NUM"
   {-s,--size}"[Set maximum output dimensions in columns and rows. By default this will be the size of your terminal, or 80x25 if size detection fails]:WxH"

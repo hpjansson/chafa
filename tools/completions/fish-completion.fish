@@ -4,6 +4,7 @@ complete -c chafa        -l 'files'   -x -a '(- _files)'  -d 'Read list of files
 complete -c chafa        -l 'files0'  -x -a '(- _files)'  -d 'Read list of files to process from PATH (NUL-separated), or "-" for stdin'
 complete -c chafa -o 'h' -l 'help'                        -d 'Show help'
 complete -c chafa        -l 'probe'   -x -a 'auto on off' -d 'Probe terminal\'s capabilities and wait for response'
+complete -c chafa        -l 'probe-mode' -x -a 'any ctty stdio' -d 'How to probe the terminal'
 complete -c chafa        -l 'version'                     -d 'Show version'
 complete -c chafa -o 'v' -l 'verbose'                     -d 'Be verbose'
 
