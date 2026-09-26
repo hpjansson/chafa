@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Running prerequisites
       run: >
         sudo apt update -y
@@ -22,7 +22,9 @@ jobs:
         libtool
         libglib2.0-dev
         libavif-dev
+        libheif-dev
         libjpeg-dev
+        libjxl-dev
         librsvg2-dev
         libtiff-dev
         libwebp-dev
