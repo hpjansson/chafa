@@ -743,10 +743,10 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
     placement_height = chafa_round_up_to_multiple_of (placement_height, cell_height);
 
     /* Convert the placement dimensions from real geometry to symbol matrix geometry. */
-    placement_x = (placement_x / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS,
-    placement_y = (placement_y / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS,
-    placement_width = (placement_width / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS,
-    placement_height = (placement_height / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS,
+    placement_x = (placement_x / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS;
+    placement_y = (placement_y / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS;
+    placement_width = (placement_width / cell_width) * CHAFA_SYMBOL_WIDTH_PIXELS;
+    placement_height = (placement_height / cell_height) * CHAFA_SYMBOL_HEIGHT_PIXELS;
 
     prep_ctx.palette = palette;
     prep_ctx.dither = dither;
