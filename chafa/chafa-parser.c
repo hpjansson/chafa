@@ -72,6 +72,7 @@ gint
 chafa_event_get_seq_arg (ChafaEvent *event, gint n)
 {
     g_return_val_if_fail (event != NULL, -1);
+    g_return_val_if_fail (n >= 0, -1);
 
     if (event->type != CHAFA_SEQ_EVENT
         || n >= event->n_seq_args)
