@@ -53,7 +53,7 @@ _chafa()
       ;;
 
     --fill|--symbols)
-      local symbols="all asci braille extra imported narrow solid ugly alnum bad diagonal geometric inverted none space vhalf alpha block digit half latin quad stipple wedge ambiguous border dot hhalf legacy sextant technical wide"
+      local symbols="all ascii braille extra imported narrow solid ugly alnum bad diagonal geometric inverted none space vhalf alpha block digit half latin quad stipple wedge ambiguous border dot hhalf legacy octant sextant technical wide"
       COMPREPLY=( $(compgen -W "${symbols}" -- "${cur}") )
       ;;
 

@@ -1,6 +1,6 @@
 #compdef chafa
 
-local symbols=(all asci braille extra imported narrow solid ugly alnum bad diagonal geometric inverted none space vhalf alpha block digit half latin quad stipple wedge ambiguous border dot hhalf legacy sextant technical wide)
+local symbols=(all ascii braille extra imported narrow solid ugly alnum bad diagonal geometric inverted none space vhalf alpha block digit half latin quad stipple wedge ambiguous border dot hhalf legacy octant sextant technical wide)
 
 local options=(
   '(- : *)'{-h,--help}"[Show help]"
@@ -19,7 +19,7 @@ local options=(
   --dither-intensity"[Multiplier for dither intensity. Defaults to 1.0]:NUM 0.0 - inf"
   {-d,--duration}"[The time to show each file]:SECONDS"
   --exact-size"[Try to match the input's size exactly. Defaults to auto]:MODE:(auto on off)"
-  --fg"[Foreground color of display (color name or hex).]:COLOR:(black blue cyan default gray green magenta orange red white)"
+  --fg"[Foreground color of display (color name or hex).]:COLOR:(black blue cyan gray green magenta orange red white)"
   --fg-only"[Leave the background color untouched]"
   --files"[Read list of files to process from PATH (newline-separated), or '-' for stdin]:FILE:_files"
   --files0"[Read list of files to process from PATH (NUL-separated), or '-' for stdin]:FILE:_files"
@@ -38,7 +38,7 @@ local options=(
   --margin-right"[When terminal size is detected, reserve at least NUM columns on the right-hand side as a safety margin. Defaults to 0.]:NUM"
   {-O,--optimize}"[Compress the output by using control sequences. 0 disables, 9 enables every available optimization. Defaults to 5, except for when used with '-c none', where it defaults to 0]:NUM:("{0..9}")"
   --passthrough"[Graphics protocol passthrough. Defaults to auto]:MODE:(auto none screen tmux)"
-  --polite"[Polite mode. Defaults to on. Turning this off may enhance presentation and prevent interference from other programs, but risks leaving the terminal in an altered state (rude).]:BOOL:(on off)"
+  --polite"[Polite mode. Defaults to off. Turning this off may enhance presentation and prevent interference from other programs, but risks leaving the terminal in an altered state (rude).]:BOOL:(on off)"
   {-p,--preprocess}"[Image preprocessing. Defaults to on with 16 colors or lower, off otherwise]:BOOL:(on off)"
   --probe"[Probe terminal's capabilities and wait for response. A positive real number denotes the maximum time to wait for a response, in seconds. Defaults to 5.0]:MODE:(auto on off)"
   --probe-mode"[How to probe the terminal. Any is the default and will probe by any means available. Ctty will probe the controlling tty, which is useful when chafa is part of a pipeline. Stdio will only consider standard input/output]:MODE:(any ctty stdio)"
