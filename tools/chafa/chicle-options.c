@@ -334,10 +334,11 @@ print_summary (void)
 
     "\nAccepted classes for --symbols and --fill:\n"
 
-    "  all        ascii   braille   extra      imported  narrow   solid      ugly\n"
-    "  alnum      bad     diagonal  geometric  inverted  none     space      vhalf\n"
-    "  alpha      block   digit     half       latin     quad     stipple    wedge\n"
-    "  ambiguous  border  dot       hhalf      legacy    sextant  technical  wide\n"
+    "  all        bad       digit      hhalf     narrow   solid      vhalf\n"
+    "  alnum      block     dot        imported  none     space      wedge\n"
+    "  alpha      border    extra      inverted  octant   stipple    wide\n"
+    "  ambiguous  braille   geometric  latin     quad     technical\n"
+    "  ascii      diagonal  half       legacy    sextant  ugly\n"
 
     "\n  These can be combined with + and -, e.g. block+border-diagonal or all-wide.\n"
 

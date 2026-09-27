@@ -573,7 +573,8 @@ and a list of symbol classes.
 <para>
 Accepted classes for --symbols and --fill are [all, none, space, solid, stipple,
 block, border, diagonal, dot, quad, half, hhalf, vhalf, inverted, braille,
-technical, geometric, ascii, legacy, sextant, wedge, wide, narrow]. Some
+technical, geometric, ascii, alpha, digit, alnum, narrow, wide, ambiguous,
+ugly, legacy, sextant, wedge, latin, imported, octant, extra, bad]. Some
 symbols belong to multiple classes, e.g. diagonals are also borders.
 </para>
 <para>

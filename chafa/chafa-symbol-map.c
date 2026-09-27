@@ -1707,10 +1707,11 @@ chafa_symbol_map_remove_by_range (ChafaSymbolMap *symbol_map, gunichar first, gu
  * it's understood to be relative to the current set in @symbol_map,
  * otherwise the map is cleared first.
  *
- * The symbol tags are string versions of #ChafaSymbolTags, i.e.
+ * The symbol tags are string versions of #ChafaSymbolTags:
  * [all, none, space, solid, stipple, block, border, diagonal, dot,
- * quad, half, hhalf, vhalf, braille, technical, geometric, ascii,
- * extra].
+ * quad, half, hhalf, vhalf, inverted, braille, technical, geometric, ascii,
+ * alpha, digit, alnum, narrow, wide, ambiguous, ugly, legacy, sextant, wedge,
+ * latin, imported, octant, extra, bad].
  *
  * Examples: "block,border" sets map to contain symbols matching either
  * of those tags. "+block,border-dot,stipple" adds block and border
