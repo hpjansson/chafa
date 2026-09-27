@@ -172,10 +172,11 @@ may confuse the terminal or other programs. Defaults to off.
 <term><option>--align <replaceable>ALIGN</replaceable></option></term>
 <listitem><para>
 Align images in viewport. The following alignments are understood: left, right,
-top, bottom, hcenter, vcenter, center. Two orthogonal alignments can be
-separated by a comma, e.g. "center,right". The meaning of "center" depends on
-context, and defaults to "hcenter" if ambiguous. "center,center" will center
-along both axes.
+top, bottom, hcenter, vcenter, center. "up", "down", "hmid", "vmid" and "mid"
+are accepted as aliases for top, bottom, hcenter, vcenter and center. Two
+orthogonal alignments can be separated by a comma, e.g. "center,right". The
+meaning of "center" depends on context, and defaults to "hcenter" if
+ambiguous. "center,center" will center along both axes.
 </para>
 <para>
 Centering vertically makes sense when used together with "--clear", or possibly
@@ -282,7 +283,8 @@ Defaults to 1.
 <term><option>--margin-right <replaceable>num</replaceable></option></term>
 <listitem><para>
 When terminal size is detected, reserve at least this many columns on the
-right-hand side as a safety margin. Defaults to 0.
+right-hand side as a safety margin. Defaults to 0, except in kitty mode,
+where it is 1.
 </para></listitem>
 </varlistentry>
 
@@ -299,7 +301,8 @@ to 1.0 for pixel graphics and 4.0 for symbols.
 <term><option>-s <replaceable>width</replaceable>x<replaceable>height</replaceable>, --size <replaceable>width</replaceable>x<replaceable>height</replaceable></option></term>
 <listitem><para>
 Set maximum output image dimensions in columns and rows. By default this will
-be equal to the view size (see --view-size).
+be equal to the view size (see --view-size) less the margins (see
+--margin-bottom and --margin-right).
 </para></listitem>
 </varlistentry>
 
@@ -349,8 +352,8 @@ for more.
 <term><option>--speed <replaceable>speed</replaceable></option></term>
 <listitem><para>
 Set the speed animations will play at. This can be either a unitless
-multiplier (fractions are allowed), or a real number followed by "fps"
-to apply a specific framerate.
+multiplier (decimals are allowed, e.g. 0.5), or a real number followed by
+"fps" to apply a specific framerate.
 </para></listitem>
 </varlistentry>
 
@@ -471,9 +474,9 @@ none. Swaps --fg and --bg.
 <varlistentry>
 <term><option>-p <replaceable>bool</replaceable>, --preprocess <replaceable>bool</replaceable></option></term>
 <listitem><para>
-Image preprocessing [on, off]. Defaults to on with 16 colors or lower, off
-otherwise. This enhances colors and contrast prior to conversion, which can be
-useful in low-color modes.
+Image preprocessing [on, off]. Defaults to on. This enhances colors and
+contrast prior to conversion, which can be useful in low-color modes. It only
+has an effect with 16 colors or fewer.
 </para></listitem>
 </varlistentry>
 
@@ -593,8 +596,11 @@ and - to add or remove symbols relative to the existing set. The ordering is
 significant.
 </para>
 <para>
-The default symbol set is block+border+space-wide-inverted for all modes
-except "none", which uses block+border+space-wide (including inverse symbols).
+The default symbol set depends on the detected terminal. For most terminals
+it's block+border+space-wide-inverted for all modes except "none", which uses
+block+border+space-wide (including inverse symbols). Terminals that are not
+known to render Unicode block symbols well, such as the Linux console, get
+ascii instead.
 </para>
 </refsect1>
 
@@ -609,12 +615,12 @@ If one or more <command>--duration</command> arguments are present, the final
 instance is respected and applied to every file.
 </para></listitem>
 <listitem><para>
-Otherwise, if there's a controlling terminal attached (indicating there's
-an interactive session), and only a single file argument is provided, and
-that file is an animation, it will have infinite duration.
+Otherwise, if both standard input and output are connected to a terminal
+(indicating there's an interactive session), and only a single file argument
+is provided, and that file is an animation, it will have infinite duration.
 </para></listitem>
 <listitem><para>
-Otherwise (no controlling terminal, multiple files, file is a still image),
+Otherwise (not interactive, multiple files, file is a still image),
 duration will be zero, causing animations to play once and then stop.
 </para></listitem>
 </orderedlist>
