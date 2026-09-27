@@ -63,7 +63,8 @@
       its development files. <command>chafa</command> has built-in
       support for the GIF, PNG, QOI and XWD formats, and can be
       built with optional support for many others, including AVIF,
-      JPEG, SVG, TIFF and WebP. <command>./configure</command> will
+      HEIF, JPEG, JPEG XL, SVG, TIFF and WebP. PNG decoding is faster
+      if libdeflate is available. <command>./configure</command> will
       summarize the build features.
     </para>
   </refsect1>

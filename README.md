@@ -38,7 +38,11 @@ you want to build the command-line tool `chafa` and not just the library,
 you will additionally need development packages for:
 
 * FreeType2. Often packaged as `libfreetype6-dev` or `freetype2-devel`.
+* libavif (optional). Look for `libavif-dev` or `libavif-devel`.
+* libdeflate (optional, speeds up PNG decoding). Look for `libdeflate-dev` or `libdeflate-devel`.
+* libheif 1.12 or later (optional). Look for `libheif-dev` or `libheif-devel`.
 * libjpeg (optional). Look for `libjpeg-dev`, `libjpeg62-devel` or `libjpeg8-devel`.
+* libjxl (optional). Look for `libjxl-dev` or `libjxl-devel`.
 * librsvg (optional). Look for `librsvg2-dev` or `librsvg-devel`.
 * libtiff (optional). Look for `libtiff5-dev` or `libtiff-devel`.
 * libwebp (optional). Look for `libwebp-dev` or `libwebp-devel`.
