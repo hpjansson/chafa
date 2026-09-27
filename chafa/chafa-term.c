@@ -83,6 +83,9 @@ struct ChafaTerm
     /* TRUE if EOF event was seen on input FD */
     guint in_eof_seen : 1;
 
+    /* TRUE if EOF was pushed to the parser */
+    guint in_eof_pushed : 1;
+
     /* TRUE if probe query was sent */
     guint probe_attempt : 1;
 
@@ -588,12 +591,21 @@ in_sync_pull (ChafaTerm *term, gint timeout_ms)
         guchar buf [READ_BUF_MAX];
         gint len;
 
-        /* TODO: Break on EOF */
-
         len = chafa_stream_reader_read (term->reader, buf, READ_BUF_MAX);
-        chafa_parser_push_data (term->parser, buf, len);
+        if (len > 0)
+        {
+            chafa_parser_push_data (term->parser, buf, len);
+        }
+        else if (!term->in_eof_pushed
+                 && chafa_stream_reader_is_eof (term->reader))
+        {
+            chafa_parser_push_eof (term->parser);
+            term->in_eof_pushed = TRUE;
+        }
 
         if ((event = chafa_parser_pop_event (term->parser)))
+            break;
+        if (term->in_eof_pushed)
             break;
 
         if (timeout_ms <= 0)
