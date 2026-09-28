@@ -374,6 +374,8 @@ parse_seq_args (gchar *out, SeqArgInfo *arg_info, const gchar *in,
             else
             {
                 /* Bad "%?" escape */
+                g_set_error (error, CHAFA_TERM_INFO_ERROR, CHAFA_TERM_INFO_ERROR_BAD_ARGUMENTS,
+                             "Control sequence had a malformed argument specifier.");
                 goto out;
             }
         }
