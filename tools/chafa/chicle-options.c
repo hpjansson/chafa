@@ -941,6 +941,13 @@ parse_view_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value,
                      "View size must be at least 1x1.");
         result = FALSE;
     }
+    else if (width > CHICLE_CELL_EXTENT_AUTO_MAX || height > CHICLE_CELL_EXTENT_AUTO_MAX)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "View dimensions must not exceed "
+                     G_STRINGIFY (CHICLE_CELL_EXTENT_AUTO_MAX) ".");
+        result = FALSE;
+    }
 
     options.view_width = width;
     options.view_height = height;
@@ -966,6 +973,13 @@ parse_size_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
     {
         g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
                      "Size must be at least 1x1.");
+        result = FALSE;
+    }
+    else if (width > CHICLE_CELL_EXTENT_AUTO_MAX || height > CHICLE_CELL_EXTENT_AUTO_MAX)
+    {
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Size dimensions must not exceed "
+                     G_STRINGIFY (CHICLE_CELL_EXTENT_AUTO_MAX) ".");
         result = FALSE;
     }
 
@@ -2147,6 +2161,10 @@ chicle_parse_options (int *argc, char **argv [])
     {
         options.cell_width = detected_term_size.width_pixels / detected_term_size.width_cells;
         options.cell_height = detected_term_size.height_pixels / detected_term_size.height_cells;
+
+        /* Guard against nonsense from the terminal */
+        options.cell_width = CLAMP (options.cell_width, 1, 1024);
+        options.cell_height = CLAMP (options.cell_height, 1, 1024);
     }
 
     /* Apply the font ratio if specified, or derive it if not */
