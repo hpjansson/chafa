@@ -96,6 +96,13 @@ path_source_destroy (PathSource *src)
     g_free (src);
 }
 
+/* GDestroyNotify wrapper for path_source_destroy() */
+static void
+destroy_path_source (gpointer data)
+{
+    path_source_destroy (data);
+}
+
 static gboolean
 path_source_is_stdin (PathSource *src)
 {
@@ -187,28 +194,6 @@ ensure_current_src (ChiclePathQueue *path_queue)
     }
 
     return FALSE;
-}
-
-static void
-destroy_path_source (gpointer data)
-{
-    PathSource *src = data;
-
-    switch (src->type)
-    {
-        case PATH_SOURCE_PATH:
-            g_free (src->data);
-            break;
-
-        case PATH_SOURCE_PATH_LIST:
-            g_list_free_full (src->data, g_free);
-            break;
-
-        case PATH_SOURCE_STREAM:
-            g_free (src->data);
-            g_free (src->separator);
-            break;
-    }
 }
 
 static gboolean
