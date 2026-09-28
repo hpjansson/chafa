@@ -628,6 +628,8 @@ in_sync_pull (ChafaTerm *term, gint timeout_ms)
  * Construct and destroy *
  * --------------------- */
 
+static ChafaTerm *default_term;  /* Singleton */
+
 static gboolean
 fd_is_valid (gint fd)
 {
@@ -734,6 +736,9 @@ chafa_term_destroy (ChafaTerm *term)
 {
     g_return_if_fail (term != NULL);
 
+    /* Can't destroy the default term as it's a global singleton behind g_once() */
+    g_return_if_fail (term != default_term);
+
     chafa_term_flush (term);
 
     if (term->reader)
@@ -763,12 +768,15 @@ chafa_term_get_default (void)
   static GOnce my_once = G_ONCE_INIT;
 
   g_once (&my_once, (GThreadFunc) instantiate_singleton, NULL);
+  default_term = my_once.retval;
   return my_once.retval;
 }
 
 gint
 chafa_term_get_buffer_max (ChafaTerm *term)
 {
+    g_return_val_if_fail (term != NULL, -1);
+
     if (term->writer)
         return chafa_stream_writer_get_buffer_max (term->writer);
     return -1;
@@ -777,6 +785,8 @@ chafa_term_get_buffer_max (ChafaTerm *term)
 void
 chafa_term_set_buffer_max (ChafaTerm *term, gint buf_max)
 {
+    g_return_if_fail (term != NULL);
+
     if (term->writer)
         chafa_stream_writer_set_buffer_max (term->writer, buf_max);
 }
@@ -784,12 +794,17 @@ chafa_term_set_buffer_max (ChafaTerm *term, gint buf_max)
 ChafaTermInfo *
 chafa_term_get_term_info (ChafaTerm *term)
 {
+    g_return_val_if_fail (term != NULL, NULL);
+
     return term->term_info;
 }
 
 void
 chafa_term_set_term_info (ChafaTerm *term, ChafaTermInfo *term_info)
 {
+    g_return_if_fail (term != NULL);
+    g_return_if_fail (term_info != NULL);
+
     if (term_info)
         chafa_term_info_ref (term_info);
     if (term->term_info)
@@ -802,6 +817,8 @@ ChafaEvent *
 chafa_term_read_event (ChafaTerm *term, guint timeout_ms)
 {
     ChafaEvent *event = NULL;
+
+    g_return_val_if_fail (term != NULL, NULL);
 
     if (!term->reader)
         goto out;
@@ -823,6 +840,8 @@ out:
 void
 chafa_term_write (ChafaTerm *term, gconstpointer data, gint len)
 {
+    g_return_if_fail (term != NULL);
+
     if (!term->writer)
         return;
 
@@ -835,6 +854,8 @@ chafa_term_print (ChafaTerm *term, const gchar *format, ...)
     gchar *str = NULL;
     va_list args;
     gint len = -1;
+
+    g_return_val_if_fail (term != NULL, -1);
 
     if (!term->writer)
         return -1;
@@ -857,6 +878,8 @@ chafa_term_print_seq (ChafaTerm *term, ChafaTermSeq seq, ...)
     gchar *str;
     gint len = -1;
 
+    g_return_val_if_fail (term != NULL, -1);
+
     if (!term->writer)
         return -1;
 
@@ -877,6 +900,8 @@ chafa_term_print_seq (ChafaTerm *term, ChafaTermSeq seq, ...)
 gboolean
 chafa_term_flush (ChafaTerm *term)
 {
+    g_return_val_if_fail (term != NULL, FALSE);
+
     if (!term->writer)
         return FALSE;
 
@@ -886,6 +911,8 @@ chafa_term_flush (ChafaTerm *term)
 void
 chafa_term_write_err (ChafaTerm *term, gconstpointer data, gint len)
 {
+    g_return_if_fail (term != NULL);
+
     if (!term->err_writer)
         return;
 
@@ -898,6 +925,8 @@ chafa_term_print_err (ChafaTerm *term, const gchar *format, ...)
     gchar *str = NULL;
     va_list args;
     gint result;
+
+    g_return_val_if_fail (term != NULL, -1);
 
     va_start (args, format);
     result = g_vasprintf (&str, format, args);
@@ -913,6 +942,8 @@ chafa_term_print_err (ChafaTerm *term, const gchar *format, ...)
 void
 chafa_term_get_size_px (ChafaTerm *term, gint *width_px_out, gint *height_px_out)
 {
+    g_return_if_fail (term != NULL);
+
     if (!term->have_tty_size)
         get_tty_size (term);
 
@@ -925,6 +956,8 @@ chafa_term_get_size_px (ChafaTerm *term, gint *width_px_out, gint *height_px_out
 void
 chafa_term_get_size_cells (ChafaTerm *term, gint *width_cells_out, gint *height_cells_out)
 {
+    g_return_if_fail (term != NULL);
+
     if (!term->have_tty_size)
         get_tty_size (term);
 
@@ -940,6 +973,9 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     ChafaEvent *event;
     gint64 start_time;
     gint remain_ms = timeout_ms;
+
+    g_return_val_if_fail (term != NULL, FALSE);
+
 #ifdef HAVE_TERMIOS_H
     struct termios saved_termios;
     gboolean termios_changed = FALSE;
@@ -1008,17 +1044,23 @@ out:
 void
 chafa_term_notify_size_changed (ChafaTerm *term)
 {
+    g_return_if_fail (term != NULL);
+
     get_tty_size (term);
 }
 
 gint32
 chafa_term_get_default_fg_color (ChafaTerm *term)
 {
+    g_return_val_if_fail (term != NULL, -1);
+
     return term->default_fg_rgb;
 }
 
 gint32
 chafa_term_get_default_bg_color (ChafaTerm *term)
 {
+    g_return_val_if_fail (term != NULL, -1);
+
     return term->default_bg_rgb;
 }
