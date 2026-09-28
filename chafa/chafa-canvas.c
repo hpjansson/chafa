@@ -748,10 +748,14 @@ chafa_canvas_set_placement (ChafaCanvas *canvas, ChafaPlacement *placement)
     g_return_if_fail (canvas != NULL);
     g_return_if_fail (canvas->refs > 0);
 
-    chafa_placement_ref (placement);
+    if (placement)
+        chafa_placement_ref (placement);
     if (canvas->placement)
         chafa_placement_unref (canvas->placement);
     canvas->placement = placement;
+
+    if (!placement)
+        return;
 
     image = placement->image;
     g_assert (image != NULL);

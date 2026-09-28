@@ -473,6 +473,10 @@ chafa_stream_writer_set_buffer_max (ChafaStreamWriter *stream_writer, gint buf_m
 void
 chafa_stream_writer_write (ChafaStreamWriter *stream_writer, gconstpointer data, gint len)
 {
+    g_return_if_fail (stream_writer != NULL);
+    g_return_if_fail (data != NULL || len == 0);
+    g_return_if_fail (len >= 0);
+
     maybe_start_thread (stream_writer);
 
     while (len > 0)
@@ -524,6 +528,9 @@ chafa_stream_writer_print (ChafaStreamWriter *stream_writer, const gchar *format
     va_list args;
     gint result;
 
+    g_return_val_if_fail (stream_writer != NULL, -1);
+    g_return_val_if_fail (format != NULL, -1);
+
     va_start (args, format);
     result = g_vasprintf (&str, format, args);
     va_end (args);
@@ -538,6 +545,8 @@ chafa_stream_writer_print (ChafaStreamWriter *stream_writer, const gchar *format
 gboolean
 chafa_stream_writer_flush (ChafaStreamWriter *stream_writer)
 {
+    g_return_val_if_fail (stream_writer != NULL, FALSE);
+
     maybe_start_thread (stream_writer);
 
     g_mutex_lock (&stream_writer->mutex);

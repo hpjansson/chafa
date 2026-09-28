@@ -1570,6 +1570,8 @@ chafa_symbol_map_copy (const ChafaSymbolMap *symbol_map)
 {
     ChafaSymbolMap *new_symbol_map;
 
+    g_return_val_if_fail (symbol_map != NULL, NULL);
+
     new_symbol_map = g_new (ChafaSymbolMap, 1);
     chafa_symbol_map_copy_contents (new_symbol_map, symbol_map);
     return new_symbol_map;
@@ -1726,6 +1728,7 @@ chafa_symbol_map_apply_selectors (ChafaSymbolMap *symbol_map, const gchar *selec
 {
     g_return_val_if_fail (symbol_map != NULL, FALSE);
     g_return_val_if_fail (symbol_map->refs > 0, FALSE);
+    g_return_val_if_fail (selectors != NULL, FALSE);
 
     return parse_selectors (symbol_map, selectors, error);
 }

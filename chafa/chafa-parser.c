@@ -113,6 +113,8 @@ chafa_parser_new (ChafaTermInfo *term_info)
 {
     ChafaParser *parser;
 
+    g_return_val_if_fail (term_info != NULL, NULL);
+
     parser = g_new0 (ChafaParser, 1);
     chafa_parser_init (parser, term_info);
     return parser;

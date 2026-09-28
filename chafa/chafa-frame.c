@@ -73,7 +73,13 @@ chafa_frame_new (gconstpointer data,
                  gint width, gint height, gint rowstride)
 {
     gpointer owned_data;
-    gsize data_size = (gsize) height * rowstride;
+    gsize data_size;
+
+    g_return_val_if_fail (data != NULL, NULL);
+    g_return_val_if_fail (pixel_type >= 0 && pixel_type < CHAFA_PIXEL_MAX, NULL);
+    g_return_val_if_fail (width > 0 && height > 0 && rowstride > 0, NULL);
+
+    data_size = (gsize) height * rowstride;
 
     owned_data = g_malloc (data_size);
     memcpy (owned_data, data, data_size);
@@ -101,6 +107,10 @@ chafa_frame_new_steal (gpointer data,
                        ChafaPixelType pixel_type,
                        gint width, gint height, gint rowstride)
 {
+    g_return_val_if_fail (data != NULL, NULL);
+    g_return_val_if_fail (pixel_type >= 0 && pixel_type < CHAFA_PIXEL_MAX, NULL);
+    g_return_val_if_fail (width > 0 && height > 0 && rowstride > 0, NULL);
+
     return new_frame (data, pixel_type, width, height, rowstride, TRUE);
 }
 
@@ -132,6 +142,10 @@ chafa_frame_new_borrow (gconstpointer data,
                         ChafaPixelType pixel_type,
                         gint width, gint height, gint rowstride)
 {
+    g_return_val_if_fail (data != NULL, NULL);
+    g_return_val_if_fail (pixel_type >= 0 && pixel_type < CHAFA_PIXEL_MAX, NULL);
+    g_return_val_if_fail (width > 0 && height > 0 && rowstride > 0, NULL);
+
     /* Suppress the warning we get with -Wcast-qual. We honor the constness
      * by tracking it with the data_is_owned flag. */
     return new_frame ((gpointer)(uintptr_t) data, pixel_type, width, height, rowstride, FALSE);

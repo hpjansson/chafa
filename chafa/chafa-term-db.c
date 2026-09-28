@@ -1215,6 +1215,8 @@ chafa_term_db_copy (const ChafaTermDb *term_db)
 {
     ChafaTermDb *new_term_db;
 
+    g_return_val_if_fail (term_db != NULL, NULL);
+
     new_term_db = g_new (ChafaTermDb, 1);
     memcpy (new_term_db, term_db, sizeof (ChafaTermDb));
     new_term_db->refs = 1;

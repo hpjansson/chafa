@@ -142,6 +142,7 @@ void
 chafa_placement_set_tuck (ChafaPlacement *placement, ChafaTuck tuck)
 {
     g_return_if_fail (placement != NULL);
+    g_return_if_fail (tuck >= 0 && tuck < CHAFA_TUCK_MAX);
 
     placement->tuck = tuck;
 }
@@ -181,6 +182,7 @@ void
 chafa_placement_set_halign (ChafaPlacement *placement, ChafaAlign align)
 {
     g_return_if_fail (placement != NULL);
+    g_return_if_fail (align >= 0 && align < CHAFA_ALIGN_MAX);
 
     placement->halign = align;
 }
@@ -219,6 +221,7 @@ void
 chafa_placement_set_valign (ChafaPlacement *placement, ChafaAlign align)
 {
     g_return_if_fail (placement != NULL);
+    g_return_if_fail (align >= 0 && align < CHAFA_ALIGN_MAX);
 
     placement->valign = align;
 }

@@ -1473,6 +1473,8 @@ chafa_term_info_parse_seq (ChafaTermInfo *term_info, ChafaTermSeq seq,
     g_return_val_if_fail (*input != NULL, CHAFA_PARSE_FAILURE);
     g_return_val_if_fail (input_len != NULL, CHAFA_PARSE_FAILURE);
 
+    if (!*input_len)
+        return CHAFA_PARSE_AGAIN;
     if (!chafa_term_info_have_seq (term_info, seq))
         return CHAFA_PARSE_FAILURE;
 
@@ -1661,6 +1663,9 @@ chafa_term_info_chain (ChafaTermInfo *outer, ChafaTermInfo *inner)
     const gchar *outer_name, *inner_name;
     gchar *new_name;
     gint i;
+
+    g_return_val_if_fail (outer != NULL, NULL);
+    g_return_val_if_fail (inner != NULL, NULL);
 
     chained = chafa_term_info_copy (outer);
 
