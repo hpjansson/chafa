@@ -23,6 +23,7 @@
 #include "chafa.h"
 #include "internal/chafa-batch.h"
 #include "internal/chafa-math-util.h"
+#include "internal/chafa-pixops.h"
 #include "internal/chafa-private.h"
 
 typedef struct
@@ -384,12 +385,17 @@ draw_pixels (DrawPixelsCtx *ctx)
 {
     ChafaColorHash color_hash;
 
-    chafa_process_batches (ctx,
-                           (GFunc) draw_pixels_pass_1_worker,
-                           NULL,
-                           ctx->dest_height,
-                           chafa_get_n_actual_threads (),
-                           1);
+    /* If there's no scale_ctx, Smolscale context creation failed and
+     * scaled_data was filled with the BG color instead. */
+    if (ctx->scale_ctx)
+    {
+        chafa_process_batches (ctx,
+                               (GFunc) draw_pixels_pass_1_worker,
+                               NULL,
+                               ctx->dest_height,
+                               chafa_get_n_actual_threads (),
+                               1);
+    }
 
     chafa_palette_generate (&ctx->indexed_image->palette,
                             ctx->scaled_data, (gsize) ctx->dest_width * ctx->dest_height,
@@ -530,6 +536,10 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
                                          SMOL_CLEAR_DEST,
                                          NULL,
                                          &ctx);
+    if (!ctx.scale_ctx)
+        chafa_clear_u32 (ctx.scaled_data,
+                         (gsize) dest_width * dest_height,
+                         chafa_color_to_u32 (bg));
 
     draw_pixels (&ctx);
 
@@ -537,6 +547,7 @@ chafa_indexed_image_draw_pixels (ChafaIndexedImage *indexed_image,
             chafa_palette_get_transparent_index (&indexed_image->palette),
             (gsize) indexed_image->width * (indexed_image->height - dest_height));
 
-    smol_scale_destroy (ctx.scale_ctx);
+    if (ctx.scale_ctx)
+        smol_scale_destroy (ctx.scale_ctx);
     g_free (ctx.scaled_data);
 }

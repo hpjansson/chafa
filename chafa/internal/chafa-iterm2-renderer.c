@@ -27,6 +27,7 @@
 #include "internal/chafa-indexed-image.h"
 #include "internal/chafa-iterm2-renderer.h"
 #include "internal/chafa-math-util.h"
+#include "internal/chafa-pixops.h"
 #include "internal/chafa-string-util.h"
 
 /* We support iTerm2 images by embedding them as uncompressed TIFF files.
@@ -220,6 +221,13 @@ chafa_iterm2_renderer_draw_all_pixels (ChafaIterm2Renderer *iterm2_renderer, Cha
                                          SMOL_CLEAR_DEST,
                                          NULL,
                                          &ctx);
+    if (!ctx.scale_ctx)
+    {
+        chafa_clear_u32 (iterm2_renderer->rgba_image,
+                         (gsize) iterm2_renderer->width * iterm2_renderer->height,
+                         0x00000000);
+        return;
+    }
 
     chafa_process_batches (&ctx,
                            (GFunc) draw_pixels_worker,

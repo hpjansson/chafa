@@ -137,6 +137,15 @@ ChafaColorCandidates;
 
 /* Internal API */
 
+static inline guint32
+chafa_color_to_u32 (ChafaColor color)
+{
+    guint32 u32;
+
+    memcpy (&u32, &color, sizeof (u32));
+    return u32;
+}
+
 guint32 chafa_pack_color (const ChafaColor *color) G_GNUC_PURE;
 void chafa_unpack_color (guint32 packed, ChafaColor *color_out);
 

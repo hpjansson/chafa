@@ -203,6 +203,14 @@ chafa_kitty_renderer_draw_all_pixels (ChafaKittyRenderer *kitty_renderer, ChafaP
                                          SMOL_CLEAR_DEST,
                                          NULL,
                                          &ctx);
+    if (!ctx.scale_ctx)
+    {
+        chafa_clear_u32 (kitty_renderer->rgba_image,
+                         kitty_renderer->width * kitty_renderer->height,
+                         0x00000000);
+        return;
+    }
+
     chafa_process_batches (&ctx,
                            (GFunc) draw_pixels_worker,
                            NULL,

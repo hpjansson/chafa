@@ -692,6 +692,28 @@ prepare_pixels_pass_2 (PrepareContext *prep_ctx)
 }
 
 void
+chafa_clear_pixels (ChafaPixel *dest, gsize n, ChafaColor color)
+{
+    gsize i;
+
+    for (i = 0; i < n; i++)
+    {
+        dest [i].col = color;
+    }
+}
+
+void
+chafa_clear_u32 (guint32 *dest, gsize n, guint32 c)
+{
+    gsize i;
+
+    for (i = 0; i < n; i++)
+    {
+        dest [i] = c;
+    }
+}
+
+void
 chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                       const ChafaDither *dither,
                                       ChafaColorSpace color_space,
@@ -800,6 +822,13 @@ chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                               smol_flags,
                                               NULL,
                                               &prep_ctx);
+    if (!prep_ctx.scale_ctx)
+    {
+        chafa_clear_pixels (dest_pixels,
+                            (gsize) dest_width * dest_height,
+                            prep_ctx.bg_color_rgb);
+        return;
+    }
 
     prepare_pixels_pass_1 (&prep_ctx);
     prepare_pixels_pass_2 (&prep_ctx);

@@ -25,6 +25,9 @@
 
 G_BEGIN_DECLS
 
+void chafa_clear_pixels (ChafaPixel *dest, gsize n, ChafaColor color);
+void chafa_clear_u32 (guint32 *dest, gsize n, guint32 c);
+
 void chafa_prepare_pixel_data_for_symbols (const ChafaPalette *palette,
                                            const ChafaDither *dither,
                                            ChafaColorSpace color_space,
