@@ -212,8 +212,9 @@ read_from_stream (ChafaStreamReader *stream_reader, guchar *out, gint max)
         }
 #endif
     }
-    else if (poll_fds [0].revents & (G_IO_HUP | G_IO_ERR))
+    else if (poll_fds [0].revents & (G_IO_HUP | G_IO_ERR | G_IO_NVAL))
     {
+        /* Hangup or error -> EOF */
         result = -1;
     }
 
