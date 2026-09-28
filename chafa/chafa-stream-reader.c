@@ -436,6 +436,7 @@ chafa_stream_reader_new_from_fd_full (gint fd, gconstpointer token_separator,
     ChafaStreamReader *stream_reader;
 
     g_return_val_if_fail (fd >= 0, NULL);
+    g_return_val_if_fail (token_separator == NULL || token_separator_len > 0, NULL);
 
     stream_reader = g_new0 (ChafaStreamReader, 1);
     chafa_stream_reader_init (stream_reader, fd, token_separator, token_separator_len,
@@ -501,6 +502,7 @@ chafa_stream_reader_read (ChafaStreamReader *stream_reader, gpointer out, gint m
     gint result = -1;
 
     g_return_val_if_fail (stream_reader != NULL, -1);
+    g_return_val_if_fail (max_len >= 0, -1);
 
     maybe_start_thread (stream_reader);
 
@@ -680,7 +682,18 @@ out:
     g_mutex_unlock (&stream_reader->mutex);
 
     if (result >= 0)
-        *out = token;
+    {
+        if (out)
+        {
+            *out = token;
+        }
+        else
+        {
+            g_free (token);
+            token = NULL;
+        }
+    }
+
     return result;
 }
 
