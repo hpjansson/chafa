@@ -276,6 +276,7 @@ void
 chafa_byte_fifo_push (ChafaByteFifo *byte_fifo, gconstpointer src, gint src_len)
 {
     g_return_if_fail (byte_fifo != NULL);
+    g_return_if_fail (src_len >= 0);
 
     enqueue (byte_fifo, src, src_len);
 }
@@ -284,6 +285,7 @@ gint
 chafa_byte_fifo_pop (ChafaByteFifo *byte_fifo, gpointer dest, gint dest_len)
 {
     g_return_val_if_fail (byte_fifo != NULL, 0);
+    g_return_val_if_fail (dest_len >= 0, 0);
 
     return dequeue (byte_fifo, dest, dest_len);
 }
@@ -320,6 +322,7 @@ gint
 chafa_byte_fifo_drop (ChafaByteFifo *byte_fifo, gint len)
 {
     g_return_val_if_fail (byte_fifo != NULL, 0);
+    g_return_val_if_fail (len >= 0, 0);
 
     return dequeue (byte_fifo, NULL, len);
 }
