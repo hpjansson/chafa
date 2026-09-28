@@ -174,6 +174,8 @@ install_interrupt_handler (void)
     sa.sa_flags = 0;
 
     sigaction (SIGINT, &sa, NULL);
+    sigaction (SIGTERM, &sa, NULL);
+    sigaction (SIGHUP, &sa, NULL);
 }
 
 #endif
