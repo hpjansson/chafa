@@ -637,6 +637,38 @@ calc_prescale_size_px (gint *prescale_width_out, gint *prescale_height_out)
     *prescale_height_out = MAX (*prescale_height_out, 160);
 }
 
+static gboolean
+check_frame_dimensions (gint width, gint height)
+{
+    gboolean result = FALSE;
+
+    /* Extra check for loader-supplied dimensions that would push the
+     * scale/render pipeline into pathological allocations. A 256 Mpx
+     * source covers 16384*16384. */
+    if (width > 0 && height > 0
+        && ((guint64) width * (guint64) height
+            > (guint64) 256 * 1024 * 1024))
+    {
+        g_printerr ("%s: Source image dimensions %dx%d exceed maximum (256Mpx).\n",
+                    options.executable_name, width, height);
+        goto out;
+    }
+
+    /* The scaler handles at most CHICLE_IMAGE_EXTENT_PX_MAX pixels per side */
+    if (width > CHICLE_IMAGE_EXTENT_PX_MAX || height > CHICLE_IMAGE_EXTENT_PX_MAX)
+    {
+        g_printerr ("%s: Source image dimensions %dx%d exceed maximum (%d px per side).\n",
+                    options.executable_name, width, height,
+                    CHICLE_IMAGE_EXTENT_PX_MAX);
+        goto out;
+    }
+
+    result = TRUE;
+
+out:
+    return result;
+}
+
 static RunResult
 run_generic (const gchar *filename, ChicleMediaLoader *media_loader,
              gboolean is_first_file, gboolean is_first_frame)
@@ -724,15 +756,8 @@ run_generic (const gchar *filename, ChicleMediaLoader *media_loader,
             if (!pixels)
                 break;
 
-            /* Extra check for loader-supplied dimensions that would push the
-             * scale/render pipeline into pathological allocations. A 256 Mpx
-             * source covers 16384*16384. */
-            if (src_width > 0 && src_height > 0
-                && ((guint64) src_width * (guint64) src_height
-                    > (guint64) 256 * 1024 * 1024))
+            if (!check_frame_dimensions (src_width, src_height))
             {
-                g_printerr ("%s: Source image dimensions %dx%d exceed maximum (256Mpx)\n",
-                            options.executable_name, src_width, src_height);
                 result = FILE_FAILED;
                 break;
             }
