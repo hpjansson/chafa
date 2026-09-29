@@ -2503,6 +2503,9 @@ chicle_parse_options (int *argc, char **argv [])
     if (options.optimization_level >= 7)
         options.optimizations |= CHAFA_OPTIMIZATION_SKIP_CELLS;
 
+    /* Any negative thread count -> auto */
+    if (options.n_threads < 0)
+        options.n_threads = -1;
     chafa_set_n_threads (options.n_threads);
 
     result = TRUE;
