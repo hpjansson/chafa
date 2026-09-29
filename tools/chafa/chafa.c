@@ -1006,6 +1006,8 @@ run_vertical (ChiclePathQueue *path_queue)
     if (!options.have_parking_row)
         chafa_term_write (term, "\n", 1);
 
+    chicle_media_pipeline_destroy (pipeline);
+
     /* Zero files processed is not a failure, since we may be processing an
      * empty file list. */
     return (n_failed > 0 && n_failed == n_processed) ? 2 : (n_failed > 0) ? 1 : 0;
