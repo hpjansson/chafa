@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef G_OS_WIN32
+# include <fcntl.h>
+#endif
+
 #include <chafa.h>
 #include "chicle-util.h"
 
@@ -411,6 +415,16 @@ chicle_path_print_label (ChafaTerm *term, const gchar *path, ChafaAlign halign,
 
     g_free (label);
     g_free (sanitized_path);
+}
+
+gboolean
+chicle_stdin_is_open (void)
+{
+#ifdef G_OS_WIN32
+    return TRUE;
+#else
+    return fcntl (STDIN_FILENO, F_GETFD) >= 0;
+#endif
 }
 
 /* ---------------- *

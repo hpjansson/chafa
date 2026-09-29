@@ -836,8 +836,17 @@ parse_fill_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GN
 }
 
 static gboolean
-parse_files_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, G_GNUC_UNUSED GError **error)
+parse_files_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
+    if (!strcmp (value, "-") && !chicle_stdin_is_open ())
+    {
+        /* Must be caught before anything else opens a descriptor, or fd 0
+         * gets reused by an internal pipe and the list reader waits forever. */
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Cannot read file list from standard input; it is closed.");
+        return FALSE;
+    }
+
     global_n_path_streams++;
 
     if (!strcmp (value, "-"))
@@ -848,8 +857,17 @@ parse_files_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_G
 }
 
 static gboolean
-parse_files0_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, G_GNUC_UNUSED GError **error)
+parse_files0_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_GNUC_UNUSED gpointer data, GError **error)
 {
+    if (!strcmp (value, "-") && !chicle_stdin_is_open ())
+    {
+        /* Must be caught before anything else opens a descriptor, or fd 0
+         * gets reused by an internal pipe and the list reader waits forever. */
+        g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
+                     "Cannot read file list from standard input; it is closed.");
+        return FALSE;
+    }
+
     global_n_path_streams++;
 
     if (!strcmp (value, "-"))
