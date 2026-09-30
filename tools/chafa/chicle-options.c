@@ -2033,6 +2033,7 @@ chicle_parse_options (int *argc, char **argv [])
         chicle_flatten_cntrl_inplace (safe_message);
         g_printerr ("%s: %s\n", options.executable_name, safe_message);
         g_free (safe_message);
+        g_clear_error (&error);
         goto out;
     }
 
