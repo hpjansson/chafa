@@ -925,18 +925,42 @@ parse_2d_size (const gchar *value, gint *width_out, gint *height_out)
     gint o = 0;
 
     *width_out = *height_out = -1;
+
     n = sscanf (value, "%d%n", width_out, &o);
+    if (n != 1)
+    {
+        /* No width, but we could still find height-only i.e. "x25" */
+        *width_out = -1;
+        o = 0;
+    }
+    else if (*width_out < 0)
+    {
+        /* Found width and it was negative */
+        goto invalid;
+    }
 
     if (value [o] == 'x' && value [o + 1] != '\0')
     {
-        gint o2;
+        gint o2 = 0;
 
         n = sscanf (value + o + 1, "%d%n", height_out, &o2);
-        if (n == 1 && value [o + o2 + 1] != '\0')
+        if (n != 1 || *height_out < 0 || value [o + 1 + o2] != '\0')
         {
-            *width_out = *height_out = -1;
+            /* No height found after "x", or it was negative, or trailing garbage */
+            goto invalid;
         }
     }
+    else if (value [o] != '\0'
+             && !(value [o] == 'x' && value [o + 1] == '\0'))
+    {
+        /* Width with trailing garbage (a trailing "x" is allowed, e.g. "80x") */
+        goto invalid;
+    }
+
+    return;
+
+invalid:
+    *width_out = *height_out = -1;
 }
 
 static gboolean
