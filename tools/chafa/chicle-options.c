@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>  /* strspn, strlen, strcmp, strncmp, memset */
 #include <locale.h>  /* setlocale */
+#include <math.h>  /* isnan, isinf */
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>  /* ioctl */
 #endif
@@ -422,8 +423,11 @@ parse_probe_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_G
         gchar *endptr;
 
         d = g_strtod (value, &endptr);
-        if (endptr == value || d <= 0.0)
+        if (endptr == value || isnan (d) || d <= 0.0)
             goto out;
+
+        if (isinf (d))
+            d = G_MAXDOUBLE;
 
         options.probe = CHICLE_TRISTATE_TRUE;
         options.probe_duration = d;
@@ -1439,8 +1443,11 @@ parse_anim_speed_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value
         gchar *endptr;
 
         d = g_strtod (value, &endptr);
-        if (endptr == value || d <= 0.0)
+        if (endptr == value || isnan (d) || d <= 0.0)
             goto out;
+
+        if (isinf (d))
+            d = G_MAXDOUBLE;
 
         while (g_ascii_isspace (*endptr))
             endptr++;
@@ -2127,7 +2134,8 @@ chicle_parse_options (int *argc, char **argv [])
              || options.probe == CHICLE_TRISTATE_AUTO)
             && options.probe_duration >= 0.0)
         {
-            chafa_term_sync_probe (probe_term, options.probe_duration * 1000);
+            chafa_term_sync_probe (probe_term,
+                                   MIN ((options.probe_duration * 1000), (gdouble) G_MAXINT));
 
             if (!options.pixel_mode_set)
             {
