@@ -462,30 +462,34 @@ static void
 find_nearest (PnnBin *bins, PnnBinIndex index, const ChafaVec3f32 *rgb_weights)
 {
     PnnBin *bin1 = &bins [index];
+    const ChafaVec3f32 accum1 = bin1->accum.f;
+    const ChafaVec3f32 weights = *rgb_weights;
     gfloat err = G_MAXFLOAT;
     PnnBinIndex nearest = 0;
-    PnnBinIndex i, j;
+    PnnBinIndex i, j, next;
 
-    for (i = bin1->next; i; i = bins [i].next)
+    for (i = bin1->next; i; i = next)
     {
         gfloat bin2_count = bins [i].count.f;
         gfloat nerr2 = (bin1->count.f * bin2_count) / (bin1->count.f + bin2_count);
-        gfloat nerr = .0f;
+        gfloat nerr;
         ChafaVec3f32 tv;
+
+        next = bins [i].next;  /* Load early to prevent a stall */
 
         if (nerr2 >= err)
             continue;
 
-        chafa_vec3f32_sub (&tv, &bins [i].accum.f, &bin1->accum.f);
+        chafa_vec3f32_sub (&tv, &bins [i].accum.f, &accum1);
         chafa_vec3f32_hadamard (&tv, &tv, &tv);
-        chafa_vec3f32_hadamard (&tv, &tv, rgb_weights);
-        nerr += nerr2 * (1 - RATIO) * chafa_vec3f32_sum_to_scalar (&tv);
+        chafa_vec3f32_hadamard (&tv, &tv, &weights);
+        nerr = nerr2 * (1 - RATIO) * chafa_vec3f32_sum_to_scalar (&tv);
         if (nerr >= err)
             continue;
 
         for (j = 0; j < 3; j++)
         {
-            chafa_vec3f32_sub (&tv, &bins [i].accum.f, &bin1->accum.f);
+            chafa_vec3f32_sub (&tv, &bins [i].accum.f, &accum1);
             chafa_vec3f32_hadamard (&tv, &tv, &pnn_coeffs [j]);
             chafa_vec3f32_hadamard (&tv, &tv, &tv);
             nerr += nerr2 * RATIO * chafa_vec3f32_sum_to_scalar (&tv);
