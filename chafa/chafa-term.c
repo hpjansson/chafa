@@ -584,7 +584,7 @@ in_sync_pull (ChafaTerm *term, gint timeout_ms)
         return event;
 
     if (timeout_ms > 0)
-        end_time_us = g_get_monotonic_time () + timeout_ms * 1000;
+        end_time_us = g_get_monotonic_time () + (gint64) timeout_ms * 1000;
 
     for (;;)
     {
