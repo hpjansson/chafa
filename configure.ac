@@ -535,15 +535,6 @@ esac
 
 AC_SUBST(CHAFA_VISIBILITY_CFLAGS)
 
-dnl
-dnl We're not picky about floating point behavior, and this makes e.g.
-dnl lrintf() a lot faster.
-dnl
-AX_CHECK_COMPILE_FLAG([-ffast-math],
-    [BASE_CFLAGS="$BASE_CFLAGS -ffast-math"],
-    ,
-    [-Werror])
-
 dnl --- Set compiler flags ---
 
 dnl Disable some LodePNG features. In particular, the CRC feature, which would
