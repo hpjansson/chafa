@@ -43,7 +43,7 @@ CHAFA_AVAILABLE_IN_1_20
 ChafaStreamReader *chafa_stream_reader_new_from_fd_full (gint fd,
                                                          gconstpointer token_separator,
                                                          gint token_separator_len,
-                                                         gint max_token_len);
+                                                         gint token_len_max);
 CHAFA_AVAILABLE_IN_1_20
 void chafa_stream_reader_ref (ChafaStreamReader *stream_reader);
 CHAFA_AVAILABLE_IN_1_20
