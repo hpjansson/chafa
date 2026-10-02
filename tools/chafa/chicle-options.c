@@ -34,7 +34,7 @@
 #ifdef HAVE_SIGACTION
 # include <signal.h>  /* sigaction */
 #endif
-#include <stdlib.h>  /* exit */
+#include <stdlib.h>  /* exit, strtol */
 #ifdef HAVE_TERMIOS_H
 # include <termios.h>  /* tcgetattr, tcsetattr */
 #endif
@@ -925,40 +925,41 @@ parse_format_arg (G_GNUC_UNUSED const gchar *option_name, const gchar *value, G_
 static void
 parse_2d_size (const gchar *value, gint *width_out, gint *height_out)
 {
-    gint n;
-    gint o = 0;
+    const gchar *p = value;
+    gchar *end;
+    glong n;
 
     *width_out = *height_out = -1;
 
-    n = sscanf (value, "%d%n", width_out, &o);
-    if (n != 1)
+    /* Width. May be omitted, as in "x25" */
+    errno = 0;
+    n = strtol (p, &end, 10);
+    if (end != p)
     {
-        /* No width, but we could still find height-only i.e. "x25" */
-        *width_out = -1;
-        o = 0;
-    }
-    else if (*width_out < 0)
-    {
-        /* Found width and it was negative */
-        goto invalid;
-    }
-
-    if (value [o] == 'x' && value [o + 1] != '\0')
-    {
-        gint o2 = 0;
-
-        n = sscanf (value + o + 1, "%d%n", height_out, &o2);
-        if (n != 1 || *height_out < 0 || value [o + 1 + o2] != '\0')
-        {
-            /* No height found after "x", or it was negative, or trailing garbage */
+        if (errno == ERANGE || n < 0 || n > G_MAXINT)
             goto invalid;
-        }
+
+        *width_out = (gint) n;
+        p = end;
     }
-    else if (value [o] != '\0'
-             && !(value [o] == 'x' && value [o + 1] == '\0'))
+
+    if (*p != '\0')
     {
-        /* Width with trailing garbage (a trailing "x" is allowed, e.g. "80x") */
-        goto invalid;
+        if (*p != 'x')
+            goto invalid;
+
+        /* Height. May be omitted after the "x", as in "80x" */
+        p++;
+        if (*p != '\0')
+        {
+            errno = 0;
+            n = strtol (p, &end, 10);
+            if (end == p || *end != '\0'
+                || errno == ERANGE || n < 0 || n > G_MAXINT)
+                goto invalid;
+
+            *height_out = (gint) n;
+        }
     }
 
     return;
