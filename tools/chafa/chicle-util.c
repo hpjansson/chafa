@@ -21,12 +21,10 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifndef G_OS_WIN32
-# include <fcntl.h>
-#endif
-
+#include <unistd.h>  /* STDIN_FILENO */
+#include <fcntl.h>  /* fcntl */
 #include <chafa.h>
+
 #include "chicle-util.h"
 
 #define CHAR_BUF_SIZE 1024
