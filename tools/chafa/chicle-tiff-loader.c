@@ -33,6 +33,7 @@
 
 #include <chafa.h>
 #include "chicle-tiff-loader.h"
+#include "chicle-util.h"
 
 /* ----------------------- *
  * Global macros and types *
@@ -227,9 +228,8 @@ chicle_tiff_loader_new_from_mapping (ChicleFileMapping *mapping)
     if (!TIFFGetField (tiff, TIFFTAG_SAMPLESPERPIXEL, &samples_per_pixel))
         goto out;
 
-    if (width < 1 || width > (1 << 28)
-        || height < 1 || height > (1 << 28)
-        || (width * (guint64) height * BYTES_PER_PIXEL > IMAGE_BUFFER_SIZE_MAX))
+    if (!chicle_calc_image_buffer_size (width, height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     /* An opaque image with unassociated alpha set to 0xff is equivalent to

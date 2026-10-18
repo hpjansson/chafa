@@ -32,6 +32,7 @@
 #include <lodepng.h>
 #include <lodepng-apng.h>
 #include "chicle-png-loader.h"
+#include "chicle-util.h"
 
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
@@ -58,11 +59,12 @@ struct ChiclePngLoader
     gint n_frames;
 };
 
-/* If the file is an RGB888 image with no transparency chunk, we can
- * take LodePNG's output and convert it in Smolscale, which is much more
+/* Read the header. If the file is an RGB888 image with no transparency chunk,
+ * we can take LodePNG's output and convert it in Smolscale, which is much more
  * efficient in both CPU time and peak RSS. */
 static gboolean
-can_decode_as_rgb8 (const guint8 *data, size_t len)
+inspect_still (const guint8 *data, size_t len,
+               guint *width_out, guint *height_out, gboolean *is_rgb8_out)
 {
     LodePNGState state;
     unsigned width, height;
@@ -70,12 +72,18 @@ can_decode_as_rgb8 (const guint8 *data, size_t len)
 
     lodepng_state_init (&state);
 
-    if (lodepng_inspect (&width, &height, &state, data, len) == 0
-        && state.info_png.color.colortype == LCT_RGB
-        && state.info_png.color.bitdepth == 8
-        && lodepng_chunk_find_const (data, data + len, "tRNS") == NULL)
-        result = TRUE;
+    if (lodepng_inspect (&width, &height, &state, data, len) != 0)
+        goto out;
 
+    *width_out = width;
+    *height_out = height;
+    *is_rgb8_out = (state.info_png.color.colortype == LCT_RGB
+                    && state.info_png.color.bitdepth == 8
+                    && lodepng_chunk_find_const (data, data + len, "tRNS") == NULL)
+        ? TRUE : FALSE;
+    result = TRUE;
+
+out:
     lodepng_state_cleanup (&state);
     return result;
 }
@@ -112,7 +120,8 @@ load_animation (ChiclePngLoader *loader)
     if (anim->num_frames == 0)
         goto out;
 
-    if (anim->width >= (1 << 28) || anim->height >= (1 << 28))
+    if (!chicle_calc_image_buffer_size (anim->width, anim->height, 4,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     if (lodepng_anim_decode_next (anim, &loader->canvas, &loader->fctl) != 0)
@@ -144,13 +153,17 @@ load_still (ChiclePngLoader *loader)
 {
     gboolean success = FALSE;
     guint width, height;
+    gboolean is_rgb8;
     unsigned char *frame_data = NULL;
     LodePNGState lode_state;
     gint lode_error;
 
     lodepng_state_init (&lode_state);
 
-    if (can_decode_as_rgb8 (loader->file_data, loader->file_data_len))
+    if (!inspect_still (loader->file_data, loader->file_data_len, &width, &height, &is_rgb8))
+        goto out;
+
+    if (is_rgb8)
     {
         lode_state.info_raw.colortype = LCT_RGB;
         loader->pixel_type = CHAFA_PIXEL_RGB8;
@@ -166,14 +179,15 @@ load_still (ChiclePngLoader *loader)
     lode_state.info_raw.bitdepth = 8;
     init_decoder_settings (&lode_state.decoder);
 
-    /* Decodes to RGBA8 */
+    /* Check before decoding; LodePNG sizes its buffers from the header */
+    if (!chicle_calc_image_buffer_size (width, height, loader->bytes_per_pixel,
+                                          IMAGE_BUFFER_SIZE_MAX, NULL))
+        goto out;
+
+    /* Decodes to RGB8 or RGBA8 */
     if ((lode_error = lodepng_decode (&frame_data, &width, &height,
                                       &lode_state,
                                       loader->file_data, loader->file_data_len)) != 0)
-        goto out;
-
-    if (width < 1 || width >= (1 << 28)
-        || height < 1 || height >= (1 << 28))
         goto out;
 
     loader->frame_data = frame_data;

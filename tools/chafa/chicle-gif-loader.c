@@ -31,6 +31,7 @@
 #include <chafa.h>
 #include <nsgif.h>
 #include "chicle-gif-loader.h"
+#include "chicle-util.h"
 
 #define BYTES_PER_PIXEL 4
 #define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
@@ -51,10 +52,13 @@ struct ChicleGifLoader
 static nsgif_bitmap_t *
 bitmap_create (int width, int height)
 {
-    if ((width * (gint64) height * BYTES_PER_PIXEL) > IMAGE_BUFFER_SIZE_MAX)
+    gsize size;
+
+    if (!chicle_calc_image_buffer_size (width, height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, &size))
         return NULL;
 
-    return g_malloc0 (width * height * BYTES_PER_PIXEL);
+    return g_malloc0 (size);
 }
 
 static void

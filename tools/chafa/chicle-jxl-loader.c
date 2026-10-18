@@ -55,8 +55,8 @@ static gboolean
 get_jxl_frame_size (const JxlBasicInfo *info, const JxlPixelFormat *format,
                     gsize *frame_size_out)
 {
-    return chicle_checked_image_buffer_size (info->xsize, info->ysize, format->num_channels,
-                                            IMAGE_BUFFER_SIZE_MAX, frame_size_out);
+    return chicle_calc_image_buffer_size (info->xsize, info->ysize, format->num_channels,
+                                          IMAGE_BUFFER_SIZE_MAX, frame_size_out);
 }
 
 static ChicleJxlLoader *

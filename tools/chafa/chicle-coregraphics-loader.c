@@ -194,8 +194,8 @@ decode_frame (ChicleCoreGraphicsLoader *loader)
     width = CGImageGetWidth (image);
     height = CGImageGetHeight (image);
 
-    if (width < 1 || width >= (1u << 28)
-        || height < 1 || height >= (1u << 28))
+    if (!chicle_calc_image_buffer_size (width, height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     rowstride = ROWSTRIDE_PAD (width * BYTES_PER_PIXEL);

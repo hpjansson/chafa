@@ -30,12 +30,14 @@
 
 #include <chafa.h>
 #include "chicle-qoi-loader.h"
+#include "chicle-util.h"
 
 #define QOI_IMPLEMENTATION
 #define QOI_NO_STDIO
 #include "qoi.h"
 
 #define BYTES_PER_PIXEL 4
+#define IMAGE_BUFFER_SIZE_MAX (0xffffffffU >> 2)
 
 struct ChicleQoiLoader
 {
@@ -77,8 +79,8 @@ chicle_qoi_loader_new_from_mapping (ChicleFileMapping *mapping)
     if (!frame_data)
         goto out;
 
-    if (desc.width < 1 || desc.width >= (1 << 16)
-        || desc.height < 1 || desc.height >= (1 << 16))
+    if (!chicle_calc_image_buffer_size (desc.width, desc.height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     loader->frame_data = frame_data;

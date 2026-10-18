@@ -176,13 +176,20 @@ chicle_rotate_image (gpointer *src, guint *width, guint *height, guint *rowstrid
     *rowstride = dest_rowstride;
 }
 
+/* Validates image dimensions supplied by a loader before anything is
+ * allocated for them. Rejects empty images, images wider or taller than
+ * CHICLE_IMAGE_EXTENT_PX_MAX, and pixel buffers that would overflow gsize
+ * or exceed max_size. On success, optionally returns the calculated
+ * buffer size in bytes. */
 gboolean
-chicle_checked_image_buffer_size (guint64 width, guint64 height, guint64 n_channels,
-                                  guint64 max_size, gsize *size_out)
+chicle_calc_image_buffer_size (guint64 width, guint64 height, guint64 n_channels,
+                               guint64 max_size, gsize *size_out)
 {
     guint64 size;
 
     if (width < 1 || height < 1 || n_channels < 1)
+        return FALSE;
+    if (width > CHICLE_IMAGE_EXTENT_PX_MAX || height > CHICLE_IMAGE_EXTENT_PX_MAX)
         return FALSE;
     if (width > G_MAXSIZE / height)
         return FALSE;

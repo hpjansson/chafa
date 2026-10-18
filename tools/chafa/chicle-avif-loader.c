@@ -95,8 +95,8 @@ maybe_decode_frame (ChicleAvifLoader *loader)
     image = loader->decoder->image;
     avifRGBImageSetDefaults (&rgb, image);
 
-    if (!chicle_checked_image_buffer_size (image->width, image->height, BYTES_PER_PIXEL,
-                                           IMAGE_BUFFER_SIZE_MAX, &frame_size))
+    if (!chicle_calc_image_buffer_size (image->width, image->height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, &frame_size))
         goto out;
 
     rgb.depth = 8;
@@ -184,17 +184,13 @@ chicle_avif_loader_new_from_mapping (ChicleFileMapping *mapping)
 
     image = loader->decoder->image;
 
-    if (image->width < 1 || image->width >= (1 << 28)
-        || image->height < 1 || image->height >= (1 << 28))
+    if (!chicle_calc_image_buffer_size (image->width, image->height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     loader->width = image->width;
     loader->height = image->height;
     loader->rowstride = loader->width * BYTES_PER_PIXEL;
-
-    if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
-                                           IMAGE_BUFFER_SIZE_MAX, NULL))
-        goto out;
 
     /* Ensure we can decode a frame. If not, we'll try other loaders */
     if (!maybe_decode_frame (loader))

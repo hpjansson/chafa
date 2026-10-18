@@ -118,12 +118,8 @@ chicle_heif_loader_new_from_mapping (ChicleFileMapping *mapping)
     loader->width = heif_image_get_primary_width (loader->image);
     loader->height = heif_image_get_primary_height (loader->image);
 
-    if (loader->width < 1 || loader->width >= (1 << 28)
-        || loader->height < 1 || loader->height >= (1 << 28))
-        goto out;
-
-    if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
-                                           IMAGE_BUFFER_SIZE_MAX, NULL))
+    if (!chicle_calc_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     loader->frame_data = heif_image_get_plane_readonly (loader->image,

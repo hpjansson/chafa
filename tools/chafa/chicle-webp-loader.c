@@ -91,8 +91,8 @@ decode_still (ChicleWebpLoader *loader, const WebPBitstreamFeatures *features,
 
     config.options.use_threads = 1;
 
-    if (!chicle_checked_image_buffer_size (out_width, out_height, BYTES_PER_PIXEL,
-                                          IMAGE_BUFFER_SIZE_MAX, &frame_size))
+    if (!chicle_calc_image_buffer_size (out_width, out_height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, &frame_size))
         return FALSE;
 
     loader->this_frame_data = g_malloc (frame_size);
@@ -125,8 +125,8 @@ maybe_decode_frame (ChicleWebpLoader *loader)
 
     if (decode_next_frame (loader, &buf, &loader->this_timestamp))
     {
-        if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
-                                              IMAGE_BUFFER_SIZE_MAX, &frame_size))
+        if (!chicle_calc_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                            IMAGE_BUFFER_SIZE_MAX, &frame_size))
             return FALSE;
 
         loader->this_frame_data = g_memdup (buf, frame_size);
@@ -202,9 +202,8 @@ chicle_webp_loader_new_from_mapping (ChicleFileMapping *mapping,
     if (!WebPAnimDecoderGetInfo (loader->anim_decoder, &anim_info))
         goto out;
 
-    if (anim_info.canvas_width < 1 || anim_info.canvas_width >= (1 << 28)
-        || anim_info.canvas_height < 1 || anim_info.canvas_height >= (1 << 28)
-        || (anim_info.canvas_width * (guint64) anim_info.canvas_height * BYTES_PER_PIXEL > IMAGE_BUFFER_SIZE_MAX))
+    if (!chicle_calc_image_buffer_size (anim_info.canvas_width, anim_info.canvas_height,
+                                        BYTES_PER_PIXEL, IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     if (anim_info.frame_count < 1)
@@ -307,8 +306,8 @@ chicle_webp_loader_get_frame_delay (ChicleWebpLoader *loader)
     {
         if (decode_next_frame (loader, &buf, &loader->next_timestamp))
         {
-            if (!chicle_checked_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
-                                                  IMAGE_BUFFER_SIZE_MAX, &frame_size))
+            if (!chicle_calc_image_buffer_size (loader->width, loader->height, BYTES_PER_PIXEL,
+                                                IMAGE_BUFFER_SIZE_MAX, &frame_size))
                 return DEFAULT_FRAME_DURATION_MS;
 
             loader->next_frame_data = g_memdup (buf, frame_size);

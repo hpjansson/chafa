@@ -419,9 +419,8 @@ chicle_jpeg_loader_new_from_mapping (ChicleFileMapping *mapping,
     width = cinfo.output_width;
     height = cinfo.output_height;
 
-    if (width < 1 || width >= (1 << 28)
-        || height < 1 || height >= (1 << 28)
-        || (width * (guint64) height >= (1 << 29)))
+    if (!chicle_calc_image_buffer_size (width, height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     rowstride = ROWSTRIDE_PAD (width * BYTES_PER_PIXEL);

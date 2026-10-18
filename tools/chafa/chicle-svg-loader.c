@@ -33,6 +33,7 @@
 
 #include <chafa.h>
 #include "chicle-svg-loader.h"
+#include "chicle-util.h"
 
 #define DIMENSION_MAX 4096
 #define MAGIC_BUF_SIZE 4096
@@ -181,9 +182,8 @@ chicle_svg_loader_new_from_mapping (ChicleFileMapping *mapping, gint target_widt
         goto locked_out;
 
     calc_dimensions (rsvg, target_width, target_height, &width, &height);
-    if (width < 1 || width >= (1 << 28)
-        || height < 1 || height >= (1 << 28)
-        || (width * (guint64) height * BYTES_PER_PIXEL > IMAGE_BUFFER_SIZE_MAX))
+    if (!chicle_calc_image_buffer_size (width, height, BYTES_PER_PIXEL,
+                                        IMAGE_BUFFER_SIZE_MAX, NULL))
         goto locked_out;
 
     loader->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);

@@ -30,6 +30,7 @@
 
 #include <chafa.h>
 #include "chicle-xwd-loader.h"
+#include "chicle-util.h"
 
 #define DEBUG(x)
 
@@ -288,9 +289,8 @@ chicle_xwd_loader_new_from_mapping (ChicleFileMapping *mapping)
 
     DEBUG (dump_header (&loader->header));
 
-    if (loader->header.pixmap_width < 1 || loader->header.pixmap_width >= (1 << 28)
-        || loader->header.pixmap_height < 1 || loader->header.pixmap_height >= (1 << 28)
-        || (loader->header.pixmap_width * (guint64) loader->header.pixmap_height >= (1 << 29)))
+    if (!chicle_calc_image_buffer_size (loader->header.pixmap_width, loader->header.pixmap_height,
+                                        4, IMAGE_BUFFER_SIZE_MAX, NULL))
         goto out;
 
     success = TRUE;
