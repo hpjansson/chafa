@@ -33,6 +33,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #endif
 
 #include "lodepng.h"
+#include "lodepng-internal.h"
 
 #ifdef HAVE_AVX2_INTRINSICS
 #include "lodepng-avx2.h"
@@ -5373,6 +5374,91 @@ unsigned lodepng_inspect_chunk(LodePNGState* state, size_t pos,
   return error;
 }
 
+/*Decompresses the zlib-compressed image data of a w*h image, as found in the IDAT chunks (or the
+fdAT chunks of an APNG frame), using the color mode and interlace method of state->info_png.*/
+static unsigned decompressImageData(unsigned char** scanlines, unsigned w, unsigned h,
+                                    const LodePNGState* state,
+                                    const unsigned char* zdata, size_t zsize) {
+  unsigned bpp = lodepng_get_bpp(&state->info_png.color);
+  size_t scanlines_size = 0, expected_size = 0;
+  unsigned error;
+
+  *scanlines = 0;
+
+  /*predict output size, to allocate exact size for output buffer to avoid more dynamic allocation.
+  If the decompressed size does not match the prediction, the image must be corrupt.*/
+  if(state->info_png.interlace_method == 0) {
+    expected_size = lodepng_get_raw_size_idat(w, h, bpp);
+  } else {
+    /*Adam-7 interlaced: expected size is the sum of the 7 sub-images' sizes*/
+    expected_size = 0;
+    expected_size += lodepng_get_raw_size_idat((w + 7) >> 3, (h + 7) >> 3, bpp);
+    if(w > 4) expected_size += lodepng_get_raw_size_idat((w + 3) >> 3, (h + 7) >> 3, bpp);
+    expected_size += lodepng_get_raw_size_idat((w + 3) >> 2, (h + 3) >> 3, bpp);
+    if(w > 2) expected_size += lodepng_get_raw_size_idat((w + 1) >> 2, (h + 3) >> 2, bpp);
+    expected_size += lodepng_get_raw_size_idat((w + 1) >> 1, (h + 1) >> 2, bpp);
+    if(w > 1) expected_size += lodepng_get_raw_size_idat((w + 0) >> 1, (h + 1) >> 1, bpp);
+    expected_size += lodepng_get_raw_size_idat((w + 0), (h + 0) >> 1, bpp);
+  }
+
+  if(expected_size > LODEPNG_IMAGE_DATA_SIZE_MAX) return 1000;
+
+  error = zlib_decompress(scanlines, &scanlines_size, expected_size, zdata, zsize, &state->decoder.zlibsettings);
+  if(!error && scanlines_size != expected_size) error = 91; /*decompressed size doesn't match prediction*/
+  return error;
+}
+
+/*Unfilters (and deinterlaces) the scanlines produced by decompressImageData into *out, which
+will be in the PNG's color mode. Takes ownership of scanlines. On error, *out may still have
+been allocated.*/
+static unsigned postProcessImageData(unsigned char** out, unsigned char* scanlines,
+                                     unsigned w, unsigned h, const LodePNGState* state) {
+  unsigned bpp = lodepng_get_bpp(&state->info_png.color);
+  size_t outsize;
+  unsigned error = 0;
+
+  *out = 0;
+
+  outsize = lodepng_get_raw_size(w, h, &state->info_png.color);
+  if(outsize > LODEPNG_IMAGE_DATA_SIZE_MAX) error = 1000;
+
+  if(!error && state->info_png.interlace_method == 0 && bpp >= 8) {
+    /* Unfiltering is the only step. Run it in place to save faulting a
+    second buffer the size of the entire image. */
+    error = unfilter(scanlines, scanlines, w, h, bpp);
+    if(!error) {
+      unsigned char* trimmed = (unsigned char*)lodepng_realloc(scanlines, outsize);
+      *out = trimmed ? trimmed : scanlines;
+      scanlines = NULL;
+    }
+  } else {
+    if(!error) {
+      *out = (unsigned char*)lodepng_malloc(outsize);
+      if(!*out) error = 83; /*alloc fail*/
+    }
+
+    if(!error) {
+      lodepng_memset(*out, 0, outsize);
+      error = postProcessScanlines(*out, scanlines, w, h, &state->info_png);
+    }
+  }
+  lodepng_free(scanlines);
+  return error;
+}
+
+unsigned lodepng_decode_image_data(unsigned char** out, unsigned w, unsigned h,
+                                   const LodePNGState* state,
+                                   const unsigned char* zdata, size_t zsize) {
+  unsigned char* scanlines;
+  unsigned error;
+
+  *out = 0;
+  error = decompressImageData(&scanlines, w, h, state, zdata, zsize);
+  if(!error) error = postProcessImageData(out, scanlines, w, h, state);
+  else lodepng_free(scanlines);
+  return error;
+}
+
 /*read a PNG, the result will be in the same color type as the PNG (hence "generic")*/
 static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
                           LodePNGState* state,
@@ -5382,8 +5468,6 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
   unsigned char* idat; /*the data from idat chunks, zlib compressed*/
   size_t idatsize = 0;
   unsigned char* scanlines = 0;
-  size_t scanlines_size = 0, expected_size = 0;
-  size_t outsize = 0;
 
   /*for unknown chunk order*/
   unsigned unknown = 0;
@@ -5558,66 +5642,12 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
   }
 
   if(!state->error) {
-    /*predict output size, to allocate exact size for output buffer to avoid more dynamic allocation.
-    If the decompressed size does not match the prediction, the image must be corrupt.*/
-    if(state->info_png.interlace_method == 0) {
-      unsigned bpp = lodepng_get_bpp(&state->info_png.color);
-      expected_size = lodepng_get_raw_size_idat(*w, *h, bpp);
-    } else {
-      unsigned bpp = lodepng_get_bpp(&state->info_png.color);
-      /*Adam-7 interlaced: expected size is the sum of the 7 sub-images sizes*/
-      expected_size = 0;
-      expected_size += lodepng_get_raw_size_idat((*w + 7) >> 3, (*h + 7) >> 3, bpp);
-      if(*w > 4) expected_size += lodepng_get_raw_size_idat((*w + 3) >> 3, (*h + 7) >> 3, bpp);
-      expected_size += lodepng_get_raw_size_idat((*w + 3) >> 2, (*h + 3) >> 3, bpp);
-      if(*w > 2) expected_size += lodepng_get_raw_size_idat((*w + 1) >> 2, (*h + 3) >> 2, bpp);
-      expected_size += lodepng_get_raw_size_idat((*w + 1) >> 1, (*h + 1) >> 2, bpp);
-      if(*w > 1) expected_size += lodepng_get_raw_size_idat((*w + 0) >> 1, (*h + 1) >> 1, bpp);
-      expected_size += lodepng_get_raw_size_idat((*w + 0), (*h + 0) >> 1, bpp);
-    }
-
-    if(expected_size > LODEPNG_IMAGE_DATA_SIZE_MAX) {
-      state->error = 1000;
-    }
+    state->error = decompressImageData(&scanlines, *w, *h, state, idat, idatsize);
   }
-
-  if (!state->error) {
-    state->error = zlib_decompress(&scanlines, &scanlines_size, expected_size, idat, idatsize, &state->decoder.zlibsettings);
-  }
-
-  if(!state->error && scanlines_size != expected_size) state->error = 91; /*decompressed size doesn't match prediction*/
   lodepng_free(idat);
 
-  if(!state->error) {
-    outsize = lodepng_get_raw_size(*w, *h, &state->info_png.color);
-    if (outsize > LODEPNG_IMAGE_DATA_SIZE_MAX) {
-      state->error = 1000;
-    }
-  }
-
-  if(!state->error && state->info_png.interlace_method == 0
-     && lodepng_get_bpp(&state->info_png.color) >= 8) {
-    /* Unfiltering is the only step. Run it in place to save faulting a
-    second buffer the size of the entire image. */
-    unsigned bpp = lodepng_get_bpp(&state->info_png.color);
-    state->error = unfilter(scanlines, scanlines, *w, *h, bpp);
-    if(!state->error) {
-      unsigned char* trimmed = (unsigned char*)lodepng_realloc(scanlines, outsize);
-      *out = trimmed ? trimmed : scanlines;
-      scanlines = NULL;
-    }
-  } else {
-    if(!state->error) {
-      *out = (unsigned char*)lodepng_malloc(outsize);
-      if(!*out) state->error = 83; /*alloc fail*/
-    }
-
-    if(!state->error) {
-      lodepng_memset(*out, 0, outsize);
-      state->error = postProcessScanlines(*out, scanlines, *w, *h, &state->info_png);
-    }
-  }
-  lodepng_free(scanlines);
+  if(!state->error) state->error = postProcessImageData(out, scanlines, *w, *h, state);
+  else lodepng_free(scanlines);
 }
 
 unsigned lodepng_decode(unsigned char** out, unsigned* w, unsigned* h,
@@ -7138,9 +7168,17 @@ const char* lodepng_error_text(unsigned code) {
     case 121: return "invalid chunk type name: may only contain [a-zA-Z]";
     case 122: return "invalid chunk type name: third character must be uppercase";
     case 123: return "invalid ICC profile size";
-    /*codes from 1000 up are local to chafa's copy, to stay clear of upstream additions*/
+    /*codes from 1000 up are local to Chafa's copy */
     /*max size of an in-memory image buffer*/
     case 1000: return "image data unreasonably large";
+    /*the following are only used by the APNG decoder in lodepng-apng.c*/
+    case 1001: return "invalid acTL chunk";
+    case 1002: return "invalid fcTL chunk";
+    case 1003: return "APNG frame region is empty or outside the image";
+    case 1004: return "APNG chunk sequence number out of order";
+    case 1005: return "invalid fdAT chunk, or fdAT outside of a frame";
+    case 1006: return "APNG frame has no image data";
+    case 1007: return "no more APNG frames to decode";
   }
   return "unknown error code";
 }

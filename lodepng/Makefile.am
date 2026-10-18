@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = liblodepng.la
 
-liblodepng_la_SOURCES = lodepng.c lodepng.h
+liblodepng_la_SOURCES = lodepng.c lodepng.h lodepng-apng.c lodepng-apng.h lodepng-internal.h
 liblodepng_la_CFLAGS = ${LODEPNG_CFLAGS} ${LIBDEFLATE_CFLAGS} -I${top_srcdir}
 liblodepng_la_LDFLAGS = ${LODEPNG_LDFLAGS}
 liblodepng_la_LIBADD = ${LIBDEFLATE_LIBS}
