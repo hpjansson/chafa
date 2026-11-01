@@ -168,6 +168,8 @@ chafa_parser_pop_event (ChafaParser *parser)
         ChafaParseResult result;
         ChafaEvent temp_event;
 
+        memset (&temp_event, 0, sizeof (temp_event));
+
         result = chafa_term_info_parse_seq_varargs (parser->term_info, i,
                                                     &p0, &len,
                                                     temp_event.seq_args,
