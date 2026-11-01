@@ -684,6 +684,7 @@ try_parse_seq (const ChafaTermInfo *term_info, ChafaTermSeq seq,
     seq_args = &term_info->seq_args [seq] [0];
 
     memset (args_out, 0, seq_meta [seq].n_args * sizeof (guint));
+    *n_args_out = 0;
 
     for ( ; ; i++)
     {
