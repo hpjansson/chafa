@@ -706,6 +706,12 @@ static const TermDef term_def [] =
         sixel_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE, PIXEL_PT_NONE,
       CHAFA_TERM_QUIRK_SIXEL_OVERSHOOT, LINUX_DESKTOP_SYMS },
 
+    { TERM_TYPE_TERM, "kwi", VARIANT_NONE, VERSION_NONE,
+      { { ENV_OP_INCL, ENV_CMP_EXACT,  "TERM_PROGRAM", "kwi", 0 } },
+      { vt220_seqs, color_direct_seqs, color_256_seqs, color_16_seqs, color_8_seqs,
+        kitty_seqs, kitty_virt_seqs }, INHERIT_NONE, CHAFA_PASSTHROUGH_NONE,
+      PIXEL_PT_NONE, QUIRKS_NONE, LINUX_DESKTOP_SYMS },
+
     /* The 'lf' file browser will choke if there are extra sequences in front
      * of a sixel image, so we need to be polite to it. */
     { TERM_TYPE_APP,  "lf", VARIANT_NONE, VERSION_NONE,
