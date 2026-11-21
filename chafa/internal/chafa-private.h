@@ -207,6 +207,19 @@ void chafa_canvas_config_init (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_deinit (ChafaCanvasConfig *canvas_config);
 void chafa_canvas_config_copy_contents (ChafaCanvasConfig *dest, const ChafaCanvasConfig *src);
 
+/* Term db */
+
+typedef enum
+{
+    CHAFA_KITTY_SUPPORT_UNKNOWN,
+    CHAFA_KITTY_SUPPORT_YES,
+    CHAFA_KITTY_SUPPORT_NO
+}
+ChafaKittySupport;
+
+gboolean chafa_term_db_is_generic_term_name (const gchar *name);
+ChafaKittySupport chafa_term_db_get_kitty_support (const gchar *term_version);
+
 gint *chafa_gen_bayer_matrix (gint matrix_size, gfloat magnitude);
 
 /* Math stuff */

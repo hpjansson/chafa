@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "chafa.h"
+#include "internal/chafa-private.h"
 #include <stdlib.h>  /* strtoul */
 #include <string.h>  /* strlen, strncmp, strcmp, memcpy */
 
@@ -268,6 +269,15 @@ static const SeqStr vt220_seqs [] =
     { CHAFA_TERM_SEQ_BEGIN_HYPERLINK, "\033]8;;" },
     { CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR, "\033\\" },
     { CHAFA_TERM_SEQ_END_HYPERLINK, "\033]8;;\033\\" },
+
+    /* XTVERSION and Kitty graphics queries. The responses are followed by
+     * text terminated by ST */
+
+    { CHAFA_TERM_SEQ_QUERY_TERMINAL_VERSION, "\033[>0q" },
+    { CHAFA_TERM_SEQ_TERMINAL_VERSION, "\033P>|" },
+
+    { CHAFA_TERM_SEQ_QUERY_KITTY_GRAPHICS, "\033_Gi=%1,s=1,v=1,a=q,t=d,f=24;AAAA\033\\" },
+    { CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE, "\033_Gi=%1;" },
 
     { CHAFA_TERM_SEQ_MAX, NULL }
 };
@@ -1176,6 +1186,127 @@ detect_capabilities (gchar **envp)
     }
 
     return ret_ti;
+}
+
+/* Terminals that answer XTVERSION but display APC strings as text. Matched
+ * as case-insensitive prefixes of the XTVERSION name. */
+static const gchar *apc_unsafe_term_versions [] =
+{
+    "k95",
+    "kermit",
+    "rlogin",
+    "terminology",
+    NULL
+};
+
+/* Env-based detection falls back to these when nothing more specific
+ * matches. They're compared to the term info name up to the first '-'. */
+static const gchar *generic_term_names [] =
+{
+    "vt220",
+    "xterm",
+    NULL
+};
+
+gboolean
+chafa_term_db_is_generic_term_name (const gchar *name)
+{
+    gint len;
+    gint i;
+
+    if (!name)
+        return FALSE;
+
+    len = strcspn (name, "-");
+
+    for (i = 0; generic_term_names [i]; i++)
+    {
+        if ((gint) strlen (generic_term_names [i]) == len
+            && !strncmp (name, generic_term_names [i], len))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+static const TermDef *
+find_base_term_def (const gchar *name)
+{
+    gint i;
+
+    for (i = 0; term_def [i].name; i++)
+    {
+        if (!term_def [i].variant && !term_def [i].version
+            && !g_ascii_strcasecmp (term_def [i].name, name))
+            return &term_def [i];
+    }
+
+    return NULL;
+}
+
+static gboolean
+term_def_has_seqs (const TermDef *def, const SeqStr *seqs)
+{
+    gint i;
+
+    for (i = 0; i < SEQ_LIST_MAX && def->seqs [i]; i++)
+    {
+        if (def->seqs [i] == seqs)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* Looks up a terminal by the name in its XTVERSION response, e.g.
+ * "kitty(0.40.0)" or "WezTerm 20240203". Returns UNKNOWN only for names
+ * that are neither in the db nor known to print APC strings, since those
+ * are the only ones it's worth sending a Kitty graphics query. */
+ChafaKittySupport
+chafa_term_db_get_kitty_support (const gchar *term_version)
+{
+    const TermDef *def;
+    gchar *name;
+    gint len;
+    gint i;
+
+    if (!term_version)
+        return CHAFA_KITTY_SUPPORT_NO;
+
+    for (i = 0; apc_unsafe_term_versions [i]; i++)
+    {
+        if (!g_ascii_strncasecmp (term_version, apc_unsafe_term_versions [i],
+                                  strlen (apc_unsafe_term_versions [i])))
+            return CHAFA_KITTY_SUPPORT_NO;
+    }
+
+    for (len = 0; g_ascii_isalnum (term_version [len])
+             || term_version [len] == '-'
+             || term_version [len] == '_'; len++)
+        ;
+
+    if (len == 0)
+        return CHAFA_KITTY_SUPPORT_NO;
+
+    name = g_strndup (term_version, len);
+    def = find_base_term_def (name);
+
+    /* Allow for a version digit in the name, e.g. "iTerm2" */
+    if (!def)
+    {
+        while (len > 1 && g_ascii_isdigit (name [len - 1]))
+            name [--len] = '\0';
+        def = find_base_term_def (name);
+    }
+
+    g_free (name);
+
+    if (!def)
+        return CHAFA_KITTY_SUPPORT_UNKNOWN;
+
+    return def->passthrough == CHAFA_PASSTHROUGH_NONE
+        && term_def_has_seqs (def, kitty_seqs)
+        ? CHAFA_KITTY_SUPPORT_YES : CHAFA_KITTY_SUPPORT_NO;
 }
 
 static ChafaTermDb *

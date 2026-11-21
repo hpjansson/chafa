@@ -2889,5 +2889,80 @@ CHAFA_TERM_SEQ_DEF(begin_hyperlink_anchor, BEGIN_HYPERLINK_ANCHOR, 0, none, char
  **/
 CHAFA_TERM_SEQ_DEF(end_hyperlink, END_HYPERLINK, 0, none, char, (CHAFA_TERM_SEQ_PFX))
 
+/* --- Available in 1.20+ --- */
+
+#undef CHAFA_TERM_SEQ_AVAILABILITY
+#define CHAFA_TERM_SEQ_AVAILABILITY CHAFA_AVAILABLE_IN_1_20
+
+/**
+ * chafa_term_info_emit_query_terminal_version:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_TERMINAL_VERSION.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.20
+ **/
+CHAFA_TERM_SEQ_DEF(query_terminal_version, QUERY_TERMINAL_VERSION, 0, none, char, (CHAFA_TERM_SEQ_PFX))
+
+/**
+ * chafa_term_info_emit_terminal_version:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_TERMINAL_VERSION.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.20
+ **/
+CHAFA_TERM_SEQ_DEF(terminal_version, TERMINAL_VERSION, 0, none, char, (CHAFA_TERM_SEQ_PFX))
+
+/**
+ * chafa_term_info_emit_query_kitty_graphics:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @id: Image ID to use for the query
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_QUERY_KITTY_GRAPHICS.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.20
+ **/
+CHAFA_TERM_SEQ_DEF(query_kitty_graphics, QUERY_KITTY_GRAPHICS, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint id))
+
+/**
+ * chafa_term_info_emit_kitty_graphics_response:
+ * @term_info: A #ChafaTermInfo
+ * @dest: String destination
+ * @id: Image ID from the query
+ *
+ * Prints the control sequence for #CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE.
+ *
+ * @dest must have enough space to hold
+ * #CHAFA_TERM_SEQ_LENGTH_MAX bytes, even if the emitted sequence is
+ * shorter. The output will not be zero-terminated.
+ *
+ * Returns: Pointer to first byte after emitted string
+ *
+ * Since: 1.20
+ **/
+CHAFA_TERM_SEQ_DEF(kitty_graphics_response, KITTY_GRAPHICS_RESPONSE, 1, none, guint, (CHAFA_TERM_SEQ_PFX, guint id))
+
 #undef CHAFA_TERM_SEQ_AVAILABILITY
 #undef CHAFA_TERM_SEQ_PFX

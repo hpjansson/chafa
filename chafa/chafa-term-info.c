@@ -201,6 +201,10 @@
  * @CHAFA_TERM_SEQ_BEGIN_HYPERLINK: Begins an OSC 8-style hyperlink. The URL follows this.
  * @CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR: Separates an OSC 8-style hyperlink URL from its anchor (label). The label follows this.
  * @CHAFA_TERM_SEQ_END_HYPERLINK: Ends an OSC 8-style hyperlink. Closes both the preceding #CHAFA_TERM_SEQ_BEGIN_HYPERLINK and #CHAFA_TERM_SEQ_BEGIN_HYPERLINK_ANCHOR.
+ * @CHAFA_TERM_SEQ_QUERY_TERMINAL_VERSION: Queries the terminal for its name and version (XTVERSION).
+ * @CHAFA_TERM_SEQ_TERMINAL_VERSION: Begins the terminal's XTVERSION response. The name and version follow this, terminated by ST.
+ * @CHAFA_TERM_SEQ_QUERY_KITTY_GRAPHICS: Queries the terminal for Kitty graphics protocol support without displaying anything.
+ * @CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE: Begins the terminal's response to a Kitty graphics command. The message follows this, terminated by ST.
  * @CHAFA_TERM_SEQ_MAX: Last control sequence plus one.
  *
  * An enumeration of the control sequences supported by #ChafaTermInfo.
