@@ -33,6 +33,7 @@
 #include <glib/gstdio.h>  /* g_open, g_close */
 
 #include "chafa.h"
+#include "internal/chafa-private.h"
 
 /* Include after glib.h for G_OS_WIN32 */
 #ifdef G_OS_WIN32
@@ -56,6 +57,11 @@
 
 /* Stack buffer size */
 #define READ_BUF_MAX 4096
+
+/* Image ID from the query example in the Kitty graphics protocol docs */
+#define KITTY_QUERY_ID 31
+
+#define PROBE_STRING_LEN_MAX 256
 
 struct ChafaTerm
 {
@@ -94,6 +100,23 @@ struct ChafaTerm
 
     /* TRUE if sixel capability was detected by the last probe */
     guint probe_found_sixel : 1;
+
+    /* TRUE if Kitty graphics capability was detected by the last probe */
+    guint probe_found_kitty : 1;
+
+    /* TRUE if a Kitty graphics query was sent and we're waiting for the
+     * DA1 response that follows it */
+    guint probe_kitty_pending : 1;
+
+    /* TRUE while collecting the text of an XTVERSION or Kitty graphics
+     * response. The seq and its argument say which. */
+    guint probe_in_string : 1;
+    ChafaTermSeq probe_string_seq;
+    guint probe_string_arg;
+    GString *probe_string;
+
+    /* XTVERSION response, or NULL if none was received */
+    GString *probe_term_version;
 
     /* I/O bookkeeping */
 
@@ -332,6 +355,14 @@ static const ChafaTermSeq sixel_seqs [] =
     CHAFA_TERM_SEQ_SET_SIXEL_ADVANCE_RIGHT
 };
 
+static const ChafaTermSeq kitty_seqs [] =
+{
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE,
+    CHAFA_TERM_SEQ_BEGIN_KITTY_IMAGE_CHUNK,
+    CHAFA_TERM_SEQ_END_KITTY_IMAGE_CHUNK
+};
+
 static void
 supplement_seq (ChafaTermInfo *dest, ChafaTermInfo *src, ChafaTermSeq seq)
 {
@@ -390,6 +421,13 @@ apply_probe_results (ChafaTerm *term)
     {
         supplement_seqs (term->term_info, term->default_term_info,
                          sixel_seqs, G_N_ELEMENTS (sixel_seqs));
+    }
+
+    if (term->probe_found_kitty && !chafa_term_info_have_seq (term->term_info,
+                                                              CHAFA_TERM_SEQ_BEGIN_KITTY_IMMEDIATE_IMAGE_V1))
+    {
+        supplement_seqs (term->term_info, term->default_term_info,
+                         kitty_seqs, G_N_ELEMENTS (kitty_seqs));
     }
 
     if (term->width_cells > 0 && term->height_cells > 0
@@ -526,9 +564,75 @@ handle_primary_da_event (ChafaTerm *term, ChafaEvent *event)
         }
     }
 
+    /* A pending Kitty graphics query is answered before this, if at all */
+    term->probe_kitty_pending = FALSE;
+
     term->probe_success = TRUE;
     apply_probe_results (term);
     return TRUE;
+}
+
+static void
+end_probe_string (ChafaTerm *term)
+{
+    const gchar *str = term->probe_string->str;
+
+    term->probe_in_string = FALSE;
+
+    if (term->probe_string_seq == CHAFA_TERM_SEQ_TERMINAL_VERSION)
+    {
+        if (term->probe_term_version)
+            g_string_assign (term->probe_term_version, str);
+        else
+            term->probe_term_version = g_string_new (str);
+    }
+    else if (term->probe_string_seq == CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE
+             && term->probe_kitty_pending
+             && term->probe_string_arg == KITTY_QUERY_ID
+             && g_str_equal (str, "OK"))
+    {
+        term->probe_found_kitty = TRUE;
+    }
+}
+
+static gboolean
+handle_probe_string_event (ChafaTerm *term, ChafaEvent *event)
+{
+    ChafaTermSeq seq = chafa_event_get_seq (event);
+
+    if (seq == CHAFA_TERM_SEQ_TERMINAL_VERSION
+        || seq == CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE)
+    {
+        if (term->probe_in_string)
+            end_probe_string (term);
+
+        if (term->probe_string)
+            g_string_truncate (term->probe_string, 0);
+        else
+            term->probe_string = g_string_new ("");
+
+        term->probe_string_seq = seq;
+        term->probe_string_arg = seq == CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE
+            ? chafa_event_get_seq_arg (event, 0) : 0;
+        term->probe_in_string = TRUE;
+        return TRUE;
+    }
+
+    if (!term->probe_in_string)
+        return FALSE;
+
+    if (chafa_event_get_type (event) == CHAFA_UNICHAR_EVENT)
+    {
+        if (term->probe_string->len < PROBE_STRING_LEN_MAX)
+            g_string_append_unichar (term->probe_string,
+                                     chafa_event_get_unichar (event));
+        return TRUE;
+    }
+
+    /* Any other event ends the string. Normally it's ST, but let other
+     * handlers see it in case the terminal left the string unterminated. */
+    end_probe_string (term);
+    return FALSE;
 }
 
 static gboolean
@@ -545,6 +649,7 @@ typedef gboolean (*EventHandler) (ChafaTerm *, ChafaEvent *);
 
 static const EventHandler event_handlers [] =
 {
+    handle_probe_string_event,
     handle_default_fg_event,
     handle_default_bg_event,
     handle_text_area_size_cells_event,
@@ -759,6 +864,12 @@ chafa_term_destroy (ChafaTerm *term)
 #endif
 
     chafa_parser_destroy (term->parser);
+
+    if (term->probe_string)
+        g_string_free (term->probe_string, TRUE);
+    if (term->probe_term_version)
+        g_string_free (term->probe_term_version, TRUE);
+
     g_free (term);
 }
 
@@ -967,12 +1078,71 @@ chafa_term_get_size_cells (ChafaTerm *term, gint *width_cells_out, gint *height_
         *height_cells_out = term->height_cells;
 }
 
+/* Returns the time left of the probe timeout, or -1 if there is no timeout. */
+static gint
+probe_remain_ms (gint timeout_ms, gint64 start_time)
+{
+    gint64 remain_ms;
+
+    if (timeout_ms <= 0)
+        return -1;
+
+    remain_ms = timeout_ms - (g_get_monotonic_time () - start_time) / 1000;
+    return MAX (remain_ms, 0);
+}
+
+static void
+probe_wait (ChafaTerm *term, gint timeout_ms, gint64 start_time)
+{
+    ChafaEvent *event;
+    gint remain_ms;
+
+    remain_ms = probe_remain_ms (timeout_ms, start_time);
+    if (remain_ms == 0)
+        return;
+
+    while ((event = in_sync_pull (term, remain_ms)))
+    {
+        handle_event (term, event);
+
+        /* Text of a response isn't input */
+        if (term->probe_in_string
+            && chafa_event_get_type (event) == CHAFA_UNICHAR_EVENT)
+            g_free (event);
+        else
+            g_queue_push_head (term->event_queue, event);
+
+        if ((term->probe_success && !term->probe_kitty_pending)
+            || term->in_eof_seen)
+            break;
+
+        remain_ms = probe_remain_ms (timeout_ms, start_time);
+        if (remain_ms == 0)
+            break;
+    }
+}
+
+/* XTVERSION is only worth sending when env-based detection didn't identify
+ * the terminal. The Kitty graphics query is an APC string, which some
+ * terminals display as text, so it's gated on the XTVERSION response. */
+static gboolean
+can_query_kitty_graphics (ChafaTerm *term)
+{
+    return !chafa_term_info_is_pixel_mode_supported (term->term_info, CHAFA_PIXEL_MODE_KITTY)
+        && chafa_term_info_get_passthrough_type (term->term_info) == CHAFA_PASSTHROUGH_NONE
+        && chafa_term_db_is_generic_term_name (chafa_term_info_get_name (term->term_info))
+        && chafa_term_info_have_seq (term->term_info, CHAFA_TERM_SEQ_QUERY_TERMINAL_VERSION)
+        && chafa_term_info_have_seq (term->term_info, CHAFA_TERM_SEQ_TERMINAL_VERSION)
+        && chafa_term_info_have_seq (term->term_info, CHAFA_TERM_SEQ_QUERY_KITTY_GRAPHICS)
+        && chafa_term_info_have_seq (term->term_info, CHAFA_TERM_SEQ_KITTY_GRAPHICS_RESPONSE);
+}
+
 gboolean
 chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
 {
-    ChafaEvent *event;
     gint64 start_time;
-    gint remain_ms = timeout_ms;
+    gint round_trip_ms;
+    gboolean query_kitty;
 
     g_return_val_if_fail (term != NULL, FALSE);
 
@@ -980,16 +1150,8 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     struct termios saved_termios;
     gboolean termios_changed = FALSE;
 #endif
-    const gint probe_seqs [] =
-    {
-        CHAFA_TERM_SEQ_QUERY_DEFAULT_FG,
-        CHAFA_TERM_SEQ_QUERY_DEFAULT_BG,
-        CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS,
-        CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX,
-        CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX,
-        CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES,
-        -1
-    };
+    gint probe_seqs [8];
+    gint n_probe_seqs = 0;
     gint n_probes = 0;
 
     if (term->probe_success)
@@ -997,8 +1159,18 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
     if (!term->interactive_supported)
         return FALSE;
 
-    if (timeout_ms > 0)
-        start_time = g_get_monotonic_time ();
+    start_time = g_get_monotonic_time ();
+    query_kitty = can_query_kitty_graphics (term);
+
+    probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_DEFAULT_FG;
+    probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_DEFAULT_BG;
+    probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_CELLS;
+    probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_TEXT_AREA_SIZE_PX;
+    probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_CELL_SIZE_PX;
+    if (query_kitty)
+        probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_TERMINAL_VERSION;
+    probe_seqs [n_probe_seqs++] = CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES;
+    probe_seqs [n_probe_seqs++] = -1;
 
     /* Terminal must be in raw mode for response to get picked up without
      * user interaction. */
@@ -1016,23 +1188,42 @@ chafa_term_sync_probe (ChafaTerm *term, gint timeout_ms)
         goto out;
     }
 
-    while ((event = in_sync_pull (term, timeout_ms > 0 ? remain_ms : -1)))
+    probe_wait (term, timeout_ms, start_time);
+    round_trip_ms = (g_get_monotonic_time () - start_time) / 1000;
+
+    /* The XTVERSION response arrives before DA1. Likewise, a Kitty graphics
+     * response must arrive before the second DA1 response. */
+    if (query_kitty
+        && term->probe_success
+        && !term->in_eof_seen
+        && term->probe_term_version)
     {
-        g_queue_push_head (term->event_queue, event);
-        handle_event (term, event);
+        ChafaKittySupport support;
+        gint remain_ms;
 
-        if (term->probe_success || term->in_eof_seen)
-            break;
+        support = chafa_term_db_get_kitty_support (term->probe_term_version->str);
+        remain_ms = probe_remain_ms (timeout_ms, start_time);
 
-        if (timeout_ms > 0)
+        if (support == CHAFA_KITTY_SUPPORT_YES)
         {
-            remain_ms = timeout_ms - (g_get_monotonic_time () - start_time) / 1000;
-            if (remain_ms <= 0)
-                break;
+            term->probe_found_kitty = TRUE;
+            apply_probe_results (term);
+        }
+        else if (support == CHAFA_KITTY_SUPPORT_UNKNOWN
+                 && (remain_ms < 0 || remain_ms >= round_trip_ms))
+        {
+            /* Skipped when there's no time for the responses to arrive, since
+             * they'd otherwise end up at the shell prompt */
+            term->probe_kitty_pending = TRUE;
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_KITTY_GRAPHICS, KITTY_QUERY_ID, -1);
+            chafa_term_print_seq (term, CHAFA_TERM_SEQ_QUERY_PRIMARY_DEVICE_ATTRIBUTES, -1);
+            probe_wait (term, timeout_ms, start_time);
         }
     }
 
 out:
+    term->probe_kitty_pending = FALSE;
+    term->probe_in_string = FALSE;
 
 #ifdef HAVE_TERMIOS_H
     restore_termios (term, &saved_termios, &termios_changed);

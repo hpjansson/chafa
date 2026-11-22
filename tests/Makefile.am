@@ -23,7 +23,8 @@ check_PROGRAMS = \
 	loader-arithmetic-test \
 	palette-test \
 	stream-reader-test \
-	term-info-test
+	term-info-test \
+	term-probe-test
 
 byte_fifo_test_SOURCES = \
 	byte-fifo-test.c
@@ -49,6 +50,9 @@ stream_reader_test_SOURCES = \
 
 term_info_test_SOURCES = \
 	term-info-test.c
+
+term_probe_test_SOURCES = \
+	term-probe-test.c
 
 ## --- Frontend tests ---
 
@@ -76,6 +80,7 @@ TESTS = \
 	palette-test \
 	stream-reader-test \
 	term-info-test \
+	term-probe-test \
 	$(TOOL_CHECKS)
 
 AM_TESTS_ENVIRONMENT = \
